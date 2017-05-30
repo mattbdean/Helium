@@ -23,7 +23,6 @@ export class Database {
     private static instance: Database;
 
     private internalSql: Sequelize.Sequelize;
-    private internalMode: Mode;
 
     // Singleton
     private constructor() {}
@@ -52,7 +51,6 @@ export class Database {
     }
 
     public get sequelize() { return this.internalSql; }
-    public get mode() { return this.internalMode; }
 
     public static get(): Database {
         if (Database.instance === undefined)
