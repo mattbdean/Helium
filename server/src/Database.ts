@@ -4,6 +4,9 @@ import * as path from 'path';
 import * as chalk from 'chalk';
 import * as Joi from 'joi';
 import * as Sequelize from 'sequelize';
+import { SyncOptions } from 'sequelize';
+
+import { importAll } from './models';
 
 interface DbConf {
     username: string;
@@ -40,10 +43,20 @@ export class Database {
             });
         }
 
-        // Wrap Sequelize Bluebird Promise into a global.Promise
-        return new Promise<void>((resolve, reject) => {
-            this.sequelize.authenticate().then(resolve).catch(reject);
-        });
+        // Cast to any to tell the TypeScript compiler to f*** off and let us
+        // use Bluebird even though their typing definitions are ever so
+        // slightly different from lib.es6.d.ts
+        return this.sequelize.authenticate() as any;
+    }
+
+    /**
+     * Imports all models and syncs
+     * @param opts Any options to pass to sequelize.sync()
+     * @returns {Promise<any>}
+     */
+    public async init(opts?: SyncOptions): Promise<void> {
+        await importAll(this.sequelize);
+        return this.sequelize.sync(opts) as any;
     }
 
     public disconnect() {
@@ -102,29 +115,3 @@ const readJson = (file): Promise<any> =>
             }
         });
     });
-
-// const User = Sequelize.define('user', {
-//     firstName: { type: Sequelize.STRING },
-//     lastName: { type: Sequelize.STRING }
-// });
-
-// const main = async () => {
-//     const db = Database.get();
-//     try {
-//
-//         await sequelize.authenticate();
-//         await User.sync({ force: true });
-//         await User.create({
-//             firstName: 'John',
-//             lastName: 'Hancock'
-//         });
-//
-//         console.log(await User.findAll())
-//     } catch (err) {
-//         console.error('Error: ' + err);
-//     } finally {
-//         sequelize.close();
-//     }
-// };
-//
-// main().catch(console.error);
