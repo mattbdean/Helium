@@ -8,6 +8,7 @@ cache: yarn
 services:
   - mysql
 before_install:
+  - mysql --version
   - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
 before_script:
   - export DISPLAY=:99.0
