@@ -9,8 +9,9 @@ services:
   - mysql
 before_install:
   - mysql --version
-  - mysql -e "SELECT Host, User FROM mysql.user;"
   - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
+  - mysql -e "GRANT ALL ON test.* TO 'travis' IDENTIFIED BY 'password';"
+  - mysql -e "SELECT Host, User FROM mysql.user;"
 before_script:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start

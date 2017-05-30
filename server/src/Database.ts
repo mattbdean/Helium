@@ -66,8 +66,8 @@ export class Database {
 
     private static async createDbConf(mode): Promise<DbConf> {
         if (process.env.TRAVIS)
-            // https://docs.travis-ci.com/user/database-setup/#MySQL
-            return { username: 'travis', password: '', database: 'test' };
+            // Set in conjunction with .travis.yml
+            return { username: 'travis', password: 'password', database: 'test' };
 
         const confPath = path.resolve(__dirname, 'db.conf.json');
         const parsed = await readJson(confPath);
