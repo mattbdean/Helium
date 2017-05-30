@@ -9,6 +9,7 @@ services:
   - mysql
 before_install:
   - mysql --version
+  - mysql -e "SELECT Host, User FROM mysql.user;"
   - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
 before_script:
   - export DISPLAY=:99.0
