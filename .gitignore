@@ -1,0 +1,29 @@
+# IDE files
+/.idea/
+
+# Code coverage
+/.nyc_output/
+/coverage/
+
+# Temporary directories
+/dist/
+/node_modules/
+
+# Client
+/client/app/common
+
+# Server
+/server/src/about.json
+/server/src/common
+/server/src/public
+
+# Sensitive files
+/db.conf.json
+/server/src/db.conf.json
+
+# Package manager error logs
+yarn-error.log
+npm-debug.log
+
+# Other
+todo.txt

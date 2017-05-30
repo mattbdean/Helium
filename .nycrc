@@ -1,0 +1,18 @@
+{
+  "include": [
+    "server/**/*.ts"
+  ],
+  "extension": [
+    ".ts"
+  ],
+  "require": [
+    "ts-node/register"
+  ],
+  "reporter": [
+    "text-summary",
+    "html",
+    "lcov"
+  ],
+  "sourceMap": true,
+  "instrument": true
+}
