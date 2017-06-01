@@ -1,70 +1,53 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import * as chalk from 'chalk';
-import * as Joi from 'joi';
-import * as Sequelize from 'sequelize';
-import { SyncOptions } from 'sequelize';
+import * as mysql from 'mysql2/promise';
 
-import { importAll } from './models';
-
+/**
+ * Generic interface for mysql2 connection options. See
+ * https://github.com/mysqljs/mysql/blob/master/Readme.md#connection-options
+ */
 interface DbConf {
-    username: string;
-    password: string;
-    database: string;
-    host?: string;
+    [keys: string]: string;
 }
 
-const dbConfSchema = Joi.object().keys({
-    username: Joi.string(),
-    password: Joi.string(),
-    database: Joi.string(),
-    host: Joi.string().regex(/[a-z.]+/i)
-}).requiredKeys('username', 'password', 'database');
-
 export class Database {
+    /** Singleton instance */
     private static instance: Database;
 
-    private internalSql: Sequelize.Sequelize;
+    /** Database connection configuration when working with Travis-CI */
+    private static TRAVIS_CONF: DbConf =
+        { user: 'travis', password: 'password', database: 'test' };
+
+    private internalConn: any;
 
     // Singleton
     private constructor() {}
 
+    /** Ensures a connection */
     public async connect(mode: Mode): Promise<void> {
-        if (this.internalSql === undefined) {
+        if (!this.internalConn) {
             const conf = await Database.createDbConf(mode);
 
-            this.internalSql = new Sequelize(conf.database, conf.username, conf.password, {
-                host: conf.host || 'localhost',
-                dialect: 'mysql',
-                logging: (str) => {
-                    process.stdout.write(chalk.blue('[SQL] ') + str + '\n');
-                }
-            });
+            this.internalConn = await mysql.createConnection(conf);
         }
-
-        // Cast to any to tell the TypeScript compiler to f*** off and let us
-        // use Bluebird even though their typing definitions are ever so
-        // slightly different from lib.es6.d.ts
-        return this.sequelize.authenticate() as any;
     }
 
+    /** Disconnects from the database */
+    public disconnect(): Promise<void> {
+        // Nothing to do if we're already disconnected
+        if (this.internalConn === null) return Promise.resolve();
+        return this.internalConn.end();
+    }
+
+    // Expose internalConn as a getter property so it can be accessed like
+    // Database.get().conn
     /**
-     * Imports all models and syncs
-     * @param opts Any options to pass to sequelize.sync()
-     * @returns {Promise<any>}
+     * A node-mysql2 PromiseConnection. Null if not connected
      */
-    public async init(opts?: SyncOptions): Promise<void> {
-        await importAll(this.sequelize);
-        return this.sequelize.sync(opts) as any;
-    }
+    public get conn(): any | null { return this.internalConn; }
 
-    public disconnect() {
-        this.internalSql.close();
-    }
-
-    public get sequelize() { return this.internalSql; }
-
+    // Singleton
     public static get(): Database {
         if (Database.instance === undefined)
             Database.instance = new Database();
@@ -72,15 +55,10 @@ export class Database {
         return Database.instance;
     }
 
-    /** Convenience function for Database.get().sequelize */
-    public static sequelize(): Sequelize.Sequelize {
-        return Database.get().sequelize;
-    }
-
-    private static async createDbConf(mode): Promise<DbConf> {
-        if (process.env.TRAVIS)
-            // Set in conjunction with .travis.yml
-            return { username: 'travis', password: 'password', database: 'test' };
+    private static async createDbConf(mode: Mode): Promise<DbConf> {
+        // Use a static configuration for Travis
+        if (process.env.TRAVIS || process.env.CI)
+            return Database.TRAVIS_CONF;
 
         const confPath = path.resolve(__dirname, 'db.conf.json');
         const parsed = await readJson(confPath);
@@ -88,11 +66,6 @@ export class Database {
         const modeProperty = Mode[mode].toLowerCase();
         if (!parsed[modeProperty]) {
             throw new Error(`Database conf (${confPath}) has no property "${modeProperty}"`);
-        }
-
-        const result = Joi.validate(parsed[modeProperty], dbConfSchema);
-        if (result.error !== null) {
-            throw new Error(`Invalid database configuration (${confPath}): ${result.error}`);
         }
 
         return parsed[modeProperty];
@@ -104,9 +77,10 @@ export enum Mode {
     TEST
 }
 
-const readJson = (file): Promise<any> =>
-    new Promise<DbConf>((resolve, reject) => {
-        fs.readFile('db.conf.json', 'utf8', (err: NodeJS.ErrnoException, data: string) => {
+/** Promises to read a file and parse its contents as JSON */
+const readJson = (file: string): Promise<any> =>
+    new Promise<any>((resolve, reject) => {
+        fs.readFile(file, 'utf8', (err: NodeJS.ErrnoException, data: string) => {
             if (err) return reject(err);
             try {
                 resolve(JSON.parse(data));

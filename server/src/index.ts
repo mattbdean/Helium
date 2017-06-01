@@ -46,9 +46,7 @@ const bootstrap = async (options: any, metadata: AppMeta) => {
     try {
         const db = Database.get();
         await db.connect(Mode.PROD);
-        await db.init();
     } catch (ex) {
-        console.error(ex)
         fatalError('Could not connect to database: ' + ex.message);
     }
 

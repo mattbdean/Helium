@@ -10,7 +10,7 @@ export default function(gulp) {
     gulp.task('server:build', [
         'server:compile',
         'server:views',
-        'server:views',
+        'server:dbconf',
         'server:about'
     ]);
 
