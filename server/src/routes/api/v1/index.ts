@@ -2,12 +2,13 @@ import { Request, Response, Router } from 'express';
 
 import { ErrorResponse } from '../../../common/responses';
 import { RouteModule } from '../../RouteModule';
+import { table } from './table';
 
 export function v1(): RouteModule {
     const router = Router();
 
     const modules: Array<() => RouteModule> = [
-        // Put your RouteModules here
+        table
     ];
 
     for (const m of modules) {

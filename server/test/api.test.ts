@@ -22,5 +22,16 @@ describe('API v1', () => {
             })
         );
     });
+
+    describe('GET /api/v1/table', () => {
+        it('should return an array of strings', () => {
+            request.basic('/table', 200, (data: string[]) => {
+                expect(Array.isArray(data)).to.be.true;
+                for (const table of data) {
+                    expect(table).to.be.a('string');
+                }
+            });
+        });
+    });
 });
 

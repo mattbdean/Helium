@@ -28,7 +28,11 @@ export default function(gulp) {
     );
 
     gulp.task('server:dbconf', () =>
-        cp('db.conf.json', distDir())
+        cp('db.conf.json', distDir()),
+    );
+
+    gulp.task('server:dbconf:testPrep', () =>
+        cp('db.conf.json', 'server/src')
     );
 
     gulp.task('server:views', () =>
@@ -37,7 +41,7 @@ export default function(gulp) {
         cp('client/app/index.html', 'server/src/public')
     );
 
-    gulp.task('server:testPrep', ['server:views']);
+    gulp.task('server:testPrep', ['server:views', 'server:dbconf:testPrep']);
 
     gulp.task('server:clean', () =>
         del([
