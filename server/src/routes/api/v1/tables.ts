@@ -6,7 +6,7 @@ import { Database } from '../../../Database';
 import { NODE_ENV, NodeEnv } from '../../../env';
 import { RouteModule } from '../../RouteModule';
 
-export function table(): RouteModule {
+export function tables(): RouteModule {
     const r = Router();
 
     r.get('/', async (req: Request, res: Response) => {
@@ -58,7 +58,7 @@ export function table(): RouteModule {
 
     return {
         router: r,
-        mountPoint: '/table'
+        mountPoint: '/tables'
     };
 }
 

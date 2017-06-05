@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { Application } from 'express';
 
 import { ErrorResponse, SqlTableHeader } from '../src/common/responses';
-import { fetchTableNames } from '../src/routes/api/v1/table';
+import { fetchTableNames } from '../src/routes/api/v1/tables';
 import { createServer } from '../src/server';
 
 import { RequestContext } from './api.test.helper';
@@ -25,9 +25,9 @@ describe('API v1', () => {
         );
     });
 
-    describe('GET /api/v1/table', () => {
+    describe('GET /api/v1/tables', () => {
         it('should return an array of strings', () => {
-            request.basic('/table', 200, (data: string[]) => {
+            return request.basic('/tables', 200, (data: string[]) => {
                 expect(Array.isArray(data)).to.be.true;
                 for (const table of data) {
                     expect(table).to.be.a('string');
@@ -36,7 +36,7 @@ describe('API v1', () => {
         });
     });
 
-    describe('GET /api/v1/table/:name/meta', () => {
+    describe('GET /api/v1/tables/:name/meta', () => {
         it('should return the table headers', async () => {
             const tableNames = await fetchTableNames();
 
@@ -45,7 +45,7 @@ describe('API v1', () => {
                 // Make sure to URI-encode the table name because it could start
                 // with '#', which supertest would strip before sending the request,
                 // resulting in a request to '/api/v1/table/'
-                await request.basic(`/table/${encodeURIComponent(tableName)}/meta`, 200, (data: SqlTableHeader[]) => {
+                await request.basic(`/tables/${encodeURIComponent(tableName)}/meta`, 200, (data: SqlTableHeader[]) => {
                     expect(Array.isArray(data)).to.be.true;
 
                     // Keep a record of all the column names
@@ -87,7 +87,7 @@ describe('API v1', () => {
         });
 
         it('should 404 when given a non-existent table', () =>
-            request.basic('/table/foobar/meta', 404, (error: ErrorResponse) => {
+            request.basic('/tables/foobar/meta', 404, (error: ErrorResponse) => {
                 expect(error.input).to.deep.equal({ name: 'foobar' });
                 expect(error.message).to.be.a('string');
             })
