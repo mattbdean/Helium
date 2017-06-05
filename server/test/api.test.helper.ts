@@ -36,9 +36,16 @@ export class RequestContext {
             .send(conf.data)
             // Expect a JSON response
             .expect('Content-Type', /application\/json/)
-            // Make sure the server returned the expected status
-            .expect(conf.expectedStatus)
             .then((res: Response) => {
+                if (res.status === 500)
+                    // Fail the test, using the request body as the subject of
+                    // the expectation so that it gets logged by mocha. Use
+                    // the 'deep' flag and compare to an empty object so mocha
+                    // prints out a diff
+                    expect(res.body).to.deep.equal({});
+
+                expect(res.status).to.equal(conf.expectedStatus);
+
                 if (res.status >= 400 && res.status < 500) {
                     // Returned a 4XX or 5XX status code, verify shape of error
                     const body = res.body as ErrorResponse;

@@ -70,6 +70,7 @@
     "chai-as-promised": "^6.0.0",
     "concurrently": "^3.4.0",
     "del": "^2.2.2",
+    "env-test": "^1.0.0",
     "favicons-webpack-plugin": "^0.0.7",
     "gulp": "^3.9.1",
     "gulp-about": "^1.1.0",
