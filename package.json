@@ -4,6 +4,7 @@
   "description": "Svoboda Lab experiment metadata collection and standardization",
   "scripts": {
     "build": "gulp build",
+    "dev": "gulp --watch",
     "e2e": "yarn e2e:prep && concurrently --kill-others \"yarn start\" \"yarn webdriver-manager start\" \"sleep 3 && protractor client/config/protractor.conf.js\" --prefix-colors green,blue,magenta --names http,selenium,protractor --prefix name --success first",
     "e2e:live": "yarn e2e:prep && concurrently --kill-others \"yarn start\" \"yarn webdriver-manager start\" \"sleep 3 && protractor client/config/protractor.conf.js --elementExplorer\" --prefix-colors green,blue,magenta --names http,selenium,protractor --prefix name --success first",
     "e2e:prep": "webdriver-manager update",
