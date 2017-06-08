@@ -3,7 +3,12 @@ export interface ErrorResponse {
     input: any;
 }
 
-export interface SqlTableBody {
+export interface PaginatedResponse<T> {
+    size: number;
+    data: T;
+}
+
+export interface SqlRow {
     [columnName: string]: any;
 }
 

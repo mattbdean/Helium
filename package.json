@@ -36,6 +36,7 @@
     "core-js": "^2.4.1",
     "express": "^4.15.2",
     "express-list-endpoints": "^3.0.0",
+    "express-paginate": "^0.2.2",
     "helmet": "^3.5.0",
     "lodash": "^4.17.4",
     "morgan": "^1.8.1",

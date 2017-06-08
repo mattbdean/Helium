@@ -20,6 +20,7 @@ export class Database {
         { user: 'travis', password: 'password', database: 'test' };
 
     private internalConn: any;
+    private config: DbConf;
 
     // Singleton
     private constructor() {}
@@ -27,9 +28,9 @@ export class Database {
     /** Ensures a connection */
     public async connect(mode: Mode): Promise<void> {
         if (!this.internalConn) {
-            const conf = await Database.createDbConf(mode);
+            this.config = await Database.createDbConf(mode);
 
-            this.internalConn = await mysql.createConnection(conf);
+            this.internalConn = await mysql.createConnection(this.config);
         }
     }
 
@@ -46,6 +47,8 @@ export class Database {
      * A node-mysql2 PromiseConnection. Null if not connected
      */
     public get conn(): any | null { return this.internalConn; }
+
+    public dbName(): string { return this.config.database; }
 
     // Singleton
     public static get(): Database {

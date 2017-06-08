@@ -1,13 +1,20 @@
 import { Request, Response, Router } from 'express';
+import * as paginate from 'express-paginate';
 import * as _ from 'lodash';
 
-import { ErrorResponse, SqlTableHeader } from '../../../common/responses';
+import {
+    ErrorResponse, PaginatedResponse, SqlRow,
+    SqlTableHeader
+} from '../../../common/responses';
 import { Database } from '../../../Database';
 import { NODE_ENV, NodeEnv } from '../../../env';
 import { RouteModule } from '../../RouteModule';
 
+const TABLE_NAME_REGEX = /^[#~]?[a-zA-Z]+$/;
+
 export function tables(): RouteModule {
     const r = Router();
+    r.use(paginate.middleware(25, 100));
 
     r.get('/', async (req: Request, res: Response) => {
         try {
@@ -16,6 +23,31 @@ export function tables(): RouteModule {
             internalError(res, err, {
                 message: 'Could not execute request',
                 input: {}
+            });
+        }
+    });
+
+    r.get('/:name', async (req: Request, res: Response) => {
+        const name: string = req.params.name;
+
+        if (!TABLE_NAME_REGEX.test(name))
+            return sendError(res, 400, {
+                message: 'table name must be entirely alphabetic and optionally ' +
+                    'prefixed with "~" or "#"',
+                input: { name }
+            });
+
+        try {
+            const data = await fetchTableContent(name, req.query.page, req.query.limit);
+            const response: PaginatedResponse<any> = {
+                size: data.length,
+                data
+            };
+            res.json(response);
+        } catch (err) {
+            internalError(res, err, {
+                message: 'Could not execute request',
+                input: { name: req.params.name }
             });
         }
     });
@@ -52,6 +84,10 @@ export function tables(): RouteModule {
         res.status(500).json(data);
     };
 
+    const sendError = (res: Response, code: number, data: ErrorResponse) => {
+        res.status(code).json(data);
+    };
+
     const sendRequestError = (res: Response, code: number, data: ErrorResponse) => {
         res.status(code).json(data);
     };
@@ -83,14 +119,14 @@ export async function fetchTableHeaders(tableName: string): Promise<SqlTableHead
             CHARACTER_MAXIMUM_LENGTH, NUMERIC_SCALE, NUMERIC_PRECISION,
             CHARACTER_SET_NAME, COLUMN_TYPE
         FROM INFORMATION_SCHEMA.columns
-        WHERE TABLE_NAME = ?
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
         ORDER BY ORDINAL_POSITION ASC`,
-        [tableName]
+        [Database.get().dbName(), tableName]
     ))[0]; // first element is content, second element is metadata
 
     // Map each BinaryRow into a SqlTableHeader, removing any additional rows
     // that share the same name
-    return _.uniqBy(_.map(result, (row: any): SqlTableHeader => ({
+    return _.map(result, (row: any): SqlTableHeader => ({
         name: row.COLUMN_NAME as string,
         type: row.DATA_TYPE as string,
         ordinalPosition: row.ORDINAL_POSITION as number,
@@ -103,8 +139,17 @@ export async function fetchTableHeaders(tableName: string): Promise<SqlTableHead
         enumValues: findEnumValues(row.COLUMN_TYPE as string),
         isNumber: isNumberType(row.DATA_TYPE as string),
         isTextual: isTextualType(row.DATA_TYPE as string)
-    })), 'name');
+    }));
+}
 
+export async function fetchTableContent(tableName: string, page: number, limit: number): Promise<SqlRow> {
+    const conn = Database.get().conn;
+    const escapedName = conn.escapeId(tableName);
+
+    return (await (Database.get().conn.execute(
+        `SELECT * FROM ${escapedName} LIMIT ? OFFSET ?`,
+        [limit, (page - 1) * limit]
+    )))[0];
 }
 
 const isNumberType = (type: string): boolean =>

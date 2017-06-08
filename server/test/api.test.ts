@@ -1,8 +1,15 @@
 import { expect } from 'chai';
 import { Application } from 'express';
+import { Response } from 'supertest';
 
-import { ErrorResponse, SqlTableHeader } from '../src/common/responses';
-import { fetchTableNames } from '../src/routes/api/v1/tables';
+import {
+    ErrorResponse, PaginatedResponse, SqlRow,
+    SqlTableHeader
+} from '../src/common/responses';
+import {
+    fetchTableHeaders as queryFetchTableHeaders,
+    fetchTableNames
+} from '../src/routes/api/v1/tables';
 import { createServer } from '../src/server';
 
 import { RequestContext } from './api.test.helper';
@@ -36,55 +43,66 @@ describe('API v1', () => {
         });
     });
 
-    describe('GET /api/v1/tables/:name/meta', () => {
-        it('should return the table headers', async () => {
-            const tableNames = await fetchTableNames();
+    describe('GET /api/v1/tables/:name', () => {
+        it('should return an array of SqlRows', () =>
+            examineSeveralTables('query', async (tableName: string, headers: SqlTableHeader[]) =>
+                request.basic(`/tables/${encodeURIComponent(tableName)}`, 200, (response: PaginatedResponse<SqlRow[]>) => {
+                    expect(response.size).to.equal(response.data.length);
+                    expect(response.size).to.be.above(0);
+                    for (const row of response.data) {
+                        expect(Object.keys(row)).to.have.lengthOf(headers.length);
 
-            // Test up to 5 tables
-            for (const tableName of tableNames.slice(Math.min(5, tableNames.length))) {
-                // Make sure to URI-encode the table name because it could start
-                // with '#', which supertest would strip before sending the request,
-                // resulting in a request to '/api/v1/table/'
-                await request.basic(`/tables/${encodeURIComponent(tableName)}/meta`, 200, (data: SqlTableHeader[]) => {
-                    expect(Array.isArray(data)).to.be.true;
-
-                    // Keep a record of all the column names
-                    const existingNames: string[] = [];
-
-                    for (const header of data) {
-                        // Make sure we don't have any duplicates
-                        expect(existingNames.indexOf(header.name)).to.be.below(0);
-                        existingNames.push(header.name);
-
-                        for (const field of ['name', 'type', 'rawType']) {
-                            expect(header[field]).to.be.a('string').with.length.above(0);
-                        }
-
-                        expect(header.ordinalPosition).to.be.at.least(1);
-
-                        expect(header.nullable).to.be.a('boolean');
-
-                        for (const varcharField of ['maxCharacters', 'charset']) {
-                            expect(header[varcharField] !== null)
-                                .to.equal(header.isTextual, `unexpected value for header '${header.name}' with type '${header.type}' at property '${varcharField}': ${header[varcharField]}`);
-                        }
-
-                        for (const numberField of ['numericPrecision', 'numericScale']) {
-                            expect(header[numberField] !== null)
-                                .to.equal(header.isNumber,
-                                    `field = ${numberField}, value = ${header[numberField]}`);
-                        }
-
-                        if (header.type === 'enum') {
-                            expect(Array.isArray(header.enumValues)).to.be.true;
-                            for (const enumVal of header.enumValues!!) {
-                                expect(enumVal).to.be.a('string');
-                            }
+                        for (const header of headers) {
+                            expect(row[header.name]).to.exist;
                         }
                     }
-                });
-            }
-        });
+                })
+            )
+        );
+    });
+
+    describe('GET /api/v1/tables/:name/meta', () => {
+        it('should return the table headers', () =>
+            examineSeveralTables('api', async (tableName: string, data: SqlTableHeader[]) => {
+                expect(Array.isArray(data)).to.be.true;
+                expect(data).to.have.length.above(0);
+
+                // Keep a record of all the column names
+                const existingNames: string[] = [];
+
+                for (const header of data) {
+                    // Make sure we don't have any duplicates
+                    expect(existingNames.indexOf(header.name)).to.be.below(0);
+                    existingNames.push(header.name);
+
+                    for (const field of ['name', 'type', 'rawType']) {
+                        expect(header[field]).to.be.a('string').with.length.above(0);
+                    }
+
+                    expect(header.ordinalPosition).to.be.at.least(1);
+
+                    expect(header.nullable).to.be.a('boolean');
+
+                    for (const varcharField of ['maxCharacters', 'charset']) {
+                        expect(header[varcharField] !== null)
+                            .to.equal(header.isTextual, `field = ${varcharField}, value = ${header[varcharField]}`)
+                    }
+
+                    for (const numberField of ['numericPrecision', 'numericScale']) {
+                        expect(header[numberField] !== null)
+                            .to.equal(header.isNumber,
+                            `field = ${numberField}, value = ${header[numberField]}`);
+                    }
+
+                    if (header.type === 'enum') {
+                        expect(Array.isArray(header.enumValues)).to.be.true;
+                        for (const enumVal of header.enumValues!!) {
+                            expect(enumVal).to.be.a('string');
+                        }
+                    }
+                }
+            })
+        );
 
         it('should 404 when given a non-existent table', () =>
             request.basic('/tables/foobar/meta', 404, (error: ErrorResponse) => {
@@ -93,5 +111,60 @@ describe('API v1', () => {
             })
         );
     });
+
+    /**
+     * Fetches up to [maxTables] tables from the database and calls [doWork]
+     * when that information is ready. Useful for ensuring that tests don't pass
+     * simply because they haven't been exposed to enough variation yet.
+     *
+     * @param method If 'api', will fetch via supertest, otherwise with a direct
+     *               query function.
+     * @param doWork Does some work with the headers (get more data, make
+     *               assertions, etc.)
+     * @param maxTables The maximum amount of tables to do work on. Defaults to
+     *                  Infinity (do work on all tables)
+     * @return {Promise<void>}
+     */
+    const examineSeveralTables = async (method: 'api' | 'query',
+                                        doWork: (name: string, headers: SqlTableHeader[]) => Promise<void>,
+                                        maxTables = Infinity) => {
+        const tableNames = await fetchTableNames();
+        const usedTables = tableNames.slice(0, Math.min(maxTables, tableNames.length));
+
+        if (usedTables.length === 0)
+            throw new Error('Must examine at least 1 table');
+
+        // Test up to 5 tables
+        for (const tableName of usedTables) {
+            await fetchTableHeaders(method, tableName).then((headers: SqlTableHeader[]) =>
+                doWork(tableName, headers)
+            );
+        }
+    };
+
+    /**
+     * Returns a Promise that resolves to the SqlTableHeaders for the given
+     * table
+     * @param method If 'api', will fetch via supertest, otherwise with a direct
+     *               query function
+     * @param tableName
+     * @returns {Promise<SqlTableHeader>}
+     */
+    const fetchTableHeaders = (method: 'api' | 'query',
+                               tableName: string): Promise<SqlTableHeader[]> => {
+
+        let prom: Promise<SqlTableHeader[]>;
+        if (method === 'api') {
+            // Make sure to URI-encode the table name because it could start
+            // with '#', which supertest would strip before sending the request,
+            // resulting in a request to '/api/v1/table/'
+            prom = request.basic(`/tables/${encodeURIComponent(tableName)}/meta`, 200)
+                .then((res: Response) => res.body);
+        } else {
+            prom = queryFetchTableHeaders(tableName);
+        }
+
+        return prom;
+    };
 });
 
