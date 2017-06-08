@@ -1,18 +1,24 @@
-<h2>{{ name }}</h2>
+<div *ngIf="exists; else tableNotFound">
+    <h2>{{ name }}</h2>
 
-<table>
-    <thead>
+    <table class="table">
+        <thead>
         <tr>
             <th *ngFor="let header of headers">
                 {{ header.name }}
             </th>
         </tr>
-    </thead>
-    <tbody>
-    <tr *ngFor="let row of content">
-        <td *ngFor="let cell of row">
-            {{ cell }}
-        </td>
-    </tr>
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+        <tr *ngFor="let row of content">
+            <td *ngFor="let cell of row">
+                {{ cell }}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<ng-template #tableNotFound>
+    <p>Table not found</p>
+</ng-template>

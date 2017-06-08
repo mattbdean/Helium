@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { Response } from '@angular/http';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import * as _ from 'lodash';
 
@@ -13,13 +15,33 @@ export class TableComponent implements OnInit {
     private name: string;
     private headers: SqlTableHeader[];
     private content: any[];
+    private exists: boolean = true;
 
-    constructor(private backend: TableService) {}
+    constructor(
+        private backend: TableService,
+        private route: ActivatedRoute
+    ) {}
 
     public async ngOnInit(): Promise<void> {
-        this.name = (await this.backend.list())[5];
-        this.headers = await this.backend.headers(this.name);
-        this.content = this.arrangeByOrdinalPos(await this.backend.content(this.name), this.headers);
+        this.route.params
+            .subscribe(async (params: Params) => {
+                const name = params.name;
+
+                try {
+                    this.headers = await this.backend.headers(name);
+                    this.content = this.arrangeByOrdinalPos(await this.backend.content(name), this.headers);
+                    this.name = name;
+                } catch (e) {
+                    // Handle 404s, show the user that the table couldn't be found
+                    if (e instanceof Response && e.status === 404) {
+                        this.exists = false;
+                        return;
+                    }
+
+                    // Other error, rethrow it
+                    throw e;
+                }
+            });
     }
 
     private arrangeByOrdinalPos(content: SqlRow[], headers: SqlTableHeader[]): any[] {
