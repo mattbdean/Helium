@@ -6,6 +6,6 @@ export class AppPage {
     }
 
     public getHeader() {
-        return element(by.css('home h1')).getText();
+        return element(by.css('table h1')).getText();
     }
 }

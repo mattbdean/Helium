@@ -13,7 +13,7 @@ describe('routes', () => {
     describe('GET /*', () => {
         // Let the Angular app show 404's
         it('should respond with HTML', async () => {
-            const randomRoutes = ['/', '/home', '/foo'];
+            const randomRoutes = ['/', '/table', '/foo'];
             for (const route of randomRoutes) {
                 await request(app)
                         .get(route)

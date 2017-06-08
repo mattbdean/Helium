@@ -5,7 +5,7 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
-import { HomeModule } from './home/home.module';
+import { TableModule } from './table/table.module';
 import { NotFoundComponent } from './not-found.component';
 
 @NgModule({
@@ -14,7 +14,7 @@ import { NotFoundComponent } from './not-found.component';
         CoreModule,
         CommonModule,
 
-        HomeModule,
+        TableModule,
         AppRoutingModule
     ],
     declarations: [

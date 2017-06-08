@@ -4,18 +4,18 @@ import { ReactiveFormsModule } from '@angular/forms';
 
 import { CoreModule } from '../core/core.module';
 
-import { HomeRoutingModule } from './home-routing.module';
-import { HomeComponent } from './home.component';
+import { TableRoutingModule } from './table-routing.module';
+import { TableComponent } from './table.component';
 
 @NgModule({
     imports: [
         CommonModule,
         CoreModule,
         ReactiveFormsModule,
-        HomeRoutingModule
+        TableRoutingModule
     ],
     declarations: [
-        HomeComponent
+        TableComponent
     ]
 })
-export class HomeModule {}
+export class TableModule {}
