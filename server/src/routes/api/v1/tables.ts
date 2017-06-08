@@ -1,6 +1,7 @@
 import { Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
 import * as _ from 'lodash';
+import * as squelBuilder from 'squel';
 
 import {
     ErrorResponse, PaginatedResponse, SqlRow,
@@ -11,6 +12,7 @@ import { NODE_ENV, NodeEnv } from '../../../env';
 import { RouteModule } from '../../RouteModule';
 
 const TABLE_NAME_REGEX = /^[#~]?[a-zA-Z]+$/;
+const squel = squelBuilder.useFlavour('mysql');
 
 export function tables(): RouteModule {
     const r = Router();
@@ -37,8 +39,20 @@ export function tables(): RouteModule {
                 input: { name }
             });
 
+        let sort: Sort | undefined;
+        if (req.query.sort) {
+            let sortStr: string = req.query.sort.trim();
+            let dir: 'asc' | 'desc' = 'asc';
+            if (sortStr.indexOf('-') === 0) {
+                dir = 'desc';
+                sortStr = sortStr.slice(1);
+            }
+
+            sort = { by: sortStr, direction: dir };
+        }
+
         try {
-            const data = await fetchTableContent(name, req.query.page, req.query.limit);
+            const data = await fetchTableContent(name, req.query.page, req.query.limit, sort);
             const response: PaginatedResponse<any> = {
                 size: data.length,
                 data
@@ -142,14 +156,31 @@ export async function fetchTableHeaders(tableName: string): Promise<SqlTableHead
     }));
 }
 
-export async function fetchTableContent(tableName: string, page: number, limit: number): Promise<SqlRow> {
+interface Sort {
+    direction: 'asc' | 'desc';
+    by: string;
+}
+
+export async function fetchTableContent(tableName: string, page: number, limit: number, sort?: Sort): Promise<SqlRow> {
     const conn = Database.get().conn;
     const escapedName = conn.escapeId(tableName);
 
-    return (await (Database.get().conn.execute(
-        `SELECT * FROM ${escapedName} LIMIT ? OFFSET ?`,
-        [limit, (page - 1) * limit]
-    )))[0];
+    // Create our basic query
+    let query = squel
+        .select()
+        // Make sure we escape the table name so that we're less vulnerable to
+        // SQL injection
+        .from(escapedName)
+        // Pagination
+        .limit(limit)
+        .offset((page - 1) * limit);
+
+    if (sort !== undefined) {
+        // Specify a sort if provided
+        query = query.order(sort.by, sort.direction === 'asc');
+    }
+
+    return (await (Database.get().conn.execute(query.toString())))[0];
 }
 
 const isNumberType = (type: string): boolean =>

@@ -6070,6 +6070,10 @@ sqlstring@^2.2.0:
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/sqlstring/-/sqlstring-2.2.0.tgz#c3135c4ea8abcd7e7ee741a4966a891d86a4f191"
 
+squel@^5.10.0:
+  version "5.10.0"
+  resolved "https://registry.yarnpkg.com/squel/-/squel-5.10.0.tgz#e5265f5dc5449b6eb4caff4c1b2bc95bc65adecd"
+
 sshpk@^1.7.0:
   version "1.13.0"
   resolved "https://registry.yarnpkg.com/sshpk/-/sshpk-1.13.0.tgz#ff2a3e4fd04497555fed97b39a0fd82fafb3a33c"

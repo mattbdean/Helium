@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { Application } from 'express';
+import * as _ from 'lodash';
 import { Response } from 'supertest';
 
 import {
@@ -43,7 +44,7 @@ describe('API v1', () => {
         });
     });
 
-    describe('GET /api/v1/tables/:name', () => {
+    describe.only('GET /api/v1/tables/:name', () => {
         it('should return an array of SqlRows', () =>
             examineSeveralTables('query', async (tableName: string, headers: SqlTableHeader[]) =>
                 request.basic(`/tables/${encodeURIComponent(tableName)}`, 200, (response: PaginatedResponse<SqlRow[]>) => {
@@ -58,6 +59,36 @@ describe('API v1', () => {
                     }
                 })
             )
+        );
+
+        it('should support sorting via query', () =>
+            firstTable(async (name: string, headers: SqlTableHeader[]) => {
+                const expectOrderedBy = (data: SqlRow[], property: string, order: 'asc' | 'desc') => {
+                    // This could fail if we're dealing with date types since
+                    // dates are serialized to strings, and those don't have the
+                    // same natural order as Date objects
+                    expect(data).to.deep.equal(_.orderBy(data, [property], [order]));
+                };
+
+                for (const header of headers) {
+                    const doRequest = (sort: 'asc' | 'desc'): Promise<void> =>
+                        request.spec({
+                            method: 'GET',
+                            relPath: `/tables/${encodeURIComponent(name)}`,
+                            expectedStatus: 200,
+                            // sort ascending with sort=name, descending with sort=-name
+                            query: { sort: (sort === 'desc' ? '-' : '') + header.name },
+                            validate: (response: PaginatedResponse<SqlRow[]>) => {
+                                expect(response.data.length).to.be.above(0);
+                                expectOrderedBy(response.data, header.name, sort);
+                            }
+                        });
+
+                    // Test both ascending and descending
+                    await doRequest('asc');
+                    await doRequest('desc');
+                }
+            })
         );
     });
 
@@ -85,7 +116,7 @@ describe('API v1', () => {
 
                     for (const varcharField of ['maxCharacters', 'charset']) {
                         expect(header[varcharField] !== null)
-                            .to.equal(header.isTextual, `field = ${varcharField}, value = ${header[varcharField]}`)
+                            .to.equal(header.isTextual, `field = ${varcharField}, value = ${header[varcharField]}`);
                     }
 
                     for (const numberField of ['numericPrecision', 'numericScale']) {
@@ -111,6 +142,15 @@ describe('API v1', () => {
             })
         );
     });
+
+    /**
+     * Like examineSeveralTables, but just for the first table it finds
+     */
+    const firstTable = async (doWork: (name: string, headers: SqlTableHeader[]) => Promise<void>) => {
+        const name = (await fetchTableNames())[0];
+        const headers = await queryFetchTableHeaders(name);
+        return doWork(name, headers);
+    };
 
     /**
      * Fetches up to [maxTables] tables from the database and calls [doWork]

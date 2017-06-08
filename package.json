@@ -46,6 +46,7 @@
     "reflect-metadata": "^0.1.10",
     "request": "^2.81.0",
     "rxjs": "^5.3.0",
+    "squel": "^5.10.0",
     "yargs": "^8.0.1",
     "zone.js": "^0.8.8"
   },
