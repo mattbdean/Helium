@@ -90,6 +90,19 @@ describe('API v1', () => {
                 }
             })
         );
+
+        it('should throw a 400 when sorting by a column that doesn\t exist', async () => {
+            const table = (await fetchTableNames())[0];
+            return request.spec({
+                method: 'GET',
+                relPath: `/tables/${encodeURIComponent(table)}`,
+                query: { sort: 'foobar' },
+                expectedStatus: 400,
+                validate: (err: ErrorResponse) => {
+                    expect(err.input).to.deep.equal({ sort: 'foobar' });
+                }
+            });
+        });
     });
 
     describe('GET /api/v1/tables/:name/meta', () => {

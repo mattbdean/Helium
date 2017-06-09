@@ -59,6 +59,12 @@ export function tables(): RouteModule {
             };
             res.json(response);
         } catch (err) {
+            if (err.code && err.code === "ER_BAD_FIELD_ERROR")
+                return sendError(res, 400, {
+                    message: 'Cannot sort: no such column name',
+                    input: { sort: req.query.sort }
+                });
+
             internalError(res, err, {
                 message: 'Could not execute request',
                 input: { name: req.params.name }
