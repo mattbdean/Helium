@@ -1,18 +1,16 @@
 import { Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
 import * as _ from 'lodash';
-import * as squelBuilder from 'squel';
 
 import {
     ErrorResponse, PaginatedResponse, SqlRow,
     SqlTableHeader
 } from '../../../common/responses';
-import { Database } from '../../../Database';
+import { Database, squel } from '../../../Database';
 import { NODE_ENV, NodeEnv } from '../../../env';
 import { RouteModule } from '../../RouteModule';
 
 const TABLE_NAME_REGEX = /^[#~]?[a-zA-Z]+$/;
-const squel = squelBuilder.useFlavour('mysql');
 
 export function tables(): RouteModule {
     const r = Router();

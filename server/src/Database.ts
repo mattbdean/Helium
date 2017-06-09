@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import * as mysql from 'mysql2/promise';
+import * as squelBuilder from 'squel';
 
 /**
  * Generic interface for mysql2 connection options. See
@@ -92,3 +93,5 @@ const readJson = (file: string): Promise<any> =>
             }
         });
     });
+
+export const squel = squelBuilder.useFlavour('mysql');
