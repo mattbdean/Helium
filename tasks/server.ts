@@ -59,7 +59,8 @@ export default function(gulp) {
 
     gulp.task('server:watch', () => {
         watch({
-            'server/src/**/*.ts': 'server:compile'
+            'server/src/**/*.ts': 'server:compile',
+            'db.conf.json': 'server:dbconf'
         });
     });
 }
