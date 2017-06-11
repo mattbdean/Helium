@@ -12,7 +12,6 @@ export function api(): Router {
 
     for (const m of modules) {
         const mod = m();
-        // data[0] is the mount point, data[1] is the Router
         router.use(mod.mountPoint, mod.router);
     }
 

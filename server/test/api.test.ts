@@ -5,9 +5,10 @@ import { Response } from 'supertest';
 
 import {
     ErrorResponse, PaginatedResponse, SqlRow,
-    SqlTableHeader
+    SqlTableHeader, TableMeta
 } from '../src/common/responses';
 import {
+    fetchTableCount,
     fetchTableHeaders as queryFetchTableHeaders,
     fetchTableNames
 } from '../src/routes/api/v1/tables';
@@ -46,8 +47,10 @@ describe('API v1', () => {
 
     describe.only('GET /api/v1/tables/:name', () => {
         it('should return an array of SqlRows', () =>
-            examineSeveralTables('query', async (tableName: string, headers: SqlTableHeader[]) =>
+            examineSeveralTables('query', async (tableName: string, meta: TableMeta) =>
                 request.basic(`/tables/${encodeURIComponent(tableName)}`, 200, (response: PaginatedResponse<SqlRow[]>) => {
+                    const headers = meta.headers;
+
                     expect(response.size).to.equal(response.data.length);
                     expect(response.size).to.be.above(0);
                     for (const row of response.data) {
@@ -107,14 +110,16 @@ describe('API v1', () => {
 
     describe('GET /api/v1/tables/:name/meta', () => {
         it('should return the table headers', () =>
-            examineSeveralTables('api', async (tableName: string, data: SqlTableHeader[]) => {
-                expect(Array.isArray(data)).to.be.true;
-                expect(data).to.have.length.above(0);
+            examineSeveralTables('api', async (tableName: string, meta: TableMeta) => {
+                const headers = meta.headers;
+
+                expect(Array.isArray(headers)).to.be.true;
+                expect(headers).to.have.length.above(0);
 
                 // Keep a record of all the column names
                 const existingNames: string[] = [];
 
-                for (const header of data) {
+                for (const header of headers) {
                     // Make sure we don't have any duplicates
                     expect(existingNames.indexOf(header.name)).to.be.below(0);
                     existingNames.push(header.name);
@@ -148,6 +153,16 @@ describe('API v1', () => {
             })
         );
 
+        it.only('should return the total amount of rows', () =>
+            examineSeveralTables('api', async (name: string, meta: TableMeta) => {
+                // console.log(meta.count)
+                expect(meta.count).to.be.a('number');
+                // It's technically possible for a table to have 0 rows but with
+                // we're assuming our test tables aren't empty
+                expect(meta.count).to.be.above(0);
+            }, 1)
+        );
+
         it('should 404 when given a non-existent table', () =>
             request.basic('/tables/foobar/meta', 404, (error: ErrorResponse) => {
                 expect(error.input).to.deep.equal({ name: 'foobar' });
@@ -157,7 +172,8 @@ describe('API v1', () => {
     });
 
     /**
-     * Like examineSeveralTables, but just for the first table it finds
+     * Like examineSeveralTables, but just for the first table it finds and does
+     * work only with the headers, not the count
      */
     const firstTable = async (doWork: (name: string, headers: SqlTableHeader[]) => Promise<void>) => {
         const name = (await fetchTableNames())[0];
@@ -179,7 +195,7 @@ describe('API v1', () => {
      * @return {Promise<void>}
      */
     const examineSeveralTables = async (method: 'api' | 'query',
-                                        doWork: (name: string, headers: SqlTableHeader[]) => Promise<void>,
+                                        doWork: (name: string, headers: TableMeta) => Promise<void>,
                                         maxTables = Infinity) => {
         const tableNames = await fetchTableNames();
         const usedTables = tableNames.slice(0, Math.min(maxTables, tableNames.length));
@@ -189,8 +205,8 @@ describe('API v1', () => {
 
         // Test up to 5 tables
         for (const tableName of usedTables) {
-            await fetchTableHeaders(method, tableName).then((headers: SqlTableHeader[]) =>
-                doWork(tableName, headers)
+            await fetchTableHeaders(method, tableName).then((meta: TableMeta) =>
+                doWork(tableName, meta)
             );
         }
     };
@@ -204,9 +220,9 @@ describe('API v1', () => {
      * @returns {Promise<SqlTableHeader>}
      */
     const fetchTableHeaders = (method: 'api' | 'query',
-                               tableName: string): Promise<SqlTableHeader[]> => {
+                               tableName: string): Promise<TableMeta> => {
 
-        let prom: Promise<SqlTableHeader[]>;
+        let prom: Promise<TableMeta>;
         if (method === 'api') {
             // Make sure to URI-encode the table name because it could start
             // with '#', which supertest would strip before sending the request,
@@ -214,7 +230,13 @@ describe('API v1', () => {
             prom = request.basic(`/tables/${encodeURIComponent(tableName)}/meta`, 200)
                 .then((res: Response) => res.body);
         } else {
-            prom = queryFetchTableHeaders(tableName);
+            prom = Promise.all([
+                queryFetchTableHeaders(tableName),
+                fetchTableCount(tableName)
+            ]).then((results: [SqlTableHeader[], number]): TableMeta => ({
+                headers: results[0],
+                count: results[1]
+            }));
         }
 
         return prom;

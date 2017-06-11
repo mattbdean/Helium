@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 
 import {
     ErrorResponse, PaginatedResponse, SqlRow,
-    SqlTableHeader
+    SqlTableHeader, TableMeta
 } from '../../../common/responses';
 import { Database, squel } from '../../../Database';
 import { NODE_ENV, NodeEnv } from '../../../env';
@@ -72,7 +72,12 @@ export function tables(): RouteModule {
 
     r.get('/:name/meta', async (req: Request, res: Response) => {
         try {
-            const headers = await fetchTableHeaders(req.params.name);
+            const name = req.params.name;
+            const [headers, count] = await Promise.all([
+                fetchTableHeaders(name),
+                fetchTableCount(name)
+            ]);
+            // const headers = await fetchTableHeaders(req.params.name);
             if (headers.length === 0) {
                 return sendRequestError(res, 404, {
                     message: `Couldn't find table`,
@@ -80,7 +85,12 @@ export function tables(): RouteModule {
                 });
             }
 
-            res.json(headers);
+            const response: TableMeta = {
+                headers,
+                count
+            };
+
+            res.json(response);
         } catch (err) {
             internalError(res, err, {
                 message: 'Could not execute request',
@@ -158,6 +168,17 @@ export async function fetchTableHeaders(tableName: string): Promise<SqlTableHead
         isNumber: isNumberType(row.DATA_TYPE as string),
         isTextual: isTextualType(row.DATA_TYPE as string)
     }));
+}
+
+export async function fetchTableCount(tableName: string): Promise<number> {
+    const conn = Database.get().conn;
+    const result = (await conn.execute(
+        // This query can apparently be slow for a table with billions of rows,
+        // but let's cross that bridge when we get to it
+        `SELECT COUNT(*) FROM ${conn.escapeId(tableName)}`
+    ))[0];
+    // This query returns only one row
+    return result[0]['COUNT(*)'];
 }
 
 interface Sort {

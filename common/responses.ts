@@ -3,6 +3,11 @@ export interface ErrorResponse {
     input: any;
 }
 
+export interface TableMeta {
+    headers: SqlTableHeader[];
+    size: number;
+}
+
 export interface PaginatedResponse<T> {
     size: number;
     data: T;
