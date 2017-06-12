@@ -21,11 +21,13 @@ interface Page {
 
 @Component({
     selector: 'home',
-    templateUrl: 'table.component.html'
+    templateUrl: 'table.component.html',
+    styleUrls: ['table.component.scss']
 })
 export class TableComponent implements OnInit {
     /** Time in milliseconds before showing a loading bar on the table */
     private static readonly LOADING_DELAY = 200;
+    public tables: string[];
     public name: string;
     public meta: TableMeta = {
         headers: [],
@@ -56,6 +58,7 @@ export class TableComponent implements OnInit {
             this.name = params.name;
 
             try {
+                this.tables = await this.backend.list();
                 this.meta = await this.backend.meta(this.name);
                 this.tableHeaders = this.createTableHeaders(this.meta.headers);
                 this.exists = true;

@@ -1,28 +1,39 @@
 <md-toolbar color="primary">Helium</md-toolbar>
-<div [hidden]="!initialized">
-    <div [hidden]="!exists">
-        <h2>{{ name }}</h2>
-
-        <ngx-datatable class="material"
-                       [hidden]="!exists"
-
-                       [columnMode]="'force'"
-                       [columns]="tableHeaders"
-                       [count]="meta.totalRows"
-                       [externalPaging]="true"
-                       [externalSorting]="true"
-                       [footerHeight]="50"
-                       [limit]="limit"
-                       [loadingIndicator]="loading"
-                       [headerHeight]="40"
-                       [offset]="page.number"
-                       [rowHeight]="'auto'"
-                       [rows]="page.data"
-
-                       (page)="setPage($event)"
-                       (sort)="onSort($event)">
-        </ngx-datatable>
+<div class="wrapper">
+    <div class="sidenav-wrapper">
+        <ul>
+            <li *ngFor="let table of tables">
+                <a [routerLink]="['/tables', table]">{{ table }}</a>
+            </li>
+        </ul>
     </div>
+    <div class="content-wrapper">
+        <div [hidden]="!initialized">
+            <div [hidden]="!exists">
+                <h2>{{ name }}</h2>
 
-    <p [hidden]="exists">Table not found</p>
+                <ngx-datatable class="material"
+                               [hidden]="!exists"
+
+                               [columnMode]="'force'"
+                               [columns]="tableHeaders"
+                               [count]="meta.totalRows"
+                               [externalPaging]="true"
+                               [externalSorting]="true"
+                               [footerHeight]="50"
+                               [limit]="limit"
+                               [loadingIndicator]="loading"
+                               [headerHeight]="40"
+                               [offset]="page.number"
+                               [rowHeight]="'auto'"
+                               [rows]="page.data"
+
+                               (page)="setPage($event)"
+                               (sort)="onSort($event)">
+                </ngx-datatable>
+            </div>
+
+            <p [hidden]="exists">Table not found</p>
+        </div>
+    </div>
 </div>
