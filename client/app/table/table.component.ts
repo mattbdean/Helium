@@ -32,8 +32,9 @@ export class TableComponent implements OnInit {
             this.name = params.name;
 
             try {
-                this.headers = this.createTableHeaders((await this.backend.headers(this.name)).headers);
-                this.setPage({ offset: 0 });
+                const meta = await this.backend.meta(this.name);
+                this.headers = this.createTableHeaders(meta.headers);
+                this.content = await this.backend.content(this.name);
             } catch (e) {
                 // Handle 404s, show the user that the table couldn't be found
                 if (e instanceof Response && e.status === 404) {
@@ -44,12 +45,6 @@ export class TableComponent implements OnInit {
                 // Other error, rethrow it
                 throw e;
             }
-        });
-    }
-
-    public setPage(event: any) {
-        this.backend.content(this.name).then((data: SqlRow[]) => {
-            this.content = data;
         });
     }
 

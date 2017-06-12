@@ -19,8 +19,8 @@ export class TableService {
         return this.get(`/tables`);
     }
 
-    /** Fetches headers for a given table */
-    public headers(name: string): Promise<TableMeta> {
+    /** Fetches meta for a given table */
+    public meta(name: string): Promise<TableMeta> {
         return this.get(`/tables/${encodeURIComponent(name)}/meta`);
     }
 

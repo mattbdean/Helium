@@ -109,7 +109,7 @@ describe('API v1', () => {
     });
 
     describe('GET /api/v1/tables/:name/meta', () => {
-        it('should return the table headers', () =>
+        it('should return the table meta', () =>
             examineSeveralTables('api', async (tableName: string, meta: TableMeta) => {
                 const headers = meta.headers;
 
@@ -173,7 +173,7 @@ describe('API v1', () => {
 
     /**
      * Like examineSeveralTables, but just for the first table it finds and does
-     * work only with the headers, not the count
+     * work only with the meta, not the count
      */
     const firstTable = async (doWork: (name: string, headers: TableHeader[]) => Promise<void>) => {
         const name = (await fetchTableNames())[0];
@@ -188,7 +188,7 @@ describe('API v1', () => {
      *
      * @param method If 'api', will fetch via supertest, otherwise with a direct
      *               query function.
-     * @param doWork Does some work with the headers (get more data, make
+     * @param doWork Does some work with the meta (get more data, make
      *               assertions, etc.)
      * @param maxTables The maximum amount of tables to do work on. Defaults to
      *                  Infinity (do work on all tables)

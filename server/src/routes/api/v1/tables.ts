@@ -77,7 +77,7 @@ export function tables(): RouteModule {
                 fetchTableHeaders(name),
                 fetchTableCount(name)
             ]);
-            // const headers = await fetchTableHeaders(req.params.name);
+            // const meta = await fetchTableHeaders(req.params.name);
             if (headers.length === 0) {
                 return sendRequestError(res, 404, {
                     message: `Couldn't find table`,

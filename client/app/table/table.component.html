@@ -5,7 +5,9 @@
                    [columnMode]="'force'"
                    [columns]="headers"
                    [rows]="content"
-                   (page)="setPage($event)">
+                   [limit]="25"
+                   [footerHeight]="50"
+                   [offset]="0">
     </ngx-datatable>
 </div>
 
