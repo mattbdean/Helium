@@ -87,7 +87,7 @@ export function tables(): RouteModule {
 
             const response: TableMeta = {
                 headers,
-                count
+                totalRows: count
             };
 
             res.json(response);

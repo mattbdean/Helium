@@ -5,7 +5,7 @@ export interface ErrorResponse {
 
 export interface TableMeta {
     headers: SqlTableHeader[];
-    size: number;
+    totalRows: number;
 }
 
 export interface PaginatedResponse<T> {

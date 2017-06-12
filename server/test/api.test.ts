@@ -156,10 +156,10 @@ describe('API v1', () => {
         it.only('should return the total amount of rows', () =>
             examineSeveralTables('api', async (name: string, meta: TableMeta) => {
                 // console.log(meta.count)
-                expect(meta.count).to.be.a('number');
+                expect(meta.totalRows).to.be.a('number');
                 // It's technically possible for a table to have 0 rows but with
                 // we're assuming our test tables aren't empty
-                expect(meta.count).to.be.above(0);
+                expect(meta.totalRows).to.be.above(0);
             }, 1)
         );
 
@@ -235,7 +235,7 @@ describe('API v1', () => {
                 fetchTableCount(tableName)
             ]).then((results: [SqlTableHeader[], number]): TableMeta => ({
                 headers: results[0],
-                count: results[1]
+                totalRows: results[1]
             }));
         }
 
