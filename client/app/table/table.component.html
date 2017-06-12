@@ -11,6 +11,7 @@
                    [externalPaging]="true"
                    [offset]="page.number"
                    [count]="meta.totalRows"
+                   [loadingIndicator]="loading"
                    (page)="setPage($event)">
     </ngx-datatable>
 </div>

@@ -24,6 +24,8 @@ interface Page {
     templateUrl: 'table.component.html'
 })
 export class TableComponent implements OnInit {
+    /** Time in milliseconds before showing a loading bar on the table */
+    private static readonly LOADING_DELAY = 200;
     public name: string;
     public meta: TableMeta = {
         headers: [],
@@ -32,6 +34,7 @@ export class TableComponent implements OnInit {
     public tableHeaders: DataTableHeader[];
     public exists: boolean = true;
     public limit: number = 2;
+    public loading: boolean = false;
 
     public page: Page = {
         number: -1,
@@ -66,19 +69,37 @@ export class TableComponent implements OnInit {
         });
     }
 
-    private async setPage(event: any) {
-        // page 1 === offset 0, page 2 === offset 1, etc.
-        const page = event.offset + 1;
-        // Get the raw data from the service and format it
-        const raw = await this.backend.content(this.name, page, this.limit);
-        const content = this.formatRows(this.meta.headers, raw);
+    private setPage(event: any) {
+        return this.showLoading(async () => {
+            // page 1 === offset 0, page 2 === offset 1, etc.
+            const page = event.offset + 1;
+            // Get the raw data from the service and format it
+            const raw = await this.backend.content(this.name, page, this.limit);
+            const content = this.formatRows(this.meta.headers, raw);
 
-        // Update the page
-        this.page = {
-            number: event.offset,
-            size: content.length,
-            data: content
-        };
+            // Update the page
+            this.page = {
+                number: event.offset,
+                size: content.length,
+                data: content
+            };
+        });
+    }
+
+    /**
+     * This function executes some function, waiting `LOADING_DELAY`
+     * milliseconds before settings `this.loading` to true. `this.loading` is
+     * set to false immediately after the Promise has resolved.
+     */
+    private showLoading(doWork: () => Promise<void>) {
+        const timeout = setTimeout(() => {
+            this.loading = true;
+        }, TableComponent.LOADING_DELAY);
+
+        doWork().then(() => {
+            this.loading = false;
+            clearTimeout(timeout);
+        });
     }
 
     private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
