@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Response } from '@angular/http';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params } from '@angular/router';
 
 import * as _ from 'lodash';
 
@@ -32,7 +32,7 @@ export class TableComponent implements OnInit {
             this.name = params.name;
 
             try {
-                this.headers = this.createTableHeaders(await this.backend.headers(this.name));
+                this.headers = this.createTableHeaders((await this.backend.headers(this.name)).headers);
                 this.setPage({ offset: 0 });
             } catch (e) {
                 // Handle 404s, show the user that the table couldn't be found

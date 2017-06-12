@@ -4,7 +4,7 @@ import { Http } from '@angular/http';
 
 import * as _ from 'lodash';
 
-import { PaginatedResponse, SqlRow, TableHeader } from '../common/responses';
+import { PaginatedResponse, SqlRow, TableMeta } from '../common/responses';
 
 /**
  * This class provides a clean way to interact with the JSON API using Angular's
@@ -20,7 +20,7 @@ export class TableService {
     }
 
     /** Fetches headers for a given table */
-    public headers(name: string): Promise<TableHeader[]> {
+    public headers(name: string): Promise<TableMeta> {
         return this.get(`/tables/${encodeURIComponent(name)}/meta`);
     }
 
