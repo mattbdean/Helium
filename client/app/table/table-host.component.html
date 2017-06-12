@@ -1,7 +1,7 @@
 <md-toolbar color="primary">Helium</md-toolbar>
 <div class="wrapper">
     <div class="sidenav-wrapper">
-        <ul>
+        <ul class="sidenav-list">
             <li *ngFor="let table of tables">
                 <a [routerLink]="['/tables', table]">{{ table }}</a>
             </li>

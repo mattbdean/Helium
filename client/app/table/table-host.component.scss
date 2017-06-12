@@ -1,8 +1,11 @@
+@import '../../assets/palette';
+
 .wrapper {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   height: 100%;
+  overflow: auto;
 }
 
 .sidenav-wrapper {
@@ -11,4 +14,45 @@
 
 .content-wrapper {
   flex-grow: 1;
+  overflow: auto;
+}
+
+.sidenav-list {
+  margin: 0;
+  padding: 0;
+
+  list-style-type: none;
+
+  li {
+    display: flex;
+
+    $border: 1px rgba(0, 0, 0, 0.06) solid;
+    border-bottom: $border;
+
+    &:first-child {
+      border-top: $border;
+    }
+  }
+
+  a {
+    $normal-color: rgba(0, 0, 0, 0.54);
+
+    color: $normal-color;
+    line-height: 47px;
+    flex-grow: 1;
+    text-decoration: none;
+    padding: 6px 16px;
+    min-width: 200px;
+
+    transition: all 0.3s;
+
+    &:visited {
+      color: $normal-color;
+    }
+
+    &:hover {
+      color: $primary-color;
+      background-color: #eaeaea;
+    }
+  }
 }
