@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import {
+    Component, Input, OnChanges, SimpleChanges
+} from '@angular/core';
 import { Response } from '@angular/http';
-import { ActivatedRoute, Params } from '@angular/router';
 
 import * as _ from 'lodash';
 import * as moment from 'moment';
@@ -20,14 +21,14 @@ interface Page {
 }
 
 @Component({
-    selector: 'home',
-    templateUrl: 'table.component.html',
-    styleUrls: ['table.component.scss']
+    selector: 'x-table',
+    templateUrl: 'table.component.html'
 })
-export class TableComponent implements OnInit {
+export class TableComponent implements OnChanges {
     /** Time in milliseconds before showing a loading bar on the table */
     private static readonly LOADING_DELAY = 200;
-    public tables: string[];
+
+    @Input()
     public name: string;
     public meta: TableMeta = {
         headers: [],
@@ -49,36 +50,30 @@ export class TableComponent implements OnInit {
     };
 
     constructor(
-        private backend: TableService,
-        private route: ActivatedRoute
+        private backend: TableService
     ) {}
 
-    public ngOnInit(): void {
-        this.route.params.subscribe(async (params: Params) => {
-            this.name = params.name;
-
-            try {
-                this.tables = await this.backend.list();
-                this.meta = await this.backend.meta(this.name);
-                this.tableHeaders = this.createTableHeaders(this.meta.headers);
-                this.exists = true;
-                // Set the initial page now that we have some data
-                this.setPage({ offset: 0 });
-            } catch (e) {
-                // Handle 404s, show the user that the table couldn't be found
-                if (e instanceof Response && e.status === 404) {
-                    this.exists = false;
-                    return;
-                }
-
-                // Other error, rethrow it
-                throw e;
-            } finally {
-                // Whether the table exists or not, let the view know that we're
-                // done loading
-                this.initialized = true;
+    public async ngOnChanges(changes: SimpleChanges) {
+        try {
+            this.meta = await this.backend.meta(this.name);
+            this.tableHeaders = this.createTableHeaders(this.meta.headers);
+            this.exists = true;
+            // Set the initial page now that we have some data
+            this.setPage({ offset: 0 });
+        } catch (e) {
+            // Handle 404s, show the user that the table couldn't be found
+            if (e instanceof Response && e.status === 404) {
+                this.exists = false;
+                return;
             }
-        });
+
+            // Other error, rethrow it
+            throw e;
+        } finally {
+            // Whether the table exists or not, let the view know that we're
+            // done loading
+            this.initialized = true;
+        }
     }
 
     private setPage(event: any) {
@@ -101,8 +96,7 @@ export class TableComponent implements OnInit {
     private onSort(event: any) {
         const sortDirPrefix = event.sorts[0].dir === 'desc' ? '-' : '';
         // '-prop' for descending, 'prop' for ascending
-        const sort = sortDirPrefix + event.sorts[0].prop;
-        this.sort = sort;
+        this.sort = sortDirPrefix + event.sorts[0].prop;
         this.showLoading(async () => {
             const raw = await this.backend.content(this.name, 1, this.limit, this.sort);
             const data = this.formatRows(this.meta.headers, raw);

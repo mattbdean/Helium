@@ -1,0 +1,15 @@
+<md-toolbar color="primary">Helium</md-toolbar>
+<div class="wrapper">
+    <div class="sidenav-wrapper">
+        <ul>
+            <li *ngFor="let table of tables">
+                <a [routerLink]="['/tables', table]">{{ table }}</a>
+            </li>
+        </ul>
+    </div>
+    <div class="content-wrapper">
+        <div *ngIf="selectedTable">
+            <x-table [name]="selectedTable"></x-table>
+        </div>
+    </div>
+</div>

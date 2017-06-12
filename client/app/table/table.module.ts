@@ -5,6 +5,7 @@ import { HttpModule } from '@angular/http';
 import { MdToolbarModule } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
+import { TableHostComponent } from './table-host.component';
 import { TableRoutingModule } from './table-routing.module';
 import { TableComponent } from './table.component';
 import { TableService } from './table.service';
@@ -25,7 +26,8 @@ import '@swimlane/ngx-datatable/release/themes/material.css';
         TableRoutingModule
     ],
     declarations: [
-        TableComponent
+        TableComponent,
+        TableHostComponent
     ],
     providers: [TableService]
 })
