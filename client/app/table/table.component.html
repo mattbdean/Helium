@@ -1,21 +1,22 @@
-<div *ngIf="exists; else tableNotFound">
-    <h2>{{ name }}</h2>
+<div [hidden]="!initialized">
+    <div [hidden]="!exists">
+        <h2>{{ name }}</h2>
 
-    <ngx-datatable class="material"
-                   [columnMode]="'force'"
-                   [columns]="tableHeaders"
-                   [rows]="page.data"
-                   [limit]="limit"
-                   [headerHeight]="40"
-                   [footerHeight]="50"
-                   [externalPaging]="true"
-                   [offset]="page.number"
-                   [count]="meta.totalRows"
-                   [loadingIndicator]="loading"
-                   (page)="setPage($event)">
-    </ngx-datatable>
+        <ngx-datatable class="material"
+                       [hidden]="!exists"
+                       [columnMode]="'force'"
+                       [columns]="tableHeaders"
+                       [rows]="page.data"
+                       [limit]="limit"
+                       [headerHeight]="40"
+                       [footerHeight]="50"
+                       [externalPaging]="true"
+                       [offset]="page.number"
+                       [count]="meta.totalRows"
+                       [loadingIndicator]="loading"
+                       (page)="setPage($event)">
+        </ngx-datatable>
+    </div>
+
+    <p [hidden]="exists">Table not found</p>
 </div>
-
-<ng-template #tableNotFound>
-    <p>Table not found</p>
-</ng-template>

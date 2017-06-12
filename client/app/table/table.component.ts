@@ -32,7 +32,10 @@ export class TableComponent implements OnInit {
         totalRows: 0
     };
     public tableHeaders: DataTableHeader[];
-    public exists: boolean = true;
+    public exists: boolean = false;
+
+    /** If this component has had time to get itself together yet */
+    public initialized: boolean = false;
     public limit: number = 2;
     public loading: boolean = false;
 
@@ -54,6 +57,7 @@ export class TableComponent implements OnInit {
             try {
                 this.meta = await this.backend.meta(this.name);
                 this.tableHeaders = this.createTableHeaders(this.meta.headers);
+                this.exists = true;
                 // Set the initial page now that we have some data
                 this.setPage({ offset: 0 });
             } catch (e) {
@@ -65,6 +69,10 @@ export class TableComponent implements OnInit {
 
                 // Other error, rethrow it
                 throw e;
+            } finally {
+                // Whether the table exists or not, let the view know that we're
+                // done loading
+                this.initialized = true;
             }
         });
     }
