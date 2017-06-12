@@ -4,17 +4,19 @@
 
         <ngx-datatable class="material"
                        [hidden]="!exists"
+
                        [columnMode]="'force'"
                        [columns]="tableHeaders"
-                       [rows]="page.data"
-                       [limit]="limit"
-                       [headerHeight]="40"
-                       [footerHeight]="50"
+                       [count]="meta.totalRows"
                        [externalPaging]="true"
                        [externalSorting]="true"
-                       [offset]="page.number"
-                       [count]="meta.totalRows"
+                       [footerHeight]="50"
+                       [limit]="limit"
                        [loadingIndicator]="loading"
+                       [headerHeight]="40"
+                       [offset]="page.number"
+                       [rows]="page.data"
+
                        (page)="setPage($event)"
                        (sort)="onSort($event)">
         </ngx-datatable>
