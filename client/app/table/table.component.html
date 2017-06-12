@@ -15,6 +15,7 @@
                        [loadingIndicator]="loading"
                        [headerHeight]="40"
                        [offset]="page.number"
+                       [rowHeight]="'auto'"
                        [rows]="page.data"
 
                        (page)="setPage($event)"
