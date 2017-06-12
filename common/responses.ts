@@ -4,7 +4,7 @@ export interface ErrorResponse {
 }
 
 export interface TableMeta {
-    headers: SqlTableHeader[];
+    headers: TableHeader[];
     totalRows: number;
 }
 
@@ -17,7 +17,7 @@ export interface SqlRow {
     [columnName: string]: any;
 }
 
-export interface SqlTableHeader {
+export interface TableHeader {
     name: string;
 
     /** Base type (int, varchar, date, etc.) */
