@@ -1,29 +1,29 @@
 sudo: false
 dist: trusty
-language: 'node_js'
+language: node_js
 node_js:
-  - node
-  - 7
+- node
+- 7
 cache: yarn
-services:
-  - mysql
-before_install:
-  - mysql --version
-  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
-  - mysql -e "GRANT ALL ON test.* TO 'travis' IDENTIFIED BY 'password';"
 before_script:
-  - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
-  - yarn webdriver-manager update
+- export DISPLAY=:99.0
+- sh -e /etc/init.d/xvfb start
+- yarn webdriver-manager update
 script:
-  - yarn gulp testPrep
-  - yarn test:server
-  - yarn test:client
-#  - yarn e2e
+- yarn gulp testPrep
+- yarn test:server
+- yarn test:client
 after_success: gulp coveralls
 addons:
   apt:
     sources:
-      - google-chrome
+    - google-chrome
     packages:
-      - google-chrome-stable
+    - google-chrome-stable
+env:
+  global:
+  # Database connection credentials
+  - secure: lJqfdyc+oxfvZcLYj+Igpq2enPFGCYDk/mkK++6UN8pA8YLD3+U+EbF6UUgk+mRZnRdZK8Bmqe//RH11uG+cXBPzmp/jJmv8+1th0p8COuejXxJC7TeasQk7gFlJMwOXxpzPSsB1bcLo12dRp7GNjkQaATcfgH3xNP+NjlnXgg+rxVGsL3KMu+rYEqLF+ctILpLmwSIjSmpyxD8Bxk0LeP9x8Dl71m0W4j3K0tJ61m/p1Ra3KE+FFi2dR2uE07vuLsOjJgeRtsNM0WDWEXZkLkgNseW6bNbXSHEVKOK0zWjaxTFPDCEqFvN8PyaObpBvgg1HR5aYS99OTsz5MN5fjFGULIzjeELSluARP6NhAFsmkJwwaOv28svrf7iL9woynS9mXqf7TaX3quNJ45/UvvA+vmJpC+0QVqclQZ2Z5129y7FDBbiuqDM32Gk5Q2TtMroGWDltIhWSKTI/ZLo6Y1z4B78P/LyfhGtjpuE8wmh8XcT4jTDQVWxe8B8zd+KXE6bv50T6rOb4PbNcj6j9CH9spqlFCLj0vojTQ1cUwbEDoAQxDNH978r9C2utMIY6GkjxEbjEd28FBcFwHMv9NielCuyg5GC5ItqUK6UqB1wtvSl748IqCRLu2jC8fKQEGTkLhLs37HahWABvdxFiyBiW67aQDgqRqW5/sz+8cAM=
+  - secure: Qe1SKkPuGAzXnamk6g578OC7KuZaUqRZJxCK5j2Ui/mf1gO3523UgJwWW/VuJfToD7oMfbTDeJlYAzGd1OQ96F3HuW+52KXOCH4doXl2GD1ZUXCF0VAWGMtZjUMfhJOoAwXnWi+L2NmaZ4X62sEzEE4FzHQHog3scWQDtiMqKyXtKIT7Mpyh2ON07/yYgA5T45FhzETfnGZqT2KcksRRxHam+T0PXe2uVv/46FjwxL5o8OAzGIQinxYvTpLNaMbJIwBiV8SExNOH5RpngzvOChpbppNIZELjvlMtgQG6dflLDbAb5dt3XFiT8RZFbBu76kgydM9u3AKXtK+z7Yq/YDNETAXXUsVxDEh8Avumdi7u+N6rc50tcqAGVcEMYvISF5yaNrIlD9nzkOoHUef8hU1KdjMDwJnL4AmiGkVgi/nLhNBK0TfzwnLXqQYX2LlTGOumDeaCD+EQnJO9wp0wmfMNEtTzonkSm1VUl1YmBnXC1iKhsIvJKo9fIhFIGbDccailpc++Ea/o2vZQUOfeaTJqjVcHCeqSId/36iYRLhNCC/Gys0qMiAIEH0N4HPo6MW1FHOGBZ8DqddpyGursLv+skzFDxH+sac7F2KXOCog/ql5n6Bjc2R+5WkjRAjjv+I6G1axjwxny+Qozde0DUtYIxyH4kfxk1sFCnZB/TPY=
+  - secure: VaCbqCc3iN16kecq2zmifjrhf7xIgBjjUSp9EsdLnKpFrIACs15DI4lys1hBgshGS0BXpczXKmDcmae6wzAz8bIhKY3o4ZtZhntrwSCorkBtiFs9bUzQJwcA5FO4DK/98p141lMH/BrDkRKdsIgGn0Z7Z+vNacBdk4gN1YD4G4oVr4VmYcZbmrH95b7FQnnAYT9+UhTrkBFVvXb12Uf6/+2vl82FJiigjNLEe8LOMBLt3VYOZB5vB7AKg0AE6eB1sQB5Pc1R3wvcS4YRweheVbo+6ZO94Y1MmXkQkWVLD/4LqFlxmENTNXEPDTjCIFZwRGI034SO9ykl7OfElCHDvfJWQH+lrA6i+CcR0fiyQHnX/pPEbRcQyrSKQrh8oIBdxCVGN0ObHm2Nk+VyRZlbFmMjmvljR5VYEj4RRQjf5+Oc9R+Wip5RzlU8Cg+1Xo39DLxk1NmllAzhFNIP450S7XFsMTSjRuGxmw++8ejzAnnIjXmyu0XD1mm6356pgsUAlEjKWIE8qkrPYRzv37dvzD/6+EyFSh6IZeotbnJQXhR/WQoqFzfo4zwZPPT6qguDSA7UqVmeGsM1OFMrJhpHtd9oZ5MgDWwpfMPPDZHgnBsQycUIPGxAWZG3XBaoFL/TopK3xMBEdk0IoM7j5fNdnbvtUsT6t4tTiWyZwREsj7s=
+  - secure: jxRVXkqzzZvsmRTQnoDaij5ib2nywe8Uzw+eYcjc9ta6P1fKVKblNon9BHXjwvXFWULZeR434eAM6JFSgvNRZiBXhQnVNSAQBC7L0ZuoOGpnBukjtumV79S2szmJuyTsuDjRfAx22/9pDKLFjKpr8MBUrSIRnk5juquziDeWJZLrZhFA7vFsigFOM0+VyyqVRm+kmz1RIp4Sq8rwBx4uhfkepcIrZAwzowbt8lH7XaTDePe3WS0hgkBvwjDYUC6sMHWfUXe45UefIC8BYP1F+dImu/hKsBUVuvGSaK3NQtGi8alctCrEWZvNr9H1PNf9WAA2zlxAUSJajghhC5apICYPWjlTmNSODMOrvzZvg1YZSK0Dp3IZ1VVrQpWnLmeAEwDftA/M6dFgR3Q4KZUI/0KS71DjFqI7ik6llfsmM/qe5xWutuEodGfd2hBDSGeWOhlRS6l+2T8iEgRw3pHkwE8lPTLNLYkOYq/3F3RDCj+Fiq7tIjSxUkB6G1Gh8lTp5to46iKtc390W/oiO29AS5BHGcbDAYclzu72hbTdyWhmKIUIkbAmiK2A5cPCLfANWa03nizfl5nW2a+KLIMGNabjYxLpJSSCxNFQKOXXxpWIuNEGn4Bz0sU7jrqiQVsspHBI6cObSZ21j+X3NswjbcurfV0JB5X0+05IT+GIp4c=

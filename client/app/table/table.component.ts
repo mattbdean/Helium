@@ -4,7 +4,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import * as _ from 'lodash';
 
-import { SqlRow, SqlTableHeader } from '../common/responses';
+import { SqlRow, TableHeader } from '../common/responses';
 import { TableService } from './table.service';
 
 interface DataTableHeader {
@@ -53,7 +53,7 @@ export class TableComponent implements OnInit {
         });
     }
 
-    private createTableHeaders(headers: SqlTableHeader[]): DataTableHeader[] {
+    private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
         return _.sortBy(_.map(headers, (h) => ({ name: h.name, prop: h.name })), 'ordinalPosition');
     }
 }

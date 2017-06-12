@@ -8,7 +8,7 @@ import * as squelBuilder from 'squel';
  * Generic interface for mysql2 connection options. See
  * https://github.com/mysqljs/mysql/blob/master/Readme.md#connection-options
  */
-interface DbConf {
+export interface DbConf {
     [keys: string]: string;
 }
 
@@ -27,10 +27,9 @@ export class Database {
     private constructor() {}
 
     /** Ensures a connection */
-    public async connect(mode: Mode): Promise<void> {
+    public async connect(mode: Mode | DbConf): Promise<void> {
         if (!this.internalConn) {
-            this.config = await Database.createDbConf(mode);
-
+            this.config = typeof mode === 'object' ? mode : await Database.createDbConf(mode);
             this.internalConn = await mysql.createConnection(this.config);
         }
     }
