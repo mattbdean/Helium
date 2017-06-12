@@ -11,10 +11,12 @@
                        [headerHeight]="40"
                        [footerHeight]="50"
                        [externalPaging]="true"
+                       [externalSorting]="true"
                        [offset]="page.number"
                        [count]="meta.totalRows"
                        [loadingIndicator]="loading"
-                       (page)="setPage($event)">
+                       (page)="setPage($event)"
+                       (sort)="onSort($event)">
         </ngx-datatable>
     </div>
 

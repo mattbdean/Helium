@@ -25,9 +25,9 @@ export class TableService {
     }
 
     /** Fetches paginated data from a given table */
-    public content(name: string, page: number = 1, limit: number = 25): Promise<SqlRow[]> {
+    public content(name: string, page: number = 1, limit: number = 25, sort?: string): Promise<SqlRow[]> {
         return this.get(`/tables/${encodeURIComponent(name)}`, {
-            page, limit
+            page, limit, sort
         }).then((data: PaginatedResponse<SqlRow[]>) => data.data);
     }
 

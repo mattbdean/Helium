@@ -37,6 +37,7 @@ export class TableComponent implements OnInit {
     /** If this component has had time to get itself together yet */
     public initialized: boolean = false;
     public limit: number = 2;
+    public sort: string;
     public loading: boolean = false;
 
     public page: Page = {
@@ -82,7 +83,7 @@ export class TableComponent implements OnInit {
             // page 1 === offset 0, page 2 === offset 1, etc.
             const page = event.offset + 1;
             // Get the raw data from the service and format it
-            const raw = await this.backend.content(this.name, page, this.limit);
+            const raw = await this.backend.content(this.name, page, this.limit, this.sort);
             const content = this.formatRows(this.meta.headers, raw);
 
             // Update the page
@@ -90,6 +91,22 @@ export class TableComponent implements OnInit {
                 number: event.offset,
                 size: content.length,
                 data: content
+            };
+        });
+    }
+
+    private onSort(event: any) {
+        const sortDirPrefix = event.sorts[0].dir === 'desc' ? '-' : '';
+        // '-prop' for descending, 'prop' for ascending
+        const sort = sortDirPrefix + event.sorts[0].prop;
+        this.sort = sort;
+        this.showLoading(async () => {
+            const raw = await this.backend.content(this.name, 1, this.limit, this.sort);
+            const data = this.formatRows(this.meta.headers, raw);
+            this.page = {
+                number: 0,
+                size: data.length,
+                data
             };
         });
     }
