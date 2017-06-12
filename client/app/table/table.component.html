@@ -3,12 +3,15 @@
 
     <ngx-datatable class="material"
                    [columnMode]="'force'"
-                   [columns]="headers"
-                   [rows]="content"
-                   [limit]="25"
+                   [columns]="tableHeaders"
+                   [rows]="page.data"
+                   [limit]="limit"
                    [headerHeight]="40"
                    [footerHeight]="50"
-                   [offset]="0">
+                   [externalPaging]="true"
+                   [offset]="page.number"
+                   [count]="meta.totalRows"
+                   (page)="setPage($event)">
     </ngx-datatable>
 </div>
 

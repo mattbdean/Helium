@@ -5,7 +5,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
-import { SqlRow, TableHeader } from '../common/responses';
+import { SqlRow, TableHeader, TableMeta } from '../common/responses';
 import { TableService } from './table.service';
 
 interface DataTableHeader {
@@ -13,15 +13,31 @@ interface DataTableHeader {
     prop: string;
 }
 
+interface Page {
+    number: number;
+    size: number;
+    data: SqlRow[];
+}
+
 @Component({
     selector: 'home',
     templateUrl: 'table.component.html'
 })
 export class TableComponent implements OnInit {
-    private name: string;
-    private headers: DataTableHeader[];
-    private content: SqlRow[];
-    private exists: boolean = true;
+    public name: string;
+    public meta: TableMeta = {
+        headers: [],
+        totalRows: 0
+    };
+    public tableHeaders: DataTableHeader[];
+    public exists: boolean = true;
+    public limit: number = 2;
+
+    public page: Page = {
+        number: -1,
+        size: 0,
+        data: []
+    };
 
     constructor(
         private backend: TableService,
@@ -33,9 +49,10 @@ export class TableComponent implements OnInit {
             this.name = params.name;
 
             try {
-                const meta = await this.backend.meta(this.name);
-                this.headers = this.createTableHeaders(meta.headers);
-                this.content = this.formatRows(meta.headers, await this.backend.content(this.name));
+                this.meta = await this.backend.meta(this.name);
+                this.tableHeaders = this.createTableHeaders(this.meta.headers);
+                // Set the initial page now that we have some data
+                this.setPage({ offset: 0 });
             } catch (e) {
                 // Handle 404s, show the user that the table couldn't be found
                 if (e instanceof Response && e.status === 404) {
@@ -47,6 +64,21 @@ export class TableComponent implements OnInit {
                 throw e;
             }
         });
+    }
+
+    private async setPage(event: any) {
+        // page 1 === offset 0, page 2 === offset 1, etc.
+        const page = event.offset + 1;
+        // Get the raw data from the service and format it
+        const raw = await this.backend.content(this.name, page, this.limit);
+        const content = this.formatRows(this.meta.headers, raw);
+
+        // Update the page
+        this.page = {
+            number: event.offset,
+            size: content.length,
+            data: content
+        };
     }
 
     private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
