@@ -5,7 +5,7 @@ import { Response } from 'supertest';
 
 import {
     ErrorResponse, PaginatedResponse, SqlRow,
-    SqlTableHeader, TableMeta
+    TableHeader, TableMeta
 } from '../src/common/responses';
 import {
     fetchTableCount,
@@ -65,7 +65,7 @@ describe('API v1', () => {
         );
 
         it('should support sorting via query', () =>
-            firstTable(async (name: string, headers: SqlTableHeader[]) => {
+            firstTable(async (name: string, headers: TableHeader[]) => {
                 const expectOrderedBy = (data: SqlRow[], property: string, order: 'asc' | 'desc') => {
                     // This could fail if we're dealing with date types since
                     // dates are serialized to strings, and those don't have the
@@ -175,7 +175,7 @@ describe('API v1', () => {
      * Like examineSeveralTables, but just for the first table it finds and does
      * work only with the headers, not the count
      */
-    const firstTable = async (doWork: (name: string, headers: SqlTableHeader[]) => Promise<void>) => {
+    const firstTable = async (doWork: (name: string, headers: TableHeader[]) => Promise<void>) => {
         const name = (await fetchTableNames())[0];
         const headers = await queryFetchTableHeaders(name);
         return doWork(name, headers);
@@ -217,7 +217,7 @@ describe('API v1', () => {
      * @param method If 'api', will fetch via supertest, otherwise with a direct
      *               query function
      * @param tableName
-     * @returns {Promise<SqlTableHeader>}
+     * @returns {Promise<TableHeader>}
      */
     const fetchTableHeaders = (method: 'api' | 'query',
                                tableName: string): Promise<TableMeta> => {
@@ -233,7 +233,7 @@ describe('API v1', () => {
             prom = Promise.all([
                 queryFetchTableHeaders(tableName),
                 fetchTableCount(tableName)
-            ]).then((results: [SqlTableHeader[], number]): TableMeta => ({
+            ]).then((results: [TableHeader[], number]): TableMeta => ({
                 headers: results[0],
                 totalRows: results[1]
             }));

@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 
 import {
     ErrorResponse, PaginatedResponse, SqlRow,
-    SqlTableHeader, TableMeta
+    TableHeader, TableMeta
 } from '../../../common/responses';
 import { Database, squel } from '../../../Database';
 import { NODE_ENV, NodeEnv } from '../../../env';
@@ -140,7 +140,7 @@ export async function fetchTableNames(): Promise<string[]> {
     return _.map(result[0], (row: { table_name: string }) => row.table_name);
 }
 
-export async function fetchTableHeaders(tableName: string): Promise<SqlTableHeader[]> {
+export async function fetchTableHeaders(tableName: string): Promise<TableHeader[]> {
     const result = (await Database.get().conn.execute(
         `SELECT
             COLUMN_NAME, ORDINAL_POSITION, IS_NULLABLE, DATA_TYPE,
@@ -152,9 +152,9 @@ export async function fetchTableHeaders(tableName: string): Promise<SqlTableHead
         [Database.get().dbName(), tableName]
     ))[0]; // first element is content, second element is metadata
 
-    // Map each BinaryRow into a SqlTableHeader, removing any additional rows
+    // Map each BinaryRow into a TableHeader, removing any additional rows
     // that share the same name
-    return _.map(result, (row: any): SqlTableHeader => ({
+    return _.map(result, (row: any): TableHeader => ({
         name: row.COLUMN_NAME as string,
         type: row.DATA_TYPE as string,
         ordinalPosition: row.ORDINAL_POSITION as number,
