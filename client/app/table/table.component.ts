@@ -39,7 +39,7 @@ export class TableComponent implements OnChanges {
 
     /** If this component has had time to get itself together yet */
     public initialized: boolean = false;
-    public limit: number = 25;
+    public limit: number = 2;
     public sort: string;
     public loading: boolean = false;
 
@@ -55,12 +55,14 @@ export class TableComponent implements OnChanges {
 
     public async ngOnChanges(changes: SimpleChanges) {
         try {
-            this.sort = undefined;
-            this.meta = await this.backend.meta(this.name);
-            this.tableHeaders = this.createTableHeaders(this.meta.headers);
-            this.exists = true;
-            // Set the initial page now that we have some data
-            this.setPage({ offset: 0 });
+            await this.showLoading(async () => {
+                this.sort = undefined;
+                this.meta = await this.backend.meta(this.name);
+                this.tableHeaders = this.createTableHeaders(this.meta.headers);
+                this.exists = true;
+                // Set the initial page now that we have some data
+                return this.setPage({ offset: 0 }, false);
+            });
         } catch (e) {
             // Handle 404s, show the user that the table couldn't be found
             if (e instanceof Response && e.status === 404) {
@@ -77,8 +79,8 @@ export class TableComponent implements OnChanges {
         }
     }
 
-    private setPage(event: any) {
-        return this.showLoading(async () => {
+    private setPage(event: any, showLoading: boolean = true) {
+        const load = async () => {
             // page 1 === offset 0, page 2 === offset 1, etc.
             const page = event.offset + 1;
             // Get the raw data from the service and format it
@@ -91,7 +93,12 @@ export class TableComponent implements OnChanges {
                 size: content.length,
                 data: content
             };
-        });
+        };
+
+        if (showLoading)
+            return this.showLoading(load);
+        else
+            return load();
     }
 
     private onSort(event: any) {
