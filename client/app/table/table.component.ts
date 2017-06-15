@@ -7,7 +7,7 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import { SqlRow, TableHeader, TableMeta } from '../common/responses';
-import { TableService } from './table.service';
+import { TableService } from '../core/table.service';
 
 interface DataTableHeader {
     name: string;

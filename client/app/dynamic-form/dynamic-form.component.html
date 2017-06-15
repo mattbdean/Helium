@@ -1,0 +1,6 @@
+<form>
+    <div *ngFor="let header of headers">
+        <h2>{{ header.name }}</h2>
+        <pre>{{ header | json }}</pre>
+    </div>
+</form>

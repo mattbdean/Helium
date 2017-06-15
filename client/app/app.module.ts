@@ -7,6 +7,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
+import { DynamicFormModule } from './dynamic-form/dynamic-form.module';
 import { TableModule } from './table/table.module';
 
 import { NotFoundComponent } from './not-found.component';
@@ -23,6 +24,7 @@ import 'normalize.css/normalize.css';
         MdToolbarModule,
 
         TableModule,
+        DynamicFormModule,
         AppRoutingModule
     ],
     declarations: [
