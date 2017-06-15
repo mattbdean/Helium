@@ -56,5 +56,10 @@
       color: $primary-color;
       background-color: #eaeaea;
     }
+
+    &.active-router-link {
+      color: $primary-color-dark;
+      font-weight: bold;
+    }
   }
 }
