@@ -39,7 +39,7 @@ export class TableComponent implements OnChanges {
 
     /** If this component has had time to get itself together yet */
     public initialized: boolean = false;
-    public limit: number = 2;
+    public limit: number = 25;
     public sort: string;
     public loading: boolean = false;
 
