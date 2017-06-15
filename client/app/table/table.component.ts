@@ -55,6 +55,7 @@ export class TableComponent implements OnChanges {
 
     public async ngOnChanges(changes: SimpleChanges) {
         try {
+            this.sort = undefined;
             this.meta = await this.backend.meta(this.name);
             this.tableHeaders = this.createTableHeaders(this.meta.headers);
             this.exists = true;

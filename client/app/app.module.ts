@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { MdToolbarModule } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -19,6 +20,7 @@ import 'normalize.css/normalize.css';
         BrowserAnimationsModule,
         CoreModule,
         CommonModule,
+        MdToolbarModule,
 
         TableModule,
         AppRoutingModule
