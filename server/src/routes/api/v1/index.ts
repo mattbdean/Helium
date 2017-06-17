@@ -21,7 +21,7 @@ export function v1(): RouteModule {
     // client still receives JSON data
     router.get('/*', (req: Request, res: Response) => {
         const resp: ErrorResponse = {
-            message: 'Not found',
+            message: 'Route not found',
             input: {}
         };
 
