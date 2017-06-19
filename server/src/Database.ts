@@ -18,7 +18,7 @@ export class Database {
 
     /** Database connection configuration when working with Travis-CI */
     private static TRAVIS_CONF: DbConf =
-        { user: 'travis', password: 'password', database: 'test' };
+        { user: 'user', password: 'password', database: 'test' };
 
     private internalConn: any;
     private config: DbConf;

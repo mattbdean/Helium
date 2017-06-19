@@ -9,12 +9,18 @@ import {
 } from '../src/common/responses';
 import {
     fetchTableCount,
-    fetchTableHeaders as queryFetchTableHeaders,
-    fetchTableNames
+    fetchTableHeaders
 } from '../src/routes/api/v1/tables';
 import { createServer } from '../src/server';
 
 import { RequestContext } from './api.test.helper';
+
+////////////////////////////////////////////////////////////////////////////////
+// NB: These tests assume that init.sql was run successfully
+////////////////////////////////////////////////////////////////////////////////
+
+const PRIMARY_TABLE = 'foo';
+const SECONDARY_TABLES = ['bar', 'baz'];
 
 describe('API v1', () => {
     let app: Application;
@@ -38,67 +44,81 @@ describe('API v1', () => {
         it('should return an array of strings', () => {
             return request.basic('/tables', 200, (data: string[]) => {
                 expect(Array.isArray(data)).to.be.true;
-                for (const table of data) {
-                    expect(table).to.be.a('string');
-                }
+                expect(data).to.deep.equal(_.sortBy([PRIMARY_TABLE, ...SECONDARY_TABLES]));
             });
         });
     });
 
-    describe.only('GET /api/v1/tables/:name', () => {
-        it('should return an array of SqlRows', () =>
-            examineSeveralTables('query', async (tableName: string, meta: TableMeta) =>
-                request.basic(`/tables/${encodeURIComponent(tableName)}`, 200, (response: PaginatedResponse<SqlRow[]>) => {
-                    const headers = meta.headers;
+    describe('GET /api/v1/tables/:name', () => {
+        let meta: TableMeta;
 
+        beforeEach(async () => {
+            meta = await fetchMetadata(PRIMARY_TABLE);
+        });
+
+        it('should return an array of SqlRows', () => {
+            return request.spec({
+                method: 'GET',
+                relPath: '/tables/' + PRIMARY_TABLE,
+                expectedStatus: 200,
+                validate: (response: PaginatedResponse<SqlRow[]>) => {
                     expect(response.size).to.equal(response.data.length);
                     expect(response.size).to.be.above(0);
                     for (const row of response.data) {
-                        expect(Object.keys(row)).to.have.lengthOf(headers.length);
+                        expect(Object.keys(row)).to.have.lengthOf(meta.headers.length);
 
-                        for (const header of headers) {
+                        for (const header of meta.headers) {
                             expect(row[header.name]).to.exist;
                         }
                     }
-                })
-            )
-        );
-
-        it('should support sorting via query', () =>
-            firstTable(async (name: string, headers: TableHeader[]) => {
-                const expectOrderedBy = (data: SqlRow[], property: string, order: 'asc' | 'desc') => {
-                    // This could fail if we're dealing with date types since
-                    // dates are serialized to strings, and those don't have the
-                    // same natural order as Date objects
-                    expect(data).to.deep.equal(_.orderBy(data, [property], [order]));
-                };
-
-                for (const header of headers) {
-                    const doRequest = (sort: 'asc' | 'desc'): Promise<void> =>
-                        request.spec({
-                            method: 'GET',
-                            relPath: `/tables/${encodeURIComponent(name)}`,
-                            expectedStatus: 200,
-                            // sort ascending with sort=name, descending with sort=-name
-                            query: { sort: (sort === 'desc' ? '-' : '') + header.name },
-                            validate: (response: PaginatedResponse<SqlRow[]>) => {
-                                expect(response.data.length).to.be.above(0);
-                                expectOrderedBy(response.data, header.name, sort);
-                            }
-                        });
-
-                    // Test both ascending and descending
-                    await doRequest('asc');
-                    await doRequest('desc');
                 }
-            })
-        );
+            });
+        });
 
-        it('should throw a 400 when sorting by a column that doesn\t exist', async () => {
-            const table = (await fetchTableNames())[0];
+        it('should support limiting via query', () => {
             return request.spec({
                 method: 'GET',
-                relPath: `/tables/${encodeURIComponent(table)}`,
+                relPath: '/tables/' + PRIMARY_TABLE,
+                expectedStatus: 200,
+                query: { limit: "2" },
+                validate: (response: PaginatedResponse<SqlRow[]>) => {
+                    expect(response.size).to.be.at.most(2);
+                }
+            });
+        });
+
+        it('should support sorting via query', async () => {
+            const expectOrderedBy = (data: SqlRow[], property: string, order: 'asc' | 'desc') => {
+                // This could fail if we're dealing with date types since
+                // dates are serialized to strings, and those don't have the
+                // same natural order as Date objects
+                expect(data).to.deep.equal(_.orderBy(data, [property], [order]));
+            };
+
+            const doRequest = (header: TableHeader, sort: 'asc' | 'desc'): Promise<void> =>
+                request.spec({
+                    method: 'GET',
+                    relPath: `/tables/${encodeURIComponent(PRIMARY_TABLE)}`,
+                    expectedStatus: 200,
+                    // sort ascending with sort=name, descending with sort=-name
+                    query: { sort: (sort === 'desc' ? '-' : '') + header.name },
+                    validate: (response: PaginatedResponse<SqlRow[]>) => {
+                        expect(response.data.length).to.be.above(0);
+                        expectOrderedBy(response.data, header.name, sort);
+                    }
+                });
+
+            for (const header of meta.headers) {
+                // Test both ascending and descending
+                await doRequest(header, 'asc');
+                await doRequest(header, 'desc');
+            }
+        });
+
+        it('should throw a 400 when sorting by a column that doesn\'t exist', async () => {
+            return request.spec({
+                method: 'GET',
+                relPath: `/tables/${encodeURIComponent(PRIMARY_TABLE)}`,
                 query: { sort: 'foobar' },
                 expectedStatus: 400,
                 validate: (err: ErrorResponse) => {
@@ -109,58 +129,71 @@ describe('API v1', () => {
     });
 
     describe('GET /api/v1/tables/:name/meta', () => {
-        it('should return the table meta', () =>
-            examineSeveralTables('api', async (tableName: string, meta: TableMeta) => {
-                const headers = meta.headers;
+        it('should return the table metadata', async () => {
+            const res = await request.spec({
+                method: 'GET',
+                relPath: `/tables/${PRIMARY_TABLE}/meta`,
+                expectedStatus: 200
+            });
 
-                expect(Array.isArray(headers)).to.be.true;
-                expect(headers).to.have.length.above(0);
+            const meta: TableMeta = res.body;
+            expect(Array.isArray(meta.headers)).to.be.true;
+            expect(meta.headers).to.have.length.above(0);
 
-                // Keep a record of all the column names
-                const existingNames: string[] = [];
+            const findHeader = (name: string): TableHeader =>
+                _.find(meta.headers, (h) => h.name === name)!!;
 
-                for (const header of headers) {
-                    // Make sure we don't have any duplicates
-                    expect(existingNames.indexOf(header.name)).to.be.below(0);
-                    existingNames.push(header.name);
+            const expectHeader = (name: string, type: 'textual' | 'numerical' | 'enum') => {
+                const h = findHeader(name);
+                expect(h).to.exist;
 
-                    for (const field of ['name', 'type', 'rawType']) {
-                        expect(header[field]).to.be.a('string').with.length.above(0);
-                    }
+                const isNum = type === 'numerical';
+                expect(h.isNumber).to.equal(isNum);
+                expect(h.isTextual).to.equal(!isNum);
 
-                    expect(header.ordinalPosition).to.be.at.least(1);
+                if (isNum) {
+                    expect(h.numericPrecision).to.be.at.least(0);
+                    expect(h.numericScale).to.be.at.least(0);
 
-                    expect(header.nullable).to.be.a('boolean');
+                    expect(h.maxCharacters).to.be.null;
+                    expect(h.charset).to.be.null;
+                    expect(h.enumValues).to.be.null;
+                } else if (type === 'textual') {
+                    // Textual header
+                    expect(h.numericPrecision).to.be.null;
+                    expect(h.numericScale).to.be.null;
 
-                    for (const varcharField of ['maxCharacters', 'charset']) {
-                        expect(header[varcharField] !== null)
-                            .to.equal(header.isTextual, `field = ${varcharField}, value = ${header[varcharField]}`);
-                    }
-
-                    for (const numberField of ['numericPrecision', 'numericScale']) {
-                        expect(header[numberField] !== null)
-                            .to.equal(header.isNumber,
-                            `field = ${numberField}, value = ${header[numberField]}`);
-                    }
-
-                    if (header.type === 'enum') {
-                        expect(Array.isArray(header.enumValues)).to.be.true;
-                        for (const enumVal of header.enumValues!!) {
-                            expect(enumVal).to.be.a('string');
-                        }
+                    expect(h.maxCharacters).to.be.above(0);
+                    expect(h.charset).to.not.be.null;
+                } else {
+                    // Enum header
+                    if (type === 'enum') {
+                        expect(Array.isArray(h.enumValues)).to.be.true;
+                        expect(h.enumValues).to.have.length.above(0);
                     }
                 }
-            })
-        );
 
-        it.only('should return the total amount of rows', () =>
-            examineSeveralTables('api', async (name: string, meta: TableMeta) => {
-                // console.log(meta.count)
+                expect(h.nullable).to.be.a('boolean');
+            };
+
+            // See init.sql
+            const textual = ['string'];
+            const numerical = ['foo_pk', 'integer', 'double', 'boolean'];
+
+            for (const h of textual) expectHeader(h, 'textual');
+            for (const h of numerical) expectHeader(h, 'numerical');
+
+            expect(findHeader('date').type).to.equal('date');
+            expect(findHeader('time').type).to.equal('timestamp');
+        });
+
+        it('should return the total amount of rows', () =>
+            request.basic(`/tables/${PRIMARY_TABLE}/meta`, 200, (meta: TableMeta) => {
                 expect(meta.totalRows).to.be.a('number');
                 // It's technically possible for a table to have 0 rows but with
                 // we're assuming our test tables aren't empty
                 expect(meta.totalRows).to.be.above(0);
-            }, 1)
+            })
         );
 
         it('should 404 when given a non-existent table', () =>
@@ -171,75 +204,18 @@ describe('API v1', () => {
         );
     });
 
-    /**
-     * Like examineSeveralTables, but just for the first table it finds and does
-     * work only with the meta, not the count
-     */
-    const firstTable = async (doWork: (name: string, headers: TableHeader[]) => Promise<void>) => {
-        const name = (await fetchTableNames())[0];
-        const headers = await queryFetchTableHeaders(name);
-        return doWork(name, headers);
-    };
+    const fetchMetadata = async (table: string): Promise<TableMeta> => {
+        const [headers, count] = await Promise.all([
+            fetchTableHeaders(table),
+            fetchTableCount(table)
+        ]);
 
-    /**
-     * Fetches up to [maxTables] tables from the database and calls [doWork]
-     * when that information is ready. Useful for ensuring that tests don't pass
-     * simply because they haven't been exposed to enough variation yet.
-     *
-     * @param method If 'api', will fetch via supertest, otherwise with a direct
-     *               query function.
-     * @param doWork Does some work with the meta (get more data, make
-     *               assertions, etc.)
-     * @param maxTables The maximum amount of tables to do work on. Defaults to
-     *                  Infinity (do work on all tables)
-     * @return {Promise<void>}
-     */
-    const examineSeveralTables = async (method: 'api' | 'query',
-                                        doWork: (name: string, headers: TableMeta) => Promise<void>,
-                                        maxTables = Infinity) => {
-        const tableNames = await fetchTableNames();
-        const usedTables = tableNames.slice(0, Math.min(maxTables, tableNames.length));
+        expect(headers).to.have.length.above(0);
 
-        if (usedTables.length === 0)
-            throw new Error('Must examine at least 1 table');
-
-        // Test up to 5 tables
-        for (const tableName of usedTables) {
-            await fetchTableHeaders(method, tableName).then((meta: TableMeta) =>
-                doWork(tableName, meta)
-            );
-        }
-    };
-
-    /**
-     * Returns a Promise that resolves to the SqlTableHeaders for the given
-     * table
-     * @param method If 'api', will fetch via supertest, otherwise with a direct
-     *               query function
-     * @param tableName
-     * @returns {Promise<TableHeader>}
-     */
-    const fetchTableHeaders = (method: 'api' | 'query',
-                               tableName: string): Promise<TableMeta> => {
-
-        let prom: Promise<TableMeta>;
-        if (method === 'api') {
-            // Make sure to URI-encode the table name because it could start
-            // with '#', which supertest would strip before sending the request,
-            // resulting in a request to '/api/v1/table/'
-            prom = request.basic(`/tables/${encodeURIComponent(tableName)}/meta`, 200)
-                .then((res: Response) => res.body);
-        } else {
-            prom = Promise.all([
-                queryFetchTableHeaders(tableName),
-                fetchTableCount(tableName)
-            ]).then((results: [TableHeader[], number]): TableMeta => ({
-                headers: results[0],
-                totalRows: results[1]
-            }));
-        }
-
-        return prom;
+        return {
+            headers,
+            totalRows: count
+        };
     };
 });
 

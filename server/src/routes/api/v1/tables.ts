@@ -73,15 +73,21 @@ export function tables(): RouteModule {
     r.get('/:name/meta', async (req: Request, res: Response) => {
         try {
             const name = req.params.name;
-            const [headers, count] = await Promise.all([
-                fetchTableHeaders(name),
-                fetchTableCount(name)
-            ]);
-            // const meta = await fetchTableHeaders(req.params.name);
-            if (headers.length === 0) {
-                return sendRequestError(res, 404, {
-                    message: `Couldn't find table`,
-                    input: { name: req.params.name }
+            let headers: TableHeader[] = [], count: number = -1;
+            try {
+                [headers, count] = await Promise.all([
+                    fetchTableHeaders(name),
+                    fetchTableCount(name)
+                ]);
+            } catch (e) {
+                if (e.code && e.code === 'ER_NO_SUCH_TABLE')
+                    return sendError(res, 404, {
+                        message: 'No such table',
+                        input: { name }
+                    });
+                return internalError(res, e, {
+                    message: 'Unable to execute request',
+                    input: { name }
                 });
             }
 
@@ -235,7 +241,7 @@ export async function fetchTableContent(tableName: string, page: number, limit: 
 
     if (sort !== undefined) {
         // Specify a sort if provided
-        query = query.order(sort.by, sort.direction === 'asc');
+        query = query.order(conn.escapeId(sort.by), sort.direction === 'asc');
     }
 
     return (await (Database.get().conn.execute(query.toString())))[0];
