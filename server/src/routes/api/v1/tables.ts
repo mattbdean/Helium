@@ -101,6 +101,39 @@ export function tables(): RouteModule {
         }
     });
 
+    r.put('/:name', async (req, res) => {
+        try {
+            await insertRow(req.params.name, req.body);
+            // Respond with 204 No Content
+            res.status(204).send();
+        } catch (e) {
+            const send400 = (message: string) =>
+                sendError(res, 400, { message, input: {
+                    name: req.params.name,
+                    data: req.body
+                }});
+
+            if (e.code) {
+                switch (e.code) {
+                    case 'ER_BAD_FIELD_ERROR':
+                        return send400('no such column');
+                    case 'ER_NO_SUCH_TABLE':
+                        return send400('no such table');
+                    case 'ER_DUP_ENTRY':
+                        return send400('duplicate entry');
+                }
+            }
+
+            return internalError(res, e, {
+                message: 'Could not execute request',
+                input: {
+                    name: req.params.name,
+                    data: req.body
+                }
+            });
+        }
+    });
+
     const internalError = (res: Response, err: Error, data: ErrorResponse) => {
         const responseData = data as any;
         if (NODE_ENV !== NodeEnv.PROD)
@@ -206,6 +239,21 @@ export async function fetchTableContent(tableName: string, page: number, limit: 
     }
 
     return (await (Database.get().conn.execute(query.toString())))[0];
+}
+
+export async function insertRow(table: string, data: { [key: string]: any }) {
+    const conn = Database.get().conn;
+
+    // Create base 'INSERT INTO' query
+    const query = squel.insert().into(conn.escapeId(table));
+
+    // Set key/value pairs to insert
+    for (const key of Object.keys(data)) {
+        query.set(key, data[key]);
+    }
+
+    // Execute the query
+    await conn.execute(query.toString());
 }
 
 const isNumberType = (type: string): boolean =>
