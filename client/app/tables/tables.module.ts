@@ -25,4 +25,4 @@ import '@swimlane/ngx-datatable/release/themes/material.css';
         TableHostComponent
     ]
 })
-export class TableModule {}
+export class TablesModule {}

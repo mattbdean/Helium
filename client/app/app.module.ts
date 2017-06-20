@@ -7,8 +7,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
-import { FormModule } from './form/form.module';
-import { TableModule } from './table/table.module';
+import { FormsModule } from './forms/forms.module';
+import { TablesModule } from './tables/tables.module';
 
 import { NotFoundComponent } from './not-found.component';
 
@@ -24,8 +24,8 @@ import 'normalize.css/normalize.css';
         MdToolbarModule,
         MdSidenavModule,
 
-        TableModule,
-        FormModule,
+        TablesModule,
+        FormsModule,
         AppRoutingModule
     ],
     declarations: [

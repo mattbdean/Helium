@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 
 import { DynamicFormComponent } from './dynamic-form.component';
-import { FormRoutingModule } from './form-routing.module';
+import { FormRoutingModule } from './forms-routing.module';
 
 @NgModule({
     imports: [
@@ -13,4 +13,4 @@ import { FormRoutingModule } from './form-routing.module';
         DynamicFormComponent
     ]
 })
-export class FormModule {}
+export class FormsModule {}
