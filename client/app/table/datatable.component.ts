@@ -21,10 +21,10 @@ interface Page {
 }
 
 @Component({
-    selector: 'x-table',
-    templateUrl: 'table.component.html'
+    selector: 'datatable',
+    templateUrl: 'datatable.component.html'
 })
-export class TableComponent implements OnChanges {
+export class DatatableComponent implements OnChanges {
     /** Time in milliseconds before showing a loading bar on the table */
     private static readonly LOADING_DELAY = 200;
 
@@ -124,7 +124,7 @@ export class TableComponent implements OnChanges {
     private showLoading(doWork: () => Promise<void>) {
         const timeout = setTimeout(() => {
             this.loading = true;
-        }, TableComponent.LOADING_DELAY);
+        }, DatatableComponent.LOADING_DELAY);
 
         doWork().then(() => {
             this.loading = false;
