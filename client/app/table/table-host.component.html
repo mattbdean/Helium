@@ -1,3 +1,10 @@
-<div class="datatable-wrapper" *ngIf="selectedTable">
+<div class="datatable-wrapper" *ngIf="selectedTable; else noSelectedTable">
     <x-table [name]="selectedTable"></x-table>
 </div>
+
+<ng-template #noSelectedTable>
+    <div class="no-selected-table">
+        <h3>Welcome to Helium</h3>
+        <p class="subtle">Pick out a table from the sidebar</p>
+    </div>
+</ng-template>
