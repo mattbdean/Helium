@@ -8,6 +8,10 @@
 
 md-sidenav-container {
   flex-grow: 1;
+
+  // Enables the scrollbar when main content is too big to fit the screen
+  display: flex;
+  flex-direction: column;
 }
 
 md-sidenav {
