@@ -1,14 +1,3 @@
-<div class="wrapper">
-    <div class="sidenav-wrapper">
-        <ul class="sidenav-list">
-            <li *ngFor="let table of tables">
-                <a [routerLink]="['/tables', table]" routerLinkActive="active-router-link">{{ table }}</a>
-            </li>
-        </ul>
-    </div>
-    <div class="content-wrapper">
-        <div *ngIf="selectedTable">
-            <x-table [name]="selectedTable"></x-table>
-        </div>
-    </div>
+<div class="datatable-wrapper" *ngIf="selectedTable">
+    <x-table [name]="selectedTable"></x-table>
 </div>

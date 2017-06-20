@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MdToolbarModule } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
 import { TableHostComponent } from './table-host.component';
@@ -17,7 +16,6 @@ import '@swimlane/ngx-datatable/release/themes/material.css';
     imports: [
         CommonModule,
         CoreModule,
-        MdToolbarModule,
         NgxDatatableModule,
         ReactiveFormsModule,
         TableRoutingModule

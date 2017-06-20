@@ -4,14 +4,8 @@
   font-family: Roboto, "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
 }
 
-body {
+app {
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-
-  app {
-    flex-grow: 1;
-  }
 }
 
 .material-icons {
