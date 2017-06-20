@@ -2,9 +2,13 @@
 ## running:
 ## mysql -u root -p < init.sql
 
-# (Re)create user and give privileges
-DROP USER IF EXISTS 'user'@'localhost';
-GRANT ALL ON helium.* TO 'user' IDENTIFIED BY 'password';
+# Ensure the user exists by creating it
+GRANT ALL ON *.* TO 'user'@'localhost' IDENTIFIED BY 'password';
+# Drop the newly-created user (the above query can be replaced by DROP USER
+# IF EXISTS) with MySQL 5.7
+DROP USER 'user'@'localhost';
+# Create the user again to ensure that the user exists
+GRANT ALL ON helium.* TO 'user'@'localhost' IDENTIFIED BY 'password';
 
 # Ensure an empty database
 DROP DATABASE IF EXISTS helium;
