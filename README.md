@@ -10,11 +10,10 @@ Notable dependencies:
 
 - Node.js
 - Express
-- MySQL (via Sequelize)
+- MySQL
 - Angular (v4)
 - Gulp
 - Webpack
-- Bootstrap (v4)
 
 Tests are written with Mocha, Chai, Karma, and Protractor.
 
