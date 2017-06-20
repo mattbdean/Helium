@@ -24,7 +24,7 @@ md-sidenav {
 
   list-style-type: none;
 
-  li {
+  li.table-ref {
     display: flex;
 
     $border: 1px rgba(0, 0, 0, 0.06) solid;
@@ -33,6 +33,15 @@ md-sidenav {
     &:first-child {
       border-top: $border;
     }
+  }
+
+  li.header {
+    background-color: rgba(0, 0, 0, 0.32);
+    color: hsla(0, 0%, 100%, 0.87);
+    text-transform: uppercase;
+    font-size: 10px;
+    padding: 6px 16px;
+    letter-spacing: 1px;
   }
 
   a {

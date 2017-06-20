@@ -2,7 +2,8 @@
 <md-sidenav-container>
     <md-sidenav mode="side" opened="true" fullscreen>
         <ul class="sidenav-list">
-            <li *ngFor="let table of tables">
+            <li class="header">Tables</li>
+            <li class="table-ref" *ngFor="let table of tables">
                 <a [routerLink]="['/tables', table]" routerLinkActive="active-router-link">{{ table }}</a>
             </li>
         </ul>
