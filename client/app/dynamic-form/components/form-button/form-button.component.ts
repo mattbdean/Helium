@@ -5,7 +5,7 @@ import { FormGroup } from '@angular/forms';
     selector: 'form-button',
     template: `
         <div class="dynamic-field form-button" [formGroup]="group">
-            <button type="submit">{{ config.label }}</button>
+            <button type="submit" [disabled]="config.disabled">{{ config.label }}</button>
         </div>
     `
 })

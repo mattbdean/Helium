@@ -4,7 +4,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { FormHostComponent } from './form-host.component';
 
 const routes: Routes = [
-    { path: 'forms', component: FormHostComponent },
+    { path: 'forms/:name', component: FormHostComponent },
 ];
 
 @NgModule({

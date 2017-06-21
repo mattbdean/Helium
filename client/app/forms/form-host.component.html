@@ -1,1 +1,3 @@
-<dynamic-form [config]="config" (submitted)="onFormSubmitted($event)"></dynamic-form>
+<div *ngIf="config">
+    <dynamic-form [config]="config" (submit)="onFormSubmitted($event)"></dynamic-form>
+</div>
