@@ -30,12 +30,7 @@ export function tables(): RouteModule {
     r.get('/:name', async (req: Request, res: Response) => {
         const name: string = req.params.name;
 
-        if (!TABLE_NAME_REGEX.test(name))
-            return sendError(res, 400, {
-                message: 'table name must be entirely alphabetic and optionally ' +
-                    'prefixed with "~" or "#"',
-                input: { name }
-            });
+        if (!verifyTableName(name, res)) return;
 
         let sort: Sort | undefined;
         if (req.query.sort) {
@@ -73,6 +68,8 @@ export function tables(): RouteModule {
     r.get('/:name/meta', async (req: Request, res: Response) => {
         try {
             const name = req.params.name;
+            if (!verifyTableName(name, res)) return;
+
             let headers: TableHeader[] = [], count: number = -1;
             try {
                 [headers, count] = await Promise.all([
@@ -108,6 +105,8 @@ export function tables(): RouteModule {
     });
 
     r.put('/:name', async (req, res) => {
+        if (!verifyTableName(req.params.name, res)) return;
+
         try {
             await insertRow(req.params.name, req.body);
             // Respond with 204 No Content
@@ -153,6 +152,23 @@ export function tables(): RouteModule {
 
     const sendError = (res: Response, code: number, data: ErrorResponse) => {
         res.status(code).json(data);
+    };
+
+    /**
+     * Verifies that a given table name is valid. If the table is determined to
+     * be invalid, a 400 response will be sent and this function will return
+     * false.
+     */
+    const verifyTableName = (name: string, res: Response): boolean => {
+        if (!TABLE_NAME_REGEX.test(name)) {
+            sendError(res, 400, {
+                message: 'table name must be entirely alphabetic and optionally ' +
+                    'prefixed with "~" or "#"',
+                input: { name }
+            });
+            return false;
+        }
+        return true;
     };
 
     const sendRequestError = (res: Response, code: number, data: ErrorResponse) => {

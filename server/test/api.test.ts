@@ -153,7 +153,9 @@ describe('API v1', () => {
 
                 if (isNum) {
                     expect(h.numericPrecision).to.be.at.least(0);
-                    expect(h.numericScale).to.be.at.least(0);
+
+                    if (h.type !== 'double')
+                        expect(h.numericScale).to.be.at.least(0);
 
                     expect(h.maxCharacters).to.be.null;
                     expect(h.charset).to.be.null;
