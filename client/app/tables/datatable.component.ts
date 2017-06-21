@@ -144,9 +144,11 @@ export class DatatableComponent implements OnChanges {
             // Iterate through each cell in that row
             for (const headerName of Object.keys(row)) {
                 const header = _.find(headers, (h) => h.name === headerName);
-                // Use moment to format dates
+                // Use moment to format dates and times in the default format
                 if (header.type === 'date')
                     row[headerName] = moment(row[headerName]).format('l');
+                if (header.type === 'timestamp' || header.type === 'datetime')
+                    row[headerName] = moment(row[headerName]).format('LLL');
             }
         }
 
