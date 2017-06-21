@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 
 import { FieldConfig } from './field-config.interface';
@@ -12,7 +12,7 @@ import { FieldConfig } from './field-config.interface';
     `
 })
 
-export class DynamicFormComponent implements OnInit {
+export class DynamicFormComponent implements OnChanges, OnInit {
     @Input()
     public config: FieldConfig[] = [];
 
@@ -23,10 +23,6 @@ export class DynamicFormComponent implements OnInit {
 
     public constructor(private fb: FormBuilder) {}
 
-    public ngOnInit() {
-        this.form = this.createGroup();
-    }
-
     /** All non-button controls */
     get controls() { return this.config.filter(({type}) => type !== 'button'); }
 
@@ -36,6 +32,28 @@ export class DynamicFormComponent implements OnInit {
     // Convenience getters for form properties
     get valid() { return this.form.valid; }
     get value() { return this.form.value; }
+
+    public ngOnInit() {
+        this.form = this.createGroup();
+    }
+
+    public ngOnChanges() {
+        if (this.form) {
+            const controls = Object.keys(this.form.controls);
+            const configControls = this.controls.map((item) => item.name);
+
+            controls
+                .filter((control) => !configControls.includes(control))
+                .forEach((control) => this.form.removeControl(control));
+
+            configControls
+                .filter((control) => !controls.includes(control))
+                .forEach((name) => {
+                    const conf = this.config.find((control) => control.name === name);
+                    this.form.addControl(name, this.createControl(conf));
+                });
+        }
+    }
 
     public setDisabled(name: string, disabled: boolean) {
         if (this.form.controls[name]) {
