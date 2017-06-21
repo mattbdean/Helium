@@ -1,16 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 
-import { DynamicFormComponent } from './dynamic-form.component';
+import { DynamicFormModule } from '../dynamic-form/dynamic-form.module';
+import { FormHostComponent } from './form-host.component';
 import { FormRoutingModule } from './forms-routing.module';
 
 @NgModule({
     imports: [
         CommonModule,
+        DynamicFormModule,
         FormRoutingModule
     ],
     declarations: [
-        DynamicFormComponent
+        FormHostComponent
     ]
 })
 export class FormsModule {}

@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 
-import { DynamicFormComponent } from './dynamic-form.component';
+import { FormHostComponent } from './form-host.component';
 
 const routes: Routes = [
-    { path: 'forms', component: DynamicFormComponent },
+    { path: 'forms', component: FormHostComponent },
 ];
 
 @NgModule({
