@@ -15,7 +15,6 @@ before_script:
 script:
 - yarn gulp testPrep
 - yarn test:server
-- yarn test:client
 after_success: gulp coveralls
 addons:
   apt:
