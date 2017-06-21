@@ -32,7 +32,8 @@ export class DatatableComponent implements OnChanges {
     public name: string;
     public meta: TableMeta = {
         headers: [],
-        totalRows: 0
+        totalRows: 0,
+        constraints: []
     };
     public tableHeaders: DataTableHeader[];
     public exists: boolean = false;
