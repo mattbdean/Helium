@@ -6,6 +6,7 @@ export interface ErrorResponse {
 export interface TableMeta {
     headers: TableHeader[];
     totalRows: number;
+    constraints: Constraint[];
 }
 
 export interface PaginatedResponse<T> {
@@ -62,3 +63,18 @@ export interface TableHeader {
      */
     enumValues: string[] | null;
 }
+
+export interface Constraint {
+    /** Name of the column in the table */
+    localColumn: string;
+
+    type: ConstraintType;
+
+    /** The table this constraint references, or null if this is not a foreign key */
+    foreignTable: string | null;
+
+    /** The referenced column in [foreignTable], or null if this is not a foreign key */
+    foreignColumn: string | null;
+}
+
+export type ConstraintType = 'primary' | 'foreign';

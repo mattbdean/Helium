@@ -8,6 +8,7 @@ import {
     TableHeader, TableMeta
 } from '../src/common/responses';
 import {
+    fetchConstraints,
     fetchTableCount,
     fetchTableHeaders
 } from '../src/routes/api/v1/tables';
@@ -198,6 +199,25 @@ describe('API v1', () => {
             })
         );
 
+        it('should return an array of Constraints', () => {
+            return request.basic(`/tables/${PRIMARY_TABLE}/meta`, 200, (meta: TableMeta) => {
+                expect(meta.constraints).to.exist;
+                expect(meta.constraints).to.have.lengthOf(1 + SECONDARY_TABLES.length);
+
+                // Should only be one primary key
+                expect(_.find(meta.constraints, (c) => c.type === 'primary')!!.localColumn)
+                    .to.equal(PRIMARY_TABLE + '_pk');
+
+                // Validate foreign keys
+                for (const secondaryTable of SECONDARY_TABLES) {
+                    const constraint = _.find(meta.constraints, (c) => c.localColumn === secondaryTable)!!;
+                    expect(constraint).to.exist;
+                    expect(constraint.type).to.equal('foreign');
+                    expect(constraint.foreignColumn).to.equal(secondaryTable + '_pk');
+                }
+            });
+        });
+
         it('should 404 when given a non-existent table', () =>
             request.basic('/tables/foobar/meta', 404, (error: ErrorResponse) => {
                 expect(error.input).to.deep.equal({ name: 'foobar' });
@@ -207,17 +227,18 @@ describe('API v1', () => {
     });
 
     const fetchMetadata = async (table: string): Promise<TableMeta> => {
-        const [headers, count] = await Promise.all([
+        const [headers, count, constraints] = await Promise.all([
             fetchTableHeaders(table),
-            fetchTableCount(table)
+            fetchTableCount(table),
+            fetchConstraints(table)
         ]);
 
         expect(headers).to.have.length.above(0);
 
         return {
             headers,
-            totalRows: count
+            totalRows: count,
+            constraints
         };
     };
 });
-

@@ -1,13 +1,19 @@
-import { Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
 import * as _ from 'lodash';
 
+import { Request, Response, Router } from 'express';
 import {
-    ErrorResponse, PaginatedResponse, SqlRow,
-    TableHeader, TableMeta
+    Constraint,
+    ConstraintType,
+    ErrorResponse,
+    PaginatedResponse,
+    SqlRow,
+    TableHeader,
+    TableMeta,
 } from '../../../common/responses';
 import { Database, squel } from '../../../Database';
 import { NODE_ENV, NodeEnv } from '../../../env';
+
 import { RouteModule } from '../../RouteModule';
 
 const TABLE_NAME_REGEX = /^[#~]?[a-zA-Z]+$/;
@@ -70,11 +76,14 @@ export function tables(): RouteModule {
             const name = req.params.name;
             if (!verifyTableName(name, res)) return;
 
-            let headers: TableHeader[] = [], count: number = -1;
+            let headers: TableHeader[] = [],
+                count: number = -1,
+                constraints: Constraint[] = [];
             try {
-                [headers, count] = await Promise.all([
+                [headers, count, constraints] = await Promise.all([
                     fetchTableHeaders(name),
-                    fetchTableCount(name)
+                    fetchTableCount(name),
+                    fetchConstraints(name)
                 ]);
             } catch (e) {
                 if (e.code && e.code === 'ER_NO_SUCH_TABLE')
@@ -90,7 +99,8 @@ export function tables(): RouteModule {
 
             const response: TableMeta = {
                 headers,
-                totalRows: count
+                totalRows: count,
+                constraints
             };
 
             res.json(response);
@@ -261,6 +271,28 @@ export async function fetchTableContent(tableName: string, page: number, limit: 
     }
 
     return (await (Database.get().conn.execute(query.toString())))[0];
+}
+
+/**
+ * Gets a list of constraints on a given table. Currently, only primary keys and
+ * foreign key constraints are recognized.
+ */
+export async function fetchConstraints(table: string): Promise<Constraint[]> {
+    const result = (await Database.get().conn.execute(
+        `SELECT
+            COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
+        FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+        WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ?
+        ORDER BY ORDINAL_POSITION ASC`,
+        [Database.get().dbName(), table]
+    ))[0]; // first element is content, second element is metadata
+
+    return _.map(result, (row: any): Constraint => ({
+        localColumn: row.COLUMN_NAME as string,
+        type: row.CONSTRAINT_NAME === 'PRIMARY' ? 'primary' : 'foreign',
+        foreignTable: row.REFERENCED_TABLE_NAME as string,
+        foreignColumn: row.REFERENCED_COLUMN_NAME as string
+    }));
 }
 
 export async function insertRow(table: string, data: { [key: string]: any }) {
