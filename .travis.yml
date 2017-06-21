@@ -16,9 +16,3 @@ script:
 - yarn gulp testPrep
 - yarn test:server
 after_success: gulp coveralls
-addons:
-  apt:
-    sources:
-    - google-chrome
-    packages:
-    - google-chrome-stable
