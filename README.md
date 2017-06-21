@@ -1,6 +1,6 @@
 # Helium
 
-[![Travis](https://img.shields.io/travis/thatJavaNerd/Helium.svg)](https://travis-ci.org/thatJavaNerd/Helium)
+[![CircleCI](https://img.shields.io/circleci/project/github/thatJavaNerd/Helium.svg)](https://circleci.com/gh/thatJavaNerd/Helium)
 [![Known Vulnerabilities](https://snyk.io/test/github/thatJavaNerd/Helium/badge.svg)](https://snyk.io/test/github/thatJavaNerd/Helium)
 [![David](https://img.shields.io/david/thatJavaNerd/Helium.svg)](https://david-dm.org/thatJavaNerd/Helium)
 
