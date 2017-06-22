@@ -51,7 +51,8 @@ export class FormHostComponent implements OnInit {
                     type,
                     subtype,
                     options: h.enumValues,
-                    validation
+                    validation,
+                    // hint: h.comment
                 };
             });
 

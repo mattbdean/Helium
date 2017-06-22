@@ -10,6 +10,9 @@ export interface FieldConfig {
     /** Type of field (input, button, select, etc.) */
     type: string;
 
+    /** Message to show the user to clarify what this field is */
+    hint?: string;
+
     /** If type=input, the value of the input's 'type' attribute (date, text, etc.) */
     subtype?: string;
 
