@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
 @Component({
@@ -15,7 +15,14 @@ import { FormGroup } from '@angular/forms';
         </div>
     `
 })
-export class FormSubmitComponent {
+export class FormSubmitComponent implements AfterViewInit {
     public config: any;
     public group: FormGroup;
+
+    public ngAfterViewInit(): void {
+        this.group.statusChanges.subscribe(() => { 
+            // Disable the button when invalid
+            this.config.disabled = this.group.invalid;
+         });
+    }
 }
