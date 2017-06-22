@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MdButtonModule } from '@angular/material';
+import { MdButtonModule, MdSelectModule } from '@angular/material';
 
 import { DynamicFormComponent } from './dynamic-form.component';
 
@@ -14,6 +14,7 @@ import { FormSelectComponent } from './components/form-select/form-select.compon
     imports: [
         CommonModule,
         MdButtonModule,
+        MdSelectModule,
         ReactiveFormsModule
     ],
     declarations: [

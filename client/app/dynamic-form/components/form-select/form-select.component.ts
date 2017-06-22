@@ -5,13 +5,11 @@ import { FormGroup } from '@angular/forms';
     selector: 'form-select',
     template: `
         <div class="dynamic-field form-select" [formGroup]="group">
-        <label>{{ config.label }}</label>
-        <select [formControlName]="config.name">
-            <option value="">{{ config.placeholder }}</option>
-            <option *ngFor="let option of config.options">
-            {{ option }}
-            </option>
-        </select>
+            <md-select [placeholder]="config.label" [formControlName]="config.name">
+                <md-option *ngFor="let option of config.options" [value]="option">
+                    {{ option }}
+                </md-option>
+            </md-select>
         </div>`
 })
 export class FormSelectComponent {
