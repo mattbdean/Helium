@@ -177,6 +177,7 @@ describe('API v1', () => {
                 }
 
                 expect(h.nullable).to.be.a('boolean');
+                expect(h.comment).to.equal(`${h.name} column`);
             };
 
             // See init.sql

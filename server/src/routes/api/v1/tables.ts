@@ -210,7 +210,7 @@ export async function fetchTableHeaders(tableName: string): Promise<TableHeader[
         `SELECT
             COLUMN_NAME, ORDINAL_POSITION, IS_NULLABLE, DATA_TYPE,
             CHARACTER_MAXIMUM_LENGTH, NUMERIC_SCALE, NUMERIC_PRECISION,
-            CHARACTER_SET_NAME, COLUMN_TYPE
+            CHARACTER_SET_NAME, COLUMN_TYPE, COLUMN_COMMENT
         FROM INFORMATION_SCHEMA.columns
         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
         ORDER BY ORDINAL_POSITION ASC`,
@@ -231,7 +231,8 @@ export async function fetchTableHeaders(tableName: string): Promise<TableHeader[
         numericScale: row.NUMERIC_SCALE as number,
         enumValues: findEnumValues(row.COLUMN_TYPE as string),
         isNumber: isNumberType(row.DATA_TYPE as string),
-        isTextual: isTextualType(row.DATA_TYPE as string)
+        isTextual: isTextualType(row.DATA_TYPE as string),
+        comment: row.COLUMN_COMMENT as string
     }));
 }
 

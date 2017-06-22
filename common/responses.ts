@@ -62,6 +62,9 @@ export interface TableHeader {
      * with the type 'enum'
      */
     enumValues: string[] | null;
+
+    /** Database-level column comment */
+    comment: string;
 }
 
 export interface Constraint {
