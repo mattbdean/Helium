@@ -1,7 +1,17 @@
-<div class="dynamic-field form-input" [formGroup]="group">
-    <md-input-container>
-        <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput>
-    </md-input-container>
-    <!--<input [type]="config.subtype" [formControlName]="config.name" [attr.placeholder]="config.label">
-    <pre>{{ group.get(config.name) !== null }}</pre>-->
+<div class="dynamic-field form-input" [formGroup]="group" [ngSwitch]="config.subtype">
+    <div *ngSwitchCase="'checkbox'">
+        <md-checkbox color="primary" [formControlName]="config.name">{{ config.label }}</md-checkbox>
+    </div>
+    <div *ngSwitchCase="'date'">
+        <md-input-container>
+            <input mdInput [mdDatepicker]="datepicker" [placeholder]="config.label">
+            <button mdSuffix [mdDatepickerToggle]="datepicker"></button>
+        </md-input-container>
+        <md-datepicker #datepicker></md-datepicker>
+    </div>
+    <div *ngSwitchDefault>
+        <md-input-container>
+            <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput>
+        </md-input-container>
+    </div>
 </div>

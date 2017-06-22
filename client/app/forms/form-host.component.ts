@@ -33,7 +33,7 @@ export class FormHostComponent implements OnInit {
                 // Default to string input
                 let subtype = 'text';
                 // 'boolean' type is usually alias to tinyint(1)
-                if (h.rawType === 'tinyint(1)') subtype = 'text';
+                if (h.rawType === 'tinyint(1)') subtype = 'checkbox';
                 // numerical
                 else if (h.isNumber) subtype = 'number';
                 // Dates and timestamps

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MdButtonModule, MdInputModule, MdSelectModule } from '@angular/material';
+import { MdButtonModule, MdCheckboxModule, MdDatepickerModule, MdInputModule, MdSelectModule } from '@angular/material';
 
 import { DynamicFormComponent } from './dynamic-form.component';
 
@@ -14,6 +14,8 @@ import { FormSubmitComponent } from './components/form-submit/form-submit.compon
     imports: [
         CommonModule,
         MdButtonModule,
+        MdCheckboxModule,
+        MdDatepickerModule,
         MdInputModule,
         MdSelectModule,
         ReactiveFormsModule
