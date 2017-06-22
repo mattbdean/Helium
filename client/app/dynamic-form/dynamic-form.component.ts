@@ -8,8 +8,7 @@ import { FieldConfig } from './field-config.interface';
     template: `
     <form class="dynamic-form" [formGroup]="form" (ngSubmit)="handleSubmit($event)">
         <ng-container *ngFor="let field of config" dynamicField [config]="field" [group]="form"></ng-container>
-    </form>
-    `
+    </form>`
 })
 
 export class DynamicFormComponent implements OnChanges, OnInit {

@@ -1,3 +1,4 @@
-<div *ngIf="config">
+<md-card class="form-host" *ngIf="config">
+    <h2 class="mat-h2">Insert a new row into <i>{{ name }}</i></h2>
     <dynamic-form [config]="config" (submit)="onFormSubmitted($event)"></dynamic-form>
-</div>
+</md-card>

@@ -10,7 +10,8 @@ import { TableHeader, TableMeta } from '../common/responses';
 
 @Component({
     selector: 'form-host',
-    templateUrl: 'form-host.component.html'
+    templateUrl: 'form-host.component.html',
+    styleUrls: ['form-host.component.scss']
 })
 export class FormHostComponent implements OnInit {
     @ViewChild(DynamicFormComponent)
@@ -22,11 +23,12 @@ export class FormHostComponent implements OnInit {
     ) { }
 
     public config: FieldConfig[] = [];
+    public name: string;
 
     public ngOnInit() {
         this.route.params.subscribe(async (params: Params) => {
-            const name = params.name;
-            const meta: TableMeta = await this.backend.meta(name);
+            this.name = params.name;
+            const meta: TableMeta = await this.backend.meta(this.name);
             const config: FieldConfig[] = meta.headers.map((h: TableHeader): FieldConfig => {
                 const type = h.enumValues !== null ? 'select' : 'input';
 

@@ -4,7 +4,7 @@ import { FormGroup } from '@angular/forms';
 @Component({
     selector: 'form-button',
     template: `
-        <div class="dynamic-field form-button" [formGroup]="group">
+        <div class="dynamic-field form-submit" [formGroup]="group">
             <button 
                 color="primary"
                 md-raised-button
