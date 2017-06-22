@@ -52,7 +52,7 @@ export class FormHostComponent implements OnInit {
             // Add the submit button
             config.push({
                 type: 'button',
-                label: 'Submit',
+                label: 'SUBMIT',
                 name: 'submit'
             });
 
