@@ -6,9 +6,9 @@ import { MdButtonModule, MdInputModule, MdSelectModule } from '@angular/material
 import { DynamicFormComponent } from './dynamic-form.component';
 
 import { DynamicFieldDirective } from './components/dynamic-field/dynamic-field.directive';
-import { FormButtonComponent } from './components/form-button/form-button.component';
 import { FormInputComponent } from './components/form-input/form-input.component';
 import { FormSelectComponent } from './components/form-select/form-select.component';
+import { FormSubmitComponent } from './components/form-submit/form-submit.component';
 
 @NgModule({
     imports: [
@@ -21,17 +21,17 @@ import { FormSelectComponent } from './components/form-select/form-select.compon
     declarations: [
         DynamicFormComponent,
         DynamicFieldDirective,
-        FormButtonComponent,
         FormInputComponent,
-        FormSelectComponent
+        FormSelectComponent,
+        FormSubmitComponent
     ],
     exports: [
         DynamicFormComponent
     ],
     entryComponents: [
-        FormButtonComponent,
         FormInputComponent,
-        FormSelectComponent
+        FormSelectComponent,
+        FormSubmitComponent
     ]
 })
 export class DynamicFormModule {}

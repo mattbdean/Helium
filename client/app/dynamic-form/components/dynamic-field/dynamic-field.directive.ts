@@ -1,14 +1,14 @@
 import { ComponentFactoryResolver, Directive, Input, OnInit, ViewContainerRef } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
-import { FormButtonComponent } from '../form-button/form-button.component';
 import { FormInputComponent } from '../form-input/form-input.component';
 import { FormSelectComponent } from '../form-select/form-select.component';
+import { FormSubmitComponent } from '../form-submit/form-submit.component';
 
 const components = {
-    button: FormButtonComponent,
     input: FormInputComponent,
-    select: FormSelectComponent
+    select: FormSelectComponent,
+    submit: FormSubmitComponent
 };
 
 @Directive({

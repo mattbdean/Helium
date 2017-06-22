@@ -15,7 +15,7 @@ import { FormGroup } from '@angular/forms';
         </div>
     `
 })
-export class FormButtonComponent {
+export class FormSubmitComponent {
     public config: any;
     public group: FormGroup;
 }
