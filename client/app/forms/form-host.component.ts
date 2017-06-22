@@ -27,13 +27,13 @@ export class FormHostComponent implements OnInit {
         this.route.params.subscribe(async (params: Params) => {
             const name = params.name;
             const meta: TableMeta = await this.backend.meta(name);
-            this.config = meta.headers.map((h: TableHeader): FieldConfig => {
+            const config: FieldConfig[] = meta.headers.map((h: TableHeader): FieldConfig => {
                 const type = h.enumValues !== null ? 'select' : 'input';
 
                 // Default to string input
                 let subtype = 'text';
                 // 'boolean' type is usually alias to tinyint(1)
-                if (h.rawType === 'tinyint(1)') subtype = 'checkbox';
+                if (h.rawType === 'tinyint(1)') subtype = 'text';
                 // numerical
                 else if (h.isNumber) subtype = 'number';
                 // Dates and timestamps
@@ -48,6 +48,15 @@ export class FormHostComponent implements OnInit {
                     options: h.enumValues
                 };
             });
+
+            // Add the submit button
+            config.push({
+                type: 'button',
+                label: 'Submit',
+                name: 'submit'
+            });
+
+            this.config = config;
         });
     }
 

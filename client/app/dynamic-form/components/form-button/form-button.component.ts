@@ -5,7 +5,13 @@ import { FormGroup } from '@angular/forms';
     selector: 'form-button',
     template: `
         <div class="dynamic-field form-button" [formGroup]="group">
-            <button type="submit" [disabled]="config.disabled">{{ config.label }}</button>
+            <button 
+                color="primary"
+                md-raised-button
+                type="submit"
+                [disabled]="config.disabled">
+                {{ config.label }}
+            </button>
         </div>
     `
 })
