@@ -33,7 +33,7 @@ CREATE TABLE foo(
   `boolean` BOOLEAN COMMENT 'boolean column',
   `date` DATE COMMENT 'date column',
   `time` TIMESTAMP COMMENT 'time column',
-  `enum` ENUM('a', 'b', 'c') COMMENT 'enum column',
+  `enum` ENUM('a', 'b', 'c') NOT NULL COMMENT 'enum column',
   `string` VARCHAR(10) COMMENT 'string column',
   bar INTEGER COMMENT 'bar column',
   baz INTEGER COMMENT 'baz column',

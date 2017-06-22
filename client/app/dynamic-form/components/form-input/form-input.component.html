@@ -6,12 +6,14 @@
         <md-input-container>
             <input mdInput [mdDatepicker]="datepicker" [placeholder]="config.label">
             <button mdSuffix [mdDatepickerToggle]="datepicker"></button>
+            <md-error>This field is required</md-error>
         </md-input-container>
         <md-datepicker #datepicker></md-datepicker>
     </div>
     <div *ngSwitchDefault>
         <md-input-container>
             <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput>
+            <md-error>This field is required</md-error>
         </md-input-container>
     </div>
 </div>
