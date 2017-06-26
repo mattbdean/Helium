@@ -89,7 +89,7 @@
     "gulp-tslint": "^8.1.1",
     "gulp-typescript": "^3.1.7",
     "html-loader": "^0.4.5",
-    "html-webpack-plugin": "https://github.com/Re-Rabbit/html-webpack-plugin.git",
+    "html-webpack-plugin": "2.29.0",
     "istanbul": "1.1.0-alpha.1",
     "karma": "^1.6.0",
     "karma-chrome-launcher": "^2.1.1",
