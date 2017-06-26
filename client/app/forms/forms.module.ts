@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { MdCardModule } from '@angular/material';
+import { MdCardModule, MdSnackBarModule } from '@angular/material';
 
 import { DynamicFormModule } from '../dynamic-form/dynamic-form.module';
 import { FormHostComponent } from './form-host.component';
@@ -11,6 +11,7 @@ import { FormRoutingModule } from './forms-routing.module';
         CommonModule,
         DynamicFormModule,
         MdCardModule,
+        MdSnackBarModule,
         FormRoutingModule
     ],
     declarations: [

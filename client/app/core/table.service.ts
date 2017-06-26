@@ -1,6 +1,6 @@
 
 import { Injectable } from '@angular/core';
-import { Http } from '@angular/http';
+import { Headers, Http, RequestOptionsArgs, Response } from '@angular/http';
 
 import * as _ from 'lodash';
 
@@ -29,6 +29,28 @@ export class TableService {
         return this.get(`/tables/${encodeURIComponent(name)}`, {
             page, limit, sort
         }).then((data: PaginatedResponse<SqlRow[]>) => data.data);
+    }
+
+    /**
+     * Attempts to add a row to the database for a given table. The table must
+     * exist and the body must have the shape of a SqlRow.
+     */
+    public async submitRow(tableName: string, body: SqlRow) {
+        // Make sure the API knows we're sending JSON
+        const headers = new Headers({ 'Content-Type': 'application/json' });
+        const options: RequestOptionsArgs = { headers };
+
+        try {
+            const url = `/api/v1/tables/${encodeURIComponent(tableName)}`;
+            const res = await this.http.put(url, JSON.stringify(body), { headers })
+                .toPromise();
+            return res.json();
+        } catch (e) {
+            if (e instanceof Response) {
+                throw e.json();
+            }
+            throw e;
+        }
     }
 
     /**

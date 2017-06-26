@@ -12,7 +12,7 @@ import {
     TableMeta,
 } from '../../../common/responses';
 import { Database, squel } from '../../../Database';
-import { NODE_ENV, NodeEnv } from '../../../env';
+import { debug, NODE_ENV, NodeEnv } from '../../../env';
 
 import { RouteModule } from '../../RouteModule';
 
@@ -136,6 +136,10 @@ export function tables(): RouteModule {
                         return send400('no such table');
                     case 'ER_DUP_ENTRY':
                         return send400('duplicate entry');
+                    case 'ER_TRUNCATED_WRONG_VALUE':
+                        // No good way to directly pinpoint the cause, send the
+                        // message directly
+                        return send400(e.message);
                 }
             }
 
@@ -150,6 +154,7 @@ export function tables(): RouteModule {
     });
 
     const internalError = (res: Response, err: Error, data: ErrorResponse) => {
+        debug(err);
         const responseData = data as any;
         if (NODE_ENV !== NodeEnv.PROD)
             responseData.error = {

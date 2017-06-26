@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
-import { Validators, ValidatorFn } from '@angular/forms';
+import { ValidatorFn, Validators } from '@angular/forms';
+import { MdSnackBar } from '@angular/material';
 import { ActivatedRoute, Params } from '@angular/router';
 
 import { TableService } from '../core/table.service';
@@ -19,7 +20,8 @@ export class FormHostComponent implements OnInit {
 
     public constructor(
         private backend: TableService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private snackBar: MdSnackBar
     ) { }
 
     public config: FieldConfig[] = [];
@@ -70,7 +72,22 @@ export class FormHostComponent implements OnInit {
         });
     }
 
-    public onFormSubmitted(event) {
-        console.log(event);
+    public async onFormSubmitted(form) {
+        let message: string;
+        try {
+            await this.backend.submitRow(this.name, form);
+            this.form.form.reset();
+            message = "Created new row";
+        } catch (e) {
+            message = "Unable add row";
+            
+            // If the error originated from a bad HTTP request, the TableService
+            // would have throw the response body, which would have the shape of
+            // ErrorResponse
+            if (e.message)
+                message += ` (${e.message})`;
+        }
+
+        this.snackBar.open(message, undefined, { duration: 3000 });
     }
 }

@@ -18,7 +18,7 @@ export class DynamicFormComponent implements OnChanges, OnInit {
     @Output()
     public submit: EventEmitter<any> = new EventEmitter<any>();
 
-    private form: FormGroup;
+    public form: FormGroup;
 
     public constructor(private fb: FormBuilder) {}
 
