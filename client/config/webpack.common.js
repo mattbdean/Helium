@@ -23,10 +23,6 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.pug$/,
-                use: ['raw-loader', 'pug-html-loader']
-            },
-            {
                 test: /\.scss$/,
                 exclude: '/node_modules/',
                 use:  ['raw-loader', 'sass-loader']
