@@ -129,6 +129,64 @@ describe('API v1', () => {
         });
     });
 
+    describe.only('PUT /api/v1/tables/:name', () => {
+        let lastPk;
+        const createSampleData = (): SqlRow => {
+            if (lastPk === undefined)
+                // Generate base PK in the range [100..10,000,000]
+                lastPk = 100 + Math.round((Math.random() * 10000000));
+            return {
+                foo_pk: lastPk++,
+                integer: 100,
+                double: 101,
+                boolean: true,
+                date: new Date(), // now
+                time: new Date(1498515312000), // some time in the past
+                enum: 'a',
+                string: 'foo',
+                // Default to valid values for bar and baz
+                bar: 0,
+                baz: 1
+            };
+        };
+
+        const insertAndRetrieve = async (data: SqlRow): Promise<SqlRow> => {
+            await request.spec({
+                method: 'PUT',
+                relPath: `/tables/foo`,
+                expectedStatus: 200,
+                data
+            });
+
+            const res = await request.spec({
+                method: 'GET',
+                relPath: `/tables/foo`,
+                expectedStatus: 200,
+                query: { limit: '100', sort: '-foo_pk' }
+            });
+
+            const body: PaginatedResponse<SqlRow[]> = res.body;
+            const fromDb = _.find(body.data, (row) => row.foo_pk === data.foo_pk);
+            expect(fromDb).to.exist;
+            return fromDb!!;
+        };
+
+        it('should insert new data', async () => {
+            const data = createSampleData();
+            console.log(data.foo_pk);
+            console.log(data.date);
+
+            const fromDb = await insertAndRetrieve(data);
+            expect(fromDb).to.exist;
+            // Make sure it preserves the primary key
+            expect(fromDb.foo_pk).to.equal(data.foo_pk);
+            // Make sure dates and times don't get jumbled
+            console.log(fromDb);
+            expect(new Date(fromDb.date)).to.equal(data.date);
+            expect(new Date(fromDb.time)).to.equal(data.time);
+        });
+    });
+
     describe('GET /api/v1/tables/:name/meta', () => {
         it('should return the table metadata', async () => {
             const res = await request.spec({

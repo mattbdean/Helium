@@ -4,7 +4,7 @@
     </div>
     <div *ngSwitchCase="'date'">
         <md-input-container>
-            <input mdInput [mdDatepicker]="datepicker" [placeholder]="config.label">
+            <input mdInput [formControlName]="config.name" [mdDatepicker]="datepicker" [placeholder]="config.label">
             <button mdSuffix [mdDatepickerToggle]="datepicker"></button>
             <md-error>This field is required</md-error>
         </md-input-container>

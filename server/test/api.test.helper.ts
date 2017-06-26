@@ -33,6 +33,7 @@ export class RequestContext {
             // Let the server know we want JSON
             .set('Accept', /application\/json/)
             // Send our data, if applicable
+            .type('json')
             .send(conf.data)
             // Expect a JSON response
             .expect('Content-Type', /application\/json/)

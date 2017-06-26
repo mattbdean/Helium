@@ -30,7 +30,6 @@ export function debug(data: any) {
     if (typeof data === 'function') {
         data();
     } else {
-        process.stdout.write(data);
-        process.stdout.write('\n');
+        console.log(data);
     }
 }

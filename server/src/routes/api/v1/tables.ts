@@ -119,8 +119,7 @@ export function tables(): RouteModule {
 
         try {
             await insertRow(req.params.name, req.body);
-            // Respond with 204 No Content
-            res.status(204).send();
+            res.status(200).send({});
         } catch (e) {
             const send400 = (message: string) =>
                 sendError(res, 400, { message, input: {
@@ -139,6 +138,22 @@ export function tables(): RouteModule {
                     case 'ER_TRUNCATED_WRONG_VALUE':
                         // No good way to directly pinpoint the cause, send the
                         // message directly
+                        return send400(e.message);
+                    case 'ER_PARSE_ERROR':
+                        // Log the message and continue so that we eventually
+                        // send an internal server error
+                        debug({
+                            message: 'generated invalid SQL',
+                            data: req.body,
+                            table: req.params.name
+                        });
+                    case 'ER_DATA_TOO_LONG':
+                        // No way to get the actual column that caused the error
+                        // short of regexps, just send back the error
+                        return send400(e.message);
+                    case 'ER_NO_REFERENCED_ROW_2':
+                        // The default message may reveal too much but that's
+                        // okay for right now
                         return send400(e.message);
                 }
             }
@@ -301,20 +316,71 @@ export async function fetchConstraints(table: string): Promise<Constraint[]> {
     }));
 }
 
-export async function insertRow(table: string, data: { [key: string]: any }) {
+export async function insertRow(table: string, data: SqlRow) {
+    const preparedData: PreparedCell[] = await prepareForInsert(table, data);
     const conn = Database.get().conn;
 
     // Create base 'INSERT INTO' query
     const query = squel.insert().into(conn.escapeId(table));
 
     // Set key/value pairs to insert
-    for (const key of Object.keys(data)) {
-        query.set(key, data[key]);
+    for (const cell of preparedData) {
+        query.set(conn.escapeId(cell.key), cell.value, {
+            dontQuote: cell.dontQuote
+        });
     }
 
     // Execute the query
     await conn.execute(query.toString());
 }
+
+interface PreparedCell {
+    key: any;
+    value: any;
+    dontQuote: boolean;
+}
+
+const prepareForInsert = async (table: string, row: SqlRow): Promise<PreparedCell[]> => {
+    const headers: TableHeader[] = await fetchTableHeaders(table);
+    const newRow: PreparedCell[] = [];
+
+    const headerNames: string[] = _.map(headers, 'name');
+
+    for (const column of Object.keys(row)) {
+        if (headerNames.indexOf(column) < 0)
+            throw new Error('unknown column: ' + column);
+        
+        const header = _.find(headers, (h) => h.name === column);
+        if (header === undefined)
+            throw new Error('could not find header for column: ' + column);
+        newRow.push(prepareCell(header, row[column]));
+    }
+
+    return newRow;
+};
+
+const prepareCell = (header: TableHeader, value: any): PreparedCell => {
+    const safe = (val: any): PreparedCell => ({
+        key: header.name,
+        value: val,
+        dontQuote: false 
+    });
+    if (header.type === 'date' || header.type === 'timestamp') {
+        console.log('recieved value', value);
+        return {
+            key: header.name,
+            value: `FROM_UNIXTIME(${new Date(value).getTime() / 1000})`,
+            dontQuote: true
+        };
+    } else if (header.rawType === 'tinyint(1)')
+        return safe(value === true || value === 'true' || value === 1);
+    else if (header.numericScale && header.numericScale === 0)
+        return safe(parseInt(value, 10));
+    else if (header.isNumber)
+        return safe(parseFloat(value));
+    else
+        return safe(value);
+};
 
 const isNumberType = (type: string): boolean =>
     /int/.test(type) || type === 'decimal' || type === 'double';
