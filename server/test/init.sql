@@ -28,7 +28,7 @@ CREATE TABLE baz(
 # Create primary table
 CREATE TABLE foo(
   foo_pk INTEGER PRIMARY KEY COMMENT 'foo_pk column',
-  `integer` INTEGER COMMENT 'integer column',
+  `integer` INTEGER UNIQUE COMMENT 'integer column',
   `double` DOUBLE COMMENT 'double column',
   `boolean` BOOLEAN COMMENT 'boolean column',
   `date` DATE COMMENT 'date column',

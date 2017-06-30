@@ -138,7 +138,8 @@ describe('API v1', () => {
                 lastPk = 100 + Math.round((Math.random() * 10000000));
             return {
                 foo_pk: lastPk++,
-                integer: 100,
+                // integer must be unique, create a random value for it
+                integer: Math.round(10000000 * Math.random()),
                 double: 101,
                 boolean: true,
                 date: new Date(), // now
@@ -276,7 +277,8 @@ describe('API v1', () => {
         it('should return an array of Constraints', () => {
             return request.basic(`/tables/${PRIMARY_TABLE}/meta`, 200, (meta: TableMeta) => {
                 expect(meta.constraints).to.exist;
-                expect(meta.constraints).to.have.lengthOf(1 + SECONDARY_TABLES.length);
+                // 1 PK, 1 unique, 1 FK for each secondary table
+                expect(meta.constraints).to.have.lengthOf(2 + SECONDARY_TABLES.length);
 
                 // Should only be one primary key
                 expect(_.find(meta.constraints, (c) => c.type === 'primary')!!.localColumn)
@@ -284,11 +286,21 @@ describe('API v1', () => {
 
                 // Validate foreign keys
                 for (const secondaryTable of SECONDARY_TABLES) {
-                    const constraint = _.find(meta.constraints, (c) => c.localColumn === secondaryTable)!!;
+                    const constraint = _.find(meta.constraints,
+                        (c) => c.localColumn === secondaryTable)!!;
+
                     expect(constraint).to.exist;
                     expect(constraint.type).to.equal('foreign');
                     expect(constraint.foreignColumn).to.equal(secondaryTable + '_pk');
                 }
+
+                // Expect to find 1 unique constraint placed on the 'integer'
+                // column
+                const unique = _.find(meta.constraints, (c) => c.type === 'unique');
+                expect(unique).to.exist;
+                expect(unique!!.localColumn).to.equal('integer');
+                expect(unique!!.foreignTable).to.be.null;
+                expect(unique!!.foreignColumn).to.be.null;
             });
         });
 

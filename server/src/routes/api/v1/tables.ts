@@ -308,12 +308,21 @@ export async function fetchConstraints(table: string): Promise<Constraint[]> {
         [Database.get().dbName(), table]
     ))[0]; // first element is content, second element is metadata
 
-    return _.map(result, (row: any): Constraint => ({
-        localColumn: row.COLUMN_NAME as string,
-        type: row.CONSTRAINT_NAME === 'PRIMARY' ? 'primary' : 'foreign',
-        foreignTable: row.REFERENCED_TABLE_NAME as string,
-        foreignColumn: row.REFERENCED_COLUMN_NAME as string
-    }));
+    return _.map(result, (row: any): Constraint => {
+        let type: ConstraintType = 'foreign';
+
+        if (row.CONSTRAINT_NAME === 'PRIMARY')
+            type = 'primary';
+        else if (row.CONSTRAINT_NAME === row.COLUMN_NAME)
+            type = 'unique';
+
+        return {
+            type,
+            localColumn: row.COLUMN_NAME as string,
+            foreignTable: row.REFERENCED_TABLE_NAME as string,
+            foreignColumn: row.REFERENCED_COLUMN_NAME as string
+        };
+    });
 }
 
 export async function insertRow(table: string, data: SqlRow) {
