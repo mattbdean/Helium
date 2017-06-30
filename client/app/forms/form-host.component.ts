@@ -32,54 +32,14 @@ export class FormHostComponent implements OnInit {
     public ngOnInit() {
         this.route.params.subscribe(async (params: Params) => {
             this.name = params.name;
-            const meta: TableMeta = await this.backend.meta(this.name);
-            const config: FieldConfig[] = meta.headers.map((h: TableHeader): FieldConfig => {
-                const type = h.enumValues !== null ? 'select' : 'input';
+            let meta: TableMeta;
+            try {
+                meta = await this.backend.meta(this.name);
+            } catch (e) {
+                meta = null;
+            }
 
-                // Default to string input
-                let subtype = 'text';
-                // 'boolean' type is usually alias to tinyint(1)
-                if (h.rawType === 'tinyint(1)') subtype = 'checkbox';
-                // numerical
-                else if (h.isNumber) subtype = 'number';
-                // Dates and timestamps
-                else if (h.type === 'date') subtype = 'date';
-                else if (h.type === 'timestamp') subtype = 'datetime-local';
-
-                const validation: ValidatorFn[] = [];
-                if (!h.nullable) validation.push(Validators.required);
-
-                let fetchAutocompleteValues: () => Promise<any[]>;
-
-                const constraint = _.find(meta.constraints, (c) => c.localColumn === h.name);
-                if (constraint && constraint.type === 'foreign') {
-                    fetchAutocompleteValues = () =>
-                        this.backend.columnValues(constraint.foreignTable, constraint.foreignColumn);
-                }
-
-                return {
-                    name: h.name,
-                    label: h.name,
-                    type,
-                    subtype,
-                    options: h.enumValues,
-                    validation,
-                    // hint: h.comment
-                    fetchAutocompleteValues
-                };
-            });
-
-            // Add the submit button
-            config.push({
-                type: 'submit',
-                label: 'SUBMIT',
-                name: 'submit',
-                // Set initially disabled, will become enabled again once the
-                // form is valid
-                disabled: true
-            });
-
-            this.config = config;
+            this.config = meta === null ? null : this.createConfigFor(meta);
         });
     }
 
@@ -100,5 +60,54 @@ export class FormHostComponent implements OnInit {
         }
 
         this.snackBar.open(message, undefined, { duration: 3000 });
+    }
+
+    private createConfigFor(meta: TableMeta): FieldConfig[] {
+        const config = meta.headers.map((h: TableHeader): FieldConfig => {
+            const type = h.enumValues !== null ? 'select' : 'input';
+
+            // Default to string input
+            let subtype = 'text';
+            // 'boolean' type is usually alias to tinyint(1)
+            if (h.rawType === 'tinyint(1)') subtype = 'checkbox';
+            // numerical
+            else if (h.isNumber) subtype = 'number';
+            // Dates and timestamps
+            else if (h.type === 'date') subtype = 'date';
+            else if (h.type === 'timestamp') subtype = 'datetime-local';
+
+            const validation: ValidatorFn[] = [];
+            if (!h.nullable) validation.push(Validators.required);
+
+            let fetchAutocompleteValues: () => Promise<any[]>;
+
+            const constraint = _.find(meta.constraints, (c) => c.localColumn === h.name);
+            if (constraint && constraint.type === 'foreign') {
+                fetchAutocompleteValues = () =>
+                    this.backend.columnValues(constraint.foreignTable, constraint.foreignColumn);
+            }
+
+            return {
+                name: h.name,
+                label: h.name,
+                type,
+                subtype,
+                options: h.enumValues,
+                validation,
+                // hint: h.comment
+                fetchAutocompleteValues
+            };
+        });
+        // Add the submit button
+        config.push({
+            type: 'submit',
+            label: 'SUBMIT',
+            name: 'submit',
+            // Set initially disabled, will become enabled again once the
+            // form is valid
+            disabled: true
+        });
+
+        return config;
     }
 }
