@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { MdNativeDateModule, MdSidenavModule, MdToolbarModule } from '@angular/material';
+import {
+    MdButtonModule,
+    MdIconModule,
+    MdNativeDateModule,
+    MdSidenavModule,
+    MdToolbarModule
+} from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -22,6 +28,9 @@ import 'normalize.css/normalize.css';
         BrowserAnimationsModule,
         CoreModule,
         CommonModule,
+
+        MdButtonModule,
+        MdIconModule,
         MdNativeDateModule,
         MdToolbarModule,
         MdSidenavModule,

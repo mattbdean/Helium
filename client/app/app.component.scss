@@ -23,20 +23,49 @@ md-sidenav {
 }
 
 .sidenav-list {
+  $normal-color: rgba(0, 0, 0, 0.54);
+
   margin: 0;
   padding: 0;
 
   list-style-type: none;
 
   li.table-ref {
-    display: flex;
-
     $border: 1px rgba(0, 0, 0, 0.06) solid;
+    display: flex;
+    align-items: center;
+    min-width: 200px;
+
     border-bottom: $border;
+
+    transition: all 0.3s;
+
+    &:hover {
+      background-color: #eaeaea;
+    }
 
     &:first-child {
       border-top: $border;
     }
+  }
+
+  .add-data-icon, .table-name {
+    padding: 20px 16px;
+    transition: all 0.3s;
+
+    &:hover {
+      color: $primary-color;
+    }
+  }
+
+  .active-router-link {
+    // A bit hacky
+    color: $primary-color-dark !important;
+    font-weight: bold;
+  }
+
+  .table-name {
+    flex-grow: 1;
   }
 
   li.header {
@@ -49,29 +78,11 @@ md-sidenav {
   }
 
   a {
-    $normal-color: rgba(0, 0, 0, 0.54);
-
     color: $normal-color;
-    line-height: 47px;
-    flex-grow: 1;
     text-decoration: none;
-    padding: 6px 16px;
-    min-width: 200px;
-
-    transition: all 0.3s;
 
     &:visited {
       color: $normal-color;
-    }
-
-    &:hover {
-      color: $primary-color;
-      background-color: #eaeaea;
-    }
-
-    &.active-router-link {
-      color: $primary-color-dark;
-      font-weight: bold;
     }
   }
 }

@@ -4,13 +4,8 @@
         <ul class="sidenav-list">
             <li class="header">Tables</li>
             <li class="table-ref" *ngFor="let table of tables">
-                <a [routerLink]="['/tables', table]" routerLinkActive="active-router-link">{{ table }}</a>
-            </li>
-        </ul>
-        <ul class="sidenav-list">
-            <li class="header">Forms</li>
-            <li class="table-ref" *ngFor="let table of tables">
-                <a [routerLink]="['/forms', table]" routerLinkActive="active-router-link">{{ table }}</a>
+                <a class="table-name" [routerLink]="['/tables', table]" routerLinkActive="active-router-link">{{ table }}</a>
+                <a class="material-icons add-data-icon" [routerLink]="['/forms', table]" routerLinkActive="active-router-link">add</a>
             </li>
         </ul>
     </md-sidenav>
