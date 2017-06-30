@@ -312,6 +312,22 @@ describe('API v1', () => {
         );
     });
 
+    describe('GET /api/v1/:name/column/:col', () => {
+        it('should return distinct values for that column in ABC order', () => {
+            return request.basic('/tables/foo/column/bar', 200, (data: any[]) => {
+                expect(data).to.deep.equal([0, 5, 10]);
+            });
+        });
+
+        it('should 400 when given an invalid table name', () => {
+            return request.basic('/tables/blablabla/column/bar', 400);
+        });
+
+        it('should 400 when given an invalid column name', () => {
+            return request.basic('/tables/foo/column/blablabla', 400);
+        });
+    });
+
     const fetchMetadata = async (table: string): Promise<TableMeta> => {
         const [headers, count, constraints] = await Promise.all([
             fetchTableHeaders(table),

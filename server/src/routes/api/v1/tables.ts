@@ -168,6 +168,41 @@ export function tables(): RouteModule {
         }
     });
 
+    r.get('/:name/column/:col', async (req, res) => {
+        if (!verifyTableName(req.params.name, res)) return;
+
+        try {
+            res.json(await fetchDistinctValues(req.params.name, req.params.col));
+        } catch (e) {
+            const input = {
+                name: req.params.name,
+                col: req.params.col
+            };
+
+            // Try to handle any errors thrown while fetching the data
+            if (e.code) {
+                switch (e.code) {
+                    case 'ER_BAD_FIELD_ERROR':
+                        return sendError(res, 400, {
+                            message: 'no such column',
+                            input
+                        });
+                    case 'ER_NO_SUCH_TABLE':
+                        return sendError(res, 400, {
+                            message: 'no such table',
+                            input
+                        });
+                }
+            }
+
+            // Unknown error, fall back to 500 Internal Server Error
+            return internalError(res, e, {
+                message: 'Could not execute request',
+                input
+            });
+        }
+    });
+
     const internalError = (res: Response, err: Error, data: ErrorResponse) => {
         debug(err);
         const responseData = data as any;
@@ -323,6 +358,24 @@ export async function fetchConstraints(table: string): Promise<Constraint[]> {
             foreignColumn: row.REFERENCED_COLUMN_NAME as string
         };
     });
+}
+
+export async function fetchDistinctValues(table: string, col: string): Promise<any[]> {
+    const conn = Database.get().conn;
+
+    // SELECT DISTINCT $col FROM $table ORDER BY $col ASC
+    const query = squel
+        .select()
+        .distinct()
+        .from(conn.escapeId(table))
+        .field(conn.escapeId(col))
+        .order(conn.escapeId(col));
+
+    const result = await conn.execute(query.toString());
+    // Each row is a document mapping the column to its value. In this case, we
+    // only have one item in the row, flatten the array of objects into an array
+    // of each value
+    return _.map(result[0], (row) => row[col]);
 }
 
 export async function insertRow(table: string, data: SqlRow) {
