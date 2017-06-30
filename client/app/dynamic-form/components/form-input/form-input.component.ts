@@ -8,6 +8,7 @@ import { FieldConfig } from '../../field-config.interface';
     templateUrl: 'form-input.component.html',
     styles: [`
         md-input-container { width: 100%; }
+        :host >>> .mat-checkbox-layout { padding-bottom: 10px; }
     `]
 })
 export class FormInputComponent implements OnInit {

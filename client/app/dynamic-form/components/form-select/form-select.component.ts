@@ -11,7 +11,7 @@ import { FormGroup } from '@angular/forms';
                 </md-option>
             </md-select>
         </div>`,
-    styles: [`md-select { width: 100%; }`]
+    styles: [`md-select { width: 100%; padding: 10px 0; }`]
 })
 export class FormSelectComponent {
     public config: any;
