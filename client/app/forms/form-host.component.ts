@@ -3,6 +3,8 @@ import { ValidatorFn, Validators } from '@angular/forms';
 import { MdSnackBar } from '@angular/material';
 import { ActivatedRoute, Params } from '@angular/router';
 
+import * as _ from 'lodash';
+
 import { TableService } from '../core/table.service';
 import { DynamicFormComponent } from '../dynamic-form/dynamic-form.component';
 import { FieldConfig } from '../dynamic-form/field-config.interface';
@@ -47,6 +49,14 @@ export class FormHostComponent implements OnInit {
                 const validation: ValidatorFn[] = [];
                 if (!h.nullable) validation.push(Validators.required);
 
+                let fetchAutocompleteValues: () => Promise<any[]>;
+
+                const constraint = _.find(meta.constraints, (c) => c.localColumn === h.name);
+                if (constraint && constraint.type === 'foreign') {
+                    fetchAutocompleteValues = () =>
+                        this.backend.columnValues(constraint.foreignTable, constraint.foreignColumn);
+                }
+
                 return {
                     name: h.name,
                     label: h.name,
@@ -55,6 +65,7 @@ export class FormHostComponent implements OnInit {
                     options: h.enumValues,
                     validation,
                     // hint: h.comment
+                    fetchAutocompleteValues
                 };
             });
 

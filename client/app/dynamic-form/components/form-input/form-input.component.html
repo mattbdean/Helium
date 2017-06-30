@@ -11,10 +11,24 @@
         <md-datepicker #datepicker></md-datepicker>
     </div>
     <div *ngSwitchDefault>
-        <md-input-container>
-            <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput>
-            <md-error>This field is required</md-error>
-            <md-hint *ngIf="config.hint" align="start">{{ config.hint }}</md-hint>
-        </md-input-container>
+        <div *ngIf="config.fetchAutocompleteValues; else noAutocomplete">
+            <md-input-container>
+                <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput [mdAutocomplete]="auto">
+            </md-input-container>
+
+            <md-autocomplete #auto="mdAutocomplete">
+                <md-option *ngFor="let option of filteredValues | async" [value]="option">
+                    {{ option }}
+                </md-option>
+            </md-autocomplete>
+        </div>
+
+        <ng-template #noAutocomplete>
+            <md-input-container>
+                <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput>
+                <md-error>This field is required</md-error>
+                <md-hint *ngIf="config.hint" align="start">{{ config.hint }}</md-hint>
+            </md-input-container>
+        </ng-template>
     </div>
 </div>

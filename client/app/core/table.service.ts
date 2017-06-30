@@ -31,6 +31,10 @@ export class TableService {
         }).then((data: PaginatedResponse<SqlRow[]>) => data.data);
     }
 
+    public columnValues(table: string, column: string): Promise<any[]> {
+        return this.get(`/tables/${encodeURIComponent(table)}/column/${encodeURIComponent(column)}`);
+    }
+
     /**
      * Attempts to add a row to the database for a given table. The table must
      * exist and the body must have the shape of a SqlRow.

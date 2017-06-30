@@ -42,8 +42,8 @@ CREATE TABLE foo(
 );
 
 # Insert values for foreign key tables
-INSERT INTO bar VALUES (0), (5), (10);
-INSERT INTO baz VALUES (1), (6), (11);
+INSERT INTO bar VALUES (0), (5), (10), (15), (20), (25), (30), (35), (40);
+INSERT INTO baz VALUES (1), (6), (11), (16), (21), (26), (31), (36), (41);
 
 # Insert values for foo
 INSERT INTO foo VALUES

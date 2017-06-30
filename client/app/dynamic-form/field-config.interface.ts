@@ -27,4 +27,7 @@ export interface FieldConfig {
 
     /** Values for enumerated fields */
     options?: string[];
+
+    /** If type is 'input', will be used to fetch any/all values for autocomplete */
+    fetchAutocompleteValues?: () => Promise<any[]>;
 }
