@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Application } from 'express';
 import * as _ from 'lodash';
+import * as moment from 'moment';
 import { Response } from 'supertest';
 
 import {
@@ -129,7 +130,7 @@ describe('API v1', () => {
         });
     });
 
-    describe.only('PUT /api/v1/tables/:name', () => {
+    describe('PUT /api/v1/tables/:name', () => {
         let lastPk;
         const createSampleData = (): SqlRow => {
             if (lastPk === undefined)
@@ -171,19 +172,33 @@ describe('API v1', () => {
             return fromDb!!;
         };
 
+        /**
+         * Removes any mention of time from this date. Sets hours, minutes,
+         * seconds, and milliseconds to 0 and returns a Moment instance.
+         */
+        const dateFloor = (date: moment.Moment | Date | string | number): moment.Moment => {
+            return moment(date).hours(0).minutes(0).seconds(0).milliseconds(0);
+        };
+
         it('should insert new data', async () => {
             const data = createSampleData();
-            console.log(data.foo_pk);
-            console.log(data.date);
 
             const fromDb = await insertAndRetrieve(data);
             expect(fromDb).to.exist;
             // Make sure it preserves the primary key
             expect(fromDb.foo_pk).to.equal(data.foo_pk);
             // Make sure dates and times don't get jumbled
-            console.log(fromDb);
-            expect(new Date(fromDb.date)).to.equal(data.date);
-            expect(new Date(fromDb.time)).to.equal(data.time);
+
+            // MySQL doesn't store any data for time for 'date' columns, so we
+            // have to remove any traces of it from the original date before
+            // making expectations
+            expect(moment(fromDb.date).toISOString())
+                .to.equal(dateFloor(data.date).toISOString());
+
+            // Timestamps should have no problem with storing times, so we can
+            // compare their values directly as ISO-formatted datetime strings.
+            expect(new Date(fromDb.time).toISOString())
+                .to.equal(data.time.toISOString());
         });
     });
 

@@ -360,26 +360,25 @@ const prepareForInsert = async (table: string, row: SqlRow): Promise<PreparedCel
 };
 
 const prepareCell = (header: TableHeader, value: any): PreparedCell => {
-    const safe = (val: any): PreparedCell => ({
+    const quoted = (val: any): PreparedCell => ({
         key: header.name,
         value: val,
         dontQuote: false 
     });
     if (header.type === 'date' || header.type === 'timestamp') {
-        console.log('recieved value', value);
         return {
             key: header.name,
             value: `FROM_UNIXTIME(${new Date(value).getTime() / 1000})`,
             dontQuote: true
         };
     } else if (header.rawType === 'tinyint(1)')
-        return safe(value === true || value === 'true' || value === 1);
+        return quoted(value === true || value === 'true' || value === 1);
     else if (header.numericScale && header.numericScale === 0)
-        return safe(parseInt(value, 10));
+        return quoted(parseInt(value, 10));
     else if (header.isNumber)
-        return safe(parseFloat(value));
+        return quoted(parseFloat(value));
     else
-        return safe(value);
+        return quoted(value);
 };
 
 const isNumberType = (type: string): boolean =>
