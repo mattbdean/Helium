@@ -80,4 +80,4 @@ export interface Constraint {
     foreignColumn: string | null;
 }
 
-export type ConstraintType = 'primary' | 'foreign';
+export type ConstraintType = 'primary' | 'foreign' | 'unique';
