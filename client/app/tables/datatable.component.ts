@@ -1,5 +1,5 @@
 import {
-    Component, Input, OnChanges, SimpleChanges
+    Component, Input, OnChanges, SimpleChanges, TemplateRef, ViewChild
 } from '@angular/core';
 import { Response } from '@angular/http';
 
@@ -22,7 +22,8 @@ interface Page {
 
 @Component({
     selector: 'datatable',
-    templateUrl: 'datatable.component.html'
+    templateUrl: 'datatable.component.html',
+    styleUrls: ['datatable.component.scss']
 })
 export class DatatableComponent implements OnChanges {
     /** Time in milliseconds before showing a loading bar on the table */
@@ -37,6 +38,8 @@ export class DatatableComponent implements OnChanges {
     };
     public tableHeaders: DataTableHeader[];
     public exists: boolean = false;
+
+    @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
 
     /** If this component has had time to get itself together yet */
     public initialized: boolean = false;
@@ -134,7 +137,11 @@ export class DatatableComponent implements OnChanges {
     }
 
     private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
-        return _.sortBy(_.map(headers, (h) => ({ name: h.name, prop: h.name })), 'ordinalPosition');
+        return _.sortBy(_.map(headers, (h) => ({ 
+            name: h.name,
+            prop: h.name,
+            cellTemplate: this.cellTemplate
+        })), 'ordinalPosition');
     }
 
     private formatRows(headers: TableHeader[], rows: SqlRow[]): SqlRow[] {

@@ -20,6 +20,11 @@
                    (page)="setPage($event)"
                    (sort)="onSort($event)">
     </ngx-datatable>
+
+    <ng-template #cellTemplate let-row="row" let-value="value">
+        <span class="null-cell" *ngIf="value === ''">null</span>
+        <span *ngIf="value !== ''">{{ value }}</span>
+    </ng-template>
 </div>
 
 <p [hidden]="exists">Table not found</p>
