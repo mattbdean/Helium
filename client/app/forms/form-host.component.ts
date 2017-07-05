@@ -95,7 +95,8 @@ export class FormHostComponent implements OnInit {
                 options: h.enumValues,
                 validation,
                 // hint: h.comment
-                fetchAutocompleteValues
+                fetchAutocompleteValues,
+                required: !h.nullable
             };
         });
         // Add the submit button

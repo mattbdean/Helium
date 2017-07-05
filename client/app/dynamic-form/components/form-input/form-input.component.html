@@ -4,7 +4,7 @@
     </div>
     <div *ngSwitchCase="'date'">
         <md-input-container>
-            <input mdInput [formControlName]="config.name" [mdDatepicker]="datepicker" [placeholder]="config.label">
+            <input mdInput [formControlName]="config.name" [mdDatepicker]="datepicker" [placeholder]="config.label" [required]="config.required">
             <button mdSuffix [mdDatepickerToggle]="datepicker"></button>
             <md-error>This field is required</md-error>
         </md-input-container>
@@ -13,7 +13,7 @@
     <div *ngSwitchDefault>
         <div *ngIf="config.fetchAutocompleteValues; else noAutocomplete">
             <md-input-container>
-                <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput [mdAutocomplete]="auto">
+                <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput [mdAutocomplete]="auto" [required]="config.required">
             </md-input-container>
 
             <md-autocomplete #auto="mdAutocomplete">
@@ -25,7 +25,7 @@
 
         <ng-template #noAutocomplete>
             <md-input-container>
-                <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput>
+                <input [type]="config.subtype" [formControlName]="config.name" [placeholder]="config.label" mdInput [required]="config.required">
                 <md-error>This field is required</md-error>
                 <md-hint *ngIf="config.hint" align="start">{{ config.hint }}</md-hint>
             </md-input-container>

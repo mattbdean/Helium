@@ -5,7 +5,7 @@ import { FormGroup } from '@angular/forms';
     selector: 'form-select',
     template: `
         <div class="dynamic-field form-select" [formGroup]="group">
-            <md-select [placeholder]="config.label" [formControlName]="config.name">
+            <md-select [placeholder]="config.label" [formControlName]="config.name" [required]="config.required">
                 <md-option *ngFor="let option of config.options" [value]="option">
                     {{ option }}
                 </md-option>

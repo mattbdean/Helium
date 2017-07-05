@@ -19,6 +19,9 @@ export interface FieldConfig {
     /** Initial value of the field, if any */
     value?: any;
 
+    /** If this field is required to succesfully submit the form */
+    required?: boolean;
+
     /** If this field is disabled or not */
     disabled?: boolean;
 
