@@ -5,6 +5,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 
 import * as _ from 'lodash';
 
+import { BOOLEAN_TYPE } from '../core/constants';
 import { TableService } from '../core/table.service';
 import { DynamicFormComponent } from '../dynamic-form/dynamic-form.component';
 import { FieldConfig } from '../dynamic-form/field-config.interface';
@@ -70,8 +71,8 @@ export class FormHostComponent implements OnInit {
 
             // Default to string input
             let subtype = 'text';
-            // 'boolean' type is usually alias to tinyint(1)
-            if (h.rawType === 'tinyint(1)') {
+
+            if (h.rawType === BOOLEAN_TYPE) {
                 subtype = 'checkbox';
                 // For checkboxes we MUST specify an initial value. If we don't,
                 // submitting the form without touching the control will result

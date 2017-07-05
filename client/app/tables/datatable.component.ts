@@ -7,6 +7,7 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import { SqlRow, TableHeader, TableMeta } from '../common/responses';
+import { BOOLEAN_TYPE } from '../core/constants';
 import { TableService } from '../core/table.service';
 
 interface DataTableHeader {
@@ -157,6 +158,9 @@ export class DatatableComponent implements OnChanges {
                     row[headerName] = this.formatMoment(row[headerName], 'l');
                 if (header.type === 'timestamp' || header.type === 'datetime')
                     row[headerName] = this.formatMoment(row[headerName], 'LLL');
+                if (header.rawType === BOOLEAN_TYPE)
+                    // Resolve either the 1 or 0 to its boolean value
+                    row[headerName] = !!row[headerName];
             }
         }
 
