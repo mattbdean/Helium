@@ -154,12 +154,23 @@ export class DatatableComponent implements OnChanges {
                 const header = _.find(headers, (h) => h.name === headerName);
                 // Use moment to format dates and times in the default format
                 if (header.type === 'date')
-                    row[headerName] = moment(row[headerName]).format('l');
+                    row[headerName] = this.formatMoment(row[headerName], 'l');
                 if (header.type === 'timestamp' || header.type === 'datetime')
-                    row[headerName] = moment(row[headerName]).format('LLL');
+                    row[headerName] = this.formatMoment(row[headerName], 'LLL');
             }
         }
 
         return copied;
+    }
+
+    /**
+     * Tries to format a given date into the format given. If the source is not
+     * a valid date, returns null.
+     * 
+     * @param format Any format accepted by Moment
+     */
+    private formatMoment(source: string, format: string): string | null {
+        const m = moment(source);
+        return m.isValid() ? m.format(format) : null;
     }
 }
