@@ -1,5 +1,5 @@
 <div [hidden]="!exists">
-    <h2>{{ name }}</h2>
+    <h1 class="mat-display-1">{{ name }}</h1>
 
     <ngx-datatable class="material"
                    [hidden]="!exists"
@@ -44,4 +44,8 @@
     </ng-template>
 </div>
 
-<p [hidden]="exists">Table not found</p>
+<div [hidden]="exists" class="not-found-container">
+    <h1 class="mat-headline">Table not found</h1>
+    <p>Pick one out from the sidebar</p>
+</div>
+
