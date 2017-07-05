@@ -15,3 +15,12 @@
   display: flex;
   min-height: 35px;
 }
+
+.fk-header-link {
+  $color: rgba(0, 0, 0, 0.54);
+  color: $color;
+
+  &:visited {
+    color: $color;
+  }
+}

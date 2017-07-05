@@ -28,7 +28,13 @@
                 <span class="header-icon" *ngSwitchCase="'unique'" [inlineSVG]="snowflakeIcon"></span>
                 <span class="header-icon" *ngSwitchCase="'foreign'" [inlineSVG]="keyChangeIcon"></span>
             </span>
-            <span>{{ column.name }}</span>
+            <span *ngIf="constraintMapping[column.name]?.type === 'foreign'; else notFK">
+                <a class="fk-header-link" [routerLink]="['/tables', constraintMapping[column.name].foreignTable]">{{ column.name }}</a>
+            </span>
+
+            <ng-template #notFK>
+                {{ column.name }}
+            </ng-template>
         </span>
     </ng-template>
 
