@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 import { MdSnackBar } from '@angular/material';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import * as _ from 'lodash';
 
@@ -24,6 +24,7 @@ export class FormHostComponent implements OnInit {
     public constructor(
         private backend: TableService,
         private route: ActivatedRoute,
+        private router: Router,
         private snackBar: MdSnackBar
     ) { }
 
@@ -45,22 +46,25 @@ export class FormHostComponent implements OnInit {
     }
 
     public async onFormSubmitted(form) {
-        let message: string;
         try {
             await this.backend.submitRow(this.name, form);
             this.form.form.reset();
-            message = "Created new row";
+            const ref = this.snackBar.open('Created new row', 'View', { duration: 3000 });
+            ref.onAction().subscribe(() => {
+                this.router.navigate(['/tables', this.name]);
+            });
         } catch (e) {
-            message = "Unable add row";
+            let message = 'Unable add row';
             
             // If the error originated from a bad HTTP request, the TableService
             // would have throw the response body, which would have the shape of
             // ErrorResponse
             if (e.message)
                 message += ` (${e.message})`;
+            
+            const ref = this.snackBar.open(message, "OK", { duration: 20000 });
+            ref.onAction().subscribe(() => { ref.dismiss(); });
         }
-
-        this.snackBar.open(message, undefined, { duration: 3000 });
     }
 
     private createConfigFor(meta: TableMeta): FieldConfig[] {
