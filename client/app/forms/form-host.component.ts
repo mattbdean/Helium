@@ -66,15 +66,27 @@ export class FormHostComponent implements OnInit {
         const config = meta.headers.map((h: TableHeader): FieldConfig => {
             const type = h.enumValues !== null ? 'select' : 'input';
 
+            let initialValue: undefined | any;
+
             // Default to string input
             let subtype = 'text';
             // 'boolean' type is usually alias to tinyint(1)
-            if (h.rawType === 'tinyint(1)') subtype = 'checkbox';
-            // numerical
-            else if (h.isNumber) subtype = 'number';
-            // Dates and timestamps
-            else if (h.type === 'date') subtype = 'date';
-            else if (h.type === 'timestamp') subtype = 'datetime-local';
+            if (h.rawType === 'tinyint(1)') {
+                subtype = 'checkbox';
+                // For checkboxes we MUST specify an initial value. If we don't,
+                // submitting the form without touching the control will result
+                // in an undefined value, instead of false, like the user likely
+                // assumes it will be.
+                initialValue = false;
+            } else if (h.isNumber) {
+                // Numerical
+                subtype = 'number';
+            } else if (h.type === 'date') {
+                // Dates and timestamp
+                subtype = 'date';
+            } else if (h.type === 'timestamp') {
+                subtype = 'datetime-local';
+            }
 
             const validation: ValidatorFn[] = [];
             if (!h.nullable) validation.push(Validators.required);
@@ -96,7 +108,8 @@ export class FormHostComponent implements OnInit {
                 validation,
                 // hint: h.comment
                 fetchAutocompleteValues,
-                required: !h.nullable
+                required: !h.nullable,
+                value: initialValue
             };
         });
         // Add the submit button
