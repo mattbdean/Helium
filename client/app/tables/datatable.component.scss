@@ -5,3 +5,13 @@
   padding: 3px;
   border-radius: 4px;
 }
+
+.header-icon {
+  fill: rgba(0, 0, 0, 0.54);
+  padding-right: 7px;
+}
+
+.header-container {
+  display: flex;
+  min-height: 35px;
+}

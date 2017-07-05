@@ -1,14 +1,19 @@
 import {
-    Component, Input, OnChanges, SimpleChanges, TemplateRef, ViewChild
+    Component, Input, OnChanges, OnInit, SimpleChanges, TemplateRef, ViewChild
 } from '@angular/core';
 import { Response } from '@angular/http';
+import { MdIconRegistry } from '@angular/material';
 
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
-import { SqlRow, TableHeader, TableMeta } from '../common/responses';
+import { Constraint, SqlRow, TableHeader, TableMeta } from '../common/responses';
 import { BOOLEAN_TYPE } from '../core/constants';
 import { TableService } from '../core/table.service';
+
+interface ConstraintMapping {
+    [headerName: string]: Constraint;
+}
 
 interface DataTableHeader {
     name: string;
@@ -26,9 +31,13 @@ interface Page {
     templateUrl: 'datatable.component.html',
     styleUrls: ['datatable.component.scss']
 })
-export class DatatableComponent implements OnChanges {
+export class DatatableComponent implements OnInit, OnChanges {
     /** Time in milliseconds before showing a loading bar on the table */
     private static readonly LOADING_DELAY = 200;
+
+    private snowflakeIcon = require('../../assets/snowflake.svg');
+    private keyIcon = require('../../assets/key.svg');
+    private keyChangeIcon = require('../../assets/key-change.svg');
 
     @Input()
     public name: string;
@@ -39,7 +48,9 @@ export class DatatableComponent implements OnChanges {
     };
     public tableHeaders: DataTableHeader[];
     public exists: boolean = false;
+    public constraintMapping: ConstraintMapping = {};
 
+    @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
 
     /** If this component has had time to get itself together yet */
@@ -55,8 +66,13 @@ export class DatatableComponent implements OnChanges {
     };
 
     constructor(
-        private backend: TableService
+        private backend: TableService,
+        private iconRegistry: MdIconRegistry
     ) {}
+
+    public ngOnInit(): void {
+        this.iconRegistry.addSvgIcon('snowflake', require('../../assets/snowflake.svg'));
+    }
 
     public async ngOnChanges(changes: SimpleChanges) {
         try {
@@ -64,6 +80,7 @@ export class DatatableComponent implements OnChanges {
                 this.sort = undefined;
                 this.meta = await this.backend.meta(this.name);
                 this.tableHeaders = this.createTableHeaders(this.meta.headers);
+                this.constraintMapping = this.createConstraintMapping(this.meta.constraints);
                 this.exists = true;
                 // Set the initial page now that we have some data
                 return this.setPage({ offset: 0 }, false);
@@ -141,8 +158,16 @@ export class DatatableComponent implements OnChanges {
         return _.sortBy(_.map(headers, (h) => ({ 
             name: h.name,
             prop: h.name,
-            cellTemplate: this.cellTemplate
+            cellTemplate: this.cellTemplate,
+            headerTemplate: this.headerTemplate
         })), 'ordinalPosition');
+    }
+
+    private createConstraintMapping(constraints: Constraint[]): ConstraintMapping {
+        const vals: ConstraintMapping = {};
+        for (const c of constraints)
+            vals[c.localColumn] = c;
+        return vals;
     }
 
     private formatRows(headers: TableHeader[], rows: SqlRow[]): SqlRow[] {
