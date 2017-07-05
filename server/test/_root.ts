@@ -26,7 +26,9 @@ const createEnvConfig = (): DbConf => {
     const keys = ["host", "user", "password", "database"];
     const conf: DbConf = {};
     for (const key of keys) {
-        conf[key] = process.env[`TEST_${key.toUpperCase()}`];
+        const prop = process.env[`TEST_${key.toUpperCase()}`];
+        if (prop !== undefined)
+            conf[key] = prop;
     }
     return conf;
 };
