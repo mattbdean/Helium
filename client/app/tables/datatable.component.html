@@ -24,9 +24,13 @@
     <ng-template #headerTemplate let-column="column">
         <span class="header-container">
             <span [ngSwitch]="constraintMapping[column.name]?.type">
-                <span class="header-icon" *ngSwitchCase="'primary'" [inlineSVG]="keyIcon"></span>
-                <span class="header-icon" *ngSwitchCase="'unique'" [inlineSVG]="snowflakeIcon"></span>
-                <span class="header-icon" *ngSwitchCase="'foreign'" [inlineSVG]="keyChangeIcon"></span>
+                <span class="header-icon" *ngSwitchCase="'primary'" [inlineSVG]="keyIcon" title="this column is a primary key"></span>
+                <span class="header-icon" *ngSwitchCase="'unique'" [inlineSVG]="snowflakeIcon" title="this column contains only unique values"></span>
+                <span class="header-icon"
+                    *ngSwitchCase="'foreign'"
+                    [inlineSVG]="keyChangeIcon"
+                    [title]="'this column references the table ' + constraintMapping[column.name].foreignTable + ' (column ' + constraintMapping[column.name].foreignColumn + ')'">
+                </span>
             </span>
             <span *ngIf="constraintMapping[column.name]?.type === 'foreign'; else notFK">
                 <a class="fk-header-link" [routerLink]="['/tables', constraintMapping[column.name].foreignTable]">{{ column.name }}</a>
