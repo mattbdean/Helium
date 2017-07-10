@@ -31,10 +31,10 @@ interface Page {
     templateUrl: 'datatable.component.html',
     styleUrls: ['datatable.component.scss']
 })
-export class DatatableComponent implements OnInit, OnChanges {
+export class DatatableComponent implements OnChanges {
     /** Time in milliseconds before showing a loading bar on the table */
     private static readonly LOADING_DELAY = 200;
-
+    
     private snowflakeIcon = require('../../assets/snowflake.svg');
     private keyIcon = require('../../assets/key.svg');
     private keyChangeIcon = require('../../assets/key-change.svg');
@@ -47,17 +47,19 @@ export class DatatableComponent implements OnInit, OnChanges {
         constraints: []
     };
     public tableHeaders: DataTableHeader[];
-    public exists: boolean = false;
     public constraintMapping: ConstraintMapping = {};
 
     @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
 
-    /** If this component has had time to get itself together yet */
-    public initialized: boolean = false;
+    /** True if this component has tried to access the table and found data */
+    public exists: boolean = true;
+
+    /** True if this component is fetching new data */
+    public loading: boolean = true;
+
     public limit: number = 25;
     public sort: string;
-    public loading: boolean = false;
 
     public page: Page = {
         number: -1,
@@ -69,10 +71,6 @@ export class DatatableComponent implements OnInit, OnChanges {
         private backend: TableService,
         private iconRegistry: MdIconRegistry
     ) {}
-
-    public ngOnInit(): void {
-        this.iconRegistry.addSvgIcon('snowflake', require('../../assets/snowflake.svg'));
-    }
 
     public async ngOnChanges(changes: SimpleChanges) {
         try {
@@ -94,10 +92,6 @@ export class DatatableComponent implements OnInit, OnChanges {
 
             // Other error, rethrow it
             throw e;
-        } finally {
-            // Whether the table exists or not, let the view know that we're
-            // done loading
-            this.initialized = true;
         }
     }
 
@@ -138,12 +132,7 @@ export class DatatableComponent implements OnInit, OnChanges {
         });
     }
 
-    /**
-     * This function executes some function, waiting `LOADING_DELAY`
-     * milliseconds before settings `this.loading` to true. `this.loading` is
-     * set to false immediately after the Promise has resolved.
-     */
-    private showLoading(doWork: () => Promise<void>) {
+    private async showLoading(doWork: () => Promise<void>) {
         const timeout = setTimeout(() => {
             this.loading = true;
         }, DatatableComponent.LOADING_DELAY);

@@ -1,3 +1,4 @@
+<md-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></md-progress-bar>
 <div [hidden]="!exists">
     <h1 class="mat-display-1">{{ name }}</h1>
 
@@ -11,7 +12,6 @@
                    [externalSorting]="true"
                    [footerHeight]="50"
                    [limit]="limit"
-                   [loadingIndicator]="loading"
                    [headerHeight]="40"
                    [offset]="page.number"
                    [rowHeight]="'auto'"
