@@ -9,11 +9,14 @@
 .header-icon {
   fill: rgba(0, 0, 0, 0.54);
   padding-right: 7px;
+
+  position: relative;
+  top: 5px;
 }
 
 .header-container {
-  display: flex;
   min-height: 35px;
+  cursor: pointer;
 }
 
 .fk-header-link {

@@ -12,7 +12,7 @@
                    [externalSorting]="true"
                    [footerHeight]="50"
                    [limit]="limit"
-                   [headerHeight]="40"
+                   [headerHeight]="50"
                    [offset]="page.number"
                    [rowHeight]="'auto'"
                    [rows]="page.data"
@@ -21,8 +21,8 @@
                    (sort)="onSort($event)">
     </ngx-datatable>
 
-    <ng-template #headerTemplate let-column="column">
-        <span class="header-container">
+    <ng-template #headerTemplate let-column="column" let-sort="sortFn">
+        <span class="header-container" (click)="sort()">
             <span [ngSwitch]="constraintMapping[column.name]?.type">
                 <span class="header-icon" *ngSwitchCase="'primary'" [inlineSVG]="keyIcon" title="this column is a primary key"></span>
                 <span class="header-icon" *ngSwitchCase="'unique'" [inlineSVG]="snowflakeIcon" title="this column contains only unique values"></span>
