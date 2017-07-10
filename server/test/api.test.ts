@@ -21,8 +21,16 @@ import { RequestContext } from './api.test.helper';
 // NB: These tests assume that init.sql was run successfully
 ////////////////////////////////////////////////////////////////////////////////
 
-const PRIMARY_TABLE = 'foo';
-const SECONDARY_TABLES = ['bar', 'baz'];
+const ALL_TABLES = [
+    'customer',
+    'organization',
+    'product',
+    'order',
+    'shipment',
+    'datatypeshowcase'
+];
+
+const SHOWCASE_TABLE = 'datatypeshowcase';
 
 describe('API v1', () => {
     let app: Application;
@@ -46,7 +54,7 @@ describe('API v1', () => {
         it('should return an array of strings', () => {
             return request.basic('/tables', 200, (data: string[]) => {
                 expect(Array.isArray(data)).to.be.true;
-                expect(data).to.deep.equal(_.sortBy([PRIMARY_TABLE, ...SECONDARY_TABLES]));
+                expect(data).to.deep.equal(_.sortBy(ALL_TABLES));
             });
         });
     });
@@ -54,14 +62,14 @@ describe('API v1', () => {
     describe('GET /api/v1/tables/:name', () => {
         let meta: TableMeta;
 
-        beforeEach(async () => {
-            meta = await fetchMetadata(PRIMARY_TABLE);
+        before(async () => {
+            meta = await fetchMetadata(SHOWCASE_TABLE);
         });
 
         it('should return an array of SqlRows', () => {
             return request.spec({
                 method: 'GET',
-                relPath: '/tables/' + PRIMARY_TABLE,
+                relPath: '/tables/' + SHOWCASE_TABLE,
                 expectedStatus: 200,
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
                     expect(response.size).to.equal(response.data.length);
@@ -70,7 +78,7 @@ describe('API v1', () => {
                         expect(Object.keys(row)).to.have.lengthOf(meta.headers.length);
 
                         for (const header of meta.headers) {
-                            expect(row[header.name]).to.exist;
+                            expect(row[header.name]).to.not.be.undefined;
                         }
                     }
                 }
@@ -80,7 +88,7 @@ describe('API v1', () => {
         it('should support limiting via query', () => {
             return request.spec({
                 method: 'GET',
-                relPath: '/tables/' + PRIMARY_TABLE,
+                relPath: '/tables/' + SHOWCASE_TABLE,
                 expectedStatus: 200,
                 query: { limit: "2" },
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
@@ -97,10 +105,15 @@ describe('API v1', () => {
                 expect(data).to.deep.equal(_.orderBy(data, [property], [order]));
             };
 
+            // Use the most complex table without any dates for this specific
+            // test
+            const table = 'product';
+            const tableMeta = await fetchMetadata(table);
+
             const doRequest = (header: TableHeader, sort: 'asc' | 'desc'): Promise<void> =>
                 request.spec({
                     method: 'GET',
-                    relPath: `/tables/${encodeURIComponent(PRIMARY_TABLE)}`,
+                    relPath: `/tables/${table}`,
                     expectedStatus: 200,
                     // sort ascending with sort=name, descending with sort=-name
                     query: { sort: (sort === 'desc' ? '-' : '') + header.name },
@@ -110,7 +123,7 @@ describe('API v1', () => {
                     }
                 });
 
-            for (const header of meta.headers) {
+            for (const header of tableMeta.headers) {
                 // Test both ascending and descending
                 await doRequest(header, 'asc');
                 await doRequest(header, 'desc');
@@ -120,7 +133,7 @@ describe('API v1', () => {
         it('should throw a 400 when sorting by a column that doesn\'t exist', async () => {
             return request.spec({
                 method: 'GET',
-                relPath: `/tables/${encodeURIComponent(PRIMARY_TABLE)}`,
+                relPath: `/tables/${encodeURIComponent(SHOWCASE_TABLE)}`,
                 query: { sort: 'foobar' },
                 expectedStatus: 400,
                 validate: (err: ErrorResponse) => {
@@ -137,34 +150,32 @@ describe('API v1', () => {
                 // Generate base PK in the range [100..10,000,000]
                 lastPk = 100 + Math.round((Math.random() * 10000000));
             return {
-                foo_pk: lastPk++,
+                pk: lastPk++,
                 // integer must be unique, create a random value for it
                 integer: Math.round(10000000 * Math.random()),
-                double: 101,
-                boolean: true,
+                double: 101.444,
+                boolean: !!Math.round(Math.random()),
                 date: new Date(), // now
                 time: new Date(1498515312000), // some time in the past
                 enum: 'a',
                 string: 'foo',
-                // Default to valid values for bar and baz
-                bar: 0,
-                baz: 1
+                string_not_null: 'not null string'
             };
         };
 
         const insertAndRetrieve = async (data: SqlRow): Promise<SqlRow> => {
             await request.spec({
                 method: 'PUT',
-                relPath: `/tables/foo`,
+                relPath: `/tables/${SHOWCASE_TABLE}`,
                 expectedStatus: 200,
                 data
             });
 
             const res = await request.spec({
                 method: 'GET',
-                relPath: `/tables/foo`,
+                relPath: `/tables/${SHOWCASE_TABLE}`,
                 expectedStatus: 200,
-                query: { limit: '100', sort: '-foo_pk' }
+                query: { limit: '100', sort: '-pk' }
             });
 
             const body: PaginatedResponse<SqlRow[]> = res.body;
@@ -204,103 +215,103 @@ describe('API v1', () => {
     });
 
     describe('GET /api/v1/tables/:name/meta', () => {
-        it('should return the table metadata', async () => {
-            const res = await request.spec({
-                method: 'GET',
-                relPath: `/tables/${PRIMARY_TABLE}/meta`,
-                expectedStatus: 200
-            });
-
-            const meta: TableMeta = res.body;
-            expect(Array.isArray(meta.headers)).to.be.true;
-            expect(meta.headers).to.have.length.above(0);
-
-            const findHeader = (name: string): TableHeader =>
-                _.find(meta.headers, (h) => h.name === name)!!;
-
-            const expectHeader = (name: string, type: 'textual' | 'numerical' | 'enum') => {
-                const h = findHeader(name);
-                expect(h).to.exist;
-
-                const isNum = type === 'numerical';
-                expect(h.isNumber).to.equal(isNum);
-                expect(h.isTextual).to.equal(!isNum);
-
-                if (isNum) {
-                    expect(h.numericPrecision).to.be.at.least(0);
-
-                    if (h.type !== 'double')
-                        expect(h.numericScale).to.be.at.least(0);
-
-                    expect(h.maxCharacters).to.be.null;
-                    expect(h.charset).to.be.null;
-                    expect(h.enumValues).to.be.null;
-                } else if (type === 'textual') {
-                    // Textual header
-                    expect(h.numericPrecision).to.be.null;
-                    expect(h.numericScale).to.be.null;
-
-                    expect(h.maxCharacters).to.be.above(0);
-                    expect(h.charset).to.not.be.null;
-                } else {
-                    // Enum header
-                    if (type === 'enum') {
-                        expect(Array.isArray(h.enumValues)).to.be.true;
-                        expect(h.enumValues).to.have.length.above(0);
-                    }
-                }
-
-                expect(h.nullable).to.be.a('boolean');
-                expect(h.comment).to.equal(`${h.name} column`);
-            };
-
-            // See init.sql
-            const textual = ['string'];
-            const numerical = ['foo_pk', 'integer', 'double', 'boolean'];
-
-            for (const h of textual) expectHeader(h, 'textual');
-            for (const h of numerical) expectHeader(h, 'numerical');
-
-            expect(findHeader('date').type).to.equal('date');
-            expect(findHeader('time').type).to.equal('timestamp');
+        let meta: TableMeta;
+        before(async () => {
+            const res = await request.basic(`/tables/${SHOWCASE_TABLE}/meta`, 200);
+            meta = res.body;
         });
 
-        it('should return the total amount of rows', () =>
-            request.basic(`/tables/${PRIMARY_TABLE}/meta`, 200, (meta: TableMeta) => {
-                expect(meta.totalRows).to.be.a('number');
-                // It's technically possible for a table to have 0 rows but with
-                // we're assuming our test tables aren't empty
-                expect(meta.totalRows).to.be.above(0);
+        it('should include table headers', () => {
+            expect(meta.headers).to.exist;
+            const headers = meta.headers;
+            expect(headers).to.have.length.above(0);
+
+            const expectHeader = (name: string, expected: TableHeader) => {
+                const actual = _.find(headers, (h) => h.name === name);
+                if (actual === undefined)
+                    throw new Error(`could not find header with name '${name}'`);
+                expect(actual).to.deep.equal(expected);
+            };
+
+            // Cherry pick a few headers
+            expectHeader('pk', {
+                name: 'pk',
+                type: 'int',
+                ordinalPosition: 1,
+                rawType: 'int(11)',
+                isNumber: true,
+                isTextual: false,
+                nullable: false,
+                maxCharacters: null,
+                charset: null,
+                numericPrecision: 10,
+                numericScale: 0,
+                enumValues: null,
+                comment: 'pk column'
+            });
+
+            expectHeader('enum', {
+                name: 'enum',
+                type: 'enum',
+                ordinalPosition: 7,
+                rawType: `enum('a','b','c')`,
+                isNumber: false,
+                isTextual: true,
+                nullable: true,
+                maxCharacters: 1,
+                charset: 'latin1',
+                numericPrecision: null,
+                numericScale: null,
+                enumValues: ['a', 'b', 'c'],
+                comment: 'enum column'
+            });
+        });
+
+        it('should include the total amount of rows', () =>
+            request.spec({
+                method: 'GET',
+                expectedStatus: 200,
+                relPath: '/tables/' + SHOWCASE_TABLE,
+                query: { limit: "100" },
+                validate: (result: PaginatedResponse<SqlRow[]>) => {
+                    // This will fail if we have more than 100 rows
+                    expect(result.size).to.equal(meta.totalRows);
+                }
             })
         );
 
-        it('should return an array of Constraints', () => {
-            return request.basic(`/tables/${PRIMARY_TABLE}/meta`, 200, (meta: TableMeta) => {
-                expect(meta.constraints).to.exist;
-                // 1 PK, 1 unique, 1 FK for each secondary table
-                expect(meta.constraints).to.have.lengthOf(2 + SECONDARY_TABLES.length);
+        it('should include an array of Constraints', () => {
+            return request.basic(`/tables/order/meta`, 200, (res: TableMeta) => {
+                const constraints = res.constraints;
+                expect(constraints).to.exist;
+                // 4 PK, 3 FK's, 1 unique
+                expect(constraints).to.have.lengthOf(8);
+                
+                const grouped = _.groupBy(constraints, 'localColumn');
+                expect(grouped.confirmation_num).to.deep.equal([{
+                    type: 'unique',
+                    localColumn: 'confirmation_num',
+                    foreignTable: null,
+                    foreignColumn: null
+                }]);
 
-                // Should only be one primary key
-                expect(_.find(meta.constraints, (c) => c.type === 'primary')!!.localColumn)
-                    .to.equal(PRIMARY_TABLE + '_pk');
+                // Map column names to the types of their constraints
+                const onlyTypes: { [col: string]: string[] } = {};
 
-                // Validate foreign keys
-                for (const secondaryTable of SECONDARY_TABLES) {
-                    const constraint = _.find(meta.constraints,
-                        (c) => c.localColumn === secondaryTable)!!;
-
-                    expect(constraint).to.exist;
-                    expect(constraint.type).to.equal('foreign');
-                    expect(constraint.foreignColumn).to.equal(secondaryTable + '_pk');
+                for (const col of Object.keys(grouped)) {
+                    onlyTypes[col] = _.sortBy(_.map(grouped[col], 'type'));
                 }
 
-                // Expect to find 1 unique constraint placed on the 'integer'
-                // column
-                const unique = _.find(meta.constraints, (c) => c.type === 'unique');
-                expect(unique).to.exist;
-                expect(unique!!.localColumn).to.equal('integer');
-                expect(unique!!.foreignTable).to.be.null;
-                expect(unique!!.foreignColumn).to.be.null;
+                // order_id is just a primary key
+                expect(onlyTypes.order_id).to.deep.equal(['primary']);
+
+                // These columns are both primary and foreign keys
+                const pkAndFk = ['organization_id', 'customer_id', 'product_id'];
+                for (const col of pkAndFk)
+                    expect(onlyTypes[col]).to.deep.equal(['foreign', 'primary']);
+                
+                // confirmation_num is the only unique constraint
+                expect(onlyTypes.confirmation_num).to.deep.equal(['unique']);
             });
         });
 
@@ -314,8 +325,8 @@ describe('API v1', () => {
 
     describe('GET /api/v1/:name/column/:col', () => {
         it('should return distinct values for that column in ABC order', () => {
-            return request.basic('/tables/foo/column/bar', 200, (data: any[]) => {
-                expect(data).to.deep.equal([0, 5, 10]);
+            return request.basic(`/tables/customer/column/customer_id`, 200, (data: any[]) => {
+                expect(data).to.deep.equal([0, 1]);
             });
         });
 

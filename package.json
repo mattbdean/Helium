@@ -105,7 +105,7 @@
     "raw-loader": "^0.5.1",
     "run-sequence": "^2.0.0",
     "sass-loader": "^6.0.6",
-    "source-map-support": "^0.4.14",
+    "source-map-support": "^0.4.15",
     "style-loader": "^0.18.2",
     "supertest": "^3.0.0",
     "ts-node": "^3.0.6",
