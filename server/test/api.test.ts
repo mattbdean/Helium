@@ -315,8 +315,8 @@ describe('API v1', () => {
             });
         });
 
-        it('should resolve FK constraints to the original table', () => {
-            return request.basic('/tables/shipment/meta', 200, (data: TableMeta) => {
+        it('should resolve FK constraints to the original table', async () => {
+            await request.basic('/tables/shipment/meta', 200, (data: TableMeta) => {
                 const grouped = _.groupBy(data.constraints, 'localColumn');
                 // order_id has no other containers between `shipment` and its
                 // home table
@@ -335,6 +335,20 @@ describe('API v1', () => {
                     foreignTable: 'organization',
                     foreignColumn: 'organization_id'
                 }]);
+            });
+
+            await request.basic('/tables/organization/meta', 200, (data: TableMeta) => {
+                // `organization` is the only table that contains a Constraint
+                // where localColumn !== foreignColumn
+                const c = data.constraints.find((c2) =>
+                    c2.localColumn === 'ceo_id' && c2.type === 'foreign');
+
+                expect(c).to.deep.equal({
+                    type: 'foreign',
+                    localColumn: 'ceo_id',
+                    foreignColumn: 'customer_id',
+                    foreignTable: 'customer'
+                });
             });
         });
 

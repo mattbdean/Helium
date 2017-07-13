@@ -396,7 +396,7 @@ export async function resolveConstraints(table: string, originals: Constraint[])
         // constraint
         while (current.foreignTable !== null) {
             previous = current;
-            current = findConstraint(current.localColumn, await getConstraints(current.foreignTable));
+            current = findConstraint(current.foreignColumn!!, await getConstraints(current.foreignTable));
         }
 
         if (previous !== undefined)
