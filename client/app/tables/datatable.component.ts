@@ -72,18 +72,16 @@ export class DatatableComponent implements OnChanges {
         private iconRegistry: MdIconRegistry
     ) {}
 
-    public async ngOnChanges(changes: SimpleChanges) {
-        try {
-            await this.showLoading(async () => {
-                this.sort = undefined;
-                this.meta = await this.backend.meta(this.name);
-                this.tableHeaders = this.createTableHeaders(this.meta.headers);
-                this.constraintMapping = this.createConstraintMapping(this.meta.constraints);
-                this.exists = true;
-                // Set the initial page now that we have some data
-                return this.setPage({ offset: 0 }, false);
-            });
-        } catch (e) {
+    public ngOnChanges(changes: SimpleChanges) {
+        this.showLoading(async () => {
+            this.sort = undefined;
+            this.meta = await this.backend.meta(this.name);
+            this.tableHeaders = this.createTableHeaders(this.meta.headers);
+            this.constraintMapping = this.createConstraintMapping(this.meta.constraints);
+            this.exists = true;
+            // Set the initial page now that we have some data
+            return this.setPage({ offset: 0 }, false);
+        }, (e) => {
             // Handle 404s, show the user that the table couldn't be found
             if (e instanceof Response && e.status === 404) {
                 this.exists = false;
@@ -92,7 +90,7 @@ export class DatatableComponent implements OnChanges {
 
             // Other error, rethrow it
             throw e;
-        }
+        });
     }
 
     private setPage(event: any, showLoading: boolean = true) {
@@ -132,15 +130,20 @@ export class DatatableComponent implements OnChanges {
         });
     }
 
-    private async showLoading(doWork: () => Promise<void>) {
+    private showLoading(
+        doWork: () => Promise<void>,
+        handleError: (e: any) => void = console.error
+    ) {
         const timeout = setTimeout(() => {
             this.loading = true;
         }, DatatableComponent.LOADING_DELAY);
 
-        doWork().then(() => {
-            this.loading = false;
-            clearTimeout(timeout);
-        });
+        return doWork()
+            .catch(handleError)
+            .then(() => {
+                this.loading = false;
+                clearTimeout(timeout);
+            });
     }
 
     private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
