@@ -79,11 +79,12 @@ export function tables(): RouteModule {
             let headers: TableHeader[] = [],
                 count: number = -1,
                 constraints: Constraint[] = [];
+            
             try {
                 [headers, count, constraints] = await Promise.all([
                     fetchTableHeaders(name),
                     fetchTableCount(name),
-                    fetchConstraints(name)
+                    fetchConstraints(name).then((constrs) => resolveConstraints(name, constrs))
                 ]);
             } catch (e) {
                 if (e.code && e.code === 'ER_NO_SUCH_TABLE')
@@ -330,8 +331,8 @@ export async function fetchTableContent(tableName: string, page: number, limit: 
 }
 
 /**
- * Gets a list of constraints on a given table. Currently, only primary keys and
- * foreign key constraints are recognized.
+ * Gets a list of constraints on a given table. Currently, only primary keys,
+ * foreign keys, and unique constraints are recognized.
  */
 export async function fetchConstraints(table: string): Promise<Constraint[]> {
     const result = (await Database.get().conn.execute(
@@ -358,6 +359,51 @@ export async function fetchConstraints(table: string): Promise<Constraint[]> {
             foreignColumn: row.REFERENCED_COLUMN_NAME as string
         };
     });
+}
+
+export async function resolveConstraints(table: string, originals: Constraint[]): Promise<Constraint[]> {
+    // Keep tables in cache once we look them up to prevent any unnecessary
+    // lookups
+    const cache: { [tableName: string]: Constraint[] } = {};
+
+    // Return constraints from cache, otherwise look them up
+    const getConstraints = (name: string): Promise<Constraint[]> => {
+        return cache[name] ? Promise.resolve(cache[name]) : fetchConstraints(name);
+    };
+    
+    const resolved: Constraint[] = [];
+
+    for (const c of originals) {
+        // We're only operating on foreign keys here
+        if (c.type !== 'foreign') {
+            resolved.push(c);
+            continue;
+        }
+
+        const findConstraint = (localColumn: string, others: Constraint[]): Constraint => {
+            const temp = _.find(others, (other: Constraint) => other.localColumn === localColumn);
+            if (temp === undefined)
+                throw new Error(`could not find constraint with name '${localColumn}'`);
+            return temp;
+        };
+
+        let current: Constraint = findConstraint(c.localColumn, originals);
+        let previous: Constraint | undefined;
+        const originalLocalColumn = current.localColumn;
+
+        // Navigate up the hierarchy until we find a non-FK constraint. 
+        // TODO: this algorithm will fail if the original column is NOT a
+        // constraint
+        while (current.foreignTable !== null) {
+            previous = current;
+            current = findConstraint(current.localColumn, await getConstraints(current.foreignTable));
+        }
+
+        if (previous !== undefined)
+            resolved.push(previous);
+    }
+
+    return resolved;
 }
 
 export async function fetchDistinctValues(table: string, col: string): Promise<any[]> {
