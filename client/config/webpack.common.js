@@ -42,6 +42,7 @@ module.exports = {
         ]
     },
     plugins: [
+        new webpack.NoEmitOnErrorsPlugin(),
         new webpack.optimize.CommonsChunkPlugin({
             names: ['app', 'vendor', 'polyfills'],
         }),
