@@ -44,7 +44,8 @@ export class DatatableComponent implements OnChanges {
     public meta: TableMeta = {
         headers: [],
         totalRows: 0,
-        constraints: []
+        constraints: [],
+        comment: ''
     };
     public tableHeaders: DataTableHeader[];
     public constraintMapping: ConstraintMapping = {};

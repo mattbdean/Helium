@@ -1,6 +1,7 @@
 <md-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></md-progress-bar>
 <div [hidden]="!exists">
     <h1 class="mat-display-1">{{ name }}</h1>
+    <h4 class="table-description" *ngIf="meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
 
     <ngx-datatable class="material"
                    [hidden]="!exists"
