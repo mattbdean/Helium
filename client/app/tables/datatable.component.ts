@@ -7,12 +7,14 @@ import { MdIconRegistry } from '@angular/material';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
-import { Constraint, SqlRow, TableHeader, TableMeta } from '../common/responses';
+import {
+    Constraint, ConstraintType, SqlRow, TableHeader, TableMeta
+} from '../common/responses';
 import { BOOLEAN_TYPE } from '../core/constants';
 import { TableService } from '../core/table.service';
 
-interface ConstraintMapping {
-    [headerName: string]: Constraint;
+interface ConstraintGrouping {
+    [headerName: string]: Constraint[];
 }
 
 interface DataTableHeader {
@@ -48,7 +50,7 @@ export class DatatableComponent implements OnChanges {
         comment: ''
     };
     public tableHeaders: DataTableHeader[];
-    public constraintMapping: ConstraintMapping = {};
+    public constraints: ConstraintGrouping = {};
 
     @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
@@ -78,7 +80,7 @@ export class DatatableComponent implements OnChanges {
             this.sort = undefined;
             this.meta = await this.backend.meta(this.name);
             this.tableHeaders = this.createTableHeaders(this.meta.headers);
-            this.constraintMapping = this.createConstraintMapping(this.meta.constraints);
+            this.constraints = _.groupBy(this.meta.constraints, 'localColumn');
             this.exists = true;
             // Set the initial page now that we have some data
             return this.setPage({ offset: 0 }, false);
@@ -92,6 +94,29 @@ export class DatatableComponent implements OnChanges {
             // Other error, rethrow it
             throw e;
         });
+    }
+
+    /**
+     * Maps this.constraints[name] to its type, or an empty array if
+     * this.constraints[name] is undefined
+     */
+    public constraintTypes(name: string): ConstraintType[] {
+        if (this.constraints === undefined || this.constraints[name] === undefined)
+            return [];
+        return this.constraints[name].map((c) => c.type);
+    }
+
+    /**
+     * Returns true if there exists a Constraint with the specified local column
+     * and ConstraintType
+     */
+    public hasConstraint(name: string, type: ConstraintType) {
+        return this.constraintTypes(name).indexOf(type) >= 0;
+    }
+
+    /** Tries to find a constraint with the given localColumn and type */
+    public getConstraint(name: string, type: ConstraintType): Constraint | undefined {
+        return this.constraints[name].find((c) => c.type === type);
     }
 
     private setPage(event: any, showLoading: boolean = true) {
@@ -154,13 +179,6 @@ export class DatatableComponent implements OnChanges {
             cellTemplate: this.cellTemplate,
             headerTemplate: this.headerTemplate
         })), 'ordinalPosition');
-    }
-
-    private createConstraintMapping(constraints: Constraint[]): ConstraintMapping {
-        const vals: ConstraintMapping = {};
-        for (const c of constraints)
-            vals[c.localColumn] = c;
-        return vals;
     }
 
     private formatRows(headers: TableHeader[], rows: SqlRow[]): SqlRow[] {
