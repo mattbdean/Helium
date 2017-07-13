@@ -7,6 +7,7 @@ export interface TableMeta {
     headers: TableHeader[];
     totalRows: number;
     constraints: Constraint[];
+    comment: string;
 }
 
 export interface PaginatedResponse<T> {

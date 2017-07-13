@@ -78,13 +78,15 @@ export function tables(): RouteModule {
 
             let headers: TableHeader[] = [],
                 count: number = -1,
-                constraints: Constraint[] = [];
+                constraints: Constraint[] = [],
+                comment: string;
             
             try {
-                [headers, count, constraints] = await Promise.all([
+                [headers, count, constraints, comment] = await Promise.all([
                     fetchTableHeaders(name),
                     fetchTableCount(name),
-                    fetchConstraints(name).then((constrs) => resolveConstraints(name, constrs))
+                    fetchConstraints(name).then((constrs) => resolveConstraints(name, constrs)),
+                    fetchTableComment(name)
                 ]);
             } catch (e) {
                 if (e.code && e.code === 'ER_NO_SUCH_TABLE')
@@ -101,7 +103,8 @@ export function tables(): RouteModule {
             const response: TableMeta = {
                 headers,
                 totalRows: count,
-                constraints
+                constraints,
+                comment
             };
 
             res.json(response);
@@ -359,6 +362,18 @@ export async function fetchConstraints(table: string): Promise<Constraint[]> {
             foreignColumn: row.REFERENCED_COLUMN_NAME as string
         };
     });
+}
+
+export async function fetchTableComment(table: string): Promise<string> {
+    const conn = Database.get().conn;
+    const query = squel.select()
+        .from('INFORMATION_SCHEMA.TABLES')
+        .field('TABLE_COMMENT')
+        .where('TABLE_NAME = ' + conn.escape(table))
+        .where('TABLE_SCHEMA = ' + conn.escape(Database.get().dbName()));
+    
+    const result = (await conn.execute(query.toString()))[0];
+    return result[0].TABLE_COMMENT;
 }
 
 export async function resolveConstraints(table: string, originals: Constraint[]): Promise<Constraint[]> {

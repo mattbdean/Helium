@@ -10,6 +10,7 @@ import {
 } from '../src/common/responses';
 import {
     fetchConstraints,
+    fetchTableComment,
     fetchTableCount,
     fetchTableHeaders
 } from '../src/routes/api/v1/tables';
@@ -352,6 +353,16 @@ describe('API v1', () => {
             });
         });
 
+        it('should include a comment when applicable', async () => {
+            await request.basic('/tables/organization/meta', 200, (data: TableMeta) => {
+                expect(data.comment).to.equal('');
+            });
+
+            await request.basic(`/tables/${SHOWCASE_TABLE}/meta`, 200, (data: TableMeta) => {
+                expect(data.comment).to.equal('a table with diverse data');
+            });
+        });
+
         it('should 404 when given a non-existent table', () =>
             request.basic('/tables/foobar/meta', 404, (error: ErrorResponse) => {
                 expect(error.input).to.deep.equal({ name: 'foobar' });
@@ -377,10 +388,11 @@ describe('API v1', () => {
     });
 
     const fetchMetadata = async (table: string): Promise<TableMeta> => {
-        const [headers, count, constraints] = await Promise.all([
+        const [headers, count, constraints, comment] = await Promise.all([
             fetchTableHeaders(table),
             fetchTableCount(table),
-            fetchConstraints(table)
+            fetchConstraints(table),
+            fetchTableComment(table)
         ]);
 
         expect(headers).to.have.length.above(0);
@@ -388,7 +400,8 @@ describe('API v1', () => {
         return {
             headers,
             totalRows: count,
-            constraints
+            constraints,
+            comment
         };
     };
 });

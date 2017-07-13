@@ -70,7 +70,7 @@ CREATE TABLE datatypeshowcase(
   `enum` ENUM('a', 'b', 'c') COMMENT 'enum column',
   `string` VARCHAR(50) COMMENT 'string column',
   `string_not_null` VARCHAR(50) NOT NULL COMMENT 'string_not_null column'
-);
+) COMMENT 'a table with diverse data';
 
 # A few customers, organizations, and products
 INSERT INTO customer VALUES (0, "Some Guy"), (1, "Another Guy");
