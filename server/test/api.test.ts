@@ -130,29 +130,6 @@ describe('API v1', () => {
             }
         });
 
-        it('should resolve FK constraints to the original table', () => {
-            return request.basic('/tables/shipment/meta', 200, (data: TableMeta) => {
-                const grouped = _.groupBy(data.constraints, 'localColumn');
-                // order_id has no other containers between `shipment` and its
-                // home table
-                expect(grouped.order_id).to.deep.equal([{
-                    localColumn: 'order_id',
-                    type: 'foreign',
-                    foreignTable: 'order',
-                    foreignColumn: 'order_id'
-                }]);
-
-                // organization_id directly references `order,` but
-                // originates from `organization`
-                expect(grouped.organization_id).to.deep.equal([{
-                    localColumn: 'organization_id',
-                    type: 'foreign',
-                    foreignTable: 'organization',
-                    foreignColumn: 'organization_id'
-                }]);
-            });
-        });
-
         it('should throw a 400 when sorting by a column that doesn\'t exist', async () => {
             return request.spec({
                 method: 'GET',
@@ -335,6 +312,29 @@ describe('API v1', () => {
                 
                 // confirmation_num is the only unique constraint
                 expect(onlyTypes.confirmation_num).to.deep.equal(['unique']);
+            });
+        });
+
+        it('should resolve FK constraints to the original table', () => {
+            return request.basic('/tables/shipment/meta', 200, (data: TableMeta) => {
+                const grouped = _.groupBy(data.constraints, 'localColumn');
+                // order_id has no other containers between `shipment` and its
+                // home table
+                expect(grouped.order_id).to.deep.equal([{
+                    localColumn: 'order_id',
+                    type: 'foreign',
+                    foreignTable: 'order',
+                    foreignColumn: 'order_id'
+                }]);
+
+                // organization_id directly references `order,` but
+                // originates from `organization`
+                expect(grouped.organization_id).to.deep.equal([{
+                    localColumn: 'organization_id',
+                    type: 'foreign',
+                    foreignTable: 'organization',
+                    foreignColumn: 'organization_id'
+                }]);
             });
         });
 
