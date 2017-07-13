@@ -282,7 +282,7 @@ describe('API v1', () => {
                 isTextual: true,
                 nullable: true,
                 maxCharacters: 1,
-                charset: 'latin1',
+                charset: 'utf8',
                 numericPrecision: null,
                 numericScale: null,
                 enumValues: ['a', 'b', 'c'],

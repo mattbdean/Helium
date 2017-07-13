@@ -12,7 +12,7 @@ GRANT ALL ON helium.* TO 'user'@'localhost' IDENTIFIED BY 'password';
 
 # Ensure an empty database
 DROP DATABASE IF EXISTS helium;
-CREATE DATABASE helium;
+CREATE DATABASE helium CHARACTER SET utf8;
 
 # Select the new database
 USE helium;
