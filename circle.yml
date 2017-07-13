@@ -1,4 +1,0 @@
-dependencies:
-  post:
-    - rm -r ~/Helium/node_modules
-
