@@ -1,8 +1,8 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, Input, OnInit } from '@angular/core';
 
 import * as _ from 'lodash';
 
-import { Constraint, ConstraintType } from "../common/responses";
+import { Constraint, ConstraintType } from '../common/responses';
 
 @Component({
     selector: 'constraint-icons',
@@ -10,16 +10,17 @@ import { Constraint, ConstraintType } from "../common/responses";
     styleUrls: ['constraint-icon.component.scss']
 })
 export class ConstraintIconsComponent implements OnInit {
-    private allConstraintTypes: ConstraintType[] = ['primary', 'foreign', 'unique'];
-
-    private snowflakeIcon = require('../../assets/snowflake.svg');
-    private keyIcon = require('../../assets/key.svg');
-    private keyChangeIcon = require('../../assets/key-change.svg');
+    // private snowflakeIcon = require('../../assets/snowflake.svg');
+    // private keyIcon = require('../../assets/key.svg');
+    // private keyChangeIcon = require('../../assets/key-change.svg');
+    private snowflakeIcon = '/assets/snowflake.svg';
+    private keyIcon = '/assets/key.svg';
+    private keyChangeIcon = '/assets/key-change.svg';
 
     @Input()
     private constraints: Constraint[];
 
-    private types: ConstraintType[] = [];
+    public types: ConstraintType[] = [];
 
     public ngOnInit(): void {
         if (this.constraints === undefined || this.constraints === null)

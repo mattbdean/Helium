@@ -5,14 +5,12 @@ end_of_line = lf
 insert_final_newline = true
 charset = utf-8
 indent_style = space
-
-[*.{js,ts,pug}]
 indent_size = 4
 
 [*.{css,scss}]
 indent_size = 2
 
-[{package.json,.travis.yml,.babelrc}]
+[{*.json,.travis.yml,.babelrc}]
 indent_size = 2
 
 [*.md]

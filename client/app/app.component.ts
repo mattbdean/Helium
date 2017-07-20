@@ -9,8 +9,7 @@ import { TableService } from "./core/table.service";
     styleUrls: ['app.component.scss']
 })
 export class AppComponent implements OnInit {
-    private tables: Observable<string[]>;
-    private selectedTable: string;
+    public tables: Observable<string[]>;
 
     public constructor(
         private backend: TableService

@@ -69,7 +69,7 @@ export class DynamicFormComponent implements OnChanges, OnInit {
         });
     }
 
-    private handleSubmit(event: Event) {
+    public handleSubmit(event: Event) {
         // Prevent default actions and then send 
         event.preventDefault();
         event.stopPropagation();

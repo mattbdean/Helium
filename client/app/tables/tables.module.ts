@@ -9,9 +9,6 @@ import { TableHostComponent } from './table-host.component';
 import { TableRoutingModule } from './table-routing.module';
 
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
-import '@swimlane/ngx-datatable/release/assets/icons.css';
-import '@swimlane/ngx-datatable/release/index.css';
-import '@swimlane/ngx-datatable/release/themes/material.css';
 
 @NgModule({
     imports: [

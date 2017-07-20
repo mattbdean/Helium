@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { TableService } from '../core/table.service';
 
 @Component({
     templateUrl: 'table-host.component.html',

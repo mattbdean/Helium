@@ -34,35 +34,35 @@ export class DatatableComponent implements OnInit, OnDestroy {
     public set name(value) { this._name$.next(value); }
     public get name() { return this._name$.getValue(); }
 
-    private set pageNumber(value) { this._pageNumber$.next(value); }
-    private get pageNumber() { return this._pageNumber$.getValue(); }
+    public set pageNumber(value) { this._pageNumber$.next(value); }
+    public get pageNumber() { return this._pageNumber$.getValue(); }
 
     private set sort(value) { this._sort$.next(value); }
 
     private nameSub: Subscription;
     private pageInfoSub: Subscription;
 
-    private meta: TableMeta = {
+    public meta: TableMeta = {
         headers: [],
         totalRows: 0,
         constraints: [],
         comment: ''
     };
-    private tableHeaders: DataTableHeader[];
+    public tableHeaders: DataTableHeader[];
     private constraints: ConstraintGrouping = {};
 
-    private loading = false;
+    public loading = false;
 
     @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
 
     /** True if this component has tried to access the table and found data */
-    private exists: boolean = true;
+    public exists: boolean = true;
 
     /** How many rows to fetch per page */
-    private readonly limit: number = 25;
+    public readonly limit: number = 25;
 
-    private data: SqlRow[] = [];
+    public data: SqlRow[] = [];
 
     constructor(
         private backend: TableService
@@ -134,12 +134,12 @@ export class DatatableComponent implements OnInit, OnDestroy {
         this.pageInfoSub.unsubscribe();
     }
 
-    private onPaginate(event: any) {
+    public onPaginate(event: any) {
         // page 1 === offset 0, page 2 === offset 1, etc.
         this.pageNumber = event.offset + 1;
     }
 
-    private onSort(event: any) {
+    public onSort(event: any) {
         const sortDirPrefix = event.sorts[0].dir === 'desc' ? '-' : '';
         // '-prop' for descending, 'prop' for ascending
         this.sort = sortDirPrefix + event.sorts[0].prop;

@@ -1,54 +1,125 @@
 import * as del from 'del';
-import * as fs from 'fs';
 
 import * as gulp from 'gulp';
-import * as coveralls from 'gulp-coveralls';
-import * as nodemon from 'gulp-nodemon';
-import tslint from 'gulp-tslint';
+import * as about from 'gulp-about';
+import * as tsc from 'gulp-typescript';
+import * as merge from 'merge2';
 import * as runSequence from 'run-sequence';
-import { distDir } from './tasks/util';
 
-import registerModules from './tasks';
-registerModules(gulp);
-
-gulp.task('default', ['build'], (cb) => {
-    runSequence('watch', 'start', cb);
-});
+gulp.task('default', ['build']);
 
 gulp.task('build', ['clean'], (cb) => {
-    runSequence('common:build', 'server:build', 'client:build', cb);
-});
-
-gulp.task('start', () => {
-    // Read from standard config so devs can also run `nodemon` from the console
-    // and have it work the same way as it does here
-    const config = JSON.parse(fs.readFileSync('nodemon.json', 'utf8'));
-    nodemon(config);
+    runSequence('common:build', 'server:build', cb);
 });
 
 gulp.task('testPrep', ['common:build', 'server:testPrep']);
 
-gulp.task('coveralls', () => {
-    return gulp.src('coverage/lcov.info').pipe(coveralls());
+gulp.task('watch', () => {
+    watch({
+        'common/**/*.ts': 'common:build',
+        'db.conf.json': 'server:dbconf',
+        'server/src/**/*.ts': 'server:compile'
+    });
 });
 
-gulp.task('lint', () => {
-    return gulp.src(['server/**/*.ts', 'client/app/**/*.ts'])
-        .pipe(tslint({
-            configuration: 'tslint.json',
-            formatter: 'prose'
-        }))
-        .pipe(tslint.report());
-});
-
-gulp.task('watch', [
-    'client:watch',
-    'common:watch',
-    'server:watch'
-]);
-
-gulp.task('clean', ['client:clean', 'server:clean'], () =>
+gulp.task('clean', () =>
     del([
-        distDir()
+        'dist',
+        'server/src/common',
+        'server/src/public',
+        'server/src/about.json'
     ])
 );
+
+gulp.task('common:build', () => {
+    const source = 'common/**/*.ts';
+    return merge(
+        cp(source, 'server/src/common'),
+        cp(source, 'client/app/common')
+    );
+});
+
+gulp.task('server:build', [
+    'server:compile',
+    'server:dbconf',
+    'server:about'
+]);
+
+gulp.task('server:compile', () =>
+    merge(
+        typescript({
+            project: 'server/tsconfig.json',
+            src: 'server/src/**/*.ts',
+            dest: 'dist'
+        }),
+        gulp.src('package.json')
+            .pipe(about())
+            .pipe(gulp.dest('dist'))
+    )
+);
+
+gulp.task('server:dbconf', () =>
+    cp('db.conf.json', 'dist'),
+);
+
+gulp.task('server:dbconf:testPrep', () =>
+    cp('db.conf.json', 'server/src')
+);
+
+gulp.task('server:views:testPrep', () =>
+    // Copy index.html so that GET /* won't throw a 404. In an actual build,
+    // webpack will modify index.html and place it in this directory
+    cp('client/app/index.html', 'server/src/public')
+);
+
+gulp.task('server:testPrep', ['server:views:testPrep', 'server:dbconf:testPrep']);
+
+gulp.task('server:about', () =>
+    gulp.src('package.json')
+        .pipe(about())
+        .pipe(gulp.dest('server/src'))
+);
+
+/** Generic options for a Gulp task that works with files. */
+interface IOTaskOptions {
+    /** Passed to gulp.src() */
+    src: string | string[];
+    /** Passed to gulp.dest() */
+    dest: string;
+}
+
+/** Options specific for compiling a TypeScript project */
+interface CompileTypescriptOptions extends IOTaskOptions {
+    /** Path to tsconfig.json relative to Gruntfile.ts */
+    project: string;
+}
+
+/**
+ * Each entry in the configuration object maps a file glob to the task(s) to
+ * execute when a file matching that glob is modified.
+ */
+interface WatchConfig {
+    [fileGlob: string]: string[] | string;
+}
+
+/** Compiles a TypeScript project */
+function typescript(opts: CompileTypescriptOptions) {
+    const proj = tsc.createProject(opts.project);
+    const result = gulp.src(opts.src).pipe(proj());
+
+    return result.js.pipe(gulp.dest(opts.dest));
+}
+
+/** simple `cp -r` for gulp */
+export function cp(src: string | string[], dest: string) {
+    return gulp.src(src).pipe(gulp.dest(dest));
+}
+
+/** Uses gulp to watch for file changes */
+export function watch(conf: WatchConfig) {
+    for (const src of Object.keys(conf)) {
+        // Ensure the tasks are an array
+        const tasks = Array.isArray(conf[src]) ? conf[src] : [conf[src]];
+        gulp.watch(src, tasks);
+    }
+}
