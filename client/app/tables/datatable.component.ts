@@ -26,10 +26,6 @@ interface DataTableHeader {
     styleUrls: ['datatable.component.scss']
 })
 export class DatatableComponent implements OnInit, OnDestroy {
-    private snowflakeIcon = require('../../assets/snowflake.svg');
-    private keyIcon = require('../../assets/key.svg');
-    private keyChangeIcon = require('../../assets/key-change.svg');
-
     private _name$ = new BehaviorSubject("");
     private _pageNumber$ = new BehaviorSubject(1);
     private _sort$ = new BehaviorSubject(undefined);
@@ -136,29 +132,6 @@ export class DatatableComponent implements OnInit, OnDestroy {
         // Clean up our subscriptions
         this.nameSub.unsubscribe();
         this.pageInfoSub.unsubscribe();
-    }
-
-    /**
-     * Maps this.constraints[name] to its type, or an empty array if
-     * this.constraints[name] is undefined
-     */
-    public constraintTypes(name: string): ConstraintType[] {
-        if (this.constraints === undefined || this.constraints[name] === undefined)
-            return [];
-        return this.constraints[name].map((c) => c.type);
-    }
-
-    /**
-     * Returns true if there exists a Constraint with the specified local column
-     * and ConstraintType
-     */
-    public hasConstraint(name: string, type: ConstraintType) {
-        return this.constraintTypes(name).indexOf(type) >= 0;
-    }
-
-    /** Tries to find a constraint with the given localColumn and type */
-    public getConstraint(name: string, type: ConstraintType): Constraint | undefined {
-        return this.constraints[name].find((c) => c.type === type);
     }
 
     private onPaginate(event: any) {

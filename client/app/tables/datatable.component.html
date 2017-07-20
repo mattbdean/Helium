@@ -24,25 +24,8 @@
 
     <ng-template #headerTemplate let-column="column" let-sort="sortFn">
         <span class="header-container" (click)="sort()">
-            <span *ngIf="hasConstraint(column.name, 'primary')"
-                class="header-icon"
-                [inlineSVG]="keyIcon"
-                title="this column is a primary key"></span>
-            <span *ngIf="hasConstraint(column.name, 'foreign')"
-                class="header-icon"
-                [inlineSVG]="keyChangeIcon"
-                [title]="'this column references the table ' + getConstraint(column.name, 'foreign').foreignTable + ' (column ' + getConstraint(column.name, 'foreign').foreignColumn + ')'"></span>
-            <span *ngIf="hasConstraint(column.name, 'unique')"
-                class="header-icon"
-                [inlineSVG]="snowflakeIcon"
-                title="this column contains only unique values"></span>
-
-            <span *ngIf="hasConstraint(column.name, 'foreign'); else notFK">
-                <a class="fk-header-link" [routerLink]="['/tables', getConstraint(column.name, 'foreign').foreignTable]">{{ column.name }}</a>
-            </span>
-            <ng-template #notFK>
-                {{ column.name }}
-            </ng-template>
+            <constraint-icons [constraints]="constraints[column.name]"></constraint-icons>
+            {{ column.name }}
         </span>
     </ng-template>
 

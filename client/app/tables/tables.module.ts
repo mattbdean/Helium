@@ -13,13 +13,10 @@ import '@swimlane/ngx-datatable/release/assets/icons.css';
 import '@swimlane/ngx-datatable/release/index.css';
 import '@swimlane/ngx-datatable/release/themes/material.css';
 
-import { InlineSVGModule } from 'ng-inline-svg';
-
 @NgModule({
     imports: [
         CommonModule,
         CoreModule,
-        InlineSVGModule,
         MdIconModule,
         MdProgressBarModule,
         NgxDatatableModule,
