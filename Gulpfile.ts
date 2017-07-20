@@ -69,7 +69,7 @@ gulp.task('server:dbconf:testPrep', () =>
 gulp.task('server:views:testPrep', () =>
     // Copy index.html so that GET /* won't throw a 404. In an actual build,
     // webpack will modify index.html and place it in this directory
-    cp('client/app/index.html', 'server/src/public')
+    cp('client/index.html', 'server/src/public')
 );
 
 gulp.task('server:testPrep', ['server:views:testPrep', 'server:dbconf:testPrep']);
@@ -80,16 +80,12 @@ gulp.task('server:about', () =>
         .pipe(gulp.dest('server/src'))
 );
 
-/** Generic options for a Gulp task that works with files. */
-interface IOTaskOptions {
+/** Options specific for compiling a TypeScript project */
+interface CompileTypescriptOptions {
     /** Passed to gulp.src() */
     src: string | string[];
     /** Passed to gulp.dest() */
     dest: string;
-}
-
-/** Options specific for compiling a TypeScript project */
-interface CompileTypescriptOptions extends IOTaskOptions {
     /** Path to tsconfig.json relative to Gruntfile.ts */
     project: string;
 }
