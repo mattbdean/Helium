@@ -33,7 +33,7 @@
                 "private-static-method"
             ]
         }],
-        "variable-name": [true, "check-format", "ban-keywords"],
+        "variable-name": [true, "check-format", "allow-leading-underscore", "ban-keywords"],
         "no-unused-variable": true
     },
     "rulesDirectory": []

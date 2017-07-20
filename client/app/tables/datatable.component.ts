@@ -1,8 +1,6 @@
-import {
-    Component, Input, OnChanges, OnInit, SimpleChanges, TemplateRef, ViewChild
-} from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Response } from '@angular/http';
-import { MdIconRegistry } from '@angular/material';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 
 import * as _ from 'lodash';
 import * as moment from 'moment';
@@ -22,78 +20,122 @@ interface DataTableHeader {
     prop: string;
 }
 
-interface Page {
-    number: number;
-    size: number;
-    data: SqlRow[];
-}
-
 @Component({
     selector: 'datatable',
     templateUrl: 'datatable.component.html',
     styleUrls: ['datatable.component.scss']
 })
-export class DatatableComponent implements OnChanges {
-    /** Time in milliseconds before showing a loading bar on the table */
-    private static readonly LOADING_DELAY = 200;
-    
+export class DatatableComponent implements OnInit, OnDestroy {
     private snowflakeIcon = require('../../assets/snowflake.svg');
     private keyIcon = require('../../assets/key.svg');
     private keyChangeIcon = require('../../assets/key-change.svg');
 
+    private _name$ = new BehaviorSubject("");
+    private _pageNumber$ = new BehaviorSubject(1);
+    private _sort$ = new BehaviorSubject(undefined);
+
     @Input()
-    public name: string;
-    public meta: TableMeta = {
+    public set name(value) { this._name$.next(value); }
+    public get name() { return this._name$.getValue(); }
+
+    private set pageNumber(value) { this._pageNumber$.next(value); }
+    private get pageNumber() { return this._pageNumber$.getValue(); }
+
+    private set sort(value) { this._sort$.next(value); }
+
+    private nameSub: Subscription;
+    private pageInfoSub: Subscription;
+
+    private meta: TableMeta = {
         headers: [],
         totalRows: 0,
         constraints: [],
         comment: ''
     };
-    public tableHeaders: DataTableHeader[];
-    public constraints: ConstraintGrouping = {};
+    private tableHeaders: DataTableHeader[];
+    private constraints: ConstraintGrouping = {};
+
+    private loading = false;
 
     @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
 
     /** True if this component has tried to access the table and found data */
-    public exists: boolean = true;
+    private exists: boolean = true;
 
-    /** True if this component is fetching new data */
-    public loading: boolean = true;
+    /** How many rows to fetch per page */
+    private readonly limit: number = 25;
 
-    public limit: number = 25;
-    public sort: string;
-
-    public page: Page = {
-        number: -1,
-        size: 0,
-        data: []
-    };
+    private data: SqlRow[] = [];
 
     constructor(
-        private backend: TableService,
-        private iconRegistry: MdIconRegistry
+        private backend: TableService
     ) {}
 
-    public ngOnChanges(changes: SimpleChanges) {
-        this.showLoading(async () => {
-            this.sort = undefined;
-            this.meta = await this.backend.meta(this.name);
-            this.tableHeaders = this.createTableHeaders(this.meta.headers);
-            this.constraints = _.groupBy(this.meta.constraints, 'localColumn');
-            this.exists = true;
-            // Set the initial page now that we have some data
-            return this.setPage({ offset: 0 }, false);
-        }, (e) => {
-            // Handle 404s, show the user that the table couldn't be found
-            if (e instanceof Response && e.status === 404) {
-                this.exists = false;
-                return;
-            }
+    public ngOnInit(): void {
+        this.nameSub = this._name$
+            .distinctUntilChanged()
+            .do(() => { this.loading = true; })
+            .switchMap((newName) => {
+                // Create a disposable Observable so we don't end up completing
+                // the main one. This way, if an error occurs, we can still
+                // react to changes in the table name
+                return this.backend.meta(newName)
+                    .catch((err) => {
+                        if (err instanceof Response && err.status === 404) {
+                            // Handle 404s, show the user that the table couldn't be
+                            // found
+                            return Observable.of(null);
+                        } else {
+                            // Unknown error
+                            throw err;
+                        }
+                    });
+            })
+            .subscribe((meta: TableMeta | null) => {
+                this.loading = false;
+                this.exists = meta !== null;
+                if (meta !== null) {
+                    this.meta = meta;
+                    this.tableHeaders = this.createTableHeaders(this.meta.headers);
+                    this.constraints = _.groupBy(this.meta.constraints, 'localColumn');
+                    this.pageNumber = 1;
+                }
+            });
 
-            // Other error, rethrow it
-            throw e;
-        });
+        this.pageInfoSub = Observable
+            // Take the latest pageNumber and sort and transform them into an
+            // object
+            .combineLatest(
+                this._pageNumber$,
+                this._sort$,
+                (pageNumber: number, sort: string) => ({
+                    pageNumber,
+                    sort
+                })
+            )
+            // Make sure we're only requesting data stemming from filters
+            // different from the previous one
+            .distinctUntilChanged()
+            .do(() => { this.loading = true; })
+            .switchMap((args: any) => {
+                return this.backend.content(this.name, args.pageNumber, this.limit, args.sort)
+                    .catch((err) => {
+                        // TODO handle this properly
+                        throw err;
+                    })
+                    .map((rows: SqlRow[]) => this.formatRows(this.meta.headers, rows));
+            })
+            .subscribe((data: SqlRow[]) => {
+                this.loading = false;
+                this.data = data;
+            });
+    }
+
+    public ngOnDestroy(): void {
+        // Clean up our subscriptions
+        this.nameSub.unsubscribe();
+        this.pageInfoSub.unsubscribe();
     }
 
     /**
@@ -119,57 +161,15 @@ export class DatatableComponent implements OnChanges {
         return this.constraints[name].find((c) => c.type === type);
     }
 
-    private setPage(event: any, showLoading: boolean = true) {
-        const load = async () => {
-            // page 1 === offset 0, page 2 === offset 1, etc.
-            const page = event.offset + 1;
-            // Get the raw data from the service and format it
-            const raw = await this.backend.content(this.name, page, this.limit, this.sort);
-            const content = this.formatRows(this.meta.headers, raw);
-
-            // Update the page
-            this.page = {
-                number: event.offset,
-                size: content.length,
-                data: content
-            };
-        };
-
-        if (showLoading)
-            return this.showLoading(load);
-        else
-            return load();
+    private onPaginate(event: any) {
+        // page 1 === offset 0, page 2 === offset 1, etc.
+        this.pageNumber = event.offset + 1;
     }
 
     private onSort(event: any) {
         const sortDirPrefix = event.sorts[0].dir === 'desc' ? '-' : '';
         // '-prop' for descending, 'prop' for ascending
         this.sort = sortDirPrefix + event.sorts[0].prop;
-        this.showLoading(async () => {
-            const raw = await this.backend.content(this.name, 1, this.limit, this.sort);
-            const data = this.formatRows(this.meta.headers, raw);
-            this.page = {
-                number: 0,
-                size: data.length,
-                data
-            };
-        });
-    }
-
-    private showLoading(
-        doWork: () => Promise<void>,
-        handleError: (e: any) => void = console.error
-    ) {
-        const timeout = setTimeout(() => {
-            this.loading = true;
-        }, DatatableComponent.LOADING_DELAY);
-
-        return doWork()
-            .catch(handleError)
-            .then(() => {
-                this.loading = false;
-                clearTimeout(timeout);
-            });
     }
 
     private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
@@ -191,9 +191,9 @@ export class DatatableComponent implements OnChanges {
                 const header = _.find(headers, (h) => h.name === headerName);
                 // Use moment to format dates and times in the default format
                 if (header.type === 'date')
-                    row[headerName] = this.formatMoment(row[headerName], 'l');
+                    row[headerName] = DatatableComponent.formatMoment(row[headerName], 'l');
                 if (header.type === 'timestamp' || header.type === 'datetime')
-                    row[headerName] = this.formatMoment(row[headerName], 'LLL');
+                    row[headerName] = DatatableComponent.formatMoment(row[headerName], 'LLL');
                 if (header.rawType === BOOLEAN_TYPE)
                     // Resolve either the 1 or 0 to its boolean value
                     row[headerName] = !!row[headerName];
@@ -207,9 +207,10 @@ export class DatatableComponent implements OnChanges {
      * Tries to format a given date into the format given. If the source is not
      * a valid date, returns null.
      * 
+     * @param source A string parsable by Moment
      * @param format Any format accepted by Moment
      */
-    private formatMoment(source: string, format: string): string | null {
+    private static formatMoment(source: string, format: string): string | null {
         const m = moment(source);
         return m.isValid() ? m.format(format) : null;
     }

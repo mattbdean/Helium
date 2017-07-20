@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { Observable } from 'rxjs/Rx';
+
 import { TableService } from "./core/table.service";
 
 @Component({
@@ -7,8 +9,8 @@ import { TableService } from "./core/table.service";
     styleUrls: ['app.component.scss']
 })
 export class AppComponent implements OnInit {
-    public tables: string[];
-    public selectedTable: string;
+    private tables: Observable<string[]>;
+    private selectedTable: string;
 
     public constructor(
         private backend: TableService

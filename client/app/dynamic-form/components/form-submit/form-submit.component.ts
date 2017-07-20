@@ -8,7 +8,6 @@ import { FormGroup } from '@angular/forms';
             <button 
                 color="primary"
                 md-raised-button
-                type="submit"
                 [disabled]="config.disabled">
                 {{ config.label }}
             </button>

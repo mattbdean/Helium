@@ -15,5 +15,5 @@ import { FormGroup } from '@angular/forms';
 })
 export class FormSelectComponent {
     public config: any;
-    public gruop: FormGroup;
+    public group: FormGroup;
 }

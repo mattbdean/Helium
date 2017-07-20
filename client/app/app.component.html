@@ -3,7 +3,7 @@
     <md-sidenav mode="side" opened="true" fullscreen>
         <ul class="sidenav-list">
             <li class="header">Tables</li>
-            <li class="table-ref" *ngFor="let table of tables">
+            <li class="table-ref" *ngFor="let table of tables | async">
                 <a class="table-name" [routerLink]="['/tables', table]" routerLinkActive="active-router-link">{{ table }}</a>
                 <a class="material-icons add-data-icon" [routerLink]="['/forms', table]" routerLinkActive="active-router-link">add</a>
             </li>

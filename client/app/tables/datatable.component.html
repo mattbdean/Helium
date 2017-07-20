@@ -14,11 +14,11 @@
                    [footerHeight]="50"
                    [limit]="limit"
                    [headerHeight]="50"
-                   [offset]="page.number"
+                   [offset]="pageNumber"
                    [rowHeight]="'auto'"
-                   [rows]="page.data"
+                   [rows]="data"
 
-                   (page)="setPage($event)"
+                   (page)="onPaginate($event)"
                    (sort)="onSort($event)">
     </ngx-datatable>
 
