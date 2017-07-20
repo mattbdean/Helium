@@ -9,6 +9,7 @@
 Notable dependencies:
 
 - Node.js
+- TypeScript
 - Express
 - MySQL
 - Angular (v4)
@@ -17,19 +18,41 @@ Notable dependencies:
 
 Tests are written with Mocha, Chai, Karma, and Protractor.
 
-This project is written with a lot of cool things like arrow and async functions, so you should probably be using the latest 7.x Node.js build, but anything above 7.6 should work.
+This project uses TypeScript for both server and client. 
 
 ### Building
 
-Helium uses Gulp and Webpack for its build process. The default task will build the client and server, start the app, and watch for any changes.
+To get started, create `db.conf.json` in the project root.
 
-```sh
-$ gulp [--watch]
+```json
+{
+  "test": {
+    "user": "user",
+    "password": "password",
+    "database": "helium"
+  },
+  "prod": {
+    "user": "<production username>",
+    "password": "<production password>",
+    "database": "<production database>",
+    "host": "<production host>"
+  }
+}
 ```
 
-You can specify `PORT=<whatever>` to change the HTTP port.
+Inside `test` and `prod` you can specify any connection options supported by [mysqljs](https://github.com/mysqljs/mysql#connection-options).
 
-Set `NODE_ENV=prod` for a production build, which enables uglifying JS and AOT compilation.
+Use the `dev` script for developing:
+
+```sh
+$ yarn dev
+```
+
+Set `NODE_ENV=prod` for a production build, which enables uglifying JS and AOT compilation. You can also specify `PORT=<whatever>` to change the HTTP port.
+
+```sh
+$ PORT=3001 NODE_ENV=prod node dist
+```
 
 ### Testing
 
