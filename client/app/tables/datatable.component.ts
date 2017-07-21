@@ -124,7 +124,17 @@ export class DatatableComponent implements OnInit, OnDestroy {
                         // TODO handle this properly
                         throw err;
                     })
-                    .map((rows: SqlRow[]) => this.formatRows(args.meta.headers, rows));
+                    .map((rows: SqlRow[]) => {
+                        try {
+                            return this.formatRows(args.meta.headers, rows);
+                        } catch (e) {
+                            // TODO we're putting a bandaid on a stab wound here,
+                            // there's a race condition here and I don't know
+                            // how to fix it
+                            console.error('Unable to format rows');
+                            return rows;
+                        }
+                    });
             })
             .subscribe((data: SqlRow[]) => {
                 this.loading = false;
