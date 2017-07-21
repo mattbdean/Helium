@@ -3,6 +3,8 @@ import { Headers, Http, RequestOptionsArgs } from '@angular/http';
 
 import { Observable } from "rxjs/Observable";
 
+import * as _ from 'lodash';
+
 import { PaginatedResponse, SqlRow, TableMeta } from '../common/responses';
 
 /**
@@ -45,7 +47,7 @@ export class TableService {
 
         const url = `/api/v1/tables/${encodeURIComponent(tableName)}`;
 
-        return this.http.put(url, JSON.stringify(body), { headers })
+        return this.http.put(url, JSON.stringify(body), options)
             .map((res) => res.json());
     }
 
@@ -54,7 +56,8 @@ export class TableService {
      * and cast its JSON response as the type T
      */
     private get<T>(relPath: string, query: any = {}): Observable<T> {
-        const requestOptions = { params: query };
+        // Only include non-null and non-undefined values in the query
+        const requestOptions = { params: _.omitBy(query, _.isNil) };
         return this.http.get(`/api/v1${relPath}`, requestOptions)
             .map((res) => res.json() as T);
     }

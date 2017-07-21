@@ -26,9 +26,6 @@ interface DataTableHeader {
     styleUrls: ['datatable.component.scss']
 })
 export class DatatableComponent implements OnInit, OnDestroy {
-    private _name$ = new BehaviorSubject("");
-    private _pageNumber$ = new BehaviorSubject(1);
-    private _sort$ = new BehaviorSubject(undefined);
 
     @Input()
     public set name(value) { this._name$.next(value); }
@@ -39,25 +36,26 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
     private set sort(value) { this._sort$.next(value); }
 
+    public set meta(value) { this._meta$.next(value); }
+    public get meta() { return this._meta$.getValue(); }
+
+    private _name$ = new BehaviorSubject(null);
+    private _pageNumber$ = new BehaviorSubject(1);
+    private _sort$ = new BehaviorSubject(null);
+    private _meta$ = new BehaviorSubject<TableMeta>(null);
+
     private nameSub: Subscription;
     private pageInfoSub: Subscription;
 
-    public meta: TableMeta = {
-        headers: [],
-        totalRows: 0,
-        constraints: [],
-        comment: ''
-    };
-    public tableHeaders: DataTableHeader[];
     private constraints: ConstraintGrouping = {};
-
-    public loading = false;
+    public tableHeaders: DataTableHeader[];
 
     @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
 
     /** True if this component has tried to access the table and found data */
     public exists: boolean = true;
+    public loading = false;
 
     /** How many rows to fetch per page */
     public readonly limit: number = 25;
@@ -95,7 +93,8 @@ export class DatatableComponent implements OnInit, OnDestroy {
                     this.meta = meta;
                     this.tableHeaders = this.createTableHeaders(this.meta.headers);
                     this.constraints = _.groupBy(this.meta.constraints, 'localColumn');
-                    this.pageNumber = 1;
+
+                    this.reset();
                 }
             });
 
@@ -103,24 +102,29 @@ export class DatatableComponent implements OnInit, OnDestroy {
             // Take the latest pageNumber and sort and transform them into an
             // object
             .combineLatest(
+                this._name$,
                 this._pageNumber$,
                 this._sort$,
-                (pageNumber: number, sort: string) => ({
+                this._meta$,
+                (name: string, pageNumber: number, sort: string, meta: TableMeta) => ({
+                    name,
                     pageNumber,
-                    sort
+                    sort,
+                    meta
                 })
             )
             // Make sure we're only requesting data stemming from filters
             // different from the previous one
+            .filter((args) => !_.isNil(args.meta) && !_.isNil(args.name))
             .distinctUntilChanged()
             .do(() => { this.loading = true; })
             .switchMap((args: any) => {
-                return this.backend.content(this.name, args.pageNumber, this.limit, args.sort)
+                return this.backend.content(args.name, args.pageNumber, this.limit, args.sort)
                     .catch((err) => {
                         // TODO handle this properly
                         throw err;
                     })
-                    .map((rows: SqlRow[]) => this.formatRows(this.meta.headers, rows));
+                    .map((rows: SqlRow[]) => this.formatRows(args.meta.headers, rows));
             })
             .subscribe((data: SqlRow[]) => {
                 this.loading = false;
@@ -174,6 +178,11 @@ export class DatatableComponent implements OnInit, OnDestroy {
         }
 
         return copied;
+    }
+
+    private reset(): void {
+        this.pageNumber = 1;
+        this.sort = null;
     }
 
     /**

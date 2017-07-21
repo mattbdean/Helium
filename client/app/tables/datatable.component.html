@@ -1,14 +1,14 @@
 <md-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></md-progress-bar>
 <div [hidden]="!exists">
     <h1 class="mat-display-1">{{ name }}</h1>
-    <h4 class="table-description" *ngIf="meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
+    <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
 
     <ngx-datatable class="material"
                    [hidden]="!exists"
 
                    [columnMode]="'force'"
                    [columns]="tableHeaders"
-                   [count]="meta.totalRows"
+                   [count]="meta ? meta.totalRows : 0"
                    [externalPaging]="true"
                    [externalSorting]="true"
                    [footerHeight]="50"
