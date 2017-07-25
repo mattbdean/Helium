@@ -21,5 +21,13 @@ describe('routes', () => {
                         .expect('Content-Type', /html/);
             }
         });
+
+        it('should respond with 404 when the Accept header is not for HTML', () => {
+            return request(app)
+                .get('/foo')
+                .accept('foo/bar')
+                .expect(404)
+                .expect('Content-Type', /text/);
+        });
     });
 });
