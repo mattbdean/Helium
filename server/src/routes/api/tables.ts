@@ -24,7 +24,7 @@ export function tables(): Router {
         }
     });
 
-    r.get('/:name', async (req: Request, res: Response) => {
+    r.get('/:name/data', async (req: Request, res: Response) => {
         const name: string = req.params.name;
 
         if (!verifyTableName(name, res)) return;
@@ -62,7 +62,7 @@ export function tables(): Router {
         }
     });
 
-    r.get('/:name/meta', async (req: Request, res: Response) => {
+    r.get('/:name', async (req: Request, res: Response) => {
         try {
             const name = req.params.name;
             if (!verifyTableName(name, res)) return;
@@ -90,7 +90,7 @@ export function tables(): Router {
         }
     });
 
-    r.put('/:name', async (req, res) => {
+    r.put('/:name/data', async (req, res) => {
         if (!verifyTableName(req.params.name, res)) return;
 
         try {

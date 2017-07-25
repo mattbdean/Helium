@@ -22,12 +22,12 @@ export class TableService {
 
     /** Fetches meta for a given table */
     public meta(name: string): Observable<TableMeta> {
-        return this.get(`/tables/${encodeURIComponent(name)}/meta`);
+        return this.get(`/tables/${encodeURIComponent(name)}`);
     }
 
     /** Fetches paginated data from a given table */
     public content(name: string, page: number = 1, limit: number = 25, sort?: string): Observable<SqlRow[]> {
-        return this.get(`/tables/${encodeURIComponent(name)}`, {
+        return this.get(`/tables/${encodeURIComponent(name)}/data`, {
             page, limit, sort
         }).map((data: PaginatedResponse<SqlRow[]>) => data.data);
     }
@@ -45,7 +45,7 @@ export class TableService {
         const headers = new Headers({ 'Content-Type': 'application/json' });
         const options: RequestOptionsArgs = { headers };
 
-        const url = `/api/v1/tables/${encodeURIComponent(tableName)}`;
+        const url = `/api/v1/tables/${encodeURIComponent(tableName)}/data`;
 
         return this.http.put(url, JSON.stringify(body), options)
             .map((res) => res.json());
