@@ -13,7 +13,7 @@ export function createServer(): express.Application {
     app.use(bodyParser.json());
     app.use(helmet());
 
-    app.use('/api', api());
+    app.use('/api/v1', api());
     // Mount static assets before the front() module so we can still use our
     // assets without the front()'s wildcard route catching it first
     app.use(express.static(path.join(__dirname, 'public')));

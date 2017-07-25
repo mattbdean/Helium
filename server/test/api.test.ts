@@ -13,7 +13,7 @@ import {
     fetchTableComment,
     fetchTableCount,
     fetchTableHeaders
-} from '../src/routes/api/v1/tables';
+} from '../src/routes/api/tables';
 import { createServer } from '../src/server';
 
 import { RequestContext } from './api.test.helper';

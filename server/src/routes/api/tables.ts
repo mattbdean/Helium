@@ -10,15 +10,13 @@ import {
     SqlRow,
     TableHeader,
     TableMeta,
-} from '../../../common/responses';
-import { Database, squel } from '../../../Database';
-import { debug, NODE_ENV, NodeEnv } from '../../../env';
-
-import { RouteModule } from '../../RouteModule';
+} from '../../common/responses';
+import { Database, squel } from '../../Database';
+import { debug, NODE_ENV, NodeEnv } from '../../env';
 
 const TABLE_NAME_REGEX = /^[#~]?[a-zA-Z]+$/;
 
-export function tables(): RouteModule {
+export function tables(): Router {
     const r = Router();
     r.use(paginate.middleware(25, 100));
 
@@ -244,10 +242,7 @@ export function tables(): RouteModule {
         res.status(code).json(data);
     };
 
-    return {
-        router: r,
-        mountPoint: '/tables'
-    };
+    return r;
 }
 
 export async function fetchTableNames(): Promise<string[]> {

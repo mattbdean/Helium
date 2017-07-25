@@ -1,19 +1,21 @@
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 
-import { RouteModule } from '../RouteModule';
-import { v1 } from './v1';
+import { ErrorResponse } from '../../common/responses';
+import { tables } from './tables';
 
 export function api(): Router {
     const router = Router();
+    router.use('/tables', tables());
 
-    const modules: Array<() => RouteModule> = [
-        v1
-    ];
+    // Catch all requests to the API not handled by an API module to ensure the
+    // client still receives JSON data
+    router.get('/*', (req: Request, res: Response) => {
+        const resp: ErrorResponse = {
+            message: 'Not found',
+            input: {}
+        };
 
-    for (const m of modules) {
-        const mod = m();
-        router.use(mod.mountPoint, mod.router);
-    }
-
+        res.status(404).json(resp);
+    });
     return router;
 }
