@@ -4,7 +4,6 @@ import { Database, DbConf, Mode } from '../src/Database';
 process.on('unhandledRejection', (reason) => {
     process.stderr.write("Unhandled Promise rejection:\n");
     console.error(reason);
-    process.exit(1);
 });
 
 // Mocha root suite. Install test hooks for all tests here.

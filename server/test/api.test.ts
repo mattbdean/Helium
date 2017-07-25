@@ -2,20 +2,14 @@ import { expect } from 'chai';
 import { Application } from 'express';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { Response } from 'supertest';
 
 import {
-    Constraint, ErrorResponse, PaginatedResponse, SqlRow,
+    ErrorResponse, PaginatedResponse, SqlRow,
     TableHeader, TableMeta
 } from '../src/common/responses';
-import {
-    fetchConstraints,
-    fetchTableComment,
-    fetchTableCount,
-    fetchTableHeaders
-} from '../src/routes/api/tables';
 import { createServer } from '../src/server';
 
+import { TableDao } from '../src/routes/api/tables.queries';
 import { RequestContext } from './api.test.helper';
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +58,7 @@ describe('API v1', () => {
         let meta: TableMeta;
 
         before(async () => {
-            meta = await fetchMetadata(SHOWCASE_TABLE);
+            meta = await TableDao.meta(SHOWCASE_TABLE);
         });
 
         it('should return an array of SqlRows', () => {
@@ -73,6 +67,7 @@ describe('API v1', () => {
                 relPath: '/tables/' + SHOWCASE_TABLE,
                 expectedStatus: 200,
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
+                    console.log(response);
                     expect(response.size).to.equal(response.data.length);
                     expect(response.size).to.be.above(0);
                     for (const row of response.data) {
@@ -109,7 +104,7 @@ describe('API v1', () => {
             // Use the most complex table without any dates for this specific
             // test
             const table = 'product';
-            const tableMeta = await fetchMetadata(table);
+            const tableMeta = await TableDao.meta(table);
 
             const doRequest = (header: TableHeader, sort: 'asc' | 'desc'): Promise<void> =>
                 request.spec({
@@ -386,22 +381,4 @@ describe('API v1', () => {
             return request.basic('/tables/foo/column/blablabla', 400);
         });
     });
-
-    const fetchMetadata = async (table: string): Promise<TableMeta> => {
-        const [headers, count, constraints, comment] = await Promise.all([
-            fetchTableHeaders(table),
-            fetchTableCount(table),
-            fetchConstraints(table),
-            fetchTableComment(table)
-        ]);
-
-        expect(headers).to.have.length.above(0);
-
-        return {
-            headers,
-            totalRows: count,
-            constraints,
-            comment
-        };
-    };
 });
