@@ -27,7 +27,8 @@ gulp.task('clean', () =>
         'dist',
         'server/src/common',
         'server/src/public',
-        'server/src/about.json'
+        'server/src/about.json',
+        'server/src/db.conf.json'
     ])
 );
 
