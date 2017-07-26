@@ -54,7 +54,7 @@ describe('API v1', () => {
         });
     });
 
-    describe('GET /api/v1/tables/:name', () => {
+    describe('GET /api/v1/tables/:name/data', () => {
         let meta: TableMeta;
 
         before(async () => {
@@ -64,10 +64,9 @@ describe('API v1', () => {
         it('should return an array of SqlRows', () => {
             return request.spec({
                 method: 'GET',
-                relPath: '/tables/' + SHOWCASE_TABLE,
+                relPath: '/tables/' + SHOWCASE_TABLE + '/data',
                 expectedStatus: 200,
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
-                    console.log(response);
                     expect(response.size).to.equal(response.data.length);
                     expect(response.size).to.be.above(0);
                     for (const row of response.data) {
@@ -84,7 +83,7 @@ describe('API v1', () => {
         it('should support limiting via query', () => {
             return request.spec({
                 method: 'GET',
-                relPath: '/tables/' + SHOWCASE_TABLE,
+                relPath: '/tables/' + SHOWCASE_TABLE + '/data',
                 expectedStatus: 200,
                 query: { limit: "2" },
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
@@ -109,7 +108,7 @@ describe('API v1', () => {
             const doRequest = (header: TableHeader, sort: 'asc' | 'desc'): Promise<void> =>
                 request.spec({
                     method: 'GET',
-                    relPath: `/tables/${table}`,
+                    relPath: `/tables/${table}/data`,
                     expectedStatus: 200,
                     // sort ascending with sort=name, descending with sort=-name
                     query: { sort: (sort === 'desc' ? '-' : '') + header.name },
@@ -129,7 +128,7 @@ describe('API v1', () => {
         it('should throw a 400 when sorting by a column that doesn\'t exist', async () => {
             return request.spec({
                 method: 'GET',
-                relPath: `/tables/${encodeURIComponent(SHOWCASE_TABLE)}`,
+                relPath: `/tables/${encodeURIComponent(SHOWCASE_TABLE)}/data`,
                 query: { sort: 'foobar' },
                 expectedStatus: 400,
                 validate: (err: ErrorResponse) => {
@@ -139,7 +138,7 @@ describe('API v1', () => {
         });
     });
 
-    describe('PUT /api/v1/tables/:name', () => {
+    describe('PUT /api/v1/tables/:name/data', () => {
         let lastPk;
         const createSampleData = (): SqlRow => {
             if (lastPk === undefined)
@@ -162,14 +161,14 @@ describe('API v1', () => {
         const insertAndRetrieve = async (data: SqlRow): Promise<SqlRow> => {
             await request.spec({
                 method: 'PUT',
-                relPath: `/tables/${SHOWCASE_TABLE}`,
+                relPath: `/tables/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 200,
                 data
             });
 
             const res = await request.spec({
                 method: 'GET',
-                relPath: `/tables/${SHOWCASE_TABLE}`,
+                relPath: `/tables/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 200,
                 query: { limit: '100', sort: '-pk' }
             });
@@ -210,10 +209,10 @@ describe('API v1', () => {
         });
     });
 
-    describe('GET /api/v1/tables/:name/meta', () => {
+    describe('GET /api/v1/tables/:name', () => {
         let meta: TableMeta;
         before(async () => {
-            const res = await request.basic(`/tables/${SHOWCASE_TABLE}/meta`, 200);
+            const res = await request.basic(`/tables/${SHOWCASE_TABLE}`, 200);
             meta = res.body;
         });
 
@@ -267,7 +266,7 @@ describe('API v1', () => {
             request.spec({
                 method: 'GET',
                 expectedStatus: 200,
-                relPath: '/tables/' + SHOWCASE_TABLE,
+                relPath: '/tables/' + SHOWCASE_TABLE + '/data',
                 query: { limit: "100" },
                 validate: (result: PaginatedResponse<SqlRow[]>) => {
                     // This will fail if we have more than 100 rows
@@ -277,7 +276,7 @@ describe('API v1', () => {
         );
 
         it('should include an array of Constraints', () => {
-            return request.basic(`/tables/order/meta`, 200, (res: TableMeta) => {
+            return request.basic(`/tables/order`, 200, (res: TableMeta) => {
                 const constraints = res.constraints;
                 expect(constraints).to.exist;
                 // 4 PK, 3 FK's, 1 unique
@@ -312,7 +311,7 @@ describe('API v1', () => {
         });
 
         it('should resolve FK constraints to the original table', async () => {
-            await request.basic('/tables/shipment/meta', 200, (data: TableMeta) => {
+            await request.basic('/tables/shipment', 200, (data: TableMeta) => {
                 const grouped = _.groupBy(data.constraints, 'localColumn');
                 // order_id has no other containers between `shipment` and its
                 // home table
@@ -333,7 +332,7 @@ describe('API v1', () => {
                 }]);
             });
 
-            await request.basic('/tables/organization/meta', 200, (data: TableMeta) => {
+            await request.basic('/tables/organization', 200, (data: TableMeta) => {
                 // `organization` is the only table that contains a Constraint
                 // where localColumn !== foreignColumn
                 const c = data.constraints.find((c2) =>
@@ -349,17 +348,17 @@ describe('API v1', () => {
         });
 
         it('should include a comment when applicable', async () => {
-            await request.basic('/tables/organization/meta', 200, (data: TableMeta) => {
+            await request.basic('/tables/organization', 200, (data: TableMeta) => {
                 expect(data.comment).to.equal('');
             });
 
-            await request.basic(`/tables/${SHOWCASE_TABLE}/meta`, 200, (data: TableMeta) => {
+            await request.basic(`/tables/${SHOWCASE_TABLE}`, 200, (data: TableMeta) => {
                 expect(data.comment).to.equal('a table with diverse data');
             });
         });
 
         it('should 404 when given a non-existent table', () =>
-            request.basic('/tables/foobar/meta', 404, (error: ErrorResponse) => {
+            request.basic('/tables/foobar', 404, (error: ErrorResponse) => {
                 expect(error.input).to.deep.equal({ name: 'foobar' });
                 expect(error.message).to.be.a('string');
             })
