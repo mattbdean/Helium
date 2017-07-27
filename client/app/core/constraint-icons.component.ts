@@ -7,7 +7,7 @@ import { Constraint, ConstraintType } from '../common/responses';
 @Component({
     selector: 'constraint-icons',
     templateUrl: 'constraint-icons.component.html',
-    styleUrls: ['constraint-icon.component.scss']
+    styleUrls: ['constraint-icons.component.scss']
 })
 export class ConstraintIconsComponent implements OnInit {
     // private snowflakeIcon = require('../../assets/snowflake.svg');

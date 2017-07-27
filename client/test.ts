@@ -1,11 +1,15 @@
 // This file is required by karma.conf.js and loads recursively all the .spec and framework files
 
+// These are placed in a very specific order, even though tslint complains
 import 'zone.js/dist/long-stack-trace-zone';
 import 'zone.js/dist/proxy.js';
 import 'zone.js/dist/sync-test';
-import 'zone.js/dist/jasmine-patch';
+import 'zone.js/dist/mocha-patch';
 import 'zone.js/dist/async-test';
 import 'zone.js/dist/fake-async-test';
+
+import 'rxjs/Rx';
+
 import { getTestBed } from '@angular/core/testing';
 import {
   BrowserDynamicTestingModule,
@@ -17,7 +21,9 @@ declare const __karma__: any;
 declare const require: any;
 
 // Prevent Karma from running prematurely.
-__karma__.loaded = function () {};
+__karma__.loaded = () => {
+    // do nothing
+};
 
 // First, initialize the Angular testing environment.
 getTestBed().initTestEnvironment(
