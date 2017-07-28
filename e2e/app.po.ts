@@ -1,11 +1,11 @@
 import { browser, by, element } from 'protractor';
 
-export class HeliumPage {
-  navigateTo() {
-    return browser.get('/');
-  }
+export class HomePage {
+    public navigateTo() {
+        return browser.get('/');
+    }
 
-  getParagraphText() {
-    return element(by.css('app-root h1')).getText();
-  }
+    public getToolbarText() {
+        return element(by.css('.mat-toolbar-row')).getText();
+    }
 }

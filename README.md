@@ -48,15 +48,19 @@ Use the `dev` script for developing:
 $ yarn dev
 ```
 
-Set `NODE_ENV=prod` for a production build, which enables uglifying JS and AOT compilation. You can also specify `PORT=<whatever>` to change the HTTP port.
+This will watch for any changes to server-side and client-side code and restart the server when necessary. HMR and livereload aren't supported at the moment, so a manual browser refresh is necessary to see the latest changes.
+
+Set `NODE_ENV=prod` and use the `prod` script for a production build, which enables uglifying JS and AOT compilation. You can also specify `PORT=<whatever>` to change the HTTP port.
 
 ```sh
-$ PORT=3001 NODE_ENV=prod node dist
+$ PORT=3001 NODE_ENV=prod yarn prod
 ```
 
 ### Testing
 
 Run unit tests with `yarn test`, or specifically with `yarn test:client`, `yarn test:server`, and `yarn e2e`.
 
-You can also run protractor with the element inspector using `yarn e2e:live`
+You can also run protractor with the element inspector using `yarn e2e:debug`.
+
+To prevent rebuilding the website every time the e2e tests are run (what `yarn e2e` does), use two terminal windows. Run `PORT=4200 yarn dev` on the first and `yarn e2e:prepped` (or `yarn e2e:prepped:debug`) in the second whenever necessary.
 

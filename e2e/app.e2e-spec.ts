@@ -1,14 +1,16 @@
-import { HeliumPage } from './app.po';
+import { HomePage } from './app.po';
 
-describe('helium App', () => {
-  let page: HeliumPage;
+const expect = global['chai'].expect;
 
-  beforeEach(() => {
-    page = new HeliumPage();
-  });
+describe('Home page', () => {
+    let page: HomePage;
 
-  it('should display welcome message', () => {
-    page.navigateTo();
-    expect(page.getParagraphText()).toEqual('Welcome to app!');
-  });
+    beforeEach(() => {
+        page = new HomePage();
+    });
+
+    it('should display welcome message', () => {
+        page.navigateTo();
+        expect(page.getToolbarText()).to.eventually.equal('Helium');
+    });
 });
