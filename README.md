@@ -1,8 +1,8 @@
 # Helium
 
-[![CircleCI](https://img.shields.io/circleci/project/github/thatJavaNerd/Helium.svg)](https://circleci.com/gh/thatJavaNerd/Helium)
-[![Known Vulnerabilities](https://snyk.io/test/github/thatJavaNerd/Helium/badge.svg)](https://snyk.io/test/github/thatJavaNerd/Helium)
-[![David](https://img.shields.io/david/thatJavaNerd/Helium.svg)](https://david-dm.org/thatJavaNerd/Helium)
+[![CircleCI](https://img.shields.io/circleci/project/github/mattbdean/Helium.svg)](https://circleci.com/gh/mattbdean/Helium)
+[![Known Vulnerabilities](https://snyk.io/test/github/mattbdean/Helium/badge.svg)](https://snyk.io/test/github/mattbdean/Helium)
+[![David](https://img.shields.io/david/mattbdean/Helium.svg)](https://david-dm.org/mattbdean/Helium)
 
 > Svoboda Lab experiment metadata collection and standardization
 
