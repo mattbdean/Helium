@@ -216,15 +216,13 @@ export class TableDao {
                 return temp;
             };
 
-            let current: Constraint = findConstraint(c.localColumn, originals);
+            let current: Constraint = c;
             let previous: Constraint | undefined;
 
-            // Navigate up the hierarchy until we find a non-FK constraint.
-            // TODO: this algorithm will fail if the original column is NOT a
-            // constraint
-            while (current.foreignTable !== null) {
+            // Navigate up the hierarchy until we find a PK constraint.
+            while (current.type !== 'primary') {
                 previous = current;
-                current = findConstraint(current.foreignColumn!!, await getConstraints(current.foreignTable));
+                current = findConstraint(current.foreignColumn!!, await getConstraints(current.foreignTable!!));
             }
 
             if (previous !== undefined)
