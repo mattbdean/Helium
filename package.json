@@ -5,7 +5,7 @@
   "scripts": {
     "build": "gulp build && ng build",
     "dev": "gulp build && concurrently --raw \"nodemon dist\" \"gulp watch\" \"ng build --watch\"",
-    "e2e": "yarn build && concurrently --raw --kill-others \"PORT=4200 node dist\" \"sleep 1 && yarn e2e:prepped\"",
+    "e2e": "yarn build && concurrently --raw --kill-others --success first \"PORT=4200 node dist\" \"sleep 1 && yarn e2e:prepped\"",
     "e2e:debug": "yarn build && concurrently --raw --kill-others \"PORT=4200 node dist\" \"sleep 1 && yarn e2e:prepped -- -ee\"",
     "e2e:prepped": "ng e2e --serve false",
     "e2e:prepped:debug": "ng e2e --serve false -ee",
