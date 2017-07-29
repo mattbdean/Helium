@@ -7,8 +7,8 @@ import { Observable } from "rxjs/Observable";
 import { Subscription } from "rxjs/Subscription";
 
 import * as _ from 'lodash';
+import * as moment from 'moment';
 
-import { BOOLEAN_TYPE } from '../core/constants';
 import { TableService } from '../core/table.service';
 import { DynamicFormComponent } from '../dynamic-form/dynamic-form.component';
 import { FieldConfig } from '../dynamic-form/field-config.interface';
@@ -16,6 +16,7 @@ import { FieldConfig } from '../dynamic-form/field-config.interface';
 import { Response } from "@angular/http";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { TableHeader, TableMeta } from '../common/responses';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
 
 @Component({
     selector: 'form-host',
@@ -59,7 +60,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             // Try to submit the row. switchMap to any error that occurred
             // during the process
             .switchMap((form: any) => {
-                return this.backend.submitRow(this.name, form)
+                return this.backend.submitRow(this.name, this.preformat(form))
                     // Assume no error
                     .mapTo(null)
                     // Handle any errors
@@ -115,20 +116,18 @@ export class FormHostComponent implements OnDestroy, OnInit {
             // Default to string input
             let subtype = 'text';
 
-            if (h.rawType === BOOLEAN_TYPE) {
+            if (h.type === 'boolean') {
                 subtype = 'checkbox';
                 // For checkboxes we MUST specify an initial value. If we don't,
                 // submitting the form without touching the control will result
                 // in an undefined value, instead of false, like the user likely
                 // assumes it will be.
                 initialValue = false;
-            } else if (h.isNumber) {
-                // Numerical
+            } else if (h.isNumerical) {
                 subtype = 'number';
             } else if (h.type === 'date') {
-                // Dates and timestamp
                 subtype = 'date';
-            } else if (h.type === 'timestamp') {
+            } else if (h.type === 'datetime') {
                 subtype = 'datetime-local';
             }
 
@@ -167,5 +166,22 @@ export class FormHostComponent implements OnDestroy, OnInit {
         });
 
         return config;
+    }
+
+    /**
+     * Takes care of any date/datetime formatting, if necessary. Returns a copy
+     * of the original form with dates and datetimes formatted in the way that
+     * the API expects.
+     */
+    private preformat(form: any): any {
+        return _.mapValues(form, (value, controlName) => {
+            const conf = _.find(this.config, (c) => c.name === controlName);
+            if (conf.subtype === 'date')
+                return moment(value).format(DATE_FORMAT);
+            else if (conf.subtype === 'datetime-local')
+                return moment(value).format(DATETIME_FORMAT);
+
+            return value;
+        });
     }
 }

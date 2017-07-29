@@ -1,10 +1,17 @@
+import * as BaseJoi from 'joi';
+import * as JoiDateExtensions from 'joi-date-extensions';
 import * as _ from 'lodash';
+import * as moment from 'moment';
 
+import { Schema } from 'joi';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import {
-    Constraint, ConstraintType, SqlRow,
+    Constraint, ConstraintType, SqlRow, TableDataType,
     TableHeader, TableMeta
 } from '../../common/responses';
 import { Database, squel } from '../../Database';
+
+const joi = BaseJoi.extend(JoiDateExtensions);
 
 /**
  * Simple interface for describing the way some data is to be organized
@@ -86,7 +93,32 @@ export class TableDao {
             query = query.order(conn.escapeId(sort.by), sort.direction === 'asc');
         }
 
-        return (await (Database.get().conn.execute(query.toString())))[0];
+        const rows = (await (Database.get().conn.execute(query.toString())))[0];
+        // TODO: This could be a source of strain if we have many users and many
+        // tables that have dates/times in them
+        let headers: TableHeader[] | null = null;
+
+        for (const row of rows) {
+            for (const key of Object.keys(row)) {
+                if (row[key] instanceof Date) {
+                    if (headers === null)
+                        headers = await TableDao.headers(name);
+
+                    const header = _.find(headers, (h) => h.name === key);
+                    if (header === undefined)
+                        throw Error(`Could not find header with name ${key}`);
+
+                    if (header.type === 'date')
+                        row[key] = moment(row[key]).format(DATE_FORMAT);
+                    else if (header.type === 'datetime')
+                        row[key] = moment(row[key]).format(DATETIME_FORMAT);
+                    else
+                        throw Error(`Header ${header.name} unexpectedly had a Date value in it`);
+                }
+            }
+        }
+
+        return rows;
     }
 
     /**
@@ -134,7 +166,13 @@ export class TableDao {
      * inserting.
      */
     public static async insertRow(table: string, data: SqlRow) {
-        const preparedData: PreparedCell[] = await TableDao.prepareForInsert(table, data);
+        const headers = await TableDao.headers(table);
+
+        // Make sure that the given data adheres to the headers
+        const schema = TableDao.compileSchemaFor(headers);
+        joi.assert(data, schema);
+
+        const preparedData: PreparedCell[] = await TableDao.prepareForInsert(headers, data);
         const conn = Database.get().conn;
 
         // Create base 'INSERT INTO' query
@@ -149,6 +187,46 @@ export class TableDao {
 
         // Execute the query
         await conn.execute(query.toString());
+    }
+
+    private static compileSchemaFor(headers: TableHeader[]): Schema {
+        const keys = _.map(headers, (h) => h.name);
+        const values = _.map(headers, (h) => {
+            switch (h.type) {
+                case 'string':
+                    return joi.string()
+                        .min(0)
+                        .max(h.maxCharacters !== null ? h.maxCharacters : Infinity);
+                case 'integer':
+                case 'float':
+                    // TODO: Handle maximum values for integers/floats
+                    let base = joi.number();
+                    if (h.signed) {
+                        base = base.min(0);
+                    }
+                    if (h.type === 'integer')
+                        base = base.integer();
+                    return base;
+                case 'date':
+                    return joi.date().format('YYYY-MM-DD');
+                case 'datetime':
+                    return joi.date().format('YYYY-MM-DD HH:mm:ss');
+                case 'boolean':
+                    return joi.boolean();
+                case 'enum':
+                    const schema = joi.string();
+                    return schema.only.apply(schema, h.enumValues!!);
+                default:
+                    throw Error('Unknown data type: ' + h.type);
+            }
+        });
+
+        // Make all non-nullable properties required
+        for (let i = 0; i < headers.length; i++) {
+            if (!headers[i].nullable)
+                values[i] = values[i].required();
+        }
+        return joi.object(_.zipObject(keys, values));
     }
 
     /**
@@ -272,25 +350,30 @@ export class TableDao {
 
         // Map each BinaryRow into a TableHeader, removing any additional rows
         // that share the same name
-        return _.map(result, (row: any): TableHeader => ({
-            name: row.COLUMN_NAME as string,
-            type: row.DATA_TYPE as string,
-            ordinalPosition: row.ORDINAL_POSITION as number,
-            rawType: row.COLUMN_TYPE as string,
-            nullable: row.IS_NULLABLE === 'YES',
-            maxCharacters: row.CHARACTER_MAXIMUM_LENGTH as number,
-            charset: row.CHARACTER_SET_NAME as string,
-            numericPrecision: row.NUMERIC_PRECISION as number,
-            numericScale: row.NUMERIC_SCALE as number,
-            enumValues: TableDao.findEnumValues(row.COLUMN_TYPE as string),
-            isNumber: TableDao.isNumericalType(row.DATA_TYPE as string),
-            isTextual: !TableDao.isNumericalType(row.DATA_TYPE as string),
-            comment: row.COLUMN_COMMENT as string
-        }));
+        return _.map(result, (row: any): TableHeader => {
+            const rawType = row.COLUMN_TYPE as string;
+            const type = TableDao.parseType(rawType);
+            const isNumerical = type === 'integer' || type === 'float';
+            return {
+                name: row.COLUMN_NAME as string,
+                type,
+                isNumerical,
+                isTextual: !isNumerical,
+                signed: isNumerical && !rawType.includes("unsigned"),
+                ordinalPosition: row.ORDINAL_POSITION as number,
+                rawType,
+                nullable: row.IS_NULLABLE === 'YES',
+                maxCharacters: row.CHARACTER_MAXIMUM_LENGTH as number,
+                charset: row.CHARACTER_SET_NAME as string,
+                numericPrecision: row.NUMERIC_PRECISION as number,
+                numericScale: row.NUMERIC_SCALE as number,
+                enumValues: TableDao.findEnumValues(row.COLUMN_TYPE as string),
+                comment: row.COLUMN_COMMENT as string
+            };
+        });
     }
 
-    private static async prepareForInsert(table: string, row: SqlRow): Promise<PreparedCell[]> {
-        const headers: TableHeader[] = await TableDao.headers(table);
+    private static async prepareForInsert(headers: TableHeader[], row: SqlRow): Promise<PreparedCell[]> {
         const newRow: PreparedCell[] = [];
 
         const headerNames: string[] = _.map(headers, 'name');
@@ -315,24 +398,38 @@ export class TableDao {
             dontQuote: false
         });
 
-        if (header.type === 'date' || header.type === 'timestamp') {
+        if (header.type === 'datetime') {
             return {
                 key: header.name,
-                value: `FROM_UNIXTIME(${new Date(value).getTime() / 1000})`,
+                value: `STR_TO_DATE('${value}', '%Y-%m-%d %H:%i:%s')`,
+                dontQuote: true
+            };
+        } else if (header.type === 'date') {
+            return {
+                key: header.name,
+                value: `STR_TO_DATE('${value}', '%Y-%m-%d')`,
                 dontQuote: true
             };
         } else if (header.rawType === 'tinyint(1)')
             return quoted(value === true || value === 'true' || value === 1);
         else if (header.numericScale && header.numericScale === 0)
             return quoted(parseInt(value, 10));
-        else if (header.isNumber)
+        else if (header.isNumerical)
             return quoted(parseFloat(value));
         else
             return quoted(value);
     }
 
-    private static isNumericalType(type: string): boolean {
-        return /int/.test(type) || type === 'decimal' || type === 'double';
+    private static parseType(rawType: string): TableDataType {
+        if (rawType.includes('tinyint(1)')) return 'boolean';
+        if (rawType.includes('int')) return 'integer';
+        if (rawType.includes('double') || rawType.includes('float') || rawType.includes('decimal')) return 'float';
+        if (rawType === 'date') return 'date';
+        if (rawType === 'datetime' || rawType === 'timestamp') return 'datetime';
+        if (rawType.startsWith('enum')) return 'enum';
+        if (rawType.includes('char')) return 'string';
+
+        throw Error(`Could not determine TableDataType for raw type '${rawType}'`);
     }
 
     private static findEnumValues(raw: string): string[] | null {
@@ -342,5 +439,4 @@ export class TableDao {
             throw new Error(`Expecting a match from input string ${raw}`);
         return matches[1].split("','");
     }
-
 }

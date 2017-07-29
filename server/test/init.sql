@@ -61,7 +61,7 @@ CREATE TABLE shipment(
 
 # Create table with all known supported datatypes
 CREATE TABLE datatypeshowcase(
-  `pk` INTEGER PRIMARY KEY NOT NULL COMMENT 'pk column',
+  `pk` INTEGER UNSIGNED PRIMARY KEY NOT NULL COMMENT 'pk column',
   `integer` INTEGER UNIQUE COMMENT 'integer column',
   `double` DOUBLE COMMENT 'double column',
   `boolean` BOOLEAN COMMENT 'boolean column',

@@ -19,23 +19,31 @@ export interface SqlRow {
     [columnName: string]: any;
 }
 
+export type TableDataType = 'string' | 'integer' | 'float' | 'date' | 'datetime' | 'boolean' | 'enum';
+
 export interface TableHeader {
     name: string;
 
-    /** Base type (int, varchar, date, etc.) */
-    type: string;
+    /** Base data type */
+    type: TableDataType;
+
+    /** The exact type the column was created with (varchar(16), int(11), etc.) */
+    rawType: string;
+
+    /** True when the type is numeric (int, decimal, double, etc.) */
+    isNumerical: boolean;
+
+    /** True when the type is textual (text, tinytext, varchar, date, etc.) */
+    isTextual: boolean;
 
     /** The position at which this column was defined (1 = first col, 2 = second, etc.) */
     ordinalPosition: number;
 
-    /** The exact type the column was created for (varchar(16), int(11), etc.) */
-    rawType: string;
-
-    /** True when the type is numeric (int, decimal, double, etc.) */
-    isNumber: boolean;
-
-    /** True when the type is textual (text, tinytext, varchar, etc.) */
-    isTextual: boolean;
+    /**
+     * Only applicable for numerical data types. An unsigned number cannot be
+     * negative.
+     */
+    signed: boolean;
 
     /** Whether or not data in this column can be null */
     nullable: boolean;

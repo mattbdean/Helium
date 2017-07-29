@@ -6,9 +6,8 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import {
-    Constraint, ConstraintType, SqlRow, TableHeader, TableMeta
+    Constraint, SqlRow, TableHeader, TableMeta
 } from '../common/responses';
-import { BOOLEAN_TYPE } from '../core/constants';
 import { TableService } from '../core/table.service';
 
 interface ConstraintGrouping {
@@ -179,9 +178,9 @@ export class DatatableComponent implements OnInit, OnDestroy {
                 // Use moment to format dates and times in the default format
                 if (header.type === 'date')
                     row[headerName] = DatatableComponent.formatMoment(row[headerName], 'l');
-                if (header.type === 'timestamp' || header.type === 'datetime')
+                if (header.type === 'datetime')
                     row[headerName] = DatatableComponent.formatMoment(row[headerName], 'LLL');
-                if (header.rawType === BOOLEAN_TYPE)
+                if (header.type === 'boolean')
                     // Resolve either the 1 or 0 to its boolean value
                     row[headerName] = !!row[headerName];
             }

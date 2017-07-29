@@ -91,18 +91,19 @@ export function tables(): Router {
     });
 
     r.put('/:name/data', async (req, res) => {
-        if (!verifyTableName(req.params.name, res)) return;
+        const table = req.params.name;
+        if (!verifyTableName(table, res)) return;
+
+        const send400 = (message: string) =>
+            sendError(res, 400, { message, input: {
+                name: table,
+                data: req.body
+            }});
 
         try {
-            await TableDao.insertRow(req.params.name, req.body);
+            await TableDao.insertRow(table, req.body);
             res.status(200).send({});
         } catch (e) {
-            const send400 = (message: string) =>
-                sendError(res, 400, { message, input: {
-                    name: req.params.name,
-                    data: req.body
-                }});
-
             if (e.code) {
                 switch (e.code) {
                     case 'ER_BAD_FIELD_ERROR':
@@ -121,7 +122,7 @@ export function tables(): Router {
                         debug({
                             message: 'generated invalid SQL',
                             data: req.body,
-                            table: req.params.name
+                            table
                         });
                         break;
                     case 'ER_DATA_TOO_LONG':
@@ -133,6 +134,13 @@ export function tables(): Router {
                         // okay for right now
                         return send400(e.message);
                 }
+            }
+
+            // Handle any validation errors
+            if (e.isJoi) {
+                // e.details is an array of all validation errors, pick out the
+                // first one to send to the user
+                return send400(e.details[0].message);
             }
 
             return internalError(res, e, {

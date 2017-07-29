@@ -11,6 +11,7 @@ import { createServer } from '../src/server';
 
 import { TableDao } from '../src/routes/api/tables.queries';
 import { RequestContext } from './api.test.helper';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 
 ////////////////////////////////////////////////////////////////////////////////
 // NB: These tests assume that init.sql was run successfully
@@ -146,12 +147,12 @@ describe('API v1', () => {
                 lastPk = 100 + Math.round((Math.random() * 10000000));
             return {
                 pk: lastPk++,
-                // integer must be unique, create a random value for it
+                // integer must be unique, create a pseudo-random value for it
                 integer: Math.round(10000000 * Math.random()),
                 double: 101.444,
                 boolean: !!Math.round(Math.random()),
-                date: new Date(), // now
-                time: new Date(1498515312000), // some time in the past
+                date: moment().format(DATE_FORMAT), // now
+                time: moment(1498515312000).format(DATETIME_FORMAT), // some time in the past
                 enum: 'a',
                 string: 'foo',
                 string_not_null: 'not null string'
@@ -174,17 +175,9 @@ describe('API v1', () => {
             });
 
             const body: PaginatedResponse<SqlRow[]> = res.body;
-            const fromDb = _.find(body.data, (row) => row.foo_pk === data.foo_pk);
+            const fromDb = _.find(body.data, (row) => row.pk === data.pk);
             expect(fromDb).to.exist;
             return fromDb!!;
-        };
-
-        /**
-         * Removes any mention of time from this date. Sets hours, minutes,
-         * seconds, and milliseconds to 0 and returns a Moment instance.
-         */
-        const dateFloor = (date: moment.Moment | Date | string | number): moment.Moment => {
-            return moment(date).hours(0).minutes(0).seconds(0).milliseconds(0);
         };
 
         it('should insert new data', async () => {
@@ -194,18 +187,11 @@ describe('API v1', () => {
             expect(fromDb).to.exist;
             // Make sure it preserves the primary key
             expect(fromDb.foo_pk).to.equal(data.foo_pk);
-            // Make sure dates and times don't get jumbled
 
-            // MySQL doesn't store any data for time for 'date' columns, so we
-            // have to remove any traces of it from the original date before
-            // making expectations
-            expect(moment(fromDb.date).toISOString())
-                .to.equal(dateFloor(data.date).toISOString());
-
-            // Timestamps should have no problem with storing times, so we can
-            // compare their values directly as ISO-formatted datetime strings.
-            expect(new Date(fromDb.time).toISOString())
-                .to.equal(data.time.toISOString());
+            // Make sure dates and times don't get jumbled and that the API
+            // returns dates and times in the format they're accepted in
+            expect(fromDb.date).to.equal(data.date);
+            expect(fromDb.time).to.equal(data.time);
         });
     });
 
@@ -231,10 +217,11 @@ describe('API v1', () => {
             // Cherry pick a few headers
             expectHeader('pk', {
                 name: 'pk',
-                type: 'int',
+                type: 'integer',
                 ordinalPosition: 1,
-                rawType: 'int(11)',
-                isNumber: true,
+                signed: false,
+                rawType: 'int(10) unsigned',
+                isNumerical: true,
                 isTextual: false,
                 nullable: false,
                 maxCharacters: null,
@@ -250,8 +237,9 @@ describe('API v1', () => {
                 type: 'enum',
                 ordinalPosition: 7,
                 rawType: `enum('a','b','c')`,
-                isNumber: false,
+                isNumerical: false,
                 isTextual: true,
+                signed: false,
                 nullable: true,
                 maxCharacters: 1,
                 charset: 'utf8',
