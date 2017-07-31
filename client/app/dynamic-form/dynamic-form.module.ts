@@ -12,10 +12,10 @@ import {
 
 import { DynamicFormComponent } from './dynamic-form.component';
 
-import { DynamicFieldDirective } from './components/dynamic-field/dynamic-field.directive';
-import { FormInputComponent } from './components/form-input/form-input.component';
-import { FormSelectComponent } from './components/form-select/form-select.component';
-import { FormSubmitComponent } from './components/form-submit/form-submit.component';
+import { DynamicFieldDirective } from './dynamic-field.directive';
+import { FormInputComponent } from './form-input/form-input.component';
+import { FormSelectComponent } from './form-select/form-select.component';
+import { FormSubmitComponent } from './form-submit/form-submit.component';
 
 @NgModule({
     imports: [

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
-import { FieldConfig } from '../../field-config.interface';
+import { FieldConfig } from '../field-config.interface';
 
 @Component({
     selector: 'form-input',

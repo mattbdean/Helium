@@ -1,9 +1,9 @@
 import { ComponentFactoryResolver, Directive, Input, OnInit, ViewContainerRef } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
-import { FormInputComponent } from '../form-input/form-input.component';
-import { FormSelectComponent } from '../form-select/form-select.component';
-import { FormSubmitComponent } from '../form-submit/form-submit.component';
+import { FormInputComponent } from './form-input/form-input.component';
+import { FormSelectComponent } from './form-select/form-select.component';
+import { FormSubmitComponent } from './form-submit/form-submit.component';
 
 const components = {
     input: FormInputComponent,
