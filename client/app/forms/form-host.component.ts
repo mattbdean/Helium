@@ -15,8 +15,8 @@ import { FieldConfig } from '../dynamic-form/field-config.interface';
 
 import { Response } from "@angular/http";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
-import { TableHeader, TableMeta } from '../common/responses';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
+import { TableHeader, TableMeta } from '../common/responses';
 
 @Component({
     selector: 'form-host',
@@ -30,7 +30,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
     private metaSub: Subscription;
     private formSubmitSub: Subscription;
 
-    private completedForm$ = new BehaviorSubject<any>(null);
+    private completedForm$ = new BehaviorSubject<object>(null);
 
     public config: FieldConfig[] = [];
     public name: string;

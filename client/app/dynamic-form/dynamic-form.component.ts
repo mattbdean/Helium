@@ -23,14 +23,10 @@ export class DynamicFormComponent implements OnChanges, OnInit {
     public constructor(private fb: FormBuilder) {}
 
     /** All non-button controls */
-    get controls() { return this.config.filter(({type}) => type !== 'button'); }
-
-    /** Changes Observable from the form */
-    get changes() { return this.form.valueChanges; }
+    private get controls() { return this.config.filter(({type}) => type !== 'button'); }
 
     // Convenience getters for form properties
-    get valid() { return this.form.valid; }
-    get value() { return this.form.value; }
+    private get value() { return this.form.value; }
 
     public ngOnInit() {
         this.form = this.createGroup();
@@ -52,21 +48,6 @@ export class DynamicFormComponent implements OnChanges, OnInit {
                     this.form.addControl(name, this.createControl(conf));
                 });
         }
-    }
-
-    public setDisabled(name: string, disabled: boolean) {
-        if (this.form.controls[name]) {
-            const method = disabled ? 'disable' : 'enable';
-            this.form.get(name)[method]();
-            return;
-        }
-
-        this.config = this.config.map((item) => {
-            if (item.name === name) {
-                item.disabled = disabled;
-            }
-            return item;
-        });
     }
 
     public handleSubmit(event: Event) {
