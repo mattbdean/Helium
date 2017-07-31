@@ -2,6 +2,9 @@
 ## running:
 ## mysql -u root -p < init.sql
 
+# Recommended datajoint
+SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
+
 # Ensure the user exists by creating it
 GRANT ALL ON *.* TO 'user'@'localhost' IDENTIFIED BY 'password';
 # Drop the newly-created user (the above query can be replaced by DROP USER
