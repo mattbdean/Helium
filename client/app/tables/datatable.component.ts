@@ -9,6 +9,7 @@ import {
     Constraint, SqlRow, TableHeader, TableMeta
 } from '../common/responses';
 import { TableService } from '../core/table.service';
+import { Subject } from 'rxjs/Subject';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];
@@ -66,79 +67,55 @@ export class DatatableComponent implements OnInit, OnDestroy {
     ) {}
 
     public ngOnInit(): void {
+        const pageInfo = Observable.combineLatest(
+            this._meta$,
+            this._name$,
+            this._pageNumber$,
+            this._sort$
+        );
+
+        // When pauser emits true, pausable will map to an Observable that never
+        // emits any values. When pauser emits false, it will map to pageInfo
+        const pauser = new Subject<boolean>();
+        const pausable = pauser.switchMap((paused) => paused ? Observable.never() : pageInfo);
+
         this.nameSub = this._name$
             .distinctUntilChanged()
-            .do(() => { this.loading = true; })
-            .switchMap((newName) => {
-                // Create a disposable Observable so we don't end up completing
-                // the main one. This way, if an error occurs, we can still
-                // react to changes in the table name
-                return this.backend.meta(newName)
+            // Pause pageInfo
+            .do(() => { pauser.next(true); })
+            .switchMap((name) => {
+                return this.backend.meta(name)
                     .catch((err) => {
-                        if (err instanceof Response && err.status === 404) {
-                            // Handle 404s, show the user that the table couldn't be
-                            // found
-                            return Observable.of(null);
-                        } else {
-                            // Unknown error
-                            throw err;
-                        }
-                    });
-            })
-            .subscribe((meta: TableMeta | null) => {
-                this.loading = false;
-                this.exists = meta !== null;
-                if (meta !== null) {
-                    this.meta = meta;
-                    this.tableHeaders = this.createTableHeaders(this.meta.headers);
-                    this.constraints = _.groupBy(this.meta.constraints, 'localColumn');
-
-                    this.reset();
-                }
-            });
-
-        this.pageInfoSub = Observable
-            // Take the latest pageNumber and sort and transform them into an
-            // object
-            .combineLatest(
-                this._name$,
-                this._pageNumber$,
-                this._sort$,
-                this._meta$,
-                (name: string, pageNumber: number, sort: string, meta: TableMeta) => ({
-                    name,
-                    pageNumber,
-                    sort,
-                    meta
-                })
-            )
-            // Make sure we're only requesting data stemming from filters
-            // different from the previous one
-            .filter((args) => !_.isNil(args.meta) && !_.isNil(args.name))
-            .distinctUntilChanged()
-            .do(() => { this.loading = true; })
-            .switchMap((args: any) => {
-                return this.backend.content(args.name, args.pageNumber, this.limit, args.sort)
-                    .catch((err) => {
-                        // TODO handle this properly
+                        this.exists = false;
+                        // TODO Handle this properly
                         throw err;
-                    })
-                    .map((rows: SqlRow[]) => {
-                        try {
-                            return this.formatRows(args.meta.headers, rows);
-                        } catch (e) {
-                            // TODO we're putting a bandaid on a stab wound here,
-                            // there's a race condition here and I don't know
-                            // how to fix it
-                            console.error('Unable to format rows');
-                            return rows;
-                        }
                     });
             })
-            .subscribe((data: SqlRow[]) => {
-                this.loading = false;
-                this.data = data;
+            .subscribe((meta: TableMeta) => {
+                this.exists = true;
+                this.tableHeaders = this.createTableHeaders(meta.headers);
+                this.constraints = _.groupBy(meta.constraints, 'localColumn');
+
+                // Reset to defaults
+                this.meta = meta;
+                this.pageNumber = 1;
+                this.sort = null;
+
+                // Unpause pageInfo
+                pauser.next(false);
             });
+
+        this.pageInfoSub = pausable.switchMap((params: [TableMeta, string, number, string]) => {
+            // params is an array: [meta, name, pageNumber, sort]
+            return this.backend.content(params[1], params[2], this.limit, params[3])
+                // TODO Handle this properly
+                .catch((err) => { throw err; })
+                .map((rows: SqlRow[]) => {
+                    return this.formatRows(params[0].headers, rows);
+                });
+        }).subscribe((data: SqlRow[]) => {
+            this.data = data;
+        });
     }
 
     public ngOnDestroy(): void {
@@ -187,11 +164,6 @@ export class DatatableComponent implements OnInit, OnDestroy {
         }
 
         return copied;
-    }
-
-    private reset(): void {
-        this.pageNumber = 1;
-        this.sort = null;
     }
 
     /**
