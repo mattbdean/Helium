@@ -10,25 +10,34 @@ import { Constraint, ConstraintType } from '../common/responses';
     styleUrls: ['constraint-icons.component.scss']
 })
 export class ConstraintIconsComponent implements OnInit {
-    // private snowflakeIcon = require('../../assets/snowflake.svg');
-    // private keyIcon = require('../../assets/key.svg');
-    // private keyChangeIcon = require('../../assets/key-change.svg');
     private snowflakeIcon = '/assets/snowflake.svg';
     private keyIcon = '/assets/key.svg';
     private keyChangeIcon = '/assets/key-change.svg';
 
+    public static readonly CONSTRAINT_ORDER: ConstraintType[] = ['primary', 'foreign', 'unique'];
+
     @Input()
-    private constraints: Constraint[];
+    public constraints: Constraint[];
 
     public types: ConstraintType[] = [];
 
     public ngOnInit(): void {
         if (this.constraints === undefined || this.constraints === null)
             this.constraints = [];
-        this.types = this.constraints.map((c) => c.type);
-        if (!_.isEqual(_.uniq(this.types), this.types)) {
+        const types = this.constraints.map((c) => c.type);
+        if (!_.isEqual(_.uniq(types), types)) {
             throw new Error('Expecting at maximum one Constraint for each ConstraintType');
         }
+
+        const ordered: ConstraintType[] = [];
+        for (const t of types) {
+            const index = ConstraintIconsComponent.CONSTRAINT_ORDER.indexOf(t);
+            if (index < 0)
+                throw new Error(`ConstraintType ${t} has no specified order`);
+            ordered[index] = t;
+        }
+
+        this.types = _.remove(ordered, (t) => !_.isNil(t));
     }
 
     private iconFor(type: ConstraintType): string {

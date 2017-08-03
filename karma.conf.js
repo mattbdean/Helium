@@ -14,11 +14,10 @@ module.exports = function (config) {
             require('@angular/cli/plugins/karma')
         ],
         client: {
-            clearContext: false // leave Jasmine Spec Runner output visible in browser
+            clearContext: false
         },
         files: [
             { pattern: 'node_modules/chai/chai.js', instrument: false },
-            { pattern: './src/test.ts', watched: false },
         ],
         coverageIstanbulReporter: {
             reports: ['html', 'lcovonly'],

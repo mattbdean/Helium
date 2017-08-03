@@ -1,11 +1,16 @@
 <span *ngFor="let type of types">
     <span *ngIf="type === 'foreign'; else notFK">
         <span>
-            <a class="header-icon" [inlineSVG]="iconFor(type)" [routerLink]="fkRouterLink()">FK</a>
+            <a class="header-icon"
+               [attr.data-constraint-type]="type"
+               [inlineSVG]="iconFor(type)"
+               [title]="infoTextFor(type)"
+               [routerLink]="fkRouterLink()">FK</a>
         </span>
     </span>
     <ng-template #notFK>
         <span class="header-icon"
+              [attr.data-constraint-type]="type"
               [inlineSVG]="iconFor(type)"
               [title]="infoTextFor(type)">
         </span>
