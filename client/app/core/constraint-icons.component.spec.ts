@@ -10,6 +10,7 @@ import { InlineSVGModule } from 'ng-inline-svg';
 import { Constraint } from '../common/responses';
 import { ConstraintIconsComponent } from './constraint-icons.component';
 import { ConstraintType } from '../../../server/src/common/responses';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('ConstraintIconsComponent', () => {
     let fixture: ComponentFixture<ConstraintIconsComponent>;
@@ -34,9 +35,7 @@ describe('ConstraintIconsComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 InlineSVGModule,
-                RouterModule.forRoot([
-                    { path: '', component: ConstraintIconsComponent }
-                ])
+                RouterTestingModule
             ],
             declarations: [ ConstraintIconsComponent ],
             providers: [
@@ -104,5 +103,16 @@ describe('ConstraintIconsComponent', () => {
                 expect(title).to.contain(constr.foreignColumn);
             }
         }
+    });
+
+    it('should use a routerLink for foreign key icons', () => {
+        comp.constraints = createConstraints(['foreign']);
+        const constr = comp.constraints[0];
+        fixture.detectChanges();
+
+        const icon = fixture.debugElement.query(By.css('.header-icon'));
+        expect(icon).to.not.be.null;
+
+        expect(icon.nativeElement.getAttribute('href')).to.equal('/tables/' + constr.foreignTable);
     });
 });
