@@ -10,8 +10,8 @@ exports.config = {
         'browserName': 'chrome'
     },
     directConnect: true,
-    baseUrl: 'http://localhost:4200/',
-    framework: 'jasmine',
+    baseUrl: 'http://localhost:3000/',
+    framework: 'mocha',
     mochaOpts: {
         reporter: 'spec',
         slow: 3000,

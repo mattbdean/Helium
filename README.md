@@ -61,5 +61,5 @@ Run unit tests with `yarn test`, or specifically with `yarn test:client`, `yarn 
 
 You can also run protractor with the element inspector using `yarn e2e:debug`.
 
-To prevent rebuilding the website every time the e2e tests are run (what `yarn e2e` does), use two terminal windows. Run `PORT=4200 yarn dev` on the first and `yarn e2e:prepped` (or `yarn e2e:prepped:debug`) in the second whenever necessary.
+To prevent rebuilding the website every time the e2e tests are run (what `yarn e2e` does), use two terminal windows. Run `yarn dev` on the first and `yarn e2e:prepped` (or `yarn e2e:prepped:debug`) in the second whenever necessary.
 
