@@ -34,6 +34,7 @@ gulp.task('clean', () =>
 
 gulp.task('common:build', () => {
     const source = 'common/**/*.ts';
+    del.sync(['server/src/common', 'client/app/common']);
     return merge(
         cp(source, 'server/src/common'),
         cp(source, 'client/app/common')
