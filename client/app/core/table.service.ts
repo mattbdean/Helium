@@ -1,5 +1,5 @@
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Headers, Http, RequestOptionsArgs } from '@angular/http';
 
 import { Observable } from "rxjs/Observable";
 
@@ -13,7 +13,7 @@ import { PaginatedResponse, SqlRow, TableMeta } from '../common/responses';
  */
 @Injectable()
 export class TableService {
-    constructor(private http: Http) {}
+    constructor(private http: HttpClient) {}
 
     /** Fetches a list of all tables */
     public list(): Observable<string[]> {
@@ -41,14 +41,16 @@ export class TableService {
      * exist and the body must have the shape of a SqlRow.
      */
     public submitRow(tableName: string, body: SqlRow): Observable<void> {
-        // Make sure the API knows we're sending JSON
-        const headers = new Headers({ 'Content-Type': 'application/json' });
-        const options: RequestOptionsArgs = { headers };
-
-        const url = `/api/v1/tables/${encodeURIComponent(tableName)}/data`;
-
-        return this.http.put(url, JSON.stringify(body), options)
-            .map((res) => res.json());
+        return this.http.put(
+            `/api/v1/tables/${encodeURIComponent(tableName)}/data`,
+            body,
+            {
+                headers: new HttpHeaders({
+                    // Make sure the API knows we're sending JSON
+                    'Content-Type': 'application/json'
+                })
+            }
+        ).mapTo(null);
     }
 
     /**
@@ -57,8 +59,13 @@ export class TableService {
      */
     private get<T>(relPath: string, query: any = {}): Observable<T> {
         // Only include non-null and non-undefined values in the query
-        const requestOptions = { params: _.omitBy(query, _.isNil) };
-        return this.http.get(`/api/v1${relPath}`, requestOptions)
-            .map((res) => res.json() as T);
+        const used = _.omitBy(query, _.isNil);
+
+        let params = new HttpParams();
+        for (const key of Object.keys(used)) {
+            params = params.set(key, used[key]);
+        }
+        return this.http.get(`/api/v1${relPath}`, { params })
+            .map((res) => res as T);
     }
 }

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { HttpModule } from '@angular/http';
 
 import { InlineSVGModule } from "ng-inline-svg";
 
@@ -12,7 +12,7 @@ import { TableService } from './table.service';
     imports: [
         CommonModule,
         InlineSVGModule,
-        HttpModule,
+        HttpClientModule,
         RouterModule
     ],
     declarations: [
