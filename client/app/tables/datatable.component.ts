@@ -1,15 +1,15 @@
 import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { Response } from '@angular/http';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
+import { HttpErrorResponse } from '@angular/common/http';
+import { Subject } from 'rxjs/Subject';
 import {
     Constraint, SqlRow, TableHeader, TableMeta
 } from '../common/responses';
 import { TableService } from '../core/table.service';
-import { Subject } from 'rxjs/Subject';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];
@@ -85,10 +85,16 @@ export class DatatableComponent implements OnInit, OnDestroy {
             .do(() => { pauser.next(true); })
             .switchMap((name) => {
                 return this.backend.meta(name)
-                    .catch((err) => {
+                    .catch((err: HttpErrorResponse) => {
                         this.exists = false;
-                        // TODO Handle this properly
-                        throw err;
+
+                        if (err.status !== 404) {
+                            // TODO: Unexpected errors could be handled more
+                            // gracefully
+                            throw err;
+                        }
+
+                        return Observable.never();
                     });
             })
             .subscribe((meta: TableMeta) => {
