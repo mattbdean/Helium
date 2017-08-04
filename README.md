@@ -9,12 +9,11 @@
 Notable dependencies:
 
 - Node.js
+- MySQL
 - TypeScript
 - Express
-- MySQL
-- Angular (v4)
+- Angular
 - Gulp
-- Webpack
 
 Tests are written with Mocha, Chai, Karma, and Protractor.
 
