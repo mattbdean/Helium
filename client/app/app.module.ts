@@ -13,7 +13,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
-import { DynamicFormModule } from './dynamic-form/dynamic-form.module';
 import { FormsModule } from './forms/forms.module';
 import { TablesModule } from './tables/tables.module';
 

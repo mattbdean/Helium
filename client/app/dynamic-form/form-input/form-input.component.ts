@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
+import { Observable } from 'rxjs/Observable';
+
 import { FieldConfig } from '../field-config.interface';
 
 @Component({
@@ -16,7 +18,7 @@ export class FormInputComponent implements OnInit {
     public group: FormGroup;
 
     /** An observable of the current autocomplete values */
-    public filteredValues: any;
+    public filteredValues: Observable<string[]>;
 
     /** All possible autocomplete values */
     private allValues: any[];
@@ -30,7 +32,7 @@ export class FormInputComponent implements OnInit {
         }
     }
 
-    private filterValues(val: string): any[] {
+    private filterValues(val: string): string[] {
         if (val === null || val === undefined) return this.allValues;
 
         const asStrings = this.allValues.map((v) => v.toString().toLowerCase());

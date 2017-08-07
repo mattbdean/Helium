@@ -23,7 +23,7 @@ export class DynamicFormComponent implements OnChanges, OnInit {
     public constructor(private fb: FormBuilder) {}
 
     /** All non-button controls */
-    private get controls() { return this.config.filter(({type}) => type !== 'button'); }
+    private get controls() { return this.config.filter(({ type }) => type !== 'submit'); }
 
     // Convenience getters for form properties
     private get value() { return this.form.value; }

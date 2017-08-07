@@ -7,8 +7,8 @@ export interface FieldConfig {
     /** Human-readable name for this field */
     label: string;
 
-    /** Type of field (input, button, select, etc.) */
-    type: string;
+    /** Type of field */
+    type: 'input' | 'select' | 'submit';
 
     /** Message to show the user to clarify what this field is */
     hint?: string;
@@ -19,7 +19,7 @@ export interface FieldConfig {
     /** Initial value of the field, if any */
     value?: any;
 
-    /** If this field is required to succesfully submit the form */
+    /** If this field is required to successfully submit the form */
     required?: boolean;
 
     /** If this field is disabled or not */

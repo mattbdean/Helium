@@ -18,6 +18,7 @@ module.exports = function (config) {
         },
         files: [
             { pattern: 'node_modules/chai/chai.js', instrument: false },
+            { pattern: 'node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css', instrument: false },
         ],
         coverageIstanbulReporter: {
             reports: ['html', 'lcovonly'],
