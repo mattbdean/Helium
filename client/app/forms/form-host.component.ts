@@ -13,7 +13,7 @@ import { TableService } from '../core/table.service';
 import { DynamicFormComponent } from '../dynamic-form/dynamic-form.component';
 import { FieldConfig } from '../dynamic-form/field-config.interface';
 
-import { Response } from "@angular/http";
+import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
 import { TableHeader, TableMeta } from '../common/responses';
@@ -65,9 +65,9 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     .mapTo(null)
                     // Handle any errors
                     .catch((err) => {
-                        // If the error is a Response (@angular/http), send its
-                        // JSON value as an error
-                        return Observable.of(err instanceof Response ? err.json() : err);
+                        // If the error is an HttpResponse (@angular/common/http),
+                        // send its JSON value as an error
+                        return Observable.of(err instanceof HttpResponse ? err.body : err);
                     });
             })
             // Handle success/error
