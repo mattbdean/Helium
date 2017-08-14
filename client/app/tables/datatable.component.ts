@@ -11,6 +11,8 @@ import {
 } from '../common/responses';
 import { TableService } from '../core/table.service';
 
+import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
+
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];
 }
@@ -160,9 +162,9 @@ export class DatatableComponent implements OnInit, OnDestroy {
                 const header = _.find(headers, (h) => h.name === headerName);
                 // Use moment to format dates and times in the default format
                 if (header.type === 'date')
-                    row[headerName] = DatatableComponent.formatMoment(row[headerName], 'l');
+                    row[headerName] = DatatableComponent.reformat(row[headerName], DATE_FORMAT, 'l');
                 if (header.type === 'datetime')
-                    row[headerName] = DatatableComponent.formatMoment(row[headerName], 'LLL');
+                    row[headerName] = DatatableComponent.reformat(row[headerName], DATETIME_FORMAT, 'LLL');
                 if (header.type === 'boolean')
                     // Resolve either the 1 or 0 to its boolean value
                     row[headerName] = !!row[headerName];
@@ -177,10 +179,11 @@ export class DatatableComponent implements OnInit, OnDestroy {
      * a valid date, returns null.
      * 
      * @param source A string parsable by Moment
-     * @param format Any format accepted by Moment
+     * @param input Input moment format
+     * @param output Output moment format
      */
-    private static formatMoment(source: string, format: string): string | null {
-        const m = moment(source);
-        return m.isValid() ? m.format(format) : null;
+    private static reformat(source: string, input: string, output: string): string | null {
+        const m = moment(source, input);
+        return m.isValid() ? m.format(output) : null;
     }
 }
