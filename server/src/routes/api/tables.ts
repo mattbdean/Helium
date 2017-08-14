@@ -7,7 +7,7 @@ import {
 import { debug, NODE_ENV, NodeEnv } from '../../env';
 import { Sort, TableDao } from './tables.queries';
 
-const TABLE_NAME_REGEX = /^[#~]?[a-zA-Z]+$/;
+const TABLE_NAME_REGEX = /^[A-Za-z_#~]*$/;
 
 export function tables(): Router {
     const r = Router();
