@@ -5,7 +5,8 @@ import { Observable } from "rxjs/Observable";
 
 import * as _ from 'lodash';
 
-import { PaginatedResponse, SqlRow, TableMeta } from '../common/responses';
+import { SqlRow, TableMeta } from '../common/api';
+import { PaginatedResponse } from '../common/responses';
 
 /**
  * This class provides a clean way to interact with the JSON API using Angular's

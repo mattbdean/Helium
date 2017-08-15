@@ -8,7 +8,7 @@ import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import {
     Constraint, ConstraintType, SqlRow, TableDataType,
     TableHeader, TableMeta
-} from '../../common/responses';
+} from '../../common/api';
 import { Database, squel } from '../../Database';
 
 const joi = BaseJoi.extend(JoiDateExtensions);

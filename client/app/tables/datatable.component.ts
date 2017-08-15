@@ -8,7 +8,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/Subject';
 import {
     Constraint, SqlRow, TableHeader, TableMeta
-} from '../common/responses';
+} from '../common/api';
 import { TableService } from '../core/table.service';
 
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';

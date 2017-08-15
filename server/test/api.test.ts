@@ -4,9 +4,9 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import {
-    ErrorResponse, PaginatedResponse, SqlRow,
-    TableHeader, TableMeta
-} from '../src/common/responses';
+    SqlRow, TableHeader, TableMeta
+} from '../src/common/api';
+import { ErrorResponse, PaginatedResponse } from '../src/common/responses';
 import { createServer } from '../src/server';
 
 import { TableDao } from '../src/routes/api/tables.queries';
