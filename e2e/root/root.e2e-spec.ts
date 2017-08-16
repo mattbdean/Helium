@@ -32,12 +32,10 @@ describe('Root page', () => {
 
             const tableLink = links.first();
             const tableName = await tableLink.getText();
-            expect(tableLink.getAttribute('href')).to.eventually
-                .match(new RegExp('/tables/' + encodeURIComponent(tableName) + '$'));
+            expect(tableLink.getAttribute('href')).to.eventually.include.all('/tables/', tableName);
 
             const formLink = links.get(1);
-            expect(formLink.getAttribute('href')).to.eventually
-                .match(new RegExp('/forms/' + encodeURIComponent(tableName) + '$'));
+            expect(formLink.getAttribute('href')).to.eventually.include.all('/forms/', tableName);
         }
     });
 });

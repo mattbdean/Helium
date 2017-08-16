@@ -75,6 +75,11 @@ CREATE TABLE datatypeshowcase(
   `string_not_null` VARCHAR(50) NOT NULL COMMENT 'string_not_null column'
 ) COMMENT 'a table with diverse data';
 
+# Create a few empty tables for the test of sorting the different types
+CREATE TABLE `#test_lookup`(pk INTEGER PRIMARY KEY);
+CREATE TABLE _test_imported(pk INTEGER PRIMARY KEY);
+CREATE TABLE __test_computed(pk INTEGER PRIMARY KEY);
+
 # A few customers, organizations, and products
 INSERT INTO customer VALUES (0, "Some Guy"), (1, "Another Guy");
 INSERT INTO organization VALUES (10, "Some Big Company", 0), (11, "Another Big Company", 1);

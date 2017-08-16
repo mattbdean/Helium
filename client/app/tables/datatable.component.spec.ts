@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
 import { By } from '@angular/platform-browser';
-import { SqlRow, TableMeta } from '../common/responses';
+import { SqlRow, TableMeta } from '../common/api';
 import { CoreModule } from '../core/core.module';
 import { TableService } from '../core/table.service';
 import { DatatableComponent } from './datatable.component';

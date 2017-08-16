@@ -4,11 +4,11 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import { Schema } from 'joi';
-import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import {
     Constraint, ConstraintType, SqlRow, TableDataType,
-    TableHeader, TableMeta
+    TableHeader, TableMeta, TableName, TableTier
 } from '../../common/api';
+import { DATE_FORMAT, DATETIME_FORMAT, TABLE_TIER_PREFIX_MAPPING } from '../../common/constants';
 import { Database, squel } from '../../Database';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
@@ -32,7 +32,7 @@ export class TableDao {
     /**
      * Returns an array of all available table names
      */
-    public static async list(): Promise<string[]> {
+    public static async list(): Promise<TableName[]> {
         const db = Database.get();
         // db.conn is a PromiseConnection that wraps a Connection. A
         // Connection has a property `config`
@@ -46,14 +46,38 @@ export class TableDao {
         Transform this:
         [
             { table_name: 'foo' },
-            { table_name: 'bar' },
-            { table_name: 'baz' },
+            { table_name: '#bar' },
+            { table_name: '_baz' }
         ]
 
-        Into this:
-        ['foo', 'bar', 'baz']
+        Into an array of TableNames:
+        [
+            { rawName: 'foo', ... }
+            { rawName: '#bar', ... }
+            { rawName: '_baz', ... }
+        ]
          */
-        return _.map(result[0], 'table_name');
+        return _.map(result[0], (row: any): TableName => {
+            const name: string = row.table_name;
+
+            // Assume the table is a manual table and therefore has no prefix
+            let tier: TableTier = 'manual';
+            let startTrim = 0;
+
+            for (const prefix of Object.keys(TABLE_TIER_PREFIX_MAPPING)) {
+                if (name.startsWith(prefix)) {
+                    startTrim = prefix.length;
+                    tier = TABLE_TIER_PREFIX_MAPPING[prefix];
+                    break;
+                }
+            }
+
+            return {
+                rawName: name,
+                tier,
+                cleanName: startTrim === 0 ? name : name.substring(startTrim)
+            };
+        });
     }
 
     /**
@@ -128,7 +152,7 @@ export class TableDao {
         const [headers, count, constraints, comment] = await Promise.all([
             TableDao.headers(name),
             TableDao.count(name),
-            TableDao.constraints(name).then((constrs) => TableDao.resolveConstraints(constrs)),
+            TableDao.constraints(name).then(TableDao.resolveConstraints),
             TableDao.comment(name)
         ]);
 

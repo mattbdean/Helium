@@ -5,7 +5,7 @@ import { Observable } from "rxjs/Observable";
 
 import * as _ from 'lodash';
 
-import { SqlRow, TableMeta } from '../common/api';
+import { SqlRow, TableMeta, TableName } from '../common/api';
 import { PaginatedResponse } from '../common/responses';
 
 /**
@@ -17,7 +17,7 @@ export class TableService {
     constructor(private http: HttpClient) {}
 
     /** Fetches a list of all tables */
-    public list(): Observable<string[]> {
+    public list(): Observable<TableName[]> {
         return this.get(`/tables`);
     }
 

@@ -5,6 +5,29 @@ export interface TableMeta {
     comment: string;
 }
 
+/**
+ * DataJoint table tier. See http://docs.datajoint.io/data-definition/Data-tiers.html
+ * for more.
+ */
+export type TableTier = 'lookup' | 'manual' | 'imported' | 'computed' | 'hidden';
+
+export interface TableName {
+    /** The name used in SQL */
+    rawName: string;
+
+    /**
+     * Datajoint-specific data tier. Determined by the first one or two
+     * characters of the raw name. See the TableTier docs for more.
+     */
+    tier: TableTier;
+
+    /**
+     * The name that should be presented to the user. Does not include tier
+     * prefix.
+     */
+    cleanName: string;
+}
+
 export interface SqlRow {
     [columnName: string]: any;
 }

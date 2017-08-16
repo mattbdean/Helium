@@ -4,14 +4,14 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import {
-    SqlRow, TableHeader, TableMeta
+    SqlRow, TableHeader, TableMeta, TableName
 } from '../src/common/api';
 import { ErrorResponse, PaginatedResponse } from '../src/common/responses';
 import { createServer } from '../src/server';
 
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableDao } from '../src/routes/api/tables.queries';
 import { RequestContext } from './api.test.helper';
-import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 
 ////////////////////////////////////////////////////////////////////////////////
 // NB: These tests assume that init.sql was run successfully
@@ -23,7 +23,10 @@ const ALL_TABLES = [
     'product',
     'order',
     'shipment',
-    'datatypeshowcase'
+    'datatypeshowcase',
+    '#test_lookup',
+    '_test_imported',
+    '__test_computed'
 ];
 
 const SHOWCASE_TABLE = 'datatypeshowcase';
@@ -47,10 +50,22 @@ describe('API v1', () => {
     });
 
     describe('GET /api/v1/tables', () => {
-        it('should return an array of strings', () => {
-            return request.basic('/tables', 200, (data: string[]) => {
+        it('should return an array of TableNames', () => {
+            return request.basic('/tables', 200, (data: TableName[]) => {
                 expect(Array.isArray(data)).to.be.true;
-                expect(data).to.deep.equal(_.sortBy(ALL_TABLES));
+                expect(_.map(data, 'rawName')).to.deep.equal(_.sortBy(ALL_TABLES));
+
+                for (const tableName of data) {
+                    if (tableName.tier === 'manual') {
+                        // Manual tables have no prefix
+                        expect(tableName.rawName).to.equal(tableName.cleanName);
+                    } else {
+                        // Non-manual tables have prefixes
+                        expect(tableName.rawName).to.not.equal(tableName.cleanName);
+                        // Make sure the raw name ends with the clean name
+                        expect(tableName.rawName).to.match(new RegExp(tableName.cleanName + '$'));
+                    }
+                }
             });
         });
     });

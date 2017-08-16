@@ -1,16 +1,14 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { RouterModule } from '@angular/router';
 
 import { expect } from 'chai';
 import * as _ from 'lodash';
 import { InlineSVGModule } from 'ng-inline-svg';
 
-import { Constraint } from '../common/responses';
-import { ConstraintIconsComponent } from './constraint-icons.component';
-import { ConstraintType } from '../../../server/src/common/responses';
 import { RouterTestingModule } from '@angular/router/testing';
+import { Constraint, ConstraintType } from '../common/api';
+import { ConstraintIconsComponent } from './constraint-icons.component';
 
 describe('ConstraintIconsComponent', () => {
     let fixture: ComponentFixture<ConstraintIconsComponent>;

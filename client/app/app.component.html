@@ -1,11 +1,11 @@
 <md-toolbar color="primary">Helium</md-toolbar>
 <md-sidenav-container>
     <md-sidenav mode="side" opened="true" fullscreen>
-        <ul class="sidenav-list">
-            <li class="header">Tables</li>
-            <li class="table-ref" *ngFor="let table of tables | async">
-                <a class="table-name" [routerLink]="['/tables', table]" routerLinkActive="active-router-link">{{ table }}</a>
-                <a class="material-icons add-data-icon" [routerLink]="['/forms', table]" routerLinkActive="active-router-link">add</a>
+        <ul class="sidenav-list" *ngFor="let groupedName of groupedNames | async">
+            <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
+            <li class="table-ref" *ngFor="let table of groupedName.names">
+                <a class="table-name" [routerLink]="['/tables', table.rawName]" routerLinkActive="active-router-link">{{ table.cleanName }}</a>
+                <a class="material-icons add-data-icon" [routerLink]="['/forms', table.rawName]" routerLinkActive="active-router-link">add</a>
             </li>
         </ul>
     </md-sidenav>
