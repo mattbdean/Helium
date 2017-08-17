@@ -6,10 +6,10 @@ import * as moment from 'moment';
 import { Schema } from 'joi';
 import {
     Constraint, ConstraintType, SqlRow, TableDataType,
-    TableHeader, TableMeta, TableName, TableTier
+    TableHeader, TableMeta, TableName
 } from '../../common/api';
-import { BLOB_STRING_REPRESENTATION, DATE_FORMAT, DATETIME_FORMAT,
-    TABLE_TIER_PREFIX_MAPPING } from '../../common/constants';
+import { BLOB_STRING_REPRESENTATION, DATE_FORMAT, DATETIME_FORMAT} from '../../common/constants';
+import { createTableName } from '../../common/util';
 import { Database, squel } from '../../Database';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
@@ -58,27 +58,7 @@ export class TableDao {
             { rawName: '_baz', ... }
         ]
          */
-        return _.map(result[0], (row: any): TableName => {
-            const name: string = row.table_name;
-
-            // Assume the table is a manual table and therefore has no prefix
-            let tier: TableTier = 'manual';
-            let startTrim = 0;
-
-            for (const prefix of Object.keys(TABLE_TIER_PREFIX_MAPPING)) {
-                if (name.startsWith(prefix)) {
-                    startTrim = prefix.length;
-                    tier = TABLE_TIER_PREFIX_MAPPING[prefix];
-                    break;
-                }
-            }
-
-            return {
-                rawName: name,
-                tier,
-                cleanName: startTrim === 0 ? name : name.substring(startTrim)
-            };
-        });
+        return _.map(result[0], (row: any): TableName => createTableName(row.table_name));
     }
 
     /**

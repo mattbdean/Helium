@@ -12,6 +12,7 @@ import { SqlRow, TableMeta } from '../common/api';
 import { CoreModule } from '../core/core.module';
 import { TableService } from '../core/table.service';
 import { DatatableComponent } from './datatable.component';
+import { createTableName } from '../common/util';
 
 const expect = global['chai'].expect;
 
@@ -58,7 +59,7 @@ describe('DatatableComponent', () => {
 
     it('should pull in the metadata when given a name', () => {
         expect(comp.meta).to.be.null;
-        comp.name = 'foo';
+        comp.name = createTableName('foo');
 
         const stub = sinon.stub(service, 'meta')
             .returns(Observable.of<TableMeta>(mockTableMeta()));

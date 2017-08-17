@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs/Subject';
 import {
-    Constraint, SqlRow, TableHeader, TableMeta
+    Constraint, SqlRow, TableHeader, TableMeta, TableName
 } from '../common/api';
 import { TableService } from '../core/table.service';
 
@@ -30,8 +30,8 @@ interface DataTableHeader {
 export class DatatableComponent implements OnInit, OnDestroy {
 
     @Input()
-    public set name(value) { this._name$.next(value); }
-    public get name() { return this._name$.getValue(); }
+    public set name(value: TableName) { this._name$.next(value); }
+    public get name(): TableName { return this._name$.getValue(); }
 
     public set pageNumber(value) { this._pageNumber$.next(value); }
     public get pageNumber() { return this._pageNumber$.getValue(); }
@@ -41,7 +41,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
     public set meta(value) { this._meta$.next(value); }
     public get meta() { return this._meta$.getValue(); }
 
-    private _name$ = new BehaviorSubject(null);
+    private _name$ = new BehaviorSubject<TableName>(null);
     private _pageNumber$ = new BehaviorSubject(1);
     private _sort$ = new BehaviorSubject(null);
     private _meta$ = new BehaviorSubject<TableMeta>(null);
@@ -87,7 +87,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
             // Pause pageInfo
             .do(() => { pauser.next(true); })
             .switchMap((name) => {
-                return this.backend.meta(name)
+                return this.backend.meta(name.rawName)
                     .catch((err: HttpErrorResponse) => {
                         this.exists = false;
 
@@ -114,9 +114,9 @@ export class DatatableComponent implements OnInit, OnDestroy {
                 pauser.next(false);
             });
 
-        this.pageInfoSub = pausable.switchMap((params: [TableMeta, string, number, string]) => {
+        this.pageInfoSub = pausable.switchMap((params: [TableMeta, TableName, number, string]) => {
             // params is an array: [meta, name, pageNumber, sort]
-            return this.backend.content(params[1], params[2], this.limit, params[3])
+            return this.backend.content(params[1].rawName, params[2], this.limit, params[3])
                 // TODO Handle this properly
                 .catch((err) => { throw err; })
                 .map((rows: SqlRow[]) => {
