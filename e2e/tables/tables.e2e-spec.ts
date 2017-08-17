@@ -11,10 +11,15 @@ describe('Tables page', () => {
     });
 
     it('should show the name of the table as the page header', async () => {
-        const table = 'customer';
-        await page.clickSidebarLink(table, 'table');
-        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/customer$/);
-        await expect(page.getHeaderText()).to.eventually.equal(table);
+        // tableName is the "clean" name, not necessarily the name that's used
+        // in SQL and the /tables link. For example, the sidebar might list a
+        // table with a name of 'person', but the actual SQL table is called
+        // '#person'. Clicking on that link wouldn't redirect to
+        // '/tables/person', but rather to '/tables/%23person'
+        const tableName = (await page.getTableNames())[0];
+        await page.clickSidebarLink(tableName, 'table');
+        await expect(browser.getCurrentUrl()).to.eventually.include.all('/tables/', tableName);
+        await expect(page.getHeaderText()).to.eventually.equal(tableName);
         await expect(page.isDatatableVisible()).to.eventually.be.true;
     });
 
@@ -27,9 +32,10 @@ describe('Tables page', () => {
 
     // Make sure our Observable pipeline isn't breaking down once it encounters an error
     it('should allow the user to click on another sidebar link if the current table doesn\'t exist', async () => {
+        const tableName = (await page.getTableNames())[0];
         await page.navigateTo('foobar');
-        await page.clickSidebarLink('customer', 'table');
-        await expect(browser.driver.getCurrentUrl()).to.eventually.match(/\/tables\/customer$/);
-        await expect(page.getHeaderText()).to.eventually.equal('customer');
+        await page.clickSidebarLink(tableName, 'table');
+        await expect(browser.driver.getCurrentUrl()).to.eventually.include.all('/tables/', tableName);
+        await expect(page.getHeaderText()).to.eventually.equal(tableName);
     });
 });
