@@ -30,8 +30,13 @@
     </ng-template>
 
     <ng-template #cellTemplate let-row="row" let-value="value">
-        <span class="null-cell" *ngIf="value === ''">null</span>
+        <span class="special-cell" *ngIf="value === ''">null</span>
         <span *ngIf="value !== ''">{{ value }}</span>
+    </ng-template>
+
+    <ng-template #cellTemplateBlob let-row="row" let-value="value">
+        <span class="special-cell" *ngIf="value === ''">null</span>
+        <span class="special-cell" *ngIf="value !== ''">blob</span>
     </ng-template>
 </div>
 

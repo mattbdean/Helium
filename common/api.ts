@@ -32,7 +32,7 @@ export interface SqlRow {
     [columnName: string]: any;
 }
 
-export type TableDataType = 'string' | 'integer' | 'float' | 'date' | 'datetime' | 'boolean' | 'enum';
+export type TableDataType = 'string' | 'integer' | 'float' | 'date' | 'datetime' | 'boolean' | 'enum' | 'blob';
 
 export interface TableHeader {
     name: string;

@@ -15,8 +15,8 @@ import { FieldConfig } from '../dynamic-form/field-config.interface';
 
 import { HttpResponse } from '@angular/common/http';
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
-import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
 import { TableHeader, TableMeta } from '../common/api';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
 
 @Component({
     selector: 'form-host',
@@ -129,6 +129,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 subtype = 'date';
             } else if (h.type === 'datetime') {
                 subtype = 'datetime-local';
+            } else if (h.type === 'blob' && h.nullable) {
+                initialValue = null;
             }
 
             const validation: ValidatorFn[] = [];
@@ -152,6 +154,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 // hint: h.comment
                 fetchAutocompleteValues,
                 required: !h.nullable,
+                // Submitting types with blobs aren't supported
+                disabled: h.type === 'blob',
                 value: initialValue
             };
         });

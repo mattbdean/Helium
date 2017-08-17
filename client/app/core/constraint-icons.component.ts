@@ -25,9 +25,6 @@ export class ConstraintIconsComponent implements OnInit {
         if (this.constraints === undefined || this.constraints === null)
             this.constraints = [];
         const types = this.constraints.map((c) => c.type);
-        if (!_.isEqual(_.uniq(types), types)) {
-            throw new Error('Expecting at maximum one Constraint for each ConstraintType');
-        }
 
         const ordered: ConstraintType[] = [];
         for (const t of types) {

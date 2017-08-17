@@ -9,7 +9,10 @@ import {
 import { ErrorResponse, PaginatedResponse } from '../src/common/responses';
 import { createServer } from '../src/server';
 
-import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
+import {
+    BLOB_STRING_REPRESENTATION, DATE_FORMAT,
+    DATETIME_FORMAT
+} from '../../common/constants';
 import { TableDao } from '../src/routes/api/tables.queries';
 import { RequestContext } from './api.test.helper';
 
@@ -24,10 +27,13 @@ const ALL_TABLES = [
     'order',
     'shipment',
     'datatypeshowcase',
+    'blob_test',
     '#test_lookup',
     '_test_imported',
     '__test_computed'
 ];
+
+const randomInt = () => Math.round((Math.random() * 10000000));
 
 const SHOWCASE_TABLE = 'datatypeshowcase';
 
@@ -85,11 +91,23 @@ describe('API v1', () => {
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
                     expect(response.size).to.equal(response.data.length);
                     expect(response.size).to.be.above(0);
+
+                    // Find the names of all headers with the type 'blob'
+                    const blobRows = _(meta.headers)
+                        .filter((h) => h.type === 'blob')
+                        .map((h) => h.name)
+                        .value();
+                    expect(blobRows).to.have.length.above(0);
+
                     for (const row of response.data) {
                         expect(Object.keys(row)).to.have.lengthOf(meta.headers.length);
 
                         for (const header of meta.headers) {
                             expect(row[header.name]).to.not.be.undefined;
+                        }
+
+                        for (const blobRow of blobRows) {
+                            expect(row[blobRow]).to.equal(BLOB_STRING_REPRESENTATION);
                         }
                     }
                 }
@@ -159,7 +177,7 @@ describe('API v1', () => {
         const createSampleData = (): SqlRow => {
             if (lastPk === undefined)
                 // Generate base PK in the range [100..10,000,000]
-                lastPk = 100 + Math.round((Math.random() * 10000000));
+                lastPk = 100 + randomInt();
             return {
                 pk: lastPk++,
                 // integer must be unique, create a pseudo-random value for it
@@ -169,6 +187,7 @@ describe('API v1', () => {
                 date: moment().format(DATE_FORMAT), // now
                 time: moment(1498515312000).format(DATETIME_FORMAT), // some time in the past
                 enum: 'a',
+                blob: null,
                 string: 'foo',
                 string_not_null: 'not null string'
             };
@@ -207,6 +226,46 @@ describe('API v1', () => {
             // returns dates and times in the format they're accepted in
             expect(fromDb.date).to.equal(data.date);
             expect(fromDb.time).to.equal(data.time);
+        });
+
+        it('should allow the user to insert blob data', () => {
+            const data = createSampleData();
+            data.blob = 'foo';
+
+            return request.spec({
+                method: 'PUT',
+                relPath: `/tables/${SHOWCASE_TABLE}/data`,
+                expectedStatus: 400,
+                data,
+                validate: (err: ErrorResponse) => {
+                    expect(err.message).to.include('blob');
+                }
+            });
+        });
+
+        it('shouldn\'t allow the user to insert any data into a table with a non-null blob column', () => {
+            return request.spec({
+                method: 'PUT',
+                relPath: `/tables/blob_test/data`,
+                expectedStatus: 400,
+                data: {
+                    pk: randomInt(),
+                    blob_nullable: null,
+                    blob_not_null: 'hello'
+                },
+                validate: (err: ErrorResponse) => {
+                    expect(err.message).to.include('blob');
+                }
+            });
+        });
+
+        it('shouldn\'t allow the user to submit data to a table that doesn\'t exist', () => {
+            return request.spec({
+                method: 'PUT',
+                relPath: '/tables/blablabla/data',
+                expectedStatus: 404,
+                data: {}
+            });
         });
     });
 

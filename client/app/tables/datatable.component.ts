@@ -54,6 +54,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
     @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
+    @ViewChild('cellTemplateBlob') private cellTemplateBlob: TemplateRef<any>;
 
     /** True if this component has tried to access the table and found data */
     public exists: boolean = true;
@@ -147,7 +148,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
         return _.sortBy(_.map(headers, (h) => ({ 
             name: h.name,
             prop: h.name,
-            cellTemplate: this.cellTemplate,
+            cellTemplate: h.type === 'blob' ? this.cellTemplateBlob : this.cellTemplate,
             headerTemplate: this.headerTemplate
         })), 'ordinalPosition');
     }

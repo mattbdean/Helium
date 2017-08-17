@@ -104,6 +104,16 @@ export function tables(): Router {
             await TableDao.insertRow(table, req.body);
             res.status(200).send({});
         } catch (e) {
+            // TODO never write anything this ugly again
+            if (e.isInternal && e.code === 'NO_SUCH_TABLE') {
+                return sendError(res, 404, {
+                    message: 'that table doesn\'t exist',
+                    input: {
+                        name: table,
+                        data: req.body
+                    }
+                });
+            }
             if (e.code) {
                 switch (e.code) {
                     case 'ER_BAD_FIELD_ERROR':

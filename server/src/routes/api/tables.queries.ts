@@ -8,7 +8,8 @@ import {
     Constraint, ConstraintType, SqlRow, TableDataType,
     TableHeader, TableMeta, TableName, TableTier
 } from '../../common/api';
-import { DATE_FORMAT, DATETIME_FORMAT, TABLE_TIER_PREFIX_MAPPING } from '../../common/constants';
+import { BLOB_STRING_REPRESENTATION, DATE_FORMAT, DATETIME_FORMAT,
+    TABLE_TIER_PREFIX_MAPPING } from '../../common/constants';
 import { Database, squel } from '../../Database';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
@@ -118,26 +119,32 @@ export class TableDao {
         }
 
         const rows = (await (Database.get().conn.execute(query.toString())))[0];
-        // TODO: This could be a source of strain if we have many users and many
-        // tables that have dates/times in them
-        let headers: TableHeader[] | null = null;
+
+        // We need access to the table's headers to resolve Dates and blobs to
+        // the right string representation
+        const headers: TableHeader[] = await TableDao.headers(name);
+        const blobHeaders = _(headers)
+            .filter((h) => h.type === 'blob')
+            .map((h) => h.name)
+            .value();
 
         for (const row of rows) {
-            for (const key of Object.keys(row)) {
-                if (row[key] instanceof Date) {
-                    if (headers === null)
-                        headers = await TableDao.headers(name);
-
-                    const header = _.find(headers, (h) => h.name === key);
+            for (const col of Object.keys(row)) {
+                if (row[col] instanceof Date) {
+                    const header = _.find(headers, (h) => h.name === col);
                     if (header === undefined)
-                        throw Error(`Could not find header with name ${key}`);
+                        throw Error(`Could not find header with name ${col}`);
 
                     if (header.type === 'date')
-                        row[key] = moment(row[key]).format(DATE_FORMAT);
+                        row[col] = moment(row[col]).format(DATE_FORMAT);
                     else if (header.type === 'datetime')
-                        row[key] = moment(row[key]).format(DATETIME_FORMAT);
+                        row[col] = moment(row[col]).format(DATETIME_FORMAT);
                     else
                         throw Error(`Header ${header.name} unexpectedly had a Date value in it`);
+                } else if (blobHeaders.indexOf(col) >= 0) {
+                    // Don't send the actual binary data, send a specific string
+                    // instead
+                    row[col] = BLOB_STRING_REPRESENTATION;
                 }
             }
         }
@@ -191,6 +198,12 @@ export class TableDao {
      */
     public static async insertRow(table: string, data: SqlRow) {
         const headers = await TableDao.headers(table);
+        if (headers.length === 0) {
+            const error = new Error('no such table') as any;
+            error.isInternal = true;
+            error.code = 'NO_SUCH_TABLE';
+            throw error;
+        }
 
         // Make sure that the given data adheres to the headers
         const schema = TableDao.compileSchemaFor(headers);
@@ -240,6 +253,11 @@ export class TableDao {
                 case 'enum':
                     const schema = joi.string();
                     return schema.only.apply(schema, h.enumValues!!);
+                case 'blob':
+                    // Only allow a value of null to be inserted when the header
+                    // explicitly marks it as nullable. Accepting blobs could be
+                    // very dangerous and isn't necessary right now.
+                    return h.nullable ? joi.only(null) : joi.forbidden();
                 default:
                     throw Error('Unknown data type: ' + h.type);
             }
@@ -247,7 +265,7 @@ export class TableDao {
 
         // Make all non-nullable properties required
         for (let i = 0; i < headers.length; i++) {
-            if (!headers[i].nullable)
+            if (!headers[i].nullable && headers[i].type !== 'blob')
                 values[i] = values[i].required();
         }
         return joi.object(_.zipObject(keys, values));
@@ -383,7 +401,7 @@ export class TableDao {
                 type,
                 isNumerical,
                 isTextual: !isNumerical,
-                signed: isNumerical && !rawType.includes("unsigned"),
+                signed: isNumerical && !rawType.includes('unsigned'),
                 ordinalPosition: row.ORDINAL_POSITION as number,
                 rawType,
                 nullable: row.IS_NULLABLE === 'YES',
@@ -452,6 +470,7 @@ export class TableDao {
         if (rawType === 'datetime' || rawType === 'timestamp') return 'datetime';
         if (rawType.startsWith('enum')) return 'enum';
         if (rawType.includes('char')) return 'string';
+        if (rawType.includes('blob')) return 'blob';
 
         throw Error(`Could not determine TableDataType for raw type '${rawType}'`);
     }
@@ -461,6 +480,6 @@ export class TableDao {
         const matches = raw.match(/^enum\('(.*)'\)$/);
         if (matches === null || matches.length !== 2)
             throw new Error(`Expecting a match from input string ${raw}`);
-        return matches[1].split("','");
+        return matches[1].split('\',\'');
     }
 }

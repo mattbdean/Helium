@@ -10,4 +10,4 @@ export const TABLE_TIER_PREFIX_MAPPING: { [prefix: string]: TableTier } = {
     '~': 'hidden'
 };
 
-export const TEST: Readonly<string> = Object.freeze('hello');
+export const BLOB_STRING_REPRESENTATION = '<blob>';

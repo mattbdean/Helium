@@ -71,9 +71,17 @@ CREATE TABLE datatypeshowcase(
   `date` DATE COMMENT 'date column',
   `time` TIMESTAMP COMMENT 'time column',
   `enum` ENUM('a', 'b', 'c') COMMENT 'enum column',
+  `blob` TINYBLOB COMMENT 'blob column',
   `string` VARCHAR(50) COMMENT 'string column',
   `string_not_null` VARCHAR(50) NOT NULL COMMENT 'string_not_null column'
 ) COMMENT 'a table with diverse data';
+
+# Table specifically for testing against inserting data with blobs
+CREATE TABLE blob_test(
+    `pk` INTEGER PRIMARY KEY NOT NULL,
+    `blob_nullable` TINYBLOB,
+    `blob_not_null` TINYBLOB NOT NULL
+);
 
 # Create a few empty tables for the test of sorting the different types
 CREATE TABLE `#test_lookup`(pk INTEGER PRIMARY KEY);
@@ -116,7 +124,7 @@ INSERT INTO shipment (shipment_id, order_id, organization_id, customer_id, produ
 
 # Try to insert data that is as diverse as possible
 INSERT INTO datatypeshowcase VALUES
-  (100, 0,    10.0, 0,    '2017-07-01', NOW(), 'a',  'some string', 'another string'),
-  (101, NULL, 11.1, 1,    '2017-07-05', NOW(), 'b',  NULL,          'another string2'),
-  (102, 5,    55.5, 0,    '2017-07-05', NOW(), 'b',  NULL,          'another string2'),
-  (110, NULL, NULL, NULL, NULL,         NULL,  NULL, NULL,          'mostly null data in this row');
+  (100, 0,    10.0, 0,    '2017-07-01', NOW(), 'a',  x'1234', 'some string', 'another string'),
+  (101, NULL, 11.1, 1,    '2017-07-05', NOW(), 'b',  NULL,    NULL,          'another string2'),
+  (102, 5,    55.5, 0,    '2017-07-05', NOW(), 'b',  x'1234', NULL,          'another string2'),
+  (110, NULL, NULL, NULL, NULL,         NULL,  NULL, NULL,    NULL,          'mostly null data in this row');
