@@ -47,6 +47,13 @@ export class FormHostComponent implements OnDestroy, OnInit {
         this.metaSub = this.route.params.switchMap((params: Params) => {
             this.name = createTableName(params.name);
 
+            // Automatically redirect the user to the master form if they try
+            // to navigate to a part table
+            if (this.name.masterRawName !== null) {
+                return Observable.fromPromise(this.router.navigate(['/forms', this.name.masterRawName]))
+                    .flatMapTo(Observable.never());
+            }
+
             return this.backend.meta(this.name.rawName)
                 .catch(() => {
                     return Observable.of(null);
