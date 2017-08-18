@@ -7,6 +7,7 @@ import * as _ from 'lodash';
 
 import { SqlRow, TableMeta, TableName } from '../common/api';
 import { PaginatedResponse } from '../common/responses';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 /**
  * This class provides a clean way to interact with the JSON API using Angular's
@@ -14,11 +15,26 @@ import { PaginatedResponse } from '../common/responses';
  */
 @Injectable()
 export class TableService {
+    private _listCache = new ReplaySubject<TableName[]>(1);
+
     constructor(private http: HttpClient) {}
 
     /** Fetches a list of all tables */
     public list(): Observable<TableName[]> {
-        return this.get(`/tables`);
+        // If the ReplaySubject hasn't been subscribed to before
+        if (!this._listCache.observers.length) {
+            this.get<TableName[]>('/tables').subscribe(
+                (data) => this._listCache.next(data),
+                (err) => {
+                    this._listCache.error(err);
+                    // Recreate the Subject since sending any error will prevent
+                    // any more data from being transmitted
+                    this._listCache = new ReplaySubject(1);
+                }
+            );
+        }
+
+        return this._listCache;
     }
 
     /** Fetches meta for a given table */

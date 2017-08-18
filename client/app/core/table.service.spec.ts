@@ -3,7 +3,7 @@ import {
     HttpClientTestingModule,
     HttpTestingController
 } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import * as _ from 'lodash';
 
@@ -59,6 +59,13 @@ describe('TableService', () => {
             service.list().subscribe();
             expectGet('/api/v1/tables');
         });
+
+        it('should cache the request values', fakeAsync(() => {
+            service.list().subscribe();
+            tick();
+            service.list().subscribe();
+            expectGet('/api/v1/tables');
+        }));
     });
 
     describe('meta', () => {
