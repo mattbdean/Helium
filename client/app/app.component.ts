@@ -3,10 +3,11 @@ import { Observable } from 'rxjs/Rx';
 
 import * as _ from 'lodash';
 
-import { TableName, TableTier } from './common/api';
+import { MasterTableName, TableName, TableTier } from './common/api';
+import { unflattenTableNames } from './common/util';
 import { TableService } from "./core/table.service";
 
-interface GroupedName { tier: TableTier; names: TableName[]; }
+interface GroupedName { tier: TableTier; names: MasterTableName[]; }
 
 @Component({
     selector: 'app',
@@ -29,9 +30,9 @@ export class AppComponent implements OnInit {
             // before we get actual data
             .startWith([])
             .map((names: TableName[]) => {
-                return _(names)
+                return _(unflattenTableNames(names))
                     .groupBy((n) => n.tier)
-                    .map((value: TableName[], key: TableTier): GroupedName => ({
+                    .map((value: MasterTableName[], key: TableTier): GroupedName => ({
                         tier: key,
                         names: value
                     }))

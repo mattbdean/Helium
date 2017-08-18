@@ -39,7 +39,8 @@ describe('AppComponent', () => {
         return _.map(tiers, (t, index): TableName => ({
             rawName: prefixFor(t) + 'table_' + index,
             tier: t,
-            cleanName: 'table_' + index
+            cleanName: 'table_' + index,
+            masterRawName: null
         }));
     };
 
@@ -119,7 +120,7 @@ describe('AppComponent', () => {
                 headerChildren = [];
             } else {
                 // Make sure non-headers are table references
-                expect(li.nativeElement.classList.contains('table-ref')).to.be.true;
+                expect(li.nativeElement.classList.contains('table-ref-container')).to.be.true;
 
                 // Keep track of the table refs under the current header
                 headerChildren.push(li);

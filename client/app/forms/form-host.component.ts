@@ -1,10 +1,12 @@
+import { HttpResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 import { MdSnackBar, MdSnackBarRef } from '@angular/material';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
-import { Observable } from "rxjs/Observable";
-import { Subscription } from "rxjs/Subscription";
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
 
 import * as _ from 'lodash';
 import * as moment from 'moment';
@@ -13,10 +15,9 @@ import { TableService } from '../core/table.service';
 import { DynamicFormComponent } from '../dynamic-form/dynamic-form.component';
 import { FieldConfig } from '../dynamic-form/field-config.interface';
 
-import { HttpResponse } from '@angular/common/http';
-import { BehaviorSubject } from "rxjs/BehaviorSubject";
-import { TableHeader, TableMeta } from '../common/api';
+import { TableHeader, TableMeta, TableName } from '../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
+import { createTableName } from '../common/util';
 
 @Component({
     selector: 'form-host',
@@ -33,7 +34,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
     private completedForm$ = new BehaviorSubject<object>(null);
 
     public config: FieldConfig[] = [];
-    public name: string;
+    public name: TableName;
 
     public constructor(
         private backend: TableService,
@@ -44,9 +45,9 @@ export class FormHostComponent implements OnDestroy, OnInit {
 
     public ngOnInit() {
         this.metaSub = this.route.params.switchMap((params: Params) => {
-            this.name = params.name;
+            this.name = createTableName(params.name);
 
-            return this.backend.meta(this.name)
+            return this.backend.meta(this.name.rawName)
                 .catch(() => {
                     return Observable.of(null);
                 });
@@ -60,7 +61,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             // Try to submit the row. switchMap to any error that occurred
             // during the process
             .switchMap((form: any) => {
-                return this.backend.submitRow(this.name, this.preformat(form))
+                return this.backend.submitRow(this.name.rawName, this.preformat(form))
                     // Assume no error
                     .mapTo(null)
                     // Handle any errors

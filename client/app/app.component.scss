@@ -18,6 +18,13 @@ md-sidenav {
   box-shadow: 3px 0 6px rgba(0,0,0,.24);
 }
 
+ul.undecorated-list {
+  margin: 0;
+  padding: 0;
+
+  list-style-type: none;
+}
+
 .router-content {
   margin: 15px;
 }
@@ -25,17 +32,13 @@ md-sidenav {
 .sidenav-list {
   $normal-color: rgba(0, 0, 0, 0.54);
 
-  margin: 0;
-  padding: 0;
-
-  list-style-type: none;
-
-  li.table-ref {
-    $border: 1px rgba(0, 0, 0, 0.06) solid;
+  .row-item {
     display: flex;
     align-items: center;
+
     min-width: 200px;
 
+    $border: 1px rgba(0, 0, 0, 0.06) solid;
     border-bottom: $border;
 
     transition: all 0.3s;
@@ -47,6 +50,15 @@ md-sidenav {
     &:first-child {
       border-top: $border;
     }
+  }
+
+  .nested-list {
+    border-left: 10px rgba(0, 0, 0, 0.24) solid;
+  }
+
+  li.table-ref {
+    display: flex;
+    flex-direction: column;
   }
 
   .add-data-icon, .table-name {

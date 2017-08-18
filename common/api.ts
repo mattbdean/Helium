@@ -11,7 +11,7 @@ export interface TableMeta {
  */
 export type TableTier = 'lookup' | 'manual' | 'imported' | 'computed' | 'hidden';
 
-export interface TableName {
+export interface BaseTableName {
     /** The name used in SQL */
     rawName: string;
 
@@ -26,6 +26,21 @@ export interface TableName {
      * prefix.
      */
     cleanName: string;
+}
+
+export interface TableName extends BaseTableName {
+    /**
+     * If this table represents a part table, the name of the master table. Null
+     * if not a part table.
+     */
+    masterRawName: string | null;
+}
+
+export interface MasterTableName extends BaseTableName {
+    /**
+     * Any part tables that belong to this master table.
+     */
+    parts: TableName[];
 }
 
 export interface SqlRow {
