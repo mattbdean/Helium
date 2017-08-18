@@ -14,7 +14,7 @@ export class TableHostComponent implements OnInit {
 
     public ngOnInit(): void {
         this.route.params.subscribe((params: Params) => {
-            this.selectedTable = createTableName(params.name);
+            this.selectedTable = params.name ? createTableName(params.name) : null;
         });
     }
 }
