@@ -66,6 +66,7 @@
     "@types/lodash": "^4.14.73",
     "@types/mocha": "^2.2.40",
     "@types/morgan": "^1.7.32",
+    "@types/mysql2": "types/mysql2",
     "@types/node": "^8.0.22",
     "@types/sinon": "^2.3.3",
     "@types/sinon-chai": "^2.7.28",

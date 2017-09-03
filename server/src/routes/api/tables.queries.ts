@@ -10,7 +10,8 @@ import {
 } from '../../common/api';
 import { BLOB_STRING_REPRESENTATION, DATE_FORMAT, DATETIME_FORMAT} from '../../common/constants';
 import { createTableName } from '../../common/util';
-import { Database, squel } from '../../Database';
+import { Database } from '../../Database';
+import { QueryHelper } from '../../query.helper';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
 
@@ -29,19 +30,20 @@ interface PreparedCell {
     dontQuote: boolean;
 }
 
+const helper: QueryHelper = new QueryHelper();
+
 export class TableDao {
     /**
      * Returns an array of all available table names
      */
     public static async list(): Promise<TableName[]> {
-        const db = Database.get();
         // db.conn is a PromiseConnection that wraps a Connection. A
         // Connection has a property `config`
-        const dbName = db.conn.connection.config.database;
-        const result = await db.conn.execute(
-            'SELECT table_name FROM INFORMATION_SCHEMA.tables WHERE TABLE_SCHEMA = ?',
-            [dbName]
-        );
+        const result = await helper.execute((squel) =>
+            squel.select()
+                .from('INFORMATION_SCHEMA.tables')
+                .field('table_name')
+                .where('TABLE_SCHEMA = ?', helper.databaseName()));
 
         /*
         Transform this:
@@ -58,7 +60,7 @@ export class TableDao {
             { rawName: '_baz', ... }
         ]
          */
-        return _.map(result[0], (row: any): TableName => createTableName(row.table_name));
+        return _.map(result, (row: any): TableName => createTableName(row.table_name));
     }
 
     /**
@@ -80,25 +82,24 @@ export class TableDao {
                                 limit: number = 25,
                                 sort: Sort | undefined): Promise<SqlRow[]> {
 
-        const conn = Database.get().conn;
-        const escapedName = conn.escapeId(name);
+        const rows = await helper.execute((squel) => {
+            // Create our basic query
+            let query = squel
+                .select()
+                // Make sure we escape the table name so that we're less vulnerable to
+                // SQL injection
+                .from(helper.escapeId(name))
+                // Pagination
+                .limit(limit)
+                .offset((page - 1) * limit);
 
-        // Create our basic query
-        let query = squel
-            .select()
-            // Make sure we escape the table name so that we're less vulnerable to
-            // SQL injection
-            .from(escapedName)
-            // Pagination
-            .limit(limit)
-            .offset((page - 1) * limit);
+            if (sort !== undefined) {
+                // Specify a sort if provided
+                query = query.order(helper.escapeId(sort.by), sort.direction === 'asc');
+            }
 
-        if (sort !== undefined) {
-            // Specify a sort if provided
-            query = query.order(conn.escapeId(sort.by), sort.direction === 'asc');
-        }
-
-        const rows = (await (Database.get().conn.execute(query.toString())))[0];
+            return query;
+        });
 
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
@@ -158,18 +159,20 @@ export class TableDao {
         const conn = Database.get().conn;
 
         // SELECT DISTINCT $col FROM $table ORDER BY $col ASC
-        const query = squel
-            .select()
-            .distinct()
-            .from(conn.escapeId(table))
-            .field(conn.escapeId(column))
-            .order(conn.escapeId(column));
+        const result = await helper.execute((squel) =>
+            squel
+                .select()
+                .distinct()
+                .from(helper.escapeId(table))
+                .field(helper.escapeId(column))
+                .order(helper.escapeId(column))
 
-        const result = await conn.execute(query.toString());
+        );
+
         // Each row is a document mapping the column to its value. In this case, we
         // only have one item in the row, flatten the array of objects into an array
         // of each value
-        return _.map(result[0], (row) => row[column]);
+        return _.map(result, (row) => row[column]);
     }
 
     /**
@@ -190,20 +193,20 @@ export class TableDao {
         joi.assert(data, schema);
 
         const preparedData: PreparedCell[] = await TableDao.prepareForInsert(headers, data);
-        const conn = Database.get().conn;
 
-        // Create base 'INSERT INTO' query
-        const query = squel.insert().into(conn.escapeId(table));
+        await helper.execute((squel) => {
+            // Create base 'INSERT INTO' query
+            const query = squel.insert().into(helper.escapeId(table));
 
-        // Set key/value pairs to insert
-        for (const cell of preparedData) {
-            query.set(conn.escapeId(cell.key), cell.value, {
-                dontQuote: cell.dontQuote
-            });
-        }
+            // Set key/value pairs to insert
+            for (const cell of preparedData) {
+                query.set(helper.escapeId(cell.key), cell.value, {
+                    dontQuote: cell.dontQuote
+                });
+            }
 
-        // Execute the query
-        await conn.execute(query.toString());
+            return query;
+        });
     }
 
     private static compileSchemaFor(headers: TableHeader[]): Schema {
@@ -256,14 +259,17 @@ export class TableDao {
      * foreign keys, and unique constraints are recognized.
      */
     private static async constraints(name: string): Promise<Constraint[]> {
-        const result = (await Database.get().conn.execute(
-            `SELECT
-                COLUMN_NAME, CONSTRAINT_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
-            FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-            WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ?
-            ORDER BY ORDINAL_POSITION ASC`,
-            [Database.get().dbName(), name]
-        ))[0]; // first element is content, second element is metadata
+        const result = await helper.execute((squel) => {
+            return squel.select()
+                .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
+                    .field('COLUMN_NAME')
+                    .field('CONSTRAINT_NAME')
+                    .field('REFERENCED_TABLE_NAME')
+                    .field('REFERENCED_COLUMN_NAME')
+                .where('CONSTRAINT_SCHEMA = ?', helper.databaseName())
+                .where('TABLE_NAME = ?', name)
+                .order('ORDINAL_POSITION');
+        });
 
         return _.map(result, (row: any): Constraint => {
             let type: ConstraintType = 'foreign';
@@ -334,41 +340,48 @@ export class TableDao {
 
     /** Fetches a table's comment, or an empty string if none exists */
     private static async comment(name: string): Promise<string> {
-        const conn = Database.get().conn;
-        const query = squel.select()
-            .from('INFORMATION_SCHEMA.TABLES')
-            .field('TABLE_COMMENT')
-            .where('TABLE_NAME = ' + conn.escape(name))
-            .where('TABLE_SCHEMA = ' + conn.escape(Database.get().dbName()));
+        const result = await helper.execute((squel) =>
+            squel.select()
+                .from('INFORMATION_SCHEMA.TABLES')
+                .field('TABLE_COMMENT')
+                .where('TABLE_NAME = ?', name)
+                .where('TABLE_SCHEMA = ?', helper.databaseName())
+        );
 
-        const result = (await conn.execute(query.toString()))[0];
         return result[0].TABLE_COMMENT;
     }
 
     /** Counts the amount of rows in a table */
     private static async count(name: string): Promise<number> {
-        const conn = Database.get().conn;
-        const result = (await conn.execute(
-            // This query can apparently be slow for a table with billions of rows,
-            // but let's cross that bridge when we get to it
-            `SELECT COUNT(*) FROM ${conn.escapeId(name)}`
-        ))[0];
+        const result = await helper.execute((squel) =>
+            squel.select()
+                .from(helper.escapeId(name))
+                .field('COUNT(*)')
+        );
         // This query returns only one row
         return result[0]['COUNT(*)'];
     }
 
     /** Returns a Promise the resolves to an array of TableHeaders */
     private static async headers(name: string): Promise<TableHeader[]> {
-        const result = (await Database.get().conn.execute(
-            `SELECT
-                COLUMN_NAME, ORDINAL_POSITION, IS_NULLABLE, DATA_TYPE,
-                CHARACTER_MAXIMUM_LENGTH, NUMERIC_SCALE, NUMERIC_PRECISION,
-                CHARACTER_SET_NAME, COLUMN_TYPE, COLUMN_COMMENT
-            FROM INFORMATION_SCHEMA.columns
-            WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
-            ORDER BY ORDINAL_POSITION ASC`,
-            [Database.get().dbName(), name]
-        ))[0]; // first element is content, second element is metadata
+        const fields = [
+            'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
+            'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
+            'CHARACTER_SET_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT'
+        ];
+
+        const result = await helper.execute((squel) => {
+            let query = squel.select().from('INFORMATION_SCHEMA.columns');
+
+            for (const field of fields) {
+                query = query.field(field);
+            }
+
+            return query
+                .where('TABLE_SCHEMA = ?', helper.databaseName())
+                .where('TABLE_NAME = ?', name)
+                .order('ORDINAL_POSITION');
+        });
 
         // Map each BinaryRow into a TableHeader, removing any additional rows
         // that share the same name

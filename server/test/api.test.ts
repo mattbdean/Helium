@@ -272,8 +272,7 @@ describe('API v1', () => {
     describe('GET /api/v1/tables/:name', () => {
         let meta: TableMeta;
         before(async () => {
-            const res = await request.basic(`/tables/${SHOWCASE_TABLE}`, 200);
-            meta = res.body;
+            meta = (await request.basic(`/tables/${SHOWCASE_TABLE}`, 200)).body;
         });
 
         it('should include table headers', () => {

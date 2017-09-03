@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import * as mysql from 'mysql2/promise';
-import * as squelBuilder from 'squel';
 
 /**
  * Generic interface for mysql2 connection options. See
@@ -20,7 +19,7 @@ export class Database {
     private static TRAVIS_CONF: DbConf =
         { user: 'user', password: 'password', database: 'helium' };
 
-    private internalConn: any;
+    private internalConn: mysql.Connection;
     private config: DbConf;
 
     // Singleton
@@ -46,7 +45,7 @@ export class Database {
     /**
      * A node-mysql2 PromiseConnection. Null if not connected
      */
-    public get conn(): any | null { return this.internalConn; }
+    public get conn(): mysql.Connection | null { return this.internalConn; }
 
     public dbName(): string { return this.config.database; }
 
@@ -92,5 +91,3 @@ const readJson = (file: string): Promise<any> =>
             }
         });
     });
-
-export const squel = squelBuilder.useFlavour('mysql');
