@@ -98,7 +98,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     snackbarRef = this.snackBar.open('Created new row', 'VIEW', { duration: 3000 });
                     return snackbarRef.onAction()
                         // Navigate to /tables/:name when 'VIEW' is clicked
-                        .flatMap(() => Observable.fromPromise(this.router.navigate(['/tables', this.name])))
+                        .flatMap(() => Observable.fromPromise(this.router.navigate(['/tables', this.name.rawName])))
                         .mapTo(snackbarRef);
                }
             })
