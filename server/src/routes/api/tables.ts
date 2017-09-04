@@ -7,7 +7,7 @@ import {
 import { debug, NODE_ENV, NodeEnv } from '../../env';
 import { Sort, TableDao } from './tables.queries';
 
-const TABLE_NAME_REGEX = /^[A-Za-z_#~]*$/;
+const TABLE_NAME_REGEX = /^[A-Za-z0-9_#~]*$/;
 
 export function tables(): Router {
     const r = Router();
@@ -91,7 +91,7 @@ export function tables(): Router {
     });
 
     r.put('/:name/data', async (req, res) => {
-        const table = req.params.name;
+        const table: string = req.params.name;
         if (!verifyTableName(table, res)) return;
 
         const send400 = (message: string) =>
@@ -99,6 +99,9 @@ export function tables(): Router {
                 name: table,
                 data: req.body
             }});
+
+        if (table.indexOf('__') > 0)
+            return send400('inserting data into part tables directly is forbidden');
 
         try {
             await TableDao.insertRow(table, req.body);
@@ -222,7 +225,7 @@ export function tables(): Router {
     const verifyTableName = (name: string, res: Response): boolean => {
         if (!TABLE_NAME_REGEX.test(name)) {
             sendError(res, 400, {
-                message: 'table name must be entirely alphabetic and optionally ' +
+                message: 'table name must be entirely alphanumeric and optionally ' +
                     'prefixed with "~" or "#"',
                 input: { name }
             });

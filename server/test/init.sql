@@ -88,6 +88,20 @@ CREATE TABLE `#test_lookup`(pk INTEGER PRIMARY KEY);
 CREATE TABLE _test_imported(pk INTEGER PRIMARY KEY);
 CREATE TABLE __test_computed(pk INTEGER PRIMARY KEY);
 
+CREATE TABLE master(pk INTEGER PRIMARY KEY);
+CREATE TABLE master__part(
+    part_pk INTEGER PRIMARY KEY,
+    master INTEGER,
+    FOREIGN KEY (master) REFERENCES master(pk)
+);
+CREATE TABLE master__part2(
+    part2_pk INTEGER PRIMARY KEY,
+    master INTEGER,
+    FOREIGN KEY (master) REFERENCES master(pk)
+);
+
+CREATE TABLE column_name_test(`$parts` INTEGER PRIMARY KEY);
+
 # A few customers, organizations, and products
 INSERT INTO customer VALUES (0, "Some Guy"), (1, "Another Guy");
 INSERT INTO organization VALUES (10, "Some Big Company", 0), (11, "Another Big Company", 1);

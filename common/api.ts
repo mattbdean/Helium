@@ -102,6 +102,8 @@ export interface TableHeader {
 
     /** Database-level column comment */
     comment: string;
+
+    tableName: string;
 }
 
 export interface Constraint {

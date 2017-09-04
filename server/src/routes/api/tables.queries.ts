@@ -1,9 +1,10 @@
 import * as BaseJoi from 'joi';
+import { AnySchema, Schema } from 'joi';
 import * as JoiDateExtensions from 'joi-date-extensions';
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { FunctionBlock } from 'squel';
 
-import { Schema } from 'joi';
 import {
     Constraint, ConstraintType, SqlRow, TableDataType,
     TableHeader, TableMeta, TableName
@@ -24,10 +25,32 @@ export interface Sort {
     by: string;
 }
 
-interface PreparedCell {
-    key: any;
-    value: any;
-    dontQuote: boolean;
+/**
+ * A PreparedInsert keeps track of all data that needs to be inserted. The
+ * keys for this object are the names of the tables as they appear in SQL.
+ * Each table can have multiple rows of data to insert. For example, a
+ * PreparedInsert for one row on a table 'foo' with textual columns 'bar' and
+ * 'baz' might look something like this:
+ *
+ * {
+ *   foo: [
+ *     [
+ *       { key: 'bar': value: 'hello', dontQuote: false }
+ *       { key: 'baz': value: 'world', dontQuote: false }
+ *     ]
+ *   ]
+ * }
+ */
+interface PreparedInsert {
+    [table: string]: SqlRow[];
+}
+
+interface PartTableHeaders { [partTableName: string]: TableHeader[]; }
+
+type PreparedCell = string | number | boolean | FunctionBlock;
+
+interface PreparedRow {
+    [columnName: string]: PreparedCell;
 }
 
 const helper: QueryHelper = new QueryHelper();
@@ -80,7 +103,7 @@ export class TableDao {
     public static async content(name: string,
                                 page: number = 1,
                                 limit: number = 25,
-                                sort: Sort | undefined): Promise<SqlRow[]> {
+                                sort?: Sort | undefined): Promise<SqlRow[]> {
 
         const rows = await helper.execute((squel) => {
             // Create our basic query
@@ -187,71 +210,165 @@ export class TableDao {
             error.code = 'NO_SUCH_TABLE';
             throw error;
         }
+        const parts = await TableDao.partTableHeaders(table);
 
         // Make sure that the given data adheres to the headers
-        const schema = TableDao.compileSchemaFor(headers);
+        const schema = TableDao.compileSchemaFor(headers, parts);
         joi.assert(data, schema);
 
-        const preparedData: PreparedCell[] = await TableDao.prepareForInsert(headers, data);
+        const preparedData: PreparedInsert = TableDao.prepareForInsert(headers, parts, data);
 
-        await helper.execute((squel) => {
-            // Create base 'INSERT INTO' query
-            const query = squel.insert().into(helper.escapeId(table));
+        return helper.transaction(async () => {
+            // Make sure we alpabetize the names so we insert master tables first
+            const names = _.sortBy(Object.keys(preparedData));
 
-            // Set key/value pairs to insert
-            for (const cell of preparedData) {
-                query.set(helper.escapeId(cell.key), cell.value, {
-                    dontQuote: cell.dontQuote
+            // Do inserts in sequence so we can guarantee that master tables
+            // are inserted before any part tables
+            for (const name of names) {
+                const rows = preparedData[name];
+
+                await helper.execute((squel) => {
+                    return squel.insert()
+                        .into(helper.escapeId(name))
+                        .setFieldsRows(rows);
                 });
             }
-
-            return query;
         });
     }
 
-    private static compileSchemaFor(headers: TableHeader[]): Schema {
+    /**
+     * Creates a Joi schema that can be used to validate the structure of the
+     * data sent to be inserted into the database. The general idea here that
+     * each column is its own property in the data object. If a table had
+     * columns `foo` and `bar`, the user could send data that looks like this:
+     *
+     * { foo: <something>, bar: <something> }
+     *
+     * What each <something> is allowed to be is determined by the type of data
+     * allowed in that column. For example, if the `foo` column is an unsigned
+     * integer, the values 1, 100, and 42 would be accepted, while -1, 'false',
+     * and `[]` (an array) would not. Unknown properties are not allowed, so if
+     * a table had columns 'foo' and 'bar', one could not specify a 'baz'
+     * property.
+     *
+     * Part tables are supported via the special property `$parts`. If a master
+     * table with the SQL name `foo` has two part tables with SQL names
+     * `foo__bar` and `foo__baz`, then the user could submit data with this
+     * shape:
+     *
+     * {
+     *   <foo properties>,
+     *   $parts: {
+     *     bar: [
+     *       <bar object 1>,
+     *       <bar object 2>,
+     *       etc.
+     *     ],
+     *     baz: [
+     *       <bar object 1>,
+     *       <bar object 2>,
+     *       etc.
+     *     ]
+     *   }
+     * }
+     *
+     * $parts.bar and $parts.baz are optional and if specified, can contain zero
+     * or more objects that fit the schema for that specific table. Note that
+     * $parts.bar[n].$parts is NOT valid since nested part tables aren't
+     * supported by DataJoint and therefore neither by this project.
+     *
+     * If a master table has no part tables, `$parts` is not allowed.
+     *
+     * @param headers The master table's headers
+     * @param partTableHeaders An object that maps the clean name of each part
+     *                         table to all of that table's headers.
+     */
+    private static compileSchemaFor(headers: TableHeader[], partTableHeaders: PartTableHeaders): Schema {
+
+        // There could be a column called $parts, ignore this
+        headers = _.filter(headers, (h) => h.name !== '$parts');
         const keys = _.map(headers, (h) => h.name);
-        const values = _.map(headers, (h) => {
-            switch (h.type) {
-                case 'string':
-                    return joi.string()
-                        .min(0)
-                        .max(h.maxCharacters !== null ? h.maxCharacters : Infinity);
-                case 'integer':
-                case 'float':
-                    // TODO: Handle maximum values for integers/floats
-                    let base = joi.number();
-                    if (h.signed) {
-                        base = base.min(0);
-                    }
-                    if (h.type === 'integer')
-                        base = base.integer();
-                    return base;
-                case 'date':
-                    return joi.date().format('YYYY-MM-DD');
-                case 'datetime':
-                    return joi.date().format('YYYY-MM-DD HH:mm:ss');
-                case 'boolean':
-                    return joi.boolean();
-                case 'enum':
-                    const schema = joi.string();
-                    return schema.only.apply(schema, h.enumValues!!);
-                case 'blob':
-                    // Only allow a value of null to be inserted when the header
-                    // explicitly marks it as nullable. Accepting blobs could be
-                    // very dangerous and isn't necessary right now.
-                    return h.nullable ? joi.only(null) : joi.forbidden();
-                default:
-                    throw Error('Unknown data type: ' + h.type);
-            }
-        });
+        const values = _.map(headers, TableDao.schemaFromHeader);
 
         // Make all non-nullable properties required
         for (let i = 0; i < headers.length; i++) {
             if (!headers[i].nullable && headers[i].type !== 'blob')
                 values[i] = values[i].required();
         }
-        return joi.object(_.zipObject(keys, values));
+
+        // Create an object by like this:
+        // { [keys[0]]: values[0], [keys[1]]: values[1], [keys[n]]: values[n] }
+        const currentSchema = _.zipObject(keys, values) as any;
+
+        // See if this table has any part tables
+        const partTableNames = Object.keys(partTableHeaders);
+        if (partTableNames.length > 0) {
+            // Do the same thing we did above, create an object by zipping the
+            // contents of two arrays together
+            const ptableKeys = partTableNames;
+
+            // Recursively call this method to generate a Schema for each part table.
+            // In theory, this method could be recursed several times, but in
+            // practice, DataJoint does not allow part tables of part tables.
+            const ptableValues = _.map(partTableNames, (name) => {
+                return joi.array().items(TableDao.compileSchemaFor(partTableHeaders[name], {}));
+            });
+
+            // Allow any part tables to be specified using the $parts key
+            currentSchema.$parts = joi.object(_.zipObject(ptableKeys, ptableValues)).optional();
+        }
+
+        return joi.object(currentSchema);
+    }
+
+    /**
+     * Creates a schema that validates the value of a particular header. For
+     * example, a header representing an unsigned integer column would create
+     * a schema that accepts only positive integers when given to this function.
+     *
+     * Dates are expected to have the format 'YYYY-MM-DD' and similarly,
+     * datetimes should have the format 'YYYY-MM-DD HH:mm:ss'.
+     *
+     * Most data types are pretty straightforward, (var)char headers produce
+     * string-based schemas, tinyint(1) headers produce boolean schemas etc.
+     *
+     * Blobs are a special case, however. Due to the unnecessary security risk
+     * of accepting blobs at face value, blobs are forbidden unless the column
+     * is nullable and the value is null.
+     */
+    private static schemaFromHeader(h: TableHeader): AnySchema<any> {
+        switch (h.type) {
+            case 'string':
+                return joi.string()
+                    .min(0)
+                    .max(h.maxCharacters !== null ? h.maxCharacters : Infinity);
+            case 'integer':
+            case 'float':
+                // TODO: Handle maximum values for integers/floats
+                let base = joi.number();
+                if (h.signed) {
+                    base = base.min(0);
+                }
+                if (h.type === 'integer')
+                    base = base.integer();
+                return base;
+            case 'date':
+                return joi.date().format('YYYY-MM-DD');
+            case 'datetime':
+                return joi.date().format('YYYY-MM-DD HH:mm:ss');
+            case 'boolean':
+                return joi.boolean();
+            case 'enum':
+                const schema = joi.string();
+                return schema.only.apply(schema, h.enumValues!!);
+            case 'blob':
+                // Only allow a value of null to be inserted when the header
+                // explicitly marks it as nullable. Accepting blobs could be
+                // very dangerous and isn't necessary right now.
+                return h.nullable ? joi.only(null) : joi.forbidden();
+            default:
+                throw Error('Unknown data type: ' + h.type);
+        }
     }
 
     /**
@@ -362,12 +479,47 @@ export class TableDao {
         return result[0]['COUNT(*)'];
     }
 
-    /** Returns a Promise the resolves to an array of TableHeaders */
+    /**
+     * Fetches the TableHeaders for all the part tables belonging to a given
+     * master table. For example, if the database contains three tables `foo`,
+     * `foo__bar`, and `foo__baz`, `partTableHeaders('foo')` will return this:
+     *
+     * {
+     *   bar: [ <all headers for foo__bar> ],
+     *   baz: [ <all headers for foo__baz> ]
+     * }
+     */
+    private static async partTableHeaders(masterName: string): Promise<PartTableHeaders> {
+        // '%' is a SQL metacharacter that matches 0 or more characters, so
+        // 'foo__%' will return any headers associated with the part tables of
+        // 'foo'.
+        const partHeaders = await TableDao.headers(masterName + '__%');
+
+        // Group the headers by their table names
+        const grouped: PartTableHeaders = {};
+
+        for (const header of partHeaders) {
+            const cleanName = createTableName(header.tableName).cleanName;
+
+            if (grouped[cleanName] === undefined)
+                grouped[cleanName] = [header];
+            else
+                grouped[cleanName].push(header);
+        }
+
+        return grouped;
+    }
+
+    /**
+     * Returns a Promise the resolves to an array of TableHeaders. Note that
+     * `name` is used in a 'LIKE' expression and therefore can contain
+     * metacharacters like '%'.
+     */
     private static async headers(name: string): Promise<TableHeader[]> {
         const fields = [
             'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
             'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
-            'CHARACTER_SET_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT'
+            'CHARACTER_SET_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT', 'TABLE_NAME'
         ];
 
         const result = await helper.execute((squel) => {
@@ -379,7 +531,7 @@ export class TableDao {
 
             return query
                 .where('TABLE_SCHEMA = ?', helper.databaseName())
-                .where('TABLE_NAME = ?', name)
+                .where('TABLE_NAME LIKE ?', name)
                 .order('ORDINAL_POSITION');
         });
 
@@ -403,56 +555,77 @@ export class TableDao {
                 numericPrecision: row.NUMERIC_PRECISION as number,
                 numericScale: row.NUMERIC_SCALE as number,
                 enumValues: TableDao.findEnumValues(row.COLUMN_TYPE as string),
-                comment: row.COLUMN_COMMENT as string
+                comment: row.COLUMN_COMMENT as string,
+                tableName: row.TABLE_NAME as string
             };
         });
     }
 
-    private static async prepareForInsert(headers: TableHeader[], row: SqlRow): Promise<PreparedCell[]> {
-        const newRow: PreparedCell[] = [];
+    private static prepareForInsert(headers: TableHeader[],
+                                    partTableHeaders: PartTableHeaders,
+                                    row: SqlRow): PreparedInsert {
 
+        const masterTableName = headers[0].tableName;
+        const prep: PreparedInsert = {};
+        prep[masterTableName] = [TableDao.prepareRow(headers, row)];
+
+        // Since `typeof null === 'object'`
+        if (row.$parts !== null && typeof row.$parts === 'object') {
+            // row.$parts is an object whose keys are the clean name of the
+            // table and whose values is an array of objects that fit the schema
+            // for the table
+            for (const partCleanName of Object.keys(row.$parts)) {
+                const partHeaders = partTableHeaders[partCleanName];
+                if (partHeaders === undefined)
+                    throw new Error(`expected headers for part table "${partCleanName}"`);
+                const sqlName = partHeaders[0].tableName;
+
+                const partRows = row.$parts[partCleanName];
+                prep[sqlName] = _.map(partRows, (r) => TableDao.prepareRow(partHeaders, r));
+            }
+        }
+
+        return prep;
+    }
+
+    private static prepareRow(headers: TableHeader[], row: SqlRow): PreparedRow {
+        const prepped: PreparedRow = {};
         const headerNames: string[] = _.map(headers, 'name');
 
         for (const column of Object.keys(row)) {
+            // $parts is a special property, ignore it
+            if (column === '$parts') continue;
+
             if (headerNames.indexOf(column) < 0)
                 throw new Error('unknown column: ' + column);
 
             const header = _.find(headers, (h) => h.name === column);
             if (header === undefined)
                 throw new Error('could not find header for column: ' + column);
-            newRow.push(TableDao.prepareCell(header, row[column]));
-        }
 
-        return newRow;
+            // Make sure to escape the column name here
+            prepped[helper.escapeId(header.name)] = TableDao.prepareCell(header, row[column]);
+        }
+        return prepped;
     }
 
     private static prepareCell(header: TableHeader, value: any): PreparedCell {
-        const quoted = (val: any): PreparedCell => ({
-            key: header.name,
-            value: val,
-            dontQuote: false
-        });
-
         if (header.type === 'datetime') {
-            return {
-                key: header.name,
-                value: `STR_TO_DATE('${value}', '%Y-%m-%d %H:%i:%s')`,
-                dontQuote: true
-            };
+            return helper.plainString('STR_TO_DATE(?, ?)', value, '%Y-%m-%d %H:%i:%s');
         } else if (header.type === 'date') {
-            return {
-                key: header.name,
-                value: `STR_TO_DATE('${value}', '%Y-%m-%d')`,
-                dontQuote: true
-            };
-        } else if (header.rawType === 'tinyint(1)')
-            return quoted(value === true || value === 'true' || value === 1);
-        else if (header.numericScale && header.numericScale === 0)
-            return quoted(parseInt(value, 10));
-        else if (header.isNumerical)
-            return quoted(parseFloat(value));
-        else
-            return quoted(value);
+            return helper.plainString('STR_TO_DATE(?, ?)', value, '%Y-%m-%d');
+        } else if (header.rawType === 'tinyint(1)') {
+            return value === true;
+        } else if (header.numericScale && header.numericScale === 0) {
+            return parseInt(value, 10);
+        } else if (header.isNumerical) {
+            return parseFloat(value);
+        } else if (header.isTextual) {
+            return value === null ? null : value.toString();
+        }
+
+        throw new Error(`Could not prepare value with type of ${header.type} ` +
+            `(${header.tableName}: ${header.name}`);
     }
 
     private static parseType(rawType: string): TableDataType {

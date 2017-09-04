@@ -22,14 +22,31 @@ export class QueryHelper {
      * result
      */
     public async execute(createQuery: (squel: MysqlSquel) => QueryBuilder): Promise<SqlRow[]> {
-        // toParam() returns a ParamString object that leaves '?' in the query
-        // so that we can allow node-mysql2 to sanitize our input
         const query = createQuery(this.squel).toString();
 
         const result = await this.db.conn!!.execute(query);
 
         // result[0] is an array of BinaryRows, result[1] is metadata
         return result[0] as SqlRow[];
+    }
+
+    /**
+     * Executes the given function in the context of a MySQL transaction.
+     * Automatically rolls back any changes done to the data if an error occurs.
+     * This function is only really needed to ensure that a group of queries
+     * all complete successfully.
+     *
+     * @param {() => Promise<void>} doWork
+     */
+    public async transaction(doWork: () => Promise<void>) {
+        await this.db.conn!!.beginTransaction();
+        try {
+            await doWork();
+            await this.db.conn!!.commit();
+        } catch (err) {
+            await this.db.conn!!.rollback();
+            throw err;
+        }
     }
 
     public databaseName() {
@@ -42,5 +59,9 @@ export class QueryHelper {
 
     public escapeId(value: any): string {
         return this.db.conn!!.escapeId(value);
+    }
+
+    public plainString(str: string, ...values: any[]) {
+        return this.squel.rstr(str, ...values);
     }
 }

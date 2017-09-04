@@ -28,6 +28,10 @@ const ALL_TABLES = [
     'shipment',
     'datatypeshowcase',
     'blob_test',
+    'master',
+    'master__part',
+    'master__part2',
+    'column_name_test',
     '#test_lookup',
     '_test_imported',
     '__test_computed'
@@ -62,14 +66,17 @@ describe('API v1', () => {
                 expect(_.map(data, 'rawName')).to.deep.equal(_.sortBy(ALL_TABLES));
 
                 for (const tableName of data) {
-                    if (tableName.tier === 'manual') {
-                        // Manual tables have no prefix
-                        expect(tableName.rawName).to.equal(tableName.cleanName);
-                    } else {
-                        // Non-manual tables have prefixes
-                        expect(tableName.rawName).to.not.equal(tableName.cleanName);
-                        // Make sure the raw name ends with the clean name
-                        expect(tableName.rawName).to.match(new RegExp(tableName.cleanName + '$'));
+                    // Only work with non-part tables
+                    if (tableName.masterRawName === null) {
+                        if (tableName.tier === 'manual') {
+                            // Manual tables have no prefix
+                            expect(tableName.rawName).to.equal(tableName.cleanName);
+                        } else {
+                            // Non-manual tables have prefixes
+                            expect(tableName.rawName).to.not.equal(tableName.cleanName);
+                            // Make sure the raw name ends with the clean name
+                            expect(tableName.rawName).to.match(new RegExp(tableName.cleanName + '$'));
+                        }
                     }
                 }
             });
@@ -173,7 +180,29 @@ describe('API v1', () => {
     });
 
     describe('PUT /api/v1/tables/:name/data', () => {
-        let lastPk;
+        /**
+         * Attempts to insert some data into the table via the API.
+         *
+         * `createData` is called with a pseudo-random positive integer to
+         * generate the data to be inserted. An optional `validate` parameter is
+         * provided to optionally validate the response.
+         */
+        const tryInsert = (table: string,
+                           expectedStatus: number,
+                           createData: (randomId: number) => any,
+                           validate: (dataOrError: any) => void = () => void 0): Promise<any> => {
+            const randomId = randomInt();
+            return request.spec({
+                method: 'PUT',
+                relPath: `/tables/${table}/data`,
+                expectedStatus,
+                data: createData(randomId),
+                validate
+            });
+        };
+
+        let lastPk: number;
+
         const createSampleData = (): SqlRow => {
             if (lastPk === undefined)
                 // Generate base PK in the range [100..10,000,000]
@@ -243,6 +272,16 @@ describe('API v1', () => {
             });
         });
 
+        it('shouldn\'t allow specifying unknown columns', () => {
+            return tryInsert('customer', 400, (randomId) => ({
+                customer_id: randomId,
+                name: 'Joe Smith',
+                other: 42 // this column doesn't exist
+            }), (error: ErrorResponse) => {
+                expect(error.message).to.include('other');
+            });
+        });
+
         it('shouldn\'t allow the user to insert any data into a table with a non-null blob column', () => {
             return request.spec({
                 method: 'PUT',
@@ -266,6 +305,64 @@ describe('API v1', () => {
                 expectedStatus: 404,
                 data: {}
             });
+        });
+
+        it('should support inserting part table data as well', async () => {
+            const partIds = [randomInt(), randomInt()];
+
+            await tryInsert('master', 200, (masterPk) => ({
+                pk: masterPk,
+                $parts: {
+                    part: [
+                        { part_pk: partIds[0], master: masterPk },
+                        { part_pk: partIds[1], master: masterPk }
+                    ]
+                }
+            }));
+
+            // Query the part table and make sure both were inserted
+            const content = await TableDao.content('master__part', 1, 1000);
+
+            for (const partId of partIds) {
+                expect(_.find(content, (row) => row['part_pk'] === partId)).to.exist;
+            }
+        });
+
+        it('should disallow specifically entering data into a part table', () => {
+            return tryInsert('master__part', 400, (randomId) => ({
+                part_pk: randomId,
+                master: randomId + 1
+            }), (error: ErrorResponse) => {
+                expect(error.message).to.include('part table');
+            });
+        });
+
+        it('should disallow entering part tables that don\'t reference the master table PK', () => {
+            return tryInsert('master', 400, (masterPk) => ({
+                pk: masterPk,
+                $parts: {
+                    part: [
+                        { part_pk: randomInt(), master: randomInt() }
+                    ]
+                }
+            }));
+        });
+
+        it('shouldn\'t allow inserting data where the column name is $parts', () => {
+            return tryInsert('column_name_test', 400, (masterPk) => ({
+                // This table's only column is its primary key whose name is '$parts'
+                $parts: masterPk
+            }), (error: ErrorResponse) => {
+                expect(error.message).to.contain('not allowed');
+            });
+        });
+
+        it('should dissalow specifying $parts when the master table has no part tables', () => {
+            return tryInsert('customer', 400, (randomId) => ({
+                customer_id: randomId,
+                name: 'Some Guy',
+                $parts: []
+            }));
         });
     });
 
@@ -302,7 +399,8 @@ describe('API v1', () => {
                 numericPrecision: 10,
                 numericScale: 0,
                 enumValues: null,
-                comment: 'pk column'
+                comment: 'pk column',
+                tableName: SHOWCASE_TABLE
             });
 
             expectHeader('enum', {
@@ -319,7 +417,8 @@ describe('API v1', () => {
                 numericPrecision: null,
                 numericScale: null,
                 enumValues: ['a', 'b', 'c'],
-                comment: 'enum column'
+                comment: 'enum column',
+                tableName: SHOWCASE_TABLE
             });
         });
 
