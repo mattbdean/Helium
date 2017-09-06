@@ -54,9 +54,9 @@ export class Database {
      * result
      */
     public async execute(createQuery: (squel: MysqlSquel) => QueryBuilder): Promise<SqlRow[]> {
-        const query = createQuery(this.squel).toString();
+        const query = createQuery(this.squel).toParam();
 
-        const result = await this.conn.execute(query);
+        const result = await this.conn.execute(query.text, query.values);
 
         // result[0] is an array of BinaryRows, result[1] is metadata
         return result[0] as SqlRow[];

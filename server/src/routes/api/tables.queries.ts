@@ -612,7 +612,10 @@ export class TableDao {
         } else if (header.type === 'date') {
             return helper.plainString('STR_TO_DATE(?, ?)', value, '%Y-%m-%d');
         } else if (header.rawType === 'tinyint(1)') {
-            return value === true;
+            // We can't return a boolean here since apparently MySQL doesn't like
+            // that. Instead, treat true/false values like we would a SQL
+            // function
+            return helper.plainString(value === true ? 'TRUE' : 'FALSE');
         } else if (header.numericScale && header.numericScale === 0) {
             return parseInt(value, 10);
         } else if (header.isNumerical) {
