@@ -10,7 +10,7 @@ import * as listEndpoints from 'express-list-endpoints';
 import * as _ from 'lodash';
 import * as yargs from 'yargs';
 
-import { Database, Mode } from './Database';
+import { Database, Mode } from './database.helper';
 import { createServer } from './server';
 
 // Catch unhandled Promises

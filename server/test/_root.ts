@@ -1,4 +1,4 @@
-import { Database, DbConf, Mode } from '../src/Database';
+import { Database, DbConf, Mode } from '../src/database.helper';
 
 // Catch unhandled Promises
 process.on('unhandledRejection', (reason) => {

@@ -11,8 +11,7 @@ import {
 } from '../../common/api';
 import { BLOB_STRING_REPRESENTATION, DATE_FORMAT, DATETIME_FORMAT} from '../../common/constants';
 import { createTableName } from '../../common/util';
-import { Database } from '../../Database';
-import { QueryHelper } from '../../query.helper';
+import { Database } from '../../database.helper';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
 
@@ -53,7 +52,7 @@ interface PreparedRow {
     [columnName: string]: PreparedCell;
 }
 
-const helper: QueryHelper = new QueryHelper();
+const helper: Database = Database.get();
 
 export class TableDao {
     /**
@@ -179,8 +178,6 @@ export class TableDao {
      * Fetches all distinct values from one column. Useful for autocomplete.
      */
     public static async columnContent(table: string, column: string): Promise<Array<string | number>> {
-        const conn = Database.get().conn;
-
         // SELECT DISTINCT $col FROM $table ORDER BY $col ASC
         const result = await helper.execute((squel) =>
             squel
