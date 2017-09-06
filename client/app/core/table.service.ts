@@ -1,13 +1,13 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { Observable } from "rxjs/Observable";
+import { Observable } from 'rxjs/Observable';
+import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import * as _ from 'lodash';
 
 import { SqlRow, TableMeta, TableName } from '../common/api';
 import { PaginatedResponse } from '../common/responses';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 /**
  * This class provides a clean way to interact with the JSON API using Angular's
