@@ -10,7 +10,6 @@ import { FieldConfig } from './field-config.interface';
         <ng-container *ngFor="let field of config" dynamicField [config]="field" [group]="form"></ng-container>
     </form>`
 })
-
 export class DynamicFormComponent implements OnChanges, OnInit {
     @Input()
     public config: FieldConfig[] = [];

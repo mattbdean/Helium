@@ -30,6 +30,7 @@ describe('DatatableComponent', () => {
     };
 
     const mockTableMeta = (): TableMeta => ({
+        name: 'foo',
         headers: [],
         totalRows: 0,
         constraints: [],

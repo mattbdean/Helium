@@ -1,11 +1,10 @@
-<md-card class="form-host" *ngIf="config; else noSuchTable">
-    <h2 class="mat-h2">Insert a new row into <i>{{ name.cleanName }}</i></h2>
-    <dynamic-form [config]="config" (submit)="onFormSubmitted($event)"></dynamic-form>
-</md-card>
+<div class="form-host" *ngIf="exists; else noSuchTable">
+    <form-container [allowMultiple]="false" [allowSubmit]="true" [meta]="masterMeta" (submit)="onFormSubmitted($event)"></form-container>
+</div>
 
 <ng-template #noSuchTable>
     <md-card class="form-host">
-        <h2 class="mat-h2">No such table</h2>
-        <p>There doesn't seem to be a table named <i><table-name [name]="name"></table-name></i> here</p>
+        <h2 class="mat-h2">Not found</h2>
+        <p>There doesn't seem to be a table by that name here</p>
     </md-card>
 </ng-template>

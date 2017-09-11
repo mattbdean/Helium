@@ -167,6 +167,7 @@ export class TableDao {
         ]);
 
         return {
+            name,
             headers,
             totalRows: count,
             constraints,

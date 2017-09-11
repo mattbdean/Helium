@@ -26,11 +26,12 @@ export class AppComponent implements OnInit {
 
     public ngOnInit() {
         this.groupedNames = this.backend.list()
+            .map(unflattenTableNames)
             // Start with an empty array so the template has something to do
             // before we get actual data
             .startWith([])
-            .map((names: TableName[]) => {
-                return _(unflattenTableNames(names))
+            .map((names: MasterTableName[]) => {
+                return _(names)
                     .groupBy((n) => n.tier)
                     .map((value: MasterTableName[], key: TableTier): GroupedName => ({
                         tier: key,

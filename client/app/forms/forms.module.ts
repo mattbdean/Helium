@@ -6,6 +6,7 @@ import { CoreModule } from "../core/core.module";
 import { DynamicFormModule } from '../dynamic-form/dynamic-form.module';
 import { FormHostComponent } from './form-host.component';
 import { FormRoutingModule } from './forms-routing.module';
+import { FormContainerComponent } from './form-container.component';
 
 @NgModule({
     imports: [
@@ -17,6 +18,7 @@ import { FormRoutingModule } from './forms-routing.module';
         FormRoutingModule
     ],
     declarations: [
+        FormContainerComponent,
         FormHostComponent
     ]
 })

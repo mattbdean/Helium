@@ -1,6 +1,5 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ValidatorFn, Validators } from '@angular/forms';
 import { MdSnackBar, MdSnackBarRef } from '@angular/material';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
@@ -12,12 +11,12 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import { TableService } from '../core/table.service';
-import { DynamicFormComponent } from '../dynamic-form/dynamic-form.component';
-import { FieldConfig } from '../dynamic-form/field-config.interface';
 
-import { TableHeader, TableMeta, TableName } from '../common/api';
+import { TableHeader } from '../../../common/api';
+import { TableMeta, TableName } from '../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
 import { createTableName } from '../common/util';
+import { FormContainerComponent } from './form-container.component';
 
 @Component({
     selector: 'form-host',
@@ -25,16 +24,17 @@ import { createTableName } from '../common/util';
     styleUrls: ['form-host.component.scss']
 })
 export class FormHostComponent implements OnDestroy, OnInit {
-    @ViewChild(DynamicFormComponent)
-    private form: DynamicFormComponent;
-
     private metaSub: Subscription;
     private formSubmitSub: Subscription;
 
     private completedForm$ = new BehaviorSubject<object>(null);
 
-    public config: FieldConfig[] = [];
+    public exists: boolean = false;
+    public masterMeta: TableMeta;
     public name: TableName;
+
+    @ViewChild(FormContainerComponent)
+    private masterForm: FormContainerComponent;
 
     public constructor(
         private backend: TableService,
@@ -44,38 +44,63 @@ export class FormHostComponent implements OnDestroy, OnInit {
     ) { }
 
     public ngOnInit() {
-        this.metaSub = this.route.params.switchMap((params: Params) => {
-            this.name = createTableName(params.name);
+        this.metaSub = Observable.combineLatest(
+            this.route.params.map((params: Params) => params.name),
+            this.backend.list()
+        )
+            .flatMap((data: [string, TableName[]]) => {
+                const requestedRawName = data[0];
+                const actualNames = data[1];
 
-            // Automatically redirect the user to the master form if they try
-            // to navigate to a part table
-            if (this.name.masterRawName !== null) {
-                return Observable.fromPromise(this.router.navigate(['/forms', this.name.masterRawName]))
-                    .flatMapTo(Observable.never());
-            }
+                const foundName: TableName | undefined =
+                    _.find(actualNames, (n) => n.rawName === requestedRawName);
 
-            return this.backend.meta(this.name.rawName)
-                .catch(() => {
+                // We don't know anything about this specific name
+                if (foundName === undefined)
                     return Observable.of(null);
-                });
-        }).subscribe((meta: TableMeta | null) => {
-            this.config = meta === null ? null : this.createConfigFor(meta);
-        });
+
+                // Automatically redirect the user to the master form if they
+                // try to navigate to a part table
+                if (foundName.masterRawName !== null) {
+                    const routeProm = this.router.navigate(['/forms', this.name.masterRawName]);
+                    return Observable.fromPromise(routeProm)
+                        .flatMapTo(Observable.never());
+                }
+
+                const rawNames = [foundName.rawName];
+                const parts = _.filter(actualNames, (n) => n.masterRawName === foundName.rawName);
+                rawNames.push(..._.map(parts, (p) => p.rawName));
+                const observables = _.map(rawNames, (n) => this.backend.meta(n));
+
+                return Observable.combineLatest(...observables);
+            })
+            .subscribe((data: TableMeta[] | null) => {
+                this.exists = data !== null;
+                if (this.exists) {
+                    const sorted = _.sortBy(data, (m) => m.name);
+                    this.masterMeta = sorted[0];
+                    // TODO
+                    // const parts = sorted.slice(1);
+
+                    this.name = createTableName(this.masterMeta.name);
+                }
+            });
 
         this.formSubmitSub = this.completedForm$
             // Prevent any null or undefined values from being submitted
             .filter((form: any) => form !== null && form !== undefined)
             // Try to submit the row. switchMap to any error that occurred
             // during the process
+            .map((form: any) => FormHostComponent.preformat(form, this.masterMeta.headers))
             .switchMap((form: any) => {
-                return this.backend.submitRow(this.name.rawName, this.preformat(form))
+                return this.backend.submitRow(this.name.rawName, form)
                     // Assume no error
                     .mapTo(null)
                     // Handle any errors
                     .catch((err) => {
                         // If the error is an HttpResponse (@angular/common/http),
                         // send its JSON value as an error
-                        return Observable.of(err instanceof HttpResponse ? err.body : err);
+                        return Observable.of(err instanceof HttpErrorResponse ? err.error : err);
                     });
             })
             // Handle success/error
@@ -88,13 +113,13 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     if (err.message)
                         message += ` (${err.message})`;
 
-                    snackbarRef = this.snackBar.open(message, "OK", { duration: 20000 });
+                    snackbarRef = this.snackBar.open(message, 'OK', { duration: 20000 });
                     // Make sure we end up mapping back to the snackbar ref so
                     // we can dismiss it later
                     return snackbarRef.onAction()
                         .mapTo(snackbarRef);
                 } else {
-                    this.form.form.reset();
+                    this.masterForm.reset();
                     snackbarRef = this.snackBar.open('Created new row', 'VIEW', { duration: 3000 });
                     return snackbarRef.onAction()
                         // Navigate to /tables/:name when 'VIEW' is clicked
@@ -115,82 +140,17 @@ export class FormHostComponent implements OnDestroy, OnInit {
         this.completedForm$.next(form);
     }
 
-    private createConfigFor(meta: TableMeta): FieldConfig[] {
-        const config = meta.headers.map((h: TableHeader): FieldConfig => {
-            const type = h.enumValues !== null ? 'select' : 'input';
-
-            let initialValue: undefined | any;
-
-            // Default to string input
-            let subtype = 'text';
-
-            if (h.type === 'boolean') {
-                subtype = 'checkbox';
-                // For checkboxes we MUST specify an initial value. If we don't,
-                // submitting the form without touching the control will result
-                // in an undefined value, instead of false, like the user likely
-                // assumes it will be.
-                initialValue = false;
-            } else if (h.isNumerical) {
-                subtype = 'number';
-            } else if (h.type === 'date') {
-                subtype = 'date';
-            } else if (h.type === 'datetime') {
-                subtype = 'datetime-local';
-            } else if (h.type === 'blob' && h.nullable) {
-                initialValue = null;
-            }
-
-            const validation: ValidatorFn[] = [];
-            if (!h.nullable) validation.push(Validators.required);
-
-            let fetchAutocompleteValues: () => Promise<any[]>;
-
-            const constraint = _.find(meta.constraints, (c) => c.localColumn === h.name);
-            if (constraint && constraint.type === 'foreign') {
-                fetchAutocompleteValues = () =>
-                    this.backend.columnValues(constraint.foreignTable, constraint.foreignColumn).toPromise();
-            }
-
-            return {
-                name: h.name,
-                label: h.name,
-                type,
-                subtype,
-                options: h.enumValues,
-                validation,
-                // hint: h.comment
-                fetchAutocompleteValues,
-                required: !h.nullable,
-                // Submitting types with blobs aren't supported
-                disabled: h.type === 'blob',
-                value: initialValue
-            };
-        });
-        // Add the submit button
-        config.push({
-            type: 'submit',
-            label: 'SUBMIT',
-            name: 'submit',
-            // Set initially disabled, will become enabled again once the
-            // form is valid
-            disabled: true
-        });
-
-        return config;
-    }
-
     /**
      * Takes care of any date/datetime formatting, if necessary. Returns a copy
      * of the original form with dates and datetimes formatted in the way that
      * the API expects.
      */
-    private preformat(form: any): any {
+    private static preformat(form: any, headers: TableHeader[]): any {
         return _.mapValues(form, (value, controlName) => {
-            const conf = _.find(this.config, (c) => c.name === controlName);
-            if (conf.subtype === 'date')
+            const header = _.find(headers, (h) => h.name === controlName);
+            if (header.type === 'date')
                 return moment(value).format(DATE_FORMAT);
-            else if (conf.subtype === 'datetime-local')
+            else if (header.type === 'datetime')
                 return moment(value).format(DATETIME_FORMAT);
 
             return value;

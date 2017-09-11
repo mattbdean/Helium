@@ -1,4 +1,5 @@
 export interface TableMeta {
+    name: string;
     headers: TableHeader[];
     totalRows: number;
     constraints: Constraint[];
