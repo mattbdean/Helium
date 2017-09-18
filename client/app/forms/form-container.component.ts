@@ -6,8 +6,6 @@ import { ValidatorFn, Validators } from '@angular/forms';
 
 import * as _ from 'lodash';
 
-import { Observable } from 'rxjs/Observable';
-
 import { Constraint, TableHeader, TableMeta } from '../common/api';
 import { createTableName } from '../common/util';
 import { TableService } from '../core/table.service';
@@ -32,7 +30,7 @@ export class FormContainerComponent implements OnChanges, OnInit {
     public submit: EventEmitter<any> = new EventEmitter();
 
     @ViewChild(DynamicFormComponent)
-    public form: DynamicFormComponent;
+    public dynamicForm: DynamicFormComponent;
 
     private config: FieldConfig[];
     private cleanName: string;
@@ -43,7 +41,7 @@ export class FormContainerComponent implements OnChanges, OnInit {
 
     /** Clears all data from all dynamic form elements */
     public reset(): void {
-        this.form.form.reset();
+        this.dynamicForm.formGroup.reset();
     }
 
     public ngOnInit(): void {

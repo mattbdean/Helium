@@ -6,9 +6,11 @@ import { FieldConfig } from './field-config.interface';
 @Component({
     selector: 'dynamic-form',
     template: `
-    <form class="dynamic-form" [formGroup]="form" (ngSubmit)="handleSubmit($event)">
-        <ng-container *ngFor="let field of config" dynamicField [config]="field" [group]="form"></ng-container>
-    </form>`
+        <form class="dynamic-form" [formGroup]="formGroup"
+              (ngSubmit)="handleSubmit($event)">
+            <ng-container *ngFor="let field of config" dynamicField
+                          [config]="field" [group]="formGroup"></ng-container>
+        </form>`
 })
 export class DynamicFormComponent implements OnChanges, OnInit {
     @Input()
@@ -17,7 +19,7 @@ export class DynamicFormComponent implements OnChanges, OnInit {
     @Output()
     public submit: EventEmitter<any> = new EventEmitter<any>();
 
-    public form: FormGroup;
+    public formGroup: FormGroup;
 
     public constructor(private fb: FormBuilder) {}
 
@@ -25,26 +27,26 @@ export class DynamicFormComponent implements OnChanges, OnInit {
     private get controls() { return this.config.filter(({ type }) => type !== 'submit'); }
 
     // Convenience getters for form properties
-    private get value() { return this.form.value; }
+    private get value() { return this.formGroup.value; }
 
     public ngOnInit() {
-        this.form = this.createGroup();
+        this.formGroup = this.createGroup();
     }
 
     public ngOnChanges() {
-        if (this.form) {
-            const controls = Object.keys(this.form.controls);
+        if (this.formGroup) {
+            const controls = Object.keys(this.formGroup.controls);
             const configControls = this.controls.map((item) => item.name);
 
             controls
                 .filter((control) => !configControls.includes(control))
-                .forEach((control) => this.form.removeControl(control));
+                .forEach((control) => this.formGroup.removeControl(control));
 
             configControls
                 .filter((control) => !controls.includes(control))
                 .forEach((name) => {
                     const conf = this.config.find((control) => control.name === name);
-                    this.form.addControl(name, this.createControl(conf));
+                    this.formGroup.addControl(name, this.createControl(conf));
                 });
         }
     }

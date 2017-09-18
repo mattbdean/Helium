@@ -87,12 +87,12 @@ describe('DynamicFormComponent', () => {
             }
         ];
         fixture.detectChanges();
-        expect(_.sortBy(Object.keys(comp.form.controls))).to.deep.equal(['bar', 'foo']);
+        expect(_.sortBy(Object.keys(comp.formGroup.controls))).to.deep.equal(['bar', 'foo']);
 
         // Form hasn't been touched yet, should still be pristine
-        expect(comp.form.controls.foo.pristine).to.be.true;
-        expect(comp.form.controls.bar.pristine).to.be.true;
-        expect(comp.form.pristine).to.be.true;
+        expect(comp.formGroup.controls.foo.pristine).to.be.true;
+        expect(comp.formGroup.controls.bar.pristine).to.be.true;
+        expect(comp.formGroup.pristine).to.be.true;
     });
 
     describe('type of "input"', () => {
@@ -138,12 +138,12 @@ describe('DynamicFormComponent', () => {
 
             const input = de.query(By.css('input[type=text]'));
             expect(input).to.exist;
-            expect(comp.form.controls.foo.pristine).to.be.true;
+            expect(comp.formGroup.controls.foo.pristine).to.be.true;
 
             // Set the initial value
-            const control = comp.form.controls.foo;
+            const control = comp.formGroup.controls.foo;
             expect(control.errors).to.deep.equal({ required: true });
-            comp.form.setValue({ foo: 'foo' });
+            comp.formGroup.setValue({ foo: 'foo' });
             expect(control.errors).to.be.null;
         });
 
@@ -231,15 +231,15 @@ describe('DynamicFormComponent', () => {
             expect(button).to.exist;
 
             // Make sure there are no errors and the button isn't disabled
-            expect(comp.form.controls.foo.errors).to.be.null;
+            expect(comp.formGroup.controls.foo.errors).to.be.null;
             expect(comp.config[1].disabled).to.be.false;
 
             // Give the input an empty value to trigger the 'required' error
-            comp.form.patchValue({ foo: '' });
+            comp.formGroup.patchValue({ foo: '' });
 
             // Make sure the required error is present and that the button is
             // disabled
-            expect(comp.form.controls.foo.errors).to.deep.equal({ required: true });
+            expect(comp.formGroup.controls.foo.errors).to.deep.equal({ required: true });
             expect(comp.config[1].disabled).to.be.true;
         });
     });

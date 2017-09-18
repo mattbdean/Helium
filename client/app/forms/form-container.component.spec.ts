@@ -100,8 +100,8 @@ describe('FormContainerComponent', () => {
         const form = { pk: 'test' };
         // Prefer patchValue so we don't have to specify a value for the 'submit'
         // button. We just have to make sure that the patch actually took effect
-        comp.form.form.patchValue(form);
-        expect(comp.form.form.value).to.deep.equal(form);
+        comp.dynamicForm.formGroup.patchValue(form);
+        expect(comp.dynamicForm.formGroup.value).to.deep.equal(form);
 
         // Use a spy to verify that we were give the form when submitted
         const spy = sinon.spy();
