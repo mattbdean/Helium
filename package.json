@@ -19,7 +19,7 @@
   "author": "Matthew Dean <deanmatthew16@gmail.com>",
   "repository": "thatJavaNerd/Helium",
   "engines": {
-    "node": ">=7"
+    "node": "7.10.0"
   },
   "dependencies": {
     "@angular/animations": "^4.3.4",
