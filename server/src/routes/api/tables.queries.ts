@@ -334,7 +334,7 @@ export class TableDao {
      * of accepting blobs at face value, blobs are forbidden unless the column
      * is nullable and the value is null.
      */
-    private static schemaFromHeader(h: TableHeader): AnySchema<any> {
+    private static schemaFromHeader(h: TableHeader): AnySchema {
         switch (h.type) {
             case 'string':
                 return joi.string()
