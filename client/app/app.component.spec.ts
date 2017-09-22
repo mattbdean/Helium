@@ -16,6 +16,7 @@ import { TableName, TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table.service';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 const expect = global['chai'].expect;
 
@@ -64,6 +65,7 @@ describe('AppComponent', () => {
             imports: [
                 CoreModule,
                 MdSidenavModule,
+                NoopAnimationsModule,
                 RouterTestingModule
             ],
             declarations: [ AppComponent ],
