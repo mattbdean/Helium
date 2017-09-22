@@ -1,6 +1,5 @@
-<md-toolbar color="primary">Helium</md-toolbar>
 <md-sidenav-container>
-    <md-sidenav mode="side" opened="true" fullscreen>
+    <md-sidenav [mode]="sidenavMode" [opened]="sidenavOpened" [disableClose]="sidenavMode === 'side'">
         <ul class="sidenav-list undecorated-list" *ngFor="let groupedName of groupedNames | async">
             <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
             <li class="table-ref-container" *ngFor="let table of groupedName.names">
@@ -19,6 +18,13 @@
             </li>
         </ul>
     </md-sidenav>
+
+    <md-toolbar color="primary">
+        <button md-button class="sidenav-toggle" (click)="toggleSidenav()">
+            <i class="material-icons md-light">menu</i>
+        </button>
+        Helium
+    </md-toolbar>
 
     <div class="router-content">
         <router-outlet></router-outlet>
