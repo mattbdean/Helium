@@ -24,23 +24,28 @@ const createMetaFor = (headers: TableHeader[], constraints: Constraint[] = []): 
     comment: 'comment'
 });
 
-const textualHeader = (h: TextualHeaderStub): TableHeader => ({
-    name: h.name,
-    type: 'string',
-    rawType: `varchar(${h.maxCharacters})`,
-    isNumerical: false,
-    isTextual: true,
-    ordinalPosition: -1,
-    signed: false,
-    nullable: h.nullable,
-    maxCharacters: h.maxCharacters || Infinity,
-    charset: 'UTF-8',
-    numericPrecision: null,
-    numericScale: null,
-    enumValues: h.enumValues || null,
-    comment: '',
-    tableName
-});
+const textualHeader = (h: TextualHeaderStub): TableHeader => {
+    const maxCharacters = h.maxCharacters === undefined ? null : h.maxCharacters;
+    const nullable = h.nullable !== undefined ? h.nullable : true;
+
+    return {
+        name: h.name,
+        type: 'string',
+        rawType: `varchar(${maxCharacters})`,
+        isNumerical: false,
+        isTextual: true,
+        ordinalPosition: -1,
+        signed: false,
+        nullable,
+        maxCharacters,
+        charset: 'UTF-8',
+        numericPrecision: null,
+        numericScale: null,
+        enumValues: h.enumValues || null,
+        comment: '',
+        tableName
+    };
+};
 
 describe('FormSpecGeneratorService', () => {
     let generator: FormSpecGeneratorService;
@@ -75,5 +80,24 @@ describe('FormSpecGeneratorService', () => {
             validation: [Validators.required]
         };
         expect(formSpec).to.deep.equal([expected]);
+    });
+
+    it('should handle maxCharacters', () => {
+        const formSpec = generator.generate(createMetaFor(
+            [textualHeader({ name: 'bar', maxCharacters: 5 })]
+        ));
+
+        // Deep equal comparison doesn't work on functions created dynamically.
+        // For example:
+        //
+        // function foo() {
+        //   return function() {}
+        // }
+        //
+        // expect(foo()).to.not.deep.equal(foo())
+        //
+        // Since the other tests verify that all other properties are as
+        // expected, we can focus on just the validation
+        expect(formSpec[0].validation).to.have.lengthOf(1);
     });
 });

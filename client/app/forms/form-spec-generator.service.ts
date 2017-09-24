@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Validators } from '@angular/forms';
+import { ValidatorFn, Validators } from '@angular/forms';
 
 import { TableMeta } from '../common/api';
 import { FormControlSpec } from './form-control-spec.interface';
@@ -16,11 +16,17 @@ export class FormSpecGeneratorService {
      */
     public generate(meta: TableMeta): FormControlSpec[] {
         return meta.headers.map((h): FormControlSpec => {
+            const validators: ValidatorFn[] = [];
+            if (!h.nullable)
+                validators.push(Validators.required);
+            if (h.maxCharacters)
+                validators.push(Validators.maxLength(h.maxCharacters));
+
             return {
                 type: 'text',
                 formControlName: h.name,
                 placeholder: h.name,
-                validation: !h.nullable ? [Validators.required] : []
+                validation: validators
             };
         });
     }

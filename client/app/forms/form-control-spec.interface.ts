@@ -17,6 +17,6 @@ export interface FormControlSpec {
     /** A value to present to the user when the current value is empty */
     placeholder: string;
 
-    /** Simple validation functions, such as `Validation.required` */
+    /** Simple validation functions, such as `Validators.required` */
     validation?: ValidatorFn[];
 }
