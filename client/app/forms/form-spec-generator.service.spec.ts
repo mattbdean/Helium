@@ -55,6 +55,7 @@ describe('FormSpecGeneratorService', () => {
         ));
 
         const expected: FormControlSpec = {
+            type: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
             validation: []
@@ -68,6 +69,7 @@ describe('FormSpecGeneratorService', () => {
         ));
 
         const expected: FormControlSpec = {
+            type: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [Validators.required]

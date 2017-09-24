@@ -11,5 +11,4 @@ import { AbstractFormControl } from './abstract-form-control.class';
         </div>
     `
 })
-export class InputControlComponent extends AbstractFormControl {
-}
+export class InputControlComponent extends AbstractFormControl {}

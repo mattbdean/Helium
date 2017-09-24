@@ -3,5 +3,7 @@
         <div *ngFor="let control of controls; let i = index;">
             <ng-template dynamicFormControl [group]="formGroup" [control]="control"></ng-template>
         </div>
+
+        <button md-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>
     </md-card>
 </form>

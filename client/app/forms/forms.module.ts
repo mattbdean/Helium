@@ -1,22 +1,29 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {
+    MdButtonModule,
     MdCardModule, MdInputModule,
     MdSnackBarModule
 } from '@angular/material';
 
 import { ReactiveFormsModule } from '@angular/forms';
 import { CoreModule } from "../core/core.module";
+import { ComponentMapperService } from './component-mapper.service';
+import { InputControlComponent } from './controls/input-control.component';
 import { DynamicFormControlDirective } from './dynamic-form-control.directive';
 import { FormHostComponent } from './form-host.component';
-import { FormRoutingModule } from './forms-routing.module';
-import { InputControlComponent } from './controls/input-control.component';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
+import { FormRoutingModule } from './forms-routing.module';
+
+const formControlComponents = [
+    InputControlComponent
+];
 
 @NgModule({
     imports: [
         CommonModule,
         CoreModule,
+        MdButtonModule,
         MdCardModule,
         MdInputModule,
         MdSnackBarModule,
@@ -27,13 +34,14 @@ import { FormSpecGeneratorService } from './form-spec-generator.service';
     declarations: [
         DynamicFormControlDirective,
         FormHostComponent,
-        InputControlComponent
+        ...formControlComponents
     ],
     providers: [
+        ComponentMapperService,
         FormSpecGeneratorService
     ],
-    entryComponents: [
-        InputControlComponent
-    ]
+    // The only components we need to insert dynamically are the form control
+    // components.
+    entryComponents: formControlComponents
 })
 export class FormsModule {}

@@ -4,8 +4,8 @@ import {
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
+import { ComponentMapperService } from './component-mapper.service';
 import { AbstractFormControl } from './controls/abstract-form-control.class';
-import { InputControlComponent } from './controls/input-control.component';
 import { FormControlSpec } from './form-control-spec.interface';
 
 /**
@@ -26,12 +26,12 @@ export class DynamicFormControlDirective implements OnInit {
 
     public constructor(
         private resolver: ComponentFactoryResolver,
-        private container: ViewContainerRef
+        private container: ViewContainerRef,
+        private componentMapper: ComponentMapperService
     ) {}
 
     public ngOnInit() {
-        // TODO: More components, service/injected value for resolving all types
-        const component = InputControlComponent;
+        const component = this.componentMapper.componentFor(this.control.type);
 
         const factory = this.resolver.resolveComponentFactory(component);
 

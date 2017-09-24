@@ -10,11 +10,18 @@ import { FormControlSpec } from './form-control-spec.interface';
  */
 @Injectable()
 export class FormSpecGeneratorService {
+    /**
+     * Generates one FormControlSpec for each header in the given TableMeta.
+     * Does not include a submit control.
+     */
     public generate(meta: TableMeta): FormControlSpec[] {
-        return meta.headers.map((h): FormControlSpec => ({
-            formControlName: h.name,
-            placeholder: h.name,
-            validation: !h.nullable ? [Validators.required] : []
-        }));
+        return meta.headers.map((h): FormControlSpec => {
+            return {
+                type: 'text',
+                formControlName: h.name,
+                placeholder: h.name,
+                validation: !h.nullable ? [Validators.required] : []
+            };
+        });
     }
 }
