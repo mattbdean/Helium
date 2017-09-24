@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { InputControlComponent } from './controls/input-control.component';
 import { FormControlType } from './form-control-spec.interface';
 
@@ -12,6 +13,8 @@ export class ComponentMapperService {
         switch (type) {
             case 'text':
                 return InputControlComponent;
+            case 'enum':
+                return EnumeratedControlComponent;
             default:
                 throw new Error('No known component for type ' + type);
         }

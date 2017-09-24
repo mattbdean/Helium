@@ -4,7 +4,7 @@ import { ValidatorFn, Validators } from '@angular/forms';
 import { TableMeta } from '../common/api';
 import {
     FormControlSpec,
-    FormControlSubtype
+    FormControlSubtype, FormControlType
 } from './form-control-spec.interface';
 
 /**
@@ -25,7 +25,10 @@ export class FormSpecGeneratorService {
             if (h.maxCharacters)
                 validators.push(Validators.maxLength(h.maxCharacters));
 
-            let subtype: FormControlSubtype;
+            let type: FormControlType = 'text';
+            let subtype: FormControlSubtype | undefined;
+            let enumValues: string[] | undefined;
+
             switch (h.type) {
                 case 'string':
                     subtype = 'text';
@@ -34,17 +37,22 @@ export class FormSpecGeneratorService {
                 case 'integer':
                     subtype = 'number';
                     break;
+                case 'enum':
+                    type = 'enum';
+                    enumValues = h.enumValues;
+                    break;
                 default:
                     // TODO throw an error instead
                     subtype = 'text';
             }
 
             return {
-                type: 'text',
+                type,
                 subtype,
                 formControlName: h.name,
                 placeholder: h.name,
-                validation: validators
+                validation: validators,
+                enumValues,
             };
         });
     }

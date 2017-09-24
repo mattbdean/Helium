@@ -1,6 +1,6 @@
 import { ValidatorFn } from '@angular/forms';
 
-export type FormControlType = 'text';
+export type FormControlType = 'text' | 'enum';
 export type FormControlSubtype = 'text' | 'number';
 
 /**
@@ -23,4 +23,7 @@ export interface FormControlSpec {
 
     /** Simple validation functions, such as `Validators.required` */
     validation?: ValidatorFn[];
+
+    /** A list of possible enumerated values. Only used when `type` is 'enum'. */
+    enumValues?: string[];
 }

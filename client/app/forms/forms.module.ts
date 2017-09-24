@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {
     MdButtonModule,
-    MdCardModule, MdInputModule,
+    MdCardModule, MdInputModule, MdSelectModule,
     MdSnackBarModule
 } from '@angular/material';
 
 import { ReactiveFormsModule } from '@angular/forms';
 import { CoreModule } from "../core/core.module";
 import { ComponentMapperService } from './component-mapper.service';
+import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { InputControlComponent } from './controls/input-control.component';
 import { DynamicFormControlDirective } from './dynamic-form-control.directive';
 import { FormHostComponent } from './form-host.component';
@@ -16,6 +17,7 @@ import { FormSpecGeneratorService } from './form-spec-generator.service';
 import { FormRoutingModule } from './forms-routing.module';
 
 const formControlComponents = [
+    EnumeratedControlComponent,
     InputControlComponent
 ];
 
@@ -26,6 +28,7 @@ const formControlComponents = [
         MdButtonModule,
         MdCardModule,
         MdInputModule,
+        MdSelectModule,
         MdSnackBarModule,
         ReactiveFormsModule,
 

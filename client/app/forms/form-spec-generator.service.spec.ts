@@ -39,8 +39,8 @@ const textualHeader = (h: TextualHeaderStub): TableHeader => {
 
     return {
         name: h.name,
-        type: 'string',
-        rawType: `varchar(${maxCharacters})`,
+        type: h.enumValues ? 'enum' : 'string',
+        rawType: 'mock string',
         isNumerical: false,
         isTextual: true,
         ordinalPosition: -1,
@@ -94,7 +94,8 @@ describe('FormSpecGeneratorService', () => {
             subtype: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
-            validation: []
+            validation: [],
+            enumValues: undefined
         };
         expect(formSpec[0]).to.deep.equal(expected);
     });
@@ -109,7 +110,8 @@ describe('FormSpecGeneratorService', () => {
             subtype: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
-            validation: [Validators.required]
+            validation: [Validators.required],
+            enumValues: undefined
         };
         expect(formSpec).to.deep.equal([expected]);
     });
@@ -143,5 +145,23 @@ describe('FormSpecGeneratorService', () => {
 
             expect(formSpec.subtype).to.equal('number');
         }
+    });
+
+    it('should handle enumerated values', () => {
+        const enumValues = ['one', 'two', 'three'];
+        const formSpec = generator.generate(createMetaFor(
+            [textualHeader({ name: 'bar', enumValues })]
+        ))[0];
+
+        const expected: FormControlSpec = {
+            type: 'enum',
+            formControlName: 'bar',
+            placeholder: 'bar',
+            validation: [],
+            subtype: undefined,
+            enumValues
+        };
+
+        expect(formSpec).to.deep.equal(expected);
     });
 });

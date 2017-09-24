@@ -20,3 +20,7 @@ $container-width: 500px;
   width: 100%;
 }
 
+::ng-deep .mat-select {
+  width: 100%;
+}
+
