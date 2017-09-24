@@ -6,7 +6,10 @@ import { AbstractFormControl } from './abstract-form-control.class';
     template: `
         <div [formGroup]="group">
             <md-form-field>
-                <input type="text" mdInput [placeholder]="spec.placeholder" [formControlName]="spec.formControlName">
+                <input mdInput
+                    [type]="spec.subtype"
+                    [placeholder]="spec.placeholder"
+                    [formControlName]="spec.formControlName">
             </md-form-field>
         </div>
     `

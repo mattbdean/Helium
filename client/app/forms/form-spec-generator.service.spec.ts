@@ -2,7 +2,10 @@ import { Validators } from '@angular/forms';
 
 import { expect } from 'chai';
 
-import { Constraint, TableHeader, TableMeta } from '../common/api';
+import {
+    Constraint, TableDataType, TableHeader,
+    TableMeta
+} from '../common/api';
 import { FormControlSpec } from './form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 
@@ -12,6 +15,12 @@ interface TextualHeaderStub {
     nullable?: boolean;
     maxCharacters?: number | undefined;
     enumValues?: string[] | null;
+}
+
+interface NumericHeaderStub {
+    name: string;
+    type: 'float' | 'integer';
+    nullable?: boolean;
 }
 
 const tableName = 'foo';
@@ -47,6 +56,27 @@ const textualHeader = (h: TextualHeaderStub): TableHeader => {
     };
 };
 
+const numericHeader = (h: NumericHeaderStub): TableHeader => {
+    const nullable = h.nullable !== undefined ? h.nullable : true;
+    return {
+        name: h.name,
+        type: h.type,
+        rawType: 'mock int',
+        isNumerical: true,
+        isTextual: false,
+        ordinalPosition: -1,
+        signed: true,
+        nullable,
+        maxCharacters: null,
+        charset: null,
+        numericPrecision: 10, // TODO
+        numericScale: 5,
+        enumValues: null,
+        comment: '',
+        tableName
+    };
+};
+
 describe('FormSpecGeneratorService', () => {
     let generator: FormSpecGeneratorService;
 
@@ -61,6 +91,7 @@ describe('FormSpecGeneratorService', () => {
 
         const expected: FormControlSpec = {
             type: 'text',
+            subtype: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
             validation: []
@@ -75,6 +106,7 @@ describe('FormSpecGeneratorService', () => {
 
         const expected: FormControlSpec = {
             type: 'text',
+            subtype: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [Validators.required]
@@ -99,5 +131,17 @@ describe('FormSpecGeneratorService', () => {
         // Since the other tests verify that all other properties are as
         // expected, we can focus on just the validation
         expect(formSpec[0].validation).to.have.lengthOf(1);
+    });
+
+    it('should handle numeric headers', () => {
+        const types: Array<'float' | 'integer'> = ['float', 'integer'];
+
+        for (const type of types) {
+            const formSpec = generator.generate(createMetaFor(
+                [numericHeader({ name: 'bar', type })]
+            ))[0];
+
+            expect(formSpec.subtype).to.equal('number');
+        }
     });
 });

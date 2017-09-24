@@ -2,7 +2,10 @@ import { Injectable } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 
 import { TableMeta } from '../common/api';
-import { FormControlSpec } from './form-control-spec.interface';
+import {
+    FormControlSpec,
+    FormControlSubtype
+} from './form-control-spec.interface';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -22,8 +25,23 @@ export class FormSpecGeneratorService {
             if (h.maxCharacters)
                 validators.push(Validators.maxLength(h.maxCharacters));
 
+            let subtype: FormControlSubtype;
+            switch (h.type) {
+                case 'string':
+                    subtype = 'text';
+                    break;
+                case 'float':
+                case 'integer':
+                    subtype = 'number';
+                    break;
+                default:
+                    // TODO throw an error instead
+                    subtype = 'text';
+            }
+
             return {
                 type: 'text',
+                subtype,
                 formControlName: h.name,
                 placeholder: h.name,
                 validation: validators
