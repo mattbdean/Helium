@@ -1,0 +1,7 @@
+<form novalidate [formGroup]="formGroup" (ngSubmit)="onSubmit($event)">
+    <md-card>
+        <div *ngFor="let control of controls; let i = index;">
+            <ng-template dynamicFormControl [group]="formGroup" [control]="control"></ng-template>
+        </div>
+    </md-card>
+</form>

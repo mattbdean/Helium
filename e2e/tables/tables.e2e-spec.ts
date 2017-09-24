@@ -32,7 +32,8 @@ describe('Tables page', () => {
 
     // Make sure our Observable pipeline isn't breaking down once it encounters an error
     it('should allow the user to click on another sidebar link if the current table doesn\'t exist', async () => {
-        const tableName = (await page.getTableNames())[0];
+        const tableNames = await page.getTableNames();
+        const tableName = tableNames[0];
         await page.navigateTo('foobar');
         await page.clickSidebarLink(tableName, 'table');
         await expect(browser.driver.getCurrentUrl()).to.eventually.include.all('/tables/', tableName);
