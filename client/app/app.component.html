@@ -1,5 +1,5 @@
 <md-sidenav-container>
-    <md-sidenav [mode]="sidenavMode" [opened]="sidenavOpened" [disableClose]="sidenavMode === 'side'">
+    <md-sidenav [mode]="sidenavMode" [disableClose]="sidenavMode === 'side'">
         <ul class="sidenav-list undecorated-list" *ngFor="let groupedName of groupedNames | async">
             <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
             <li class="table-ref-container" *ngFor="let table of groupedName.names">

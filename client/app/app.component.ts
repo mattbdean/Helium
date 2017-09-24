@@ -36,7 +36,6 @@ export class AppComponent implements OnDestroy, OnInit {
     private sidenav: MdSidenav;
 
     private sidenavMode: 'push' | 'over' | 'side' = 'side';
-    private sidenavOpened: boolean = true;
 
     public constructor(
         private backend: TableService
@@ -66,8 +65,10 @@ export class AppComponent implements OnDestroy, OnInit {
 
         this.windowSizeSub = Observable
             .fromEvent(window, 'resize')
+            // Start with a value so adjustSidenav gets called on init
+            .startWith(-1)
             .subscribe(() => {
-                this.adjustSidenav(window.innerWidth);
+                this.adjustSidenav();
             });
     }
 
@@ -76,12 +77,12 @@ export class AppComponent implements OnDestroy, OnInit {
     }
 
     public toggleSidenav() {
-        this.sidenavOpened = !this.sidenavOpened;
+        this.sidenav.opened = !this.sidenav.opened;
     }
 
-    private adjustSidenav(windowWidth: number) {
-        const alwaysShow = windowWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
+    private adjustSidenav() {
+        const alwaysShow = window.innerWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
         this.sidenavMode = alwaysShow ? 'side' : 'over';
-        this.sidenavOpened = alwaysShow;
+        this.sidenav.opened = alwaysShow;
     }
 }

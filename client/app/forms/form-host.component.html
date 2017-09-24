@@ -1,6 +1,7 @@
-<form novalidate [formGroup]="formGroup" (ngSubmit)="onSubmit($event)">
-    <md-card>
-        <div *ngFor="let control of controls; let i = index;">
+<form class="centered-horizontally" novalidate [formGroup]="formGroup" (ngSubmit)="onSubmit($event)">
+    <md-card class="form-container">
+        <h1 class="mat-h1">Insert a new {{ name.cleanName }}</h1>
+        <div *ngFor="let control of controls">
             <ng-template dynamicFormControl [group]="formGroup" [control]="control"></ng-template>
         </div>
 

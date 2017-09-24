@@ -8,6 +8,8 @@ import * as _ from 'lodash';
 import { TableService } from '../core/table.service';
 import { FormControlSpec } from './form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
+import { TableName } from '../common/api';
+import { createTableName } from '../common/util';
 
 /**
  * This component creates a dynamically generated form based on the 'name'
@@ -15,11 +17,13 @@ import { FormSpecGeneratorService } from './form-spec-generator.service';
  */
 @Component({
     selector: 'form-host',
-    templateUrl: 'form-host.component.html'
+    templateUrl: 'form-host.component.html',
+    styleUrls: ['form-host.component.scss']
 })
 export class FormHostComponent implements OnInit, OnDestroy {
     public formGroup: FormGroup;
     public controls: FormControlSpec[];
+    public name: TableName;
 
     private nameSub: Subscription;
 
@@ -37,6 +41,7 @@ export class FormHostComponent implements OnInit, OnDestroy {
         this.nameSub = this.route.params
             .map((p: Params) => p.name)
             .switchMap((name: string) => {
+                this.name = createTableName(name);
                 return this.backend.meta(name)
                     .catch((err) => {
                         // TODO handle better
