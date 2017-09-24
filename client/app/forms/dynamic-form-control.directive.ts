@@ -4,9 +4,9 @@ import {
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
-import { AbstractFormControl } from './abstract-form-control.class';
+import { AbstractFormControl } from './controls/abstract-form-control.class';
+import { InputControlComponent } from './controls/input-control.component';
 import { FormControlSpec } from './form-control-spec.interface';
-import { InputControlComponent } from './input-control.component';
 
 /**
  * This directive dynamically inserts an AbstractFormControl based on the given

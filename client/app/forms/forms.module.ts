@@ -10,7 +10,7 @@ import { CoreModule } from "../core/core.module";
 import { DynamicFormControlDirective } from './dynamic-form-control.directive';
 import { FormHostComponent } from './form-host.component';
 import { FormRoutingModule } from './forms-routing.module';
-import { InputControlComponent } from './input-control.component';
+import { InputControlComponent } from './controls/input-control.component';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 
 @NgModule({
