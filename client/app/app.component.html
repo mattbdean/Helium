@@ -20,7 +20,7 @@
     </md-sidenav>
 
     <md-toolbar color="primary">
-        <button md-button class="sidenav-toggle" (click)="toggleSidenav()">
+        <button [style.visibility]="sidenavMode === 'side' ? 'hidden' : 'visible'" md-button class="sidenav-toggle" (click)="toggleSidenav()">
             <i class="material-icons md-light">menu</i>
         </button>
         Helium
