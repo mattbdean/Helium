@@ -76,6 +76,11 @@ export class AppComponent implements OnDestroy, OnInit {
         this.windowSizeSub.unsubscribe();
     }
 
+    public onSidenavLinkClicked() {
+        if (this.sidenavMode !== 'side')
+            this.sidenav.opened = false;
+    }
+
     public toggleSidenav() {
         this.sidenav.opened = !this.sidenav.opened;
     }
