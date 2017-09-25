@@ -20,10 +20,14 @@ export class FormSpecGeneratorService {
     public generate(meta: TableMeta): FormControlSpec[] {
         return meta.headers.map((h): FormControlSpec => {
             const validators: ValidatorFn[] = [];
-            if (!h.nullable)
-                validators.push(Validators.required);
-            if (h.maxCharacters)
-                validators.push(Validators.maxLength(h.maxCharacters));
+
+            // booleans require no validation
+            if (h.type !== 'boolean') {
+                if (!h.nullable)
+                    validators.push(Validators.required);
+                if (h.maxCharacters)
+                    validators.push(Validators.maxLength(h.maxCharacters));
+            }
 
             let type: FormControlType = 'text';
             let subtype: FormControlSubtype | undefined;
@@ -40,6 +44,9 @@ export class FormSpecGeneratorService {
                 case 'enum':
                     type = 'enum';
                     enumValues = h.enumValues;
+                    break;
+                case 'boolean':
+                    type = 'boolean';
                     break;
                 default:
                     // TODO throw an error instead

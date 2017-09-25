@@ -1,6 +1,6 @@
 import { ValidatorFn } from '@angular/forms';
 
-export type FormControlType = 'text' | 'enum';
+export type FormControlType = 'text' | 'enum' | 'boolean';
 export type FormControlSubtype = 'text' | 'number';
 
 /**

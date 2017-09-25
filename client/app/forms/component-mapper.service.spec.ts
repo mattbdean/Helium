@@ -2,6 +2,8 @@
 import { ComponentMapperService } from './component-mapper.service';
 import { InputControlComponent } from './controls/input-control.component';
 import { FormControlType } from './form-control-spec.interface';
+import { EnumeratedControlComponent } from './controls/enumerated-control.component';
+import { CheckboxControlComponent } from './controls/checkbox-control.component';
 
 describe('ComponentMapperService', () => {
     let mapper: ComponentMapperService;
@@ -13,6 +15,8 @@ describe('ComponentMapperService', () => {
     describe('componentFor', () => {
         it('should recognize basic types', () => {
             const expected: { [key: string]: any } = {
+                boolean: CheckboxControlComponent,
+                enum: EnumeratedControlComponent,
                 text: InputControlComponent
             };
 

@@ -6,7 +6,7 @@ import { FormControlSpec } from '../form-control-spec.interface';
 /**
  * Base class for all dynamic reactive form controls.
  */
-export class AbstractFormControl {
+export abstract class AbstractFormControl {
     @Input()
     public spec: FormControlSpec;
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { InputControlComponent } from './controls/input-control.component';
 import { FormControlType } from './form-control-spec.interface';
+import { CheckboxControlComponent } from './controls/checkbox-control.component';
 
 /**
  * Maps FormControlTypes to component types. Exists as a service instead of a
@@ -15,6 +16,8 @@ export class ComponentMapperService {
                 return InputControlComponent;
             case 'enum':
                 return EnumeratedControlComponent;
+            case 'boolean':
+                return CheckboxControlComponent;
             default:
                 throw new Error('No known component for type ' + type);
         }

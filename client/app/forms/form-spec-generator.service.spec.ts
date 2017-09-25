@@ -164,4 +164,15 @@ describe('FormSpecGeneratorService', () => {
 
         expect(formSpec).to.deep.equal(expected);
     });
+
+    it('should handle boolean values', () => {
+        const formSpec = generator.generate(createMetaFor([{
+            name: 'bar',
+            type: 'boolean',
+            nullable: false
+        } as TableHeader]))[0];
+
+        formSpec.validation.should.have.lengthOf(0);
+        formSpec.type.should.equal('boolean');
+    });
 });
