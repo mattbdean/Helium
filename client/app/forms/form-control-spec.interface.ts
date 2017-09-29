@@ -28,4 +28,6 @@ export interface FormControlSpec {
     enumValues?: string[];
 
     initialValue?: any;
+
+    required: boolean;
 }

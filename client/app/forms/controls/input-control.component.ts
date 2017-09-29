@@ -9,7 +9,8 @@ import { AbstractFormControl } from './abstract-form-control.class';
                 <input mdInput
                     [type]="spec.subtype"
                     [placeholder]="spec.placeholder"
-                    [formControlName]="spec.formControlName">
+                    [formControlName]="spec.formControlName"
+                    [required]="spec.required">
             </md-form-field>
         </div>
     `

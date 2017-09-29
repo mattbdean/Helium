@@ -94,7 +94,8 @@ describe('FormSpecGeneratorService', () => {
             subtype: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
-            validation: []
+            validation: [],
+            required: false
         };
         expect(formSpec[0]).to.deep.equal(expected);
     });
@@ -110,6 +111,7 @@ describe('FormSpecGeneratorService', () => {
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [Validators.required],
+            required: true
         };
         expect(formSpec).to.deep.equal([expected]);
     });
@@ -156,7 +158,8 @@ describe('FormSpecGeneratorService', () => {
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [],
-            enumValues
+            enumValues,
+            required: false
         };
 
         expect(formSpec).to.deep.equal(expected);
@@ -166,7 +169,7 @@ describe('FormSpecGeneratorService', () => {
         const formSpec = generator.generate(createMetaFor([{
             name: 'bar',
             type: 'boolean',
-            nullable: false
+            nullable: false,
         } as TableHeader]))[0];
 
         formSpec.validation.should.have.lengthOf(0);

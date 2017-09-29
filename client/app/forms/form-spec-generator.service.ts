@@ -22,11 +22,14 @@ export class FormSpecGeneratorService {
     public generate(meta: TableMeta): FormControlSpec[] {
         return meta.headers.map((h): FormControlSpec => {
             const validators: ValidatorFn[] = [];
+            let required = false;
 
             // booleans require no validation
             if (h.type !== 'boolean') {
-                if (!h.nullable)
+                if (!h.nullable) {
                     validators.push(Validators.required);
+                    required = true;
+                }
                 if (h.maxCharacters)
                     validators.push(Validators.maxLength(h.maxCharacters));
             }
@@ -60,14 +63,15 @@ export class FormSpecGeneratorService {
                     subtype = 'text';
             }
 
-            const spec = {
+            const spec: FormControlSpec = {
                 type,
                 subtype,
                 formControlName: h.name,
                 placeholder: h.name,
                 validation: validators,
                 enumValues,
-                initialValue
+                initialValue,
+                required
             };
 
             // Don't specifically define undefined values as undefined. Messes
