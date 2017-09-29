@@ -5,8 +5,7 @@ import { pickBy } from 'lodash';
 
 import { TableMeta } from '../common/api';
 import {
-    FormControlSpec,
-    FormControlSubtype, FormControlType
+    FormControlSpec, FormControlType
 } from './form-control-spec.interface';
 
 /**
@@ -35,7 +34,7 @@ export class FormSpecGeneratorService {
             }
 
             let type: FormControlType = 'text';
-            let subtype: FormControlSubtype | undefined;
+            let subtype: string | undefined;
             let enumValues: string[] | undefined;
             let initialValue: any | undefined;
 
@@ -57,6 +56,12 @@ export class FormSpecGeneratorService {
                     // an initial value of false, except the user will expect an
                     // unchecked checkbox to represent 'false' instead of null.
                     initialValue = false;
+                    break;
+                case 'date':
+                case 'datetime':
+                    type = 'date';
+                    // datetime-local used for dates and times
+                    subtype = h.type === 'date' ? 'date' : 'datetime-local';
                     break;
                 default:
                     // TODO throw an error instead

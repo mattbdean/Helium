@@ -84,10 +84,13 @@ describe('FormSpecGeneratorService', () => {
         generator = new FormSpecGeneratorService();
     });
 
+    const generateSingle = (header: TableHeader) => {
+        const meta = createMetaFor([header]);
+        return generator.generate(meta)[0];
+    };
+
     it('should handle the simplest possible table', () => {
-        const formSpec = generator.generate(createMetaFor(
-            [textualHeader({ name: 'bar', nullable: true })]
-        ));
+        const formSpec = generateSingle(textualHeader({ name: 'bar', nullable: true }));
 
         const expected: FormControlSpec = {
             type: 'text',
@@ -97,13 +100,11 @@ describe('FormSpecGeneratorService', () => {
             validation: [],
             required: false
         };
-        expect(formSpec[0]).to.deep.equal(expected);
+        expect(formSpec).to.deep.equal(expected);
     });
 
     it('should make non-null headers required', () => {
-        const formSpec = generator.generate(createMetaFor(
-            [textualHeader({ name: 'bar', nullable: false })]
-        ));
+        const formSpec = generateSingle(textualHeader({ name: 'bar', nullable: false }));
 
         const expected: FormControlSpec = {
             type: 'text',
@@ -113,13 +114,11 @@ describe('FormSpecGeneratorService', () => {
             validation: [Validators.required],
             required: true
         };
-        expect(formSpec).to.deep.equal([expected]);
+        expect(formSpec).to.deep.equal(expected);
     });
 
     it('should handle maxCharacters', () => {
-        const formSpec = generator.generate(createMetaFor(
-            [textualHeader({ name: 'bar', maxCharacters: 5 })]
-        ));
+        const formSpec = generateSingle(textualHeader({ name: 'bar', maxCharacters: 5 }));
 
         // Deep equal comparison doesn't work on functions created dynamically.
         // For example:
@@ -132,7 +131,7 @@ describe('FormSpecGeneratorService', () => {
         //
         // Since the other tests verify that all other properties are as
         // expected, we can focus on just the validation
-        expect(formSpec[0].validation).to.have.lengthOf(1);
+        expect(formSpec.validation).to.have.lengthOf(1);
     });
 
     it('should handle numeric headers', () => {
@@ -149,9 +148,7 @@ describe('FormSpecGeneratorService', () => {
 
     it('should handle enumerated values', () => {
         const enumValues = ['one', 'two', 'three'];
-        const formSpec = generator.generate(createMetaFor(
-            [textualHeader({ name: 'bar', enumValues })]
-        ))[0];
+        const formSpec = generateSingle(textualHeader({ name: 'bar', enumValues }));
 
         const expected: FormControlSpec = {
             type: 'enum',
@@ -166,14 +163,34 @@ describe('FormSpecGeneratorService', () => {
     });
 
     it('should handle boolean values', () => {
-        const formSpec = generator.generate(createMetaFor([{
+        const formSpec = generateSingle({
             name: 'bar',
             type: 'boolean',
             nullable: false,
-        } as TableHeader]))[0];
+        } as TableHeader);
 
         formSpec.validation.should.have.lengthOf(0);
         formSpec.type.should.equal('boolean');
         formSpec.initialValue.should.be.false;
+    });
+
+    it('should handle dates', () => {
+        const formSpec = generateSingle({
+            name: 'bar',
+            type: 'date'
+        } as TableHeader);
+
+        formSpec.type.should.equal('date');
+        formSpec.subtype.should.equal('date');
+    });
+
+    it('should handle datetimes', () => {
+        const formSpec = generateSingle({
+            name: 'bar',
+            type: 'datetime'
+        } as TableHeader);
+
+        formSpec.type.should.equal('date');
+        formSpec.subtype.should.equal('datetime-local');
     });
 });

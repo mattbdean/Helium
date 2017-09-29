@@ -1,7 +1,6 @@
 import { ValidatorFn } from '@angular/forms';
 
-export type FormControlType = 'text' | 'enum' | 'boolean';
-export type FormControlSubtype = 'text' | 'number';
+export type FormControlType = 'text' | 'enum' | 'boolean' | 'date';
 
 /**
  * Defines how a specific form control should behave.
@@ -18,8 +17,8 @@ export interface FormControlSpec {
     /** A value to present to the user when the current value is empty */
     placeholder: string;
 
-    /** More specific input type. Only used when `type` is 'text'. */
-    subtype?: FormControlSubtype;
+    /** More specific input type. Not always used. */
+    subtype?: string;
 
     /** Simple validation functions, such as `Validators.required` */
     validation?: ValidatorFn[];

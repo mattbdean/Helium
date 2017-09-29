@@ -4,6 +4,7 @@ import { InputControlComponent } from './controls/input-control.component';
 import { FormControlType } from './form-control-spec.interface';
 import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { CheckboxControlComponent } from './controls/checkbox-control.component';
+import { DateTimeControlComponent } from './controls/date-time-control.component';
 
 describe('ComponentMapperService', () => {
     let mapper: ComponentMapperService;
@@ -17,7 +18,8 @@ describe('ComponentMapperService', () => {
             const expected: { [key: string]: any } = {
                 boolean: CheckboxControlComponent,
                 enum: EnumeratedControlComponent,
-                text: InputControlComponent
+                text: InputControlComponent,
+                date: DateTimeControlComponent
             };
 
             for (const type of Object.keys(expected)) {

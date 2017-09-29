@@ -2,7 +2,9 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {
     MdButtonModule,
-    MdCardModule, MdCheckboxModule, MdInputModule, MdSelectModule,
+    MdCardModule, MdCheckboxModule, MdDatepickerModule, MdInputModule,
+    MdNativeDateModule,
+    MdSelectModule,
     MdSnackBarModule
 } from '@angular/material';
 
@@ -10,6 +12,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { CoreModule } from "../core/core.module";
 import { ComponentMapperService } from './component-mapper.service';
 import { CheckboxControlComponent } from './controls/checkbox-control.component';
+import { DateTimeControlComponent } from './controls/date-time-control.component';
 import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { InputControlComponent } from './controls/input-control.component';
 import { DynamicFormControlDirective } from './dynamic-form-control.directive';
@@ -19,6 +22,7 @@ import { FormRoutingModule } from './forms-routing.module';
 
 const formControlComponents = [
     CheckboxControlComponent,
+    DateTimeControlComponent,
     EnumeratedControlComponent,
     InputControlComponent
 ];
@@ -30,7 +34,9 @@ const formControlComponents = [
         MdButtonModule,
         MdCardModule,
         MdCheckboxModule,
+        MdDatepickerModule,
         MdInputModule,
+        MdNativeDateModule,
         MdSelectModule,
         MdSnackBarModule,
         ReactiveFormsModule,
