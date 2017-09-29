@@ -71,7 +71,7 @@ export class FormHostComponent implements OnInit, OnDestroy {
         return this.fb.group(_.zipObject(
             _.map(formSpec, (spec) => spec.formControlName),
             _.map(formSpec, (spec) => {
-                return this.fb.control('', spec.validation);
+                return this.fb.control(spec.initialValue, spec.validation);
             })
         ));
     }

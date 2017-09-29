@@ -94,8 +94,7 @@ describe('FormSpecGeneratorService', () => {
             subtype: 'text',
             formControlName: 'bar',
             placeholder: 'bar',
-            validation: [],
-            enumValues: undefined
+            validation: []
         };
         expect(formSpec[0]).to.deep.equal(expected);
     });
@@ -111,7 +110,6 @@ describe('FormSpecGeneratorService', () => {
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [Validators.required],
-            enumValues: undefined
         };
         expect(formSpec).to.deep.equal([expected]);
     });
@@ -158,7 +156,6 @@ describe('FormSpecGeneratorService', () => {
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [],
-            subtype: undefined,
             enumValues
         };
 
@@ -174,5 +171,6 @@ describe('FormSpecGeneratorService', () => {
 
         formSpec.validation.should.have.lengthOf(0);
         formSpec.type.should.equal('boolean');
+        formSpec.initialValue.should.be.false;
     });
 });

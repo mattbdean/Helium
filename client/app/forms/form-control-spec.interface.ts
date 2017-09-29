@@ -26,4 +26,6 @@ export interface FormControlSpec {
 
     /** A list of possible enumerated values. Only used when `type` is 'enum'. */
     enumValues?: string[];
+
+    initialValue?: any;
 }
