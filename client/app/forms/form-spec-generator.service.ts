@@ -37,6 +37,7 @@ export class FormSpecGeneratorService {
             let subtype: string | undefined;
             let enumValues: string[] | undefined;
             let initialValue: any | undefined;
+            let disabled = false;
 
             switch (h.type) {
                 case 'string':
@@ -63,6 +64,14 @@ export class FormSpecGeneratorService {
                     // datetime-local used for dates and times
                     subtype = h.type === 'date' ? 'date' : 'datetime-local';
                     break;
+                case 'blob':
+                    type = 'text';
+                    // Since blobs aren't supported, we only allow entering
+                    // null values. Disable all blob controls and set the initial
+                    // value to null only if the header is nullable.
+                    initialValue = h.nullable ? null : undefined;
+                    disabled = true;
+                    break;
                 default:
                     // TODO throw an error instead
                     subtype = 'text';
@@ -76,7 +85,8 @@ export class FormSpecGeneratorService {
                 validation: validators,
                 enumValues,
                 initialValue,
-                required
+                required,
+                disabled
             };
 
             // Don't specifically define undefined values as undefined. Messes

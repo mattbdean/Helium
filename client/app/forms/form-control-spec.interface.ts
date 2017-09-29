@@ -29,4 +29,7 @@ export interface FormControlSpec {
     initialValue?: any;
 
     required: boolean;
+
+    /** If true, the form control will be disabled */
+    disabled?: boolean;
 }

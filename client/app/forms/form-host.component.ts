@@ -64,14 +64,15 @@ export class FormHostComponent implements OnInit, OnDestroy {
         event.preventDefault();
         event.stopPropagation();
         // TODO do something with the submitted form
-        console.log(this.formGroup.value);
+        // formGroup.value does not contain disabled form controls, use this instead
+        console.log(this.formGroup.getRawValue());
     }
 
     private createFormGroup(formSpec: FormControlSpec[]): FormGroup {
         return this.fb.group(_.zipObject(
             _.map(formSpec, (spec) => spec.formControlName),
             _.map(formSpec, (spec) => {
-                return this.fb.control(spec.initialValue, spec.validation);
+                return this.fb.control({ value: spec.initialValue, disabled: !!spec.disabled }, spec.validation);
             })
         ));
     }

@@ -98,7 +98,8 @@ describe('FormSpecGeneratorService', () => {
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [],
-            required: false
+            required: false,
+            disabled: false
         };
         expect(formSpec).to.deep.equal(expected);
     });
@@ -112,7 +113,8 @@ describe('FormSpecGeneratorService', () => {
             formControlName: 'bar',
             placeholder: 'bar',
             validation: [Validators.required],
-            required: true
+            required: true,
+            disabled: false
         };
         expect(formSpec).to.deep.equal(expected);
     });
@@ -156,7 +158,8 @@ describe('FormSpecGeneratorService', () => {
             placeholder: 'bar',
             validation: [],
             enumValues,
-            required: false
+            required: false,
+            disabled: false
         };
 
         expect(formSpec).to.deep.equal(expected);
@@ -192,5 +195,29 @@ describe('FormSpecGeneratorService', () => {
 
         formSpec.type.should.equal('date');
         formSpec.subtype.should.equal('datetime-local');
+    });
+
+    it('should handle blobs', () => {
+        const formSpecNullable = generateSingle({
+            name: 'bar',
+            type: 'blob',
+            nullable: true
+        } as TableHeader);
+
+        formSpecNullable.type.should.equal('text');
+        expect(formSpecNullable.initialValue).to.be.null;
+        formSpecNullable.disabled.should.be.true;
+
+        // The only difference specifying nullable: false is that the initial
+        // value is undefined instead of null.
+        const formSpecNonNull = generateSingle({
+            name: 'bar',
+            type: 'blob',
+            nullable: false
+        } as TableHeader);
+
+        formSpecNonNull.type.should.equal('text');
+        expect(formSpecNonNull.initialValue).to.be.undefined;
+        formSpecNonNull.disabled.should.be.true;
     });
 });
