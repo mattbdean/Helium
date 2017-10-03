@@ -8,6 +8,7 @@ import {
 } from '../common/api';
 import { FormControlSpec } from './form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
+import { TableService } from '../core/table.service';
 
 /** Special interface to make creating actual textual TableHeader instances easier */
 interface TextualHeaderStub {
@@ -81,7 +82,9 @@ describe('FormSpecGeneratorService', () => {
     let generator: FormSpecGeneratorService;
 
     beforeEach(() => {
-        generator = new FormSpecGeneratorService();
+        // Mock this if necessary
+        const tableService: TableService = null;
+        generator = new FormSpecGeneratorService(tableService);
     });
 
     const generateSingle = (header: TableHeader) => {

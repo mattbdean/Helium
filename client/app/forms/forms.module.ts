@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {
+    MdAutocompleteModule,
     MdButtonModule,
     MdCardModule, MdCheckboxModule, MdDatepickerModule, MdInputModule,
     MdNativeDateModule,
@@ -11,6 +12,7 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import { CoreModule } from "../core/core.module";
 import { ComponentMapperService } from './component-mapper.service';
+import { AutocompleteControlComponent } from './controls/autocomplete-control.component';
 import { CheckboxControlComponent } from './controls/checkbox-control.component';
 import { DateTimeControlComponent } from './controls/date-time-control.component';
 import { EnumeratedControlComponent } from './controls/enumerated-control.component';
@@ -21,6 +23,7 @@ import { FormSpecGeneratorService } from './form-spec-generator.service';
 import { FormRoutingModule } from './forms-routing.module';
 
 const formControlComponents = [
+    AutocompleteControlComponent,
     CheckboxControlComponent,
     DateTimeControlComponent,
     EnumeratedControlComponent,
@@ -31,6 +34,7 @@ const formControlComponents = [
     imports: [
         CommonModule,
         CoreModule,
+        MdAutocompleteModule,
         MdButtonModule,
         MdCardModule,
         MdCheckboxModule,

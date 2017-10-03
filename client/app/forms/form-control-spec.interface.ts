@@ -1,6 +1,7 @@
 import { ValidatorFn } from '@angular/forms';
+import { Observable } from 'rxjs/Observable';
 
-export type FormControlType = 'text' | 'enum' | 'boolean' | 'date';
+export type FormControlType = 'text' | 'enum' | 'boolean' | 'date' | 'autocomplete';
 
 /**
  * Defines how a specific form control should behave.
@@ -32,4 +33,6 @@ export interface FormControlSpec {
 
     /** If true, the form control will be disabled */
     disabled?: boolean;
+
+    autocompleteValues?: Observable<string[]>;
 }

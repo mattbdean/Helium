@@ -7,6 +7,8 @@ import { TableMeta } from '../common/api';
 import {
     FormControlSpec, FormControlType
 } from './form-control-spec.interface';
+import { Observable } from 'rxjs/Observable';
+import { TableService } from '../core/table.service';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -14,6 +16,10 @@ import {
  */
 @Injectable()
 export class FormSpecGeneratorService {
+    public constructor(
+        private backend: TableService
+    ) {}
+
     /**
      * Generates one FormControlSpec for each header in the given TableMeta.
      * Does not include a submit control.
@@ -38,6 +44,10 @@ export class FormSpecGeneratorService {
             let enumValues: string[] | undefined;
             let initialValue: any | undefined;
             let disabled = false;
+            let autocompleteValues: Observable<string[]> | undefined;
+
+            const foreignKey = meta.constraints.find(
+                (constraint) => constraint.type === 'foreign' && constraint.localColumn === h.name);
 
             switch (h.type) {
                 case 'string':
@@ -77,6 +87,12 @@ export class FormSpecGeneratorService {
                     subtype = 'text';
             }
 
+            if (foreignKey !== undefined) {
+                autocompleteValues = this.backend.columnValues(
+                    foreignKey.foreignTable, foreignKey.foreignColumn);
+                type = 'autocomplete';
+            }
+
             const spec: FormControlSpec = {
                 type,
                 subtype,
@@ -86,7 +102,8 @@ export class FormSpecGeneratorService {
                 enumValues,
                 initialValue,
                 required,
-                disabled
+                disabled,
+                autocompleteValues
             };
 
             // Don't specifically define undefined values as undefined. Messes
