@@ -525,7 +525,7 @@ describe('API v1', () => {
             })
         );
 
-        it.only('should include part table names when applicable', () => {
+        it('should include part table names when applicable', () => {
             // `datatypeshowcase` has no part tables
             expect(meta.parts).to.be.empty;
 
