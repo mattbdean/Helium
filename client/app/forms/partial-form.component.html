@@ -1,3 +1,10 @@
-<div *ngFor="let spec of formSpec">
-    <ng-template dynamicFormControl [group]="formArray.at(0)" [control]="spec"></ng-template>
-</div>
+<md-card>
+    <h1 class="form-title">{{ name.cleanName }}</h1>
+    <h6 class="form-subtitle">{{ displayRole }} table</h6>
+
+    <div class="form-content">
+        <div *ngFor="let spec of formSpec">
+            <ng-template dynamicFormControl [group]="formArray.at(0)" [control]="spec"></ng-template>
+        </div>
+    </div>
+</md-card>

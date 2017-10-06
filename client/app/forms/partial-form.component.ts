@@ -21,7 +21,8 @@ import { FormSpecGeneratorService } from './form-spec-generator.service';
  */
 @Component({
     selector: 'partial-form',
-    templateUrl: 'partial-form.component.html'
+    templateUrl: 'partial-form.component.html',
+    styleUrls: ['partial-form.component.scss']
 })
 export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     /** The table whose data we are creating a form for */
@@ -37,6 +38,10 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     @Input('rootGroup')
     private rootGroupPropertyBinding: FormGroup;
     private rootGroup$ = new BehaviorSubject<FormGroup>(null);
+
+    @Input('role')
+    private role: 'master' | 'part';
+    private displayRole: string;
 
     public formSpec: FormControlSpec[];
 
@@ -54,11 +59,11 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
             .switchMap((name: TableName) =>
                 this.backend.meta(name.rawName)
                     .catch((err) => {
-                            // TODO handle better
-                            console.error(err);
-                            return Observable.never();
-                        }
-                    ))
+                        // TODO handle better
+                        console.error(err);
+                        return Observable.never();
+                    }
+                ))
             .map(this.formSpecGenerator.generate, this);
 
         // Combine the latest output from the FormControlSpec array generated
@@ -73,6 +78,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                 data[1].addControl(this.name.rawName, this.formArray);
             });
 
+        this.displayRole = this.role[0].toUpperCase() + this.role.substring(1);
     }
 
     public ngOnChanges(changes: SimpleChanges): void {

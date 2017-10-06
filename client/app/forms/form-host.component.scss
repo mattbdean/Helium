@@ -10,6 +10,12 @@ $container-width: 500px;
   width: $container-width;
 }
 
+.partial-form-container {
+  $padding: 15px;
+  padding-top: $padding;
+  padding-bottom: $padding;
+}
+
 @media all and (max-width: $container-width + 100px) {
   .form-container {
     width: 80vw;
