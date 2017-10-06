@@ -34,7 +34,8 @@ describe('DatatableComponent', () => {
         headers: [],
         totalRows: 0,
         constraints: [],
-        comment: 'description'
+        comment: 'description',
+        parts: []
     });
 
     beforeEach(() => {

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import {
     MdAutocompleteModule,
     MdButtonModule,
@@ -9,8 +10,7 @@ import {
     MdSnackBarModule
 } from '@angular/material';
 
-import { ReactiveFormsModule } from '@angular/forms';
-import { CoreModule } from "../core/core.module";
+import { CoreModule } from '../core/core.module';
 import { ComponentMapperService } from './component-mapper.service';
 import { AutocompleteControlComponent } from './controls/autocomplete-control.component';
 import { CheckboxControlComponent } from './controls/checkbox-control.component';
@@ -21,6 +21,7 @@ import { DynamicFormControlDirective } from './dynamic-form-control.directive';
 import { FormHostComponent } from './form-host.component';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 import { FormRoutingModule } from './forms-routing.module';
+import { PartialFormComponent } from './partial-form.component';
 
 const formControlComponents = [
     AutocompleteControlComponent,
@@ -49,6 +50,7 @@ const formControlComponents = [
     ],
     declarations: [
         DynamicFormControlDirective,
+        PartialFormComponent,
         FormHostComponent,
         ...formControlComponents
     ],

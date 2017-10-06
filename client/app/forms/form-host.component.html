@@ -1,9 +1,8 @@
 <form class="centered-horizontally" novalidate [formGroup]="formGroup" (ngSubmit)="onSubmit($event)">
     <md-card class="form-container">
         <h1 class="mat-h1">Insert a new {{ name.cleanName }}</h1>
-        <div *ngFor="let control of controls">
-            <ng-template dynamicFormControl [group]="formGroup" [control]="control"></ng-template>
-        </div>
+
+        <partial-form [rootGroup]="formGroup" [name]="name"></partial-form>
 
         <button md-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>
     </md-card>

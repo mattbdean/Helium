@@ -65,7 +65,7 @@ export class Database {
     /**
      * Executes the given function in the context of a MySQL transaction.
      * Automatically rolls back any changes done to the data if an error occurs.
-     * This function is only really needed to ensure that a group of queries
+     * This function is only really needed to ensure that a rootGroup of queries
      * all complete successfully.
      *
      * @param {() => Promise<void>} doWork

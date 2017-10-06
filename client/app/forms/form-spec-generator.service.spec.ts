@@ -31,7 +31,8 @@ const createMetaFor = (headers: TableHeader[], constraints: Constraint[] = []): 
     headers,
     totalRows: -1,
     constraints,
-    comment: 'comment'
+    comment: 'comment',
+    parts: []
 });
 
 const textualHeader = (h: TextualHeaderStub): TableHeader => {
