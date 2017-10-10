@@ -4,20 +4,9 @@
 [![Known Vulnerabilities](https://snyk.io/test/github/mattbdean/Helium/badge.svg)](https://snyk.io/test/github/mattbdean/Helium)
 [![David](https://img.shields.io/david/mattbdean/Helium.svg)](https://david-dm.org/mattbdean/Helium)
 
-> Svoboda Lab experiment metadata collection and standardization
+> A visual companion interface for [DataJoint](https://datajoint.github.io/) originally written with :heart: for the Svoboda Lab
 
-Notable dependencies:
-
-- Node.js
-- MySQL
-- TypeScript
-- Express
-- Angular
-- Gulp
-
-Tests are written with Mocha, Chai, Karma, and Protractor.
-
-This project uses TypeScript for both server and client. 
+Helium runs on a TypeScript-based MEAN stack (but with MySQL instead of MongoDB) and is tested with Mocha, Chai, Karma, and Protractor.
 
 ### Building
 
