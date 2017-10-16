@@ -3,9 +3,9 @@ import {
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 
-import { Subscription } from 'rxjs/Subscription';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
 
 import * as _ from 'lodash';
 
@@ -32,21 +32,20 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     public get rootGroup(): FormGroup { return this.rootGroup$.getValue(); }
 
     @Input('name')
-    private namePropertyBinding: TableName;
+    public namePropertyBinding: TableName;
     private name$ = new BehaviorSubject<TableName>(null);
 
     @Input('rootGroup')
-    private rootGroupPropertyBinding: FormGroup;
+    public rootGroupPropertyBinding: FormGroup;
     private rootGroup$ = new BehaviorSubject<FormGroup>(null);
 
     @Input('role')
-    private role: 'master' | 'part';
-    private displayRole: string;
+    public role: 'master' | 'part';
 
     public formSpec: FormControlSpec[];
 
     private sub: Subscription;
-    private formArray: FormArray;
+    public formArray: FormArray;
 
     public constructor(
         private backend: TableService,
@@ -74,11 +73,14 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
         )
             .subscribe((data: [FormControlSpec[], FormGroup]) => {
                 this.formSpec = data[0];
-                this.formArray = this.fb.array([this.createItem(this.formSpec)]);
+
+                // Master tables start off with one entry
+                const initialData = this.role === 'master' ?
+                    [this.createItem(this.formSpec)] : [];
+
+                this.formArray = this.fb.array(initialData);
                 data[1].addControl(this.name.rawName, this.formArray);
             });
-
-        this.displayRole = this.role[0].toUpperCase() + this.role.substring(1);
     }
 
     public ngOnChanges(changes: SimpleChanges): void {
@@ -92,6 +94,14 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
     public ngOnDestroy() {
         this.sub.unsubscribe();
+    }
+
+    public addEntry() {
+        this.formArray.push(this.createItem(this.formSpec));
+    }
+
+    public removeEntry(index) {
+        this.formArray.removeAt(index);
     }
 
     private createItem(formSpec: FormControlSpec[]): FormGroup {

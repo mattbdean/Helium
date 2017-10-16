@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { InputControlComponent } from './controls/input-control.component';
 import { FormControlType } from './form-control-spec.interface';
@@ -12,7 +12,7 @@ import { AutocompleteControlComponent } from './controls/autocomplete-control.co
  */
 @Injectable()
 export class ComponentMapperService {
-    public componentFor(type: FormControlType) {
+    public componentFor(type: FormControlType): Type<any> {
         switch (type) {
             case 'autocomplete':
                 return AutocompleteControlComponent;

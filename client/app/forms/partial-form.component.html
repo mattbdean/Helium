@@ -1,10 +1,32 @@
 <md-card>
     <h1 class="form-title">{{ name.cleanName }}</h1>
-    <h6 class="form-subtitle">{{ displayRole }} table</h6>
 
     <div class="form-content">
-        <div *ngFor="let spec of formSpec">
-            <ng-template dynamicFormControl [group]="formArray.at(0)" [control]="spec"></ng-template>
+        <div class="entry-container" *ngFor="let group of formArray?.controls">
+            <div class="form-controls-container">
+                <div class="control-container" *ngFor="let spec of formSpec">
+                    <ng-template dynamicFormControl [group]="group" [control]="spec"></ng-template>
+                </div>
+            </div>
+
+            <div class="remove-button-wrapper" *ngIf="role === 'part'">
+                <button *ngIf="role === 'part'"
+                        md-icon-button
+                        tabindex="-1"
+                        title="Remove this entry"
+                        (click)="removeEntry(index)">
+                    <md-icon>remove_circle</md-icon>
+                </button>
+            </div>
+        </div>
+
+        <div class="add-button-wrapper" *ngIf="role === 'part'">
+            <button *ngIf="role === 'part'"
+                    md-icon-button
+                    title="Add another entry"
+                    (click)="addEntry()">
+                <md-icon color="primary">add_circle</md-icon>
+            </button>
         </div>
     </div>
 </md-card>

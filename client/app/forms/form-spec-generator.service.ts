@@ -109,7 +109,7 @@ export class FormSpecGeneratorService {
             // Don't specifically define undefined values as undefined. Messes
             // with tests. { a: 1, b: undefined } does NOT deep equal
             // { a: 1 }.
-            return pickBy(spec, (value) => value !== undefined);
+            return pickBy(spec, (value) => value !== undefined) as FormControlSpec;
         });
     }
 }

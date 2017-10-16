@@ -4,7 +4,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import {
     MdAutocompleteModule,
     MdButtonModule,
-    MdCardModule, MdCheckboxModule, MdDatepickerModule, MdInputModule,
+    MdCardModule, MdCheckboxModule, MdDatepickerModule, MdIconModule,
+    MdInputModule,
     MdNativeDateModule,
     MdSelectModule,
     MdSnackBarModule
@@ -40,6 +41,7 @@ const formControlComponents = [
         MdCardModule,
         MdCheckboxModule,
         MdDatepickerModule,
+        MdIconModule,
         MdInputModule,
         MdNativeDateModule,
         MdSelectModule,
