@@ -21,6 +21,7 @@ import {
 } from './form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 const expect = global['chai'].expect;
 
@@ -107,6 +108,7 @@ describe('PartialFormComponent', () => {
             imports: [
                 MdButtonModule,
                 MdIconModule,
+                NoopAnimationsModule,
                 ReactiveFormsModule
             ],
             providers: [
