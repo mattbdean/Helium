@@ -2,6 +2,8 @@
 $card-padding: 24px;
 md-card {
   padding: 0;
+
+  transition: max-height 300ms ease-in-out;
 }
 
 .form-title {

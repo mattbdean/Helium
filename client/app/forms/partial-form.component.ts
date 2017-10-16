@@ -1,3 +1,4 @@
+import { animate, style, transition, trigger } from '@angular/animations';
 import {
     Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
 } from '@angular/core';
@@ -22,7 +23,19 @@ import { FormSpecGeneratorService } from './form-spec-generator.service';
 @Component({
     selector: 'partial-form',
     templateUrl: 'partial-form.component.html',
-    styleUrls: ['partial-form.component.scss']
+    styleUrls: ['partial-form.component.scss'],
+    animations: [
+        trigger('fade', [
+            transition(':enter', [
+                style({ height: 0, opacity: 0 }),
+                animate('0.5s ease-out', style({ height: '*', opacity: 1 }))
+            ]),
+            transition(':leave', [
+                style({ height: '*', opacity: 1 }),
+                animate('0.5s ease-out', style({ height: 0, opacity: 0 }))
+            ])
+        ])
+    ]
 })
 export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     /** The table whose data we are creating a form for */
