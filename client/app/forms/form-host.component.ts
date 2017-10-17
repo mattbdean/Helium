@@ -39,7 +39,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             this.backend.list(),
             this.route.params.map((p: Params) => p.name)
         )
-            .flatMap((data: [TableName[], string]): Observable<MasterTableName> => {
+            .switchMap((data: [TableName[], string]): Observable<MasterTableName> => {
                 // Try to identify a MasterTableName for the given raw SQL name
                 const allNames = data[0];
                 const currentRawName = data[1];
@@ -56,7 +56,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                         newPath = ['/forms', currentName.masterRawName];
 
                     return Observable.fromPromise(this.router.navigate(newPath))
-                        .mapTo(null as MasterTableName);
+                        .switchMapTo(Observable.never());
                 }
 
                 const masterTableNames = unflattenTableNames(allNames);

@@ -10,15 +10,30 @@ import { Subscription } from 'rxjs/Subscription';
 
 import * as _ from 'lodash';
 
-import { TableName } from '../common/api';
+import { TableMeta, TableName } from '../common/api';
 import { TableService } from '../core/table.service';
 import { FormControlSpec } from './form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
+
+interface Binding {
+    controlName: string;
+    valueChanges: Observable<any>;
+    subscriptions: Subscription[];
+    lastValue: any;
+}
 
 /**
  * A "partial" form handles data entry for exactly one table. Each instance
  * handles zero or more entries to that table. Upon receiving `rootGroup`, a
  * FormArray is added to that group whose key is the raw name of the table.
+ *
+ * If this form is for a part table, it is possible that one or more of the
+ * controls in each FormGroup in the FormArray can be "bound" to another
+ * control. When this happens, the control will be disabled and will
+ * automatically update to the value of the control in the master table that
+ * it's bound to.
+ *
+ * @see FormSpecGeneratorService.bindingConstraints
  */
 @Component({
     selector: 'partial-form',
@@ -60,6 +75,11 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     private sub: Subscription;
     public formArray: FormArray;
 
+    /** A list of all bound controls for this form */
+    private bindings: Binding[] = [];
+
+    private lastValueWatchers: { [controlName: string]: Subscription } = {};
+
     public constructor(
         private backend: TableService,
         private formSpecGenerator: FormSpecGeneratorService,
@@ -76,16 +96,17 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                         return Observable.never();
                     }
                 ))
-            .map(this.formSpecGenerator.generate, this);
+            .map((meta: TableMeta) => [meta, this.formSpecGenerator.generate(meta)], this);
 
         // Combine the latest output from the FormControlSpec array generated
         // from the table name/meta and the rootGroup
         this.sub = Observable.zip(
             spec$,
-            this.rootGroup$
+            this.rootGroup$,
         )
-            .subscribe((data: [FormControlSpec[], FormGroup]) => {
-                this.formSpec = data[0];
+            .subscribe((data: [[TableMeta, FormControlSpec[]], FormGroup]) => {
+                const tableMeta = data[0][0];
+                this.formSpec = data[0][1];
 
                 // Master tables start off with one entry
                 const initialData = this.role === 'master' ?
@@ -93,6 +114,37 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
                 this.formArray = this.fb.array(initialData);
                 data[1].addControl(this.name.rawName, this.formArray);
+
+                const bindings = this.formSpecGenerator.bindingConstraints(this.name.masterRawName, tableMeta);
+                // If we have binding constraints, this is guaranteed to be a
+                // part table
+                if (bindings.length > 0) {
+                    // The FormGroup for the master table is created first
+                    const masterFormArray =
+                        data[1].controls[this.name.masterRawName] as FormArray;
+
+                    // The master table form array only contains one entry
+                    const masterGroup = masterFormArray.at(0) as FormGroup;
+
+                    for (const binding of bindings) {
+                        // Make a note of what local control should be bound to
+                        // what Observable
+                        const b = {
+                            controlName: binding.localColumn,
+                            valueChanges: masterGroup.controls[binding.foreignColumn].valueChanges,
+                            subscriptions: [],
+                            lastValue: ''
+                        };
+                        this.bindings.push(b);
+
+                        // Subscribe to the observable so we know what value to
+                        // give a newly created bound form control
+                        this.lastValueWatchers[binding.localColumn] =
+                            b.valueChanges.subscribe((value) => {
+                                b.lastValue = value;
+                            });
+                    }
+                }
             });
     }
 
@@ -107,6 +159,13 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
     public ngOnDestroy() {
         this.sub.unsubscribe();
+
+        for (const controlName of Object.keys(this.lastValueWatchers))
+            this.lastValueWatchers[controlName].unsubscribe();
+
+        for (const binding of this.bindings)
+            for (const sub of binding.subscriptions)
+                sub.unsubscribe();
     }
 
     public addEntry() {
@@ -114,14 +173,55 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     public removeEntry(index) {
+        if (index >= this.formArray.length)
+            throw new Error(`Tried to remove control at index ${index}, but ` +
+                `length was ${this.formArray.length}`);
+
+        // Make sure to unsubscribe to any bindings before removing the control.
+        // For every binding, remove the subscription at the given index.
+        for (const binding of this.bindings) {
+            // Unsubscribe and remove the Subscription from the array
+            binding.subscriptions[index].unsubscribe();
+            binding.subscriptions.slice(index, 1);
+        }
+
         this.formArray.removeAt(index);
     }
 
+    /**
+     * Creates a new FormGroup according to the given FormControlSpecs. This
+     * function automatically takes care of binding the appropriate controls.
+     */
     private createItem(formSpec: FormControlSpec[]): FormGroup {
+        const names = _.map(formSpec, (spec) => spec.formControlName);
         return this.fb.group(_.zipObject(
-            _.map(formSpec, (spec) => spec.formControlName),
-            _.map(formSpec, (spec) => {
-                return this.fb.control({ value: spec.initialValue, disabled: !!spec.disabled }, spec.validation);
+            names,
+            _.map(formSpec, (spec, index) => {
+                // Look for a binding for the current form control name
+                const binding = _(this.bindings).find((b) => b.controlName === names[index]);
+
+                // Fall back to the spec's initial value if there is no binding
+                // for this particular control
+                const initialValue = binding ? binding.lastValue : spec.initialValue;
+
+                // Create the actual form control. Bound controls are always
+                // disabled.
+                const conf = {
+                    value: initialValue,
+                    disabled: !!spec.disabled || binding !== undefined
+                };
+                const control = this.fb.control(conf, spec.validation);
+
+                if (binding !== undefined) {
+                    // Do the actual "binding" -- whenever we get a new value
+                    // from the master table's FormControl, update the bound
+                    // control's value.
+                    binding.subscriptions.push(binding.valueChanges.subscribe((value) => {
+                        control.setValue(value);
+                    }));
+                }
+
+                return control;
             })
         ));
     }

@@ -6,6 +6,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MdButtonModule, MdIconModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
@@ -21,7 +22,7 @@ import {
 } from './form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Constraint } from '../common/api';
 
 const expect = global['chai'].expect;
 
@@ -77,7 +78,8 @@ describe('PartialFormComponent', () => {
             if (result === undefined)
                 throw new Error('No such spec: ' + mockTableMeta.name);
             return result;
-        }
+        },
+        bindingConstraints: (): Constraint[] => []
     };
 
     // Always return MockFormControlComponent, regardless of requested type

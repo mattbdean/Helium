@@ -93,135 +93,186 @@ describe('FormSpecGeneratorService', () => {
         return generator.generate(meta)[0];
     };
 
-    it('should handle the simplest possible table', () => {
-        const formSpec = generateSingle(textualHeader({ name: 'bar', nullable: true }));
+    describe('generate', () => {
+        it('should handle the simplest possible table', () => {
+            const formSpec = generateSingle(textualHeader({ name: 'bar', nullable: true }));
 
-        const expected: FormControlSpec = {
-            type: 'text',
-            subtype: 'text',
-            formControlName: 'bar',
-            placeholder: 'bar',
-            validation: [],
-            required: false,
-            disabled: false
-        };
-        expect(formSpec).to.deep.equal(expected);
+            const expected: FormControlSpec = {
+                type: 'text',
+                subtype: 'text',
+                formControlName: 'bar',
+                placeholder: 'bar',
+                validation: [],
+                required: false,
+                disabled: false
+            };
+            expect(formSpec).to.deep.equal(expected);
+        });
+
+        it('should make non-null headers required', () => {
+            const formSpec = generateSingle(textualHeader({ name: 'bar', nullable: false }));
+
+            const expected: FormControlSpec = {
+                type: 'text',
+                subtype: 'text',
+                formControlName: 'bar',
+                placeholder: 'bar',
+                validation: [Validators.required],
+                required: true,
+                disabled: false
+            };
+            expect(formSpec).to.deep.equal(expected);
+        });
+
+        it('should handle maxCharacters', () => {
+            const formSpec = generateSingle(textualHeader({ name: 'bar', maxCharacters: 5 }));
+
+            // Deep equal comparison doesn't work on functions created dynamically.
+            // For example:
+            //
+            // function foo() {
+            //   return function() {}
+            // }
+            //
+            // expect(foo()).to.not.deep.equal(foo())
+            //
+            // Since the other tests verify that all other properties are as
+            // expected, we can focus on just the validation
+            expect(formSpec.validation).to.have.lengthOf(1);
+        });
+
+        it('should handle numeric headers', () => {
+            const types: Array<'float' | 'integer'> = ['float', 'integer'];
+
+            for (const type of types) {
+                const formSpec = generator.generate(createMetaFor(
+                    [numericHeader({ name: 'bar', type })]
+                ))[0];
+
+                expect(formSpec.subtype).to.equal('number');
+            }
+        });
+
+        it('should handle enumerated values', () => {
+            const enumValues = ['one', 'two', 'three'];
+            const formSpec = generateSingle(textualHeader({ name: 'bar', enumValues }));
+
+            const expected: FormControlSpec = {
+                type: 'enum',
+                formControlName: 'bar',
+                placeholder: 'bar',
+                validation: [],
+                enumValues,
+                required: false,
+                disabled: false
+            };
+
+            expect(formSpec).to.deep.equal(expected);
+        });
+
+        it('should handle boolean values', () => {
+            const formSpec = generateSingle({
+                name: 'bar',
+                type: 'boolean',
+                nullable: false,
+            } as TableHeader);
+
+            formSpec.validation.should.have.lengthOf(0);
+            formSpec.type.should.equal('boolean');
+            formSpec.initialValue.should.be.false;
+        });
+
+        it('should handle dates', () => {
+            const formSpec = generateSingle({
+                name: 'bar',
+                type: 'date'
+            } as TableHeader);
+
+            formSpec.type.should.equal('date');
+            formSpec.subtype.should.equal('date');
+        });
+
+        it('should handle datetimes', () => {
+            const formSpec = generateSingle({
+                name: 'bar',
+                type: 'datetime'
+            } as TableHeader);
+
+            formSpec.type.should.equal('date');
+            formSpec.subtype.should.equal('datetime-local');
+        });
+
+        it('should handle blobs', () => {
+            const formSpecNullable = generateSingle({
+                name: 'bar',
+                type: 'blob',
+                nullable: true
+            } as TableHeader);
+
+            formSpecNullable.type.should.equal('text');
+            expect(formSpecNullable.initialValue).to.be.null;
+            formSpecNullable.disabled.should.be.true;
+
+            // The only difference specifying nullable: false is that the initial
+            // value is undefined instead of null.
+            const formSpecNonNull = generateSingle({
+                name: 'bar',
+                type: 'blob',
+                nullable: false
+            } as TableHeader);
+
+            formSpecNonNull.type.should.equal('text');
+            expect(formSpecNonNull.initialValue).to.be.undefined;
+            formSpecNonNull.disabled.should.be.true;
+        });
     });
 
-    it('should make non-null headers required', () => {
-        const formSpec = generateSingle(textualHeader({ name: 'bar', nullable: false }));
+    describe('bindingConstraints', () => {
+        it('should throw an error if the given part tables aren\'t actually ' + '' +
+            'part tables of the master', () => {
+            const mockMeta = { name: 'bar__part' } as TableMeta;
+            expect(() => { generator.bindingConstraints('foo', mockMeta ); }).to.throw(Error);
+        });
 
-        const expected: FormControlSpec = {
-            type: 'text',
-            subtype: 'text',
-            formControlName: 'bar',
-            placeholder: 'bar',
-            validation: [Validators.required],
-            required: true,
-            disabled: false
-        };
-        expect(formSpec).to.deep.equal(expected);
-    });
+        it('should pick out FK constraints', () => {
+            const mockMeta = {
+                name: 'master__part',
+                constraints: [
+                    // throw in two FK constraints that reference master
+                    {
+                        localColumn: 'part_fk1',
+                        foreignTable: 'master',
+                        foreignColumn: 'master_pk1',
+                        type: 'foreign'
+                    },
+                    {
+                        localColumn: 'part_fk2',
+                        foreignTable: 'master',
+                        foreignColumn: 'master_pk2',
+                        type: 'foreign'
+                    },
+                    // should not be included since it's a unique constraint and
+                    // not a FK constraint
+                    {
+                        localColumn: 'part_unique',
+                        type: 'unique',
+                        foreignTable: null,
+                        foreignColumn: null
+                    },
+                    // should not be included since it's a FK that references a
+                    // table that isn't the master table
+                    {
+                        localColumn: 'part_fk3',
+                        foreignTable: 'not_master',
+                        foreignColumn: 'foo',
+                        type: 'foreign'
+                    }
+                ]
+            } as TableMeta;
 
-    it('should handle maxCharacters', () => {
-        const formSpec = generateSingle(textualHeader({ name: 'bar', maxCharacters: 5 }));
-
-        // Deep equal comparison doesn't work on functions created dynamically.
-        // For example:
-        //
-        // function foo() {
-        //   return function() {}
-        // }
-        //
-        // expect(foo()).to.not.deep.equal(foo())
-        //
-        // Since the other tests verify that all other properties are as
-        // expected, we can focus on just the validation
-        expect(formSpec.validation).to.have.lengthOf(1);
-    });
-
-    it('should handle numeric headers', () => {
-        const types: Array<'float' | 'integer'> = ['float', 'integer'];
-
-        for (const type of types) {
-            const formSpec = generator.generate(createMetaFor(
-                [numericHeader({ name: 'bar', type })]
-            ))[0];
-
-            expect(formSpec.subtype).to.equal('number');
-        }
-    });
-
-    it('should handle enumerated values', () => {
-        const enumValues = ['one', 'two', 'three'];
-        const formSpec = generateSingle(textualHeader({ name: 'bar', enumValues }));
-
-        const expected: FormControlSpec = {
-            type: 'enum',
-            formControlName: 'bar',
-            placeholder: 'bar',
-            validation: [],
-            enumValues,
-            required: false,
-            disabled: false
-        };
-
-        expect(formSpec).to.deep.equal(expected);
-    });
-
-    it('should handle boolean values', () => {
-        const formSpec = generateSingle({
-            name: 'bar',
-            type: 'boolean',
-            nullable: false,
-        } as TableHeader);
-
-        formSpec.validation.should.have.lengthOf(0);
-        formSpec.type.should.equal('boolean');
-        formSpec.initialValue.should.be.false;
-    });
-
-    it('should handle dates', () => {
-        const formSpec = generateSingle({
-            name: 'bar',
-            type: 'date'
-        } as TableHeader);
-
-        formSpec.type.should.equal('date');
-        formSpec.subtype.should.equal('date');
-    });
-
-    it('should handle datetimes', () => {
-        const formSpec = generateSingle({
-            name: 'bar',
-            type: 'datetime'
-        } as TableHeader);
-
-        formSpec.type.should.equal('date');
-        formSpec.subtype.should.equal('datetime-local');
-    });
-
-    it('should handle blobs', () => {
-        const formSpecNullable = generateSingle({
-            name: 'bar',
-            type: 'blob',
-            nullable: true
-        } as TableHeader);
-
-        formSpecNullable.type.should.equal('text');
-        expect(formSpecNullable.initialValue).to.be.null;
-        formSpecNullable.disabled.should.be.true;
-
-        // The only difference specifying nullable: false is that the initial
-        // value is undefined instead of null.
-        const formSpecNonNull = generateSingle({
-            name: 'bar',
-            type: 'blob',
-            nullable: false
-        } as TableHeader);
-
-        formSpecNonNull.type.should.equal('text');
-        expect(formSpecNonNull.initialValue).to.be.undefined;
-        formSpecNonNull.disabled.should.be.true;
+            // Only the first two constraints are binding
+            expect(generator.bindingConstraints('master', mockMeta)).to.deep
+                .equal(mockMeta.constraints.slice(0, 2));
+        });
     });
 });

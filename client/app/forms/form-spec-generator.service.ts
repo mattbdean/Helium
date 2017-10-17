@@ -3,12 +3,13 @@ import { ValidatorFn, Validators } from '@angular/forms';
 
 import { pickBy } from 'lodash';
 
-import { TableMeta } from '../common/api';
+import { Constraint, TableMeta, TableName } from '../common/api';
 import {
     FormControlSpec, FormControlType
 } from './form-control-spec.interface';
 import { Observable } from 'rxjs/Observable';
 import { TableService } from '../core/table.service';
+import { createTableName } from '../common/util';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -111,5 +112,44 @@ export class FormSpecGeneratorService {
             // { a: 1 }.
             return pickBy(spec, (value) => value !== undefined) as FormControlSpec;
         });
+    }
+
+    /**
+     * Since entries to part tables have to be inserted at the same time as
+     * the master table they reference, foreign keys have to match exactly the
+     * value of the primary key of the master column, creating a "binding."
+     * Consider this situation:
+     *
+     * CREATE TABLE master(
+     *   pk INTEGER PRIMARY KEY
+     * )
+     *
+     * CREATE TABLE master__part(
+     *   fk_master INTEGER,
+     *   fk_other INTEGER,
+     *   FOREIGN KEY (fk_master) REFERENCES master(pk)
+     *   FOREIGN KEY (fk_other) REFERENCES foo(bar)
+     * )
+     *
+     * In this example, master__part.fk_master is a binding constraint, while
+     * master__part.fk_other is not.
+     *
+     * @param {string} masterRawName The SQL name of the master table's name. If
+     *                               null, an empty array will be returned
+     * @param {TableMeta} tableMeta The metadata for the part table
+     * @returns {Constraint[]} An array of binding constraints in this master/
+     *                         part relationship.
+     */
+    public bindingConstraints(masterRawName: string, tableMeta: TableMeta): Constraint[] {
+        if (masterRawName === null)
+            // The given TableMeta is for a master table, nothing to do
+            return [];
+
+        const tableName = createTableName(tableMeta.name);
+        if (tableName.masterRawName !== masterRawName)
+            throw new Error(`Given TableMeta was not a part table of ` +
+                `${masterRawName}, but actually for ${tableName.masterRawName}`);
+
+        return tableMeta.constraints.filter((c) => c.foreignTable === masterRawName);
     }
 }
