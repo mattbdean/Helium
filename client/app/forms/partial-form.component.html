@@ -4,7 +4,7 @@
     <div class="form-content">
         <div class="entry-container" [@fade] *ngFor="let group of formArray?.controls; let i = index">
             <div class="form-controls-container">
-                <div class="control-container" *ngFor="let spec of formSpec">
+                <div [ngClass]="{ 'control-container': true, gone: shouldBeHidden(spec.formControlName) }" *ngFor="let spec of formSpec">
                     <ng-template dynamicFormControl [group]="group" [control]="spec"></ng-template>
                 </div>
             </div>

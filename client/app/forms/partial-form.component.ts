@@ -188,6 +188,11 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
         this.formArray.removeAt(index);
     }
 
+    public shouldBeHidden(formControlName: string) {
+        const binding = _.find(this.bindings, (b) => b.controlName === formControlName);
+        return binding !== undefined;
+    }
+
     /**
      * Creates a new FormGroup according to the given FormControlSpecs. This
      * function automatically takes care of binding the appropriate controls.
