@@ -31,7 +31,7 @@ interface Binding {
  * controls in each FormGroup in the FormArray can be "bound" to another
  * control. When this happens, the control will be disabled and will
  * automatically update to the value of the control in the master table that
- * it's bound to.
+ * it's bound to. Bound controls are hidden from the user.
  *
  * @see FormSpecGeneratorService.bindingConstraints
  */
