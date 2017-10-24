@@ -65,12 +65,50 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 return Observable.of(currentMaster);
             })
             .subscribe((mainName: MasterTableName) => {
+                // Reinitialize the FormGroup so that we don't keep data from
+                // previously created forms
+                this.formGroup = this.fb.group({});
+
                 this.mainName = mainName;
                 // The TableName array we use to create PartialFormComponents
                 // is comprised of the mainName (as a TableName instead of a
                 // MasterTableName) and its parts.
                 this.names = [createTableName(mainName.rawName), ...this.mainName.parts];
             });
+    }
+
+    /**
+     * This function transforms form data from the format represented by Angular
+     * into a format the API expects.
+     */
+    public prepareSubmit(form: object): object {
+        // The only thing we're guaranteed here is that there will be exactly
+        // one master table entry
+        const master = form[this.mainName.rawName][0];
+
+        const processed: object = {};
+
+        // Transfer all master properties to the root of the processed form
+        for (const key of Object.keys(master)) {
+            processed[key] = master[key];
+        }
+
+        // Identify any part table names
+        const partTableNames = Object.keys(form)
+            .filter((k) => k !== this.mainName.rawName);
+
+        // Add the special $parts key for part tables
+        if (partTableNames.length > 0) {
+            processed['$parts'] = {};
+        }
+
+        // Add all part tables to the $parts object under the clean name
+        for (const partTable of partTableNames) {
+            const cleanName = createTableName(partTable).cleanName;
+            processed['$parts'][cleanName] = form[partTable];
+        }
+
+        return processed;
     }
 
     public ngOnDestroy() {
@@ -82,7 +120,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
         event.stopPropagation();
         // TODO do something with the submitted form
         // formGroup.value does not contain disabled form controls (necessary
-        // for blobs), use this instead
-        console.log(this.formGroup.getRawValue());
+        // for blobs and bound part table foreign keys), use
+        // formGroup.getRawValue() instead
+        console.log('Submit data: ', this.prepareSubmit(this.formGroup.getRawValue()));
     }
 }
