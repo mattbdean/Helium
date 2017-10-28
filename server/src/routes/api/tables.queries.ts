@@ -6,10 +6,13 @@ import * as moment from 'moment';
 import { FunctionBlock } from 'squel';
 
 import {
-    Constraint, ConstraintType, SqlRow, TableDataType,
+    Constraint, ConstraintType, DefaultValue, SqlRow, TableDataType,
     TableHeader, TableMeta, TableName
 } from '../../common/api';
-import { BLOB_STRING_REPRESENTATION, DATE_FORMAT, DATETIME_FORMAT} from '../../common/constants';
+import {
+    BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
+    DATETIME_FORMAT
+} from '../../common/constants';
 import { createTableName, unflattenTableNames } from '../../common/util';
 import { Database } from '../../database.helper';
 
@@ -524,7 +527,8 @@ export class TableDao {
         const fields = [
             'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
             'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
-            'CHARACTER_SET_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT', 'TABLE_NAME'
+            'CHARACTER_SET_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT', 'TABLE_NAME',
+            'COLUMN_DEFAULT'
         ];
 
         const result = await helper.execute((squel) => {
@@ -546,6 +550,8 @@ export class TableDao {
             const rawType = row.COLUMN_TYPE as string;
             const type = TableDao.parseType(rawType);
             const isNumerical = type === 'integer' || type === 'float';
+            const defaultValue = TableDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT);
+
             return {
                 name: row.COLUMN_NAME as string,
                 type,
@@ -554,6 +560,7 @@ export class TableDao {
                 signed: isNumerical && !rawType.includes('unsigned'),
                 ordinalPosition: row.ORDINAL_POSITION as number,
                 rawType,
+                defaultValue,
                 nullable: row.IS_NULLABLE === 'YES',
                 maxCharacters: row.CHARACTER_MAXIMUM_LENGTH as number,
                 charset: row.CHARACTER_SET_NAME as string,
@@ -564,6 +571,31 @@ export class TableDao {
                 tableName: row.TABLE_NAME as string
             };
         });
+    }
+
+    private static identifyDefaultValue(rawType: string, type: TableDataType, rawDefault: string): DefaultValue {
+        if (rawDefault === CURRENT_TIMESTAMP && rawType === 'datetime')
+            return { constantName: CURRENT_TIMESTAMP };
+
+        switch (type) {
+            case 'integer':
+                return parseInt(rawDefault, 10);
+            case 'float':
+                return parseFloat(rawDefault);
+            case 'boolean':
+                return !!parseInt(rawDefault, 10);
+            // We don't have to do anything for textual columns
+            case 'string':
+            case 'enum':
+            case 'date':
+            case 'datetime':
+                return rawDefault;
+            case 'blob':
+                // Don't leak any blob data
+                return null;
+        }
+
+        throw new Error(`Could not determine default header for type=${type}`);
     }
 
     private static prepareForInsert(headers: TableHeader[],

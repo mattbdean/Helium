@@ -102,6 +102,18 @@ CREATE TABLE master__part2(
 
 CREATE TABLE column_name_test(`$parts` INTEGER PRIMARY KEY);
 
+CREATE TABLE defaults_test(
+    pk INTEGER PRIMARY KEY AUTO_INCREMENT,
+    `int` INTEGER DEFAULT 5,
+    `float` FLOAT DEFAULT 10.0,
+    `date` DATE DEFAULT '2017-01-01',
+    `datetime` DATETIME DEFAULT '2017-01-01 12:00:00',
+    datetime_now DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `boolean` BOOLEAN DEFAULT TRUE,
+    `enum` ENUM('a', 'b', 'c') DEFAULT 'a',
+    no_default INTEGER
+);
+
 # A few customers, organizations, and products
 INSERT INTO customer VALUES (0, "Some Guy"), (1, "Another Guy");
 INSERT INTO organization VALUES (10, "Some Big Company", 0), (11, "Another Big Company", 1);

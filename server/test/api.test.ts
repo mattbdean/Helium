@@ -33,6 +33,7 @@ const ALL_TABLES = [
     'master__part',
     'master__part2',
     'column_name_test',
+    'defaults_test',
     '#test_lookup',
     '_test_imported',
     '__test_computed'
@@ -401,7 +402,8 @@ describe('API v1', () => {
                 numericScale: 0,
                 enumValues: null,
                 comment: 'pk column',
-                tableName: SHOWCASE_TABLE
+                tableName: SHOWCASE_TABLE,
+                defaultValue: null
             });
 
             expectHeader('enum', {
@@ -419,7 +421,8 @@ describe('API v1', () => {
                 numericScale: null,
                 enumValues: ['a', 'b', 'c'],
                 comment: 'enum column',
-                tableName: SHOWCASE_TABLE
+                tableName: SHOWCASE_TABLE,
+                defaultValue: null
             });
         });
 
@@ -536,6 +539,35 @@ describe('API v1', () => {
                     createTableName('master__part2')
                 ];
                 expect(data.parts).to.deep.equal(expected);
+            });
+        });
+
+        it('should include default values for headers', () => {
+            return request.basic('/tables/defaults_test', 200, (data: TableMeta) => {
+                const headers = data.headers;
+
+                const expectDefault = (name: string, expectedDefault: any) => {
+                    const header = headers.find((h) => h.name === name);
+                    if (header === undefined)
+                        throw new Error('Could not find header for name ' + name);
+                    expect(header.defaultValue).to.deep.equal(expectedDefault);
+                };
+
+                const expected = {
+                    pk: null,
+                    int: 5,
+                    float: 10,
+                    date: '2017-01-01',
+                    datetime: '2017-01-01 12:00:00',
+                    datetime_now: { constantName: 'CURRENT_TIMESTAMP' },
+                    boolean: true,
+                    enum: 'a',
+                    no_default: null
+                };
+
+                for (const headerName of Object.keys(expected)) {
+                    expectDefault(headerName, expected[headerName]);
+                }
             });
         });
     });
