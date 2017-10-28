@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { FormHostComponent } from './form-host.component';
+import { FormHostComponent } from './form-host/form-host.component';
 
 const routes: Routes = [
     { path: 'forms', redirectTo: '/tables', pathMatch: 'full' },

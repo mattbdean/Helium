@@ -1,15 +1,15 @@
 import { Component, DebugElement, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
-import { TableName } from '../common/api';
-import { createTableName } from '../common/util';
-import { TableService } from '../core/table.service';
+import { TableName } from '../../common/api';
+import { createTableName } from '../../common/util';
+import { TableService } from '../../core/table.service';
 import { FormHostComponent } from './form-host.component';
 import { By } from '@angular/platform-browser';
 import { MatSnackBar } from '@angular/material';

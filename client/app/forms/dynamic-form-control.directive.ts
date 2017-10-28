@@ -4,8 +4,8 @@ import {
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
-import { ComponentMapperService } from './component-mapper.service';
-import { AbstractFormControl } from './controls/abstract-form-control.class';
+import { ComponentMapperService } from './component-mapper/component-mapper.service';
+import { AbstractFormControl } from './dynamic-controls/abstract-form-control.class';
 import { FormControlSpec } from './form-control-spec.interface';
 
 /**

@@ -3,13 +3,13 @@ import { ValidatorFn, Validators } from '@angular/forms';
 
 import { pickBy } from 'lodash';
 
-import { Constraint, TableMeta, TableName } from '../common/api';
+import { Constraint, TableMeta, TableName } from '../../common/api';
 import {
     FormControlSpec, FormControlType
-} from './form-control-spec.interface';
+} from '../form-control-spec.interface';
 import { Observable } from 'rxjs/Observable';
-import { TableService } from '../core/table.service';
-import { createTableName } from '../common/util';
+import { TableService } from '../../core/table.service';
+import { createTableName } from '../../common/util';
 
 /**
  * This service is responsible for generating FormControlSpecs given a

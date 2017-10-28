@@ -11,17 +11,17 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
-import { Constraint } from '../common/api';
-import { createTableName } from '../common/util';
-import { TableService } from '../core/table.service';
-import { ComponentMapperService } from './component-mapper.service';
-import { AbstractFormControl } from './controls/abstract-form-control.class';
-import { DynamicFormControlDirective } from './dynamic-form-control.directive';
+import { Constraint } from '../../common/api';
+import { createTableName } from '../../common/util';
+import { TableService } from '../../core/table.service';
+import { ComponentMapperService } from '../component-mapper/component-mapper.service';
+import { AbstractFormControl } from '../dynamic-controls/abstract-form-control.class';
+import { DynamicFormControlDirective } from '../dynamic-form-control.directive';
 import {
     FormControlSpec,
     FormControlType
-} from './form-control-spec.interface';
-import { FormSpecGeneratorService } from './form-spec-generator.service';
+} from '../form-control-spec.interface';
+import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
 
 const expect = global['chai'].expect;

@@ -10,10 +10,10 @@ import { Subscription } from 'rxjs/Subscription';
 
 import * as _ from 'lodash';
 
-import { TableMeta, TableName } from '../common/api';
-import { TableService } from '../core/table.service';
-import { FormControlSpec } from './form-control-spec.interface';
-import { FormSpecGeneratorService } from './form-spec-generator.service';
+import { TableMeta, TableName } from '../../common/api';
+import { TableService } from '../../core/table.service';
+import { FormControlSpec } from '../form-control-spec.interface';
+import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 
 interface Binding {
     controlName: string;

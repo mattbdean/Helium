@@ -17,11 +17,11 @@ import * as moment from 'moment';
 import {
     MasterTableName, TableHeader, TableMeta,
     TableName
-} from '../common/api';
-import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
-import { createTableName, unflattenTableNames } from '../common/util';
-import { TableService } from '../core/table.service';
-import { PartialFormComponent } from './partial-form.component';
+} from '../../common/api';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
+import { createTableName, unflattenTableNames } from '../../common/util';
+import { TableService } from '../../core/table.service';
+import { PartialFormComponent } from '../partial-form/partial-form.component';
 
 /**
  * This component creates a dynamically generated form based on the 'name'

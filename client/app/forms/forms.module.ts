@@ -15,17 +15,17 @@ import {
 } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
-import { ComponentMapperService } from './component-mapper.service';
-import { AutocompleteControlComponent } from './controls/autocomplete-control.component';
-import { CheckboxControlComponent } from './controls/checkbox-control.component';
-import { DateTimeControlComponent } from './controls/date-time-control.component';
-import { EnumeratedControlComponent } from './controls/enumerated-control.component';
-import { InputControlComponent } from './controls/input-control.component';
+import { ComponentMapperService } from './component-mapper/component-mapper.service';
+import { AutocompleteControlComponent } from './dynamic-controls/autocomplete-control.component';
+import { CheckboxControlComponent } from './dynamic-controls/checkbox-control.component';
+import { DateTimeControlComponent } from './dynamic-controls/date-time-control.component';
+import { EnumeratedControlComponent } from './dynamic-controls/enumerated-control.component';
+import { InputControlComponent } from './dynamic-controls/input-control.component';
 import { DynamicFormControlDirective } from './dynamic-form-control.directive';
-import { FormHostComponent } from './form-host.component';
-import { FormSpecGeneratorService } from './form-spec-generator.service';
+import { FormHostComponent } from './form-host/form-host.component';
+import { FormSpecGeneratorService } from './form-spec-generator/form-spec-generator.service';
 import { FormRoutingModule } from './forms-routing.module';
-import { PartialFormComponent } from './partial-form.component';
+import { PartialFormComponent } from './partial-form/partial-form.component';
 
 const formControlComponents = [
     AutocompleteControlComponent,
