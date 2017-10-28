@@ -12,6 +12,7 @@ import { createTableName } from '../common/util';
 import { TableService } from '../core/table.service';
 import { FormHostComponent } from './form-host.component';
 import { By } from '@angular/platform-browser';
+import { MdSnackBar } from '@angular/material';
 
 const expect = global['chai'].expect;
 
@@ -24,6 +25,8 @@ describe('FormHostComponent', () => {
     const tableServiceStub = {
         list: (): Observable<any> => Observable.throw('Not stubbed')
     };
+
+    const snackbarStub = {};
 
     const tableNamesObservable = (...rawNames: string[]) => {
         return Observable.of(rawNames.map(createTableName));
@@ -45,7 +48,8 @@ describe('FormHostComponent', () => {
                     // name will always be 'master'
                     useValue: { params: Observable.of({ name: 'master' }) }
                 },
-                { provide: TableService, useValue: tableServiceStub }
+                { provide: TableService, useValue: tableServiceStub },
+                { provide: MdSnackBar, useValue: snackbarStub }
             ]
         });
 

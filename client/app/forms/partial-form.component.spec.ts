@@ -11,6 +11,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
+import { Constraint } from '../common/api';
 import { createTableName } from '../common/util';
 import { TableService } from '../core/table.service';
 import { ComponentMapperService } from './component-mapper.service';
@@ -22,7 +23,6 @@ import {
 } from './form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
-import { Constraint } from '../common/api';
 
 const expect = global['chai'].expect;
 

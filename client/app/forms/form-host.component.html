@@ -2,7 +2,7 @@
     <div class="form-container">
 
         <div class="partial-form-container" *ngFor="let name of names">
-            <partial-form [rootGroup]="formGroup" [name]="name" [role]="name.masterRawName === null ? 'master' : 'part'"></partial-form>
+            <partial-form #partialForms [rootGroup]="formGroup" [name]="name" [role]="name.masterRawName === null ? 'master' : 'part'"></partial-form>
         </div>
 
         <button md-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>

@@ -224,7 +224,7 @@ export class TableDao {
         const preparedData: PreparedInsert = TableDao.prepareForInsert(headers, parts, data);
 
         return helper.transaction(async () => {
-            // Make sure we alpabetize the names so we insert master tables first
+            // Make sure we alphabetize the names so we insert master tables first
             const names = _.sortBy(Object.keys(preparedData));
 
             // Do inserts in sequence so we can guarantee that master tables
@@ -586,7 +586,10 @@ export class TableDao {
                 const sqlName = partHeaders[0].tableName;
 
                 const partRows = row.$parts[partCleanName];
-                prep[sqlName] = _.map(partRows, (r) => TableDao.prepareRow(partHeaders, r));
+
+                const prepared = _.map(partRows, (r) => TableDao.prepareRow(partHeaders, r));
+                if (prepared.length !== 0)
+                    prep[sqlName] = prepared;
             }
         }
 

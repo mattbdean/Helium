@@ -53,7 +53,7 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
     private static filterValues(userInput: string, availableOptions: string[]): string[] {
         // Case-insensitive search
         const lowercaseOptions = availableOptions.map((val) => val.toLowerCase());
-        const userInputLower = userInput.toLowerCase();
+        const userInputLower = (userInput || '').toLowerCase();
 
         // Only return values that start with the user input
         return lowercaseOptions.filter((s) => s.indexOf(userInputLower) === 0);

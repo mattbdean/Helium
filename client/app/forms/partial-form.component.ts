@@ -72,6 +72,8 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
     public formSpec: FormControlSpec[];
 
+    public meta: TableMeta = null;
+
     private sub: Subscription;
     public formArray: FormArray;
 
@@ -87,26 +89,30 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     ) {}
 
     public ngOnInit() {
-        const spec$ = this.name$
-            .switchMap((name: TableName) =>
+        const meta$ = this.name$
+            .switchMap((name: TableName): Observable<TableMeta> =>
                 this.backend.meta(name.rawName)
                     .catch((err) => {
                         // TODO handle better
                         console.error(err);
-                        return Observable.never();
+                        return Observable.never<TableMeta>();
                     }
-                ))
-            .map((meta: TableMeta) => [meta, this.formSpecGenerator.generate(meta)], this);
+                ));
+
+        const spec$ = meta$
+            .map(this.formSpecGenerator.generate, this);
 
         // Combine the latest output from the FormControlSpec array generated
         // from the table name/meta and the rootGroup
         this.sub = Observable.zip(
-            spec$,
+            meta$,
             this.rootGroup$,
+            spec$,
         )
-            .subscribe((data: [[TableMeta, FormControlSpec[]], FormGroup]) => {
-                const tableMeta = data[0][0];
-                this.formSpec = data[0][1];
+            .subscribe((data: [TableMeta, FormGroup, FormControlSpec[]]) => {
+                const tableMeta = data[0];
+                this.meta = tableMeta;
+                this.formSpec = data[2];
 
                 // Master tables start off with one entry
                 const initialData = this.role === 'master' ?
