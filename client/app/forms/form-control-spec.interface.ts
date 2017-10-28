@@ -18,6 +18,9 @@ export interface FormControlSpec {
     /** A value to present to the user when the current value is empty */
     placeholder: string;
 
+    /** A value to prepopulate the form control with */
+    defaultValue?: string | number | boolean | Date;
+
     /** More specific input type. Not always used. */
     subtype?: string;
 
@@ -26,8 +29,6 @@ export interface FormControlSpec {
 
     /** A list of possible enumerated values. Only used when `type` is 'enum'. */
     enumValues?: string[];
-
-    initialValue?: any;
 
     required: boolean;
 

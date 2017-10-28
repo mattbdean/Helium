@@ -54,7 +54,8 @@ const textualHeader = (h: TextualHeaderStub): TableHeader => {
         numericScale: null,
         enumValues: h.enumValues || null,
         comment: '',
-        tableName
+        tableName,
+        defaultValue: null
     };
 };
 
@@ -75,7 +76,8 @@ const numericHeader = (h: NumericHeaderStub): TableHeader => {
         numericScale: 5,
         enumValues: null,
         comment: '',
-        tableName
+        tableName,
+        defaultValue: null
     };
 };
 

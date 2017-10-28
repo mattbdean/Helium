@@ -2,14 +2,20 @@ import { Injectable } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 
 import { pickBy } from 'lodash';
+import * as moment from 'moment';
 
-import { Constraint, TableMeta, TableName } from '../../common/api';
+import { Observable } from 'rxjs/Observable';
+import {
+    Constraint, TableMeta } from '../../common/api';
+import {
+    CURRENT_TIMESTAMP, DATE_FORMAT,
+    DATETIME_FORMAT
+} from '../../common/constants';
+import { createTableName } from '../../common/util';
+import { TableService } from '../../core/table.service';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';
-import { Observable } from 'rxjs/Observable';
-import { TableService } from '../../core/table.service';
-import { createTableName } from '../../common/util';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -46,6 +52,20 @@ export class FormSpecGeneratorService {
             let initialValue: any | undefined;
             let disabled = false;
             let autocompleteValues: Observable<string[]> | undefined;
+            let defaultValue;
+
+            const constantName = ((h.defaultValue || {}) as any).constantName;
+            if (h.type === 'datetime' && constantName !== undefined) {
+                switch (constantName) {
+                    case CURRENT_TIMESTAMP:
+                        defaultValue = new Date();
+                        break;
+                    default:
+                        throw new Error('Unknown special default value: ' + constantName);
+                }
+            } else {
+                defaultValue = h.defaultValue;
+            }
 
             const foreignKey = meta.constraints.find(
                 (constraint) => constraint.type === 'foreign' && constraint.localColumn === h.name);
@@ -74,13 +94,18 @@ export class FormSpecGeneratorService {
                     type = 'date';
                     // datetime-local used for dates and times
                     subtype = h.type === 'date' ? 'date' : 'datetime-local';
+                    if (typeof defaultValue === 'string') {
+                        // Parse the string into a Date
+                        const format = h.type === 'date' ? DATE_FORMAT : DATETIME_FORMAT;
+                        defaultValue = moment(defaultValue, format).toDate();
+                    }
                     break;
                 case 'blob':
                     type = 'text';
                     // Since blobs aren't supported, we only allow entering
                     // null values. Disable all blob controls and set the initial
                     // value to null only if the header is nullable.
-                    initialValue = h.nullable ? null : undefined;
+                    defaultValue = h.nullable ? null : undefined;
                     disabled = true;
                     break;
                 default:
@@ -101,10 +126,10 @@ export class FormSpecGeneratorService {
                 placeholder: h.name,
                 validation: validators,
                 enumValues,
-                initialValue,
                 required,
                 disabled,
-                autocompleteValues
+                autocompleteValues,
+                defaultValue
             };
 
             // Don't specifically define undefined values as undefined. Messes
