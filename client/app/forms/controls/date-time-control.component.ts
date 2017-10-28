@@ -9,16 +9,16 @@ import { AbstractFormControl } from './abstract-form-control.class';
     selector: 'date-time-control',
     template: `
         <div [formGroup]="group">
-            <md-form-field>
-                <input mdInput
-                       [mdDatepicker]="picker"
+            <mat-form-field>
+                <input matInput
+                       [matDatepicker]="picker"
                        [type]="spec.subtype"
                        [placeholder]="spec.placeholder"
                        [formControlName]="spec.formControlName"
                        [required]="spec.required">
-                <md-datepicker-toggle mdSuffix [for]="picker"></md-datepicker-toggle>
-                <md-datepicker #picker></md-datepicker>
-            </md-form-field>
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
         </div>
     `
 })

@@ -5,7 +5,7 @@
   flex-direction: column;
 }
 
-md-sidenav-container {
+mat-sidenav-container {
   flex-grow: 1;
 
   // Enables the scrollbar when main content is too big to fit the screen
@@ -13,7 +13,7 @@ md-sidenav-container {
   flex-direction: column;
 }
 
-md-sidenav {
+mat-sidenav {
   box-shadow: 3px 0 6px rgba(0,0,0,.24);
   // Sidenav must have a fixed width for larger screens to display properly without a manual window resize
   width: 240px;

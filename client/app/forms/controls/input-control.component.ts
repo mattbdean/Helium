@@ -5,13 +5,13 @@ import { AbstractFormControl } from './abstract-form-control.class';
     selector: 'input-control',
     template: `
         <div [formGroup]="group">
-            <md-form-field>
-                <input mdInput
+            <mat-form-field>
+                <input matInput
                     [type]="spec.subtype"
                     [placeholder]="spec.placeholder"
                     [formControlName]="spec.formControlName"
                     [required]="spec.required">
-            </md-form-field>
+            </mat-form-field>
         </div>
     `
 })

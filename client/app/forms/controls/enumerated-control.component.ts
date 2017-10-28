@@ -5,12 +5,12 @@ import { AbstractFormControl } from './abstract-form-control.class';
     selector: 'enumerated-control',
     template: `
         <div class="enum-wrapper" [formGroup]="group">
-            <md-select
+            <mat-select
                 [required]="spec.required"
                 [placeholder]="spec.placeholder"
                 [formControlName]="spec.formControlName">
-                <md-option *ngFor="let option of spec.enumValues" [value]="option">{{ option }}</md-option>
-            </md-select>
+                <mat-option *ngFor="let option of spec.enumValues" [value]="option">{{ option }}</mat-option>
+            </mat-select>
         </div>
     `,
     styles: [`

@@ -3,7 +3,7 @@ import {
     ComponentFixture, fakeAsync, TestBed,
     tick
 } from '@angular/core/testing';
-import { MdSidenavModule } from '@angular/material';
+import { MatSidenavModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 
@@ -64,7 +64,7 @@ describe('AppComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 CoreModule,
-                MdSidenavModule,
+                MatSidenavModule,
                 NoopAnimationsModule,
                 RouterTestingModule
             ],

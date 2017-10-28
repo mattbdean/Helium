@@ -5,6 +5,6 @@
             <partial-form #partialForms [rootGroup]="formGroup" [name]="name" [role]="name.masterRawName === null ? 'master' : 'part'"></partial-form>
         </div>
 
-        <button md-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>
+        <button mat-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>
     </div>
 </form>

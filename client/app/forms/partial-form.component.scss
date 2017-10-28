@@ -1,6 +1,6 @@
 // Remove default padding from the card so the background effect applied to the entry-containers have more significance
 $card-padding: 24px;
-md-card {
+mat-card {
   padding: 0;
 
   transition: max-height 300ms ease-in-out;

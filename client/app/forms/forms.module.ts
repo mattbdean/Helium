@@ -2,13 +2,16 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import {
-    MdAutocompleteModule,
-    MdButtonModule,
-    MdCardModule, MdCheckboxModule, MdDatepickerModule, MdIconModule,
-    MdInputModule,
-    MdNativeDateModule,
-    MdSelectModule,
-    MdSnackBarModule
+    MatAutocompleteModule,
+    MatButtonModule,
+    MatCardModule,
+    MatCheckboxModule,
+    MatDatepickerModule,
+    MatIconModule,
+    MatInputModule,
+    MatNativeDateModule,
+    MatSelectModule,
+    MatSnackBarModule
 } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
@@ -36,16 +39,16 @@ const formControlComponents = [
     imports: [
         CommonModule,
         CoreModule,
-        MdAutocompleteModule,
-        MdButtonModule,
-        MdCardModule,
-        MdCheckboxModule,
-        MdDatepickerModule,
-        MdIconModule,
-        MdInputModule,
-        MdNativeDateModule,
-        MdSelectModule,
-        MdSnackBarModule,
+        MatAutocompleteModule,
+        MatButtonModule,
+        MatCardModule,
+        MatCheckboxModule,
+        MatDatepickerModule,
+        MatIconModule,
+        MatInputModule,
+        MatNativeDateModule,
+        MatSelectModule,
+        MatSnackBarModule,
         ReactiveFormsModule,
 
         FormRoutingModule

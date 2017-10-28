@@ -3,7 +3,7 @@ import {
     ComponentFixture, fakeAsync, TestBed, tick
 } from '@angular/core/testing';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MdButtonModule, MdIconModule } from '@angular/material';
+import { MatButtonModule, MatIconModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -108,8 +108,8 @@ describe('PartialFormComponent', () => {
                 PartialFormComponent
             ],
             imports: [
-                MdButtonModule,
-                MdIconModule,
+                MatButtonModule,
+                MatIconModule,
                 NoopAnimationsModule,
                 ReactiveFormsModule
             ],

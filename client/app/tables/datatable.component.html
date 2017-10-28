@@ -1,4 +1,4 @@
-<md-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></md-progress-bar>
+<mat-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></mat-progress-bar>
 <div [hidden]="!exists">
     <h1 class="mat-display-1"><table-name [name]="name"></table-name></h1>
     <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>

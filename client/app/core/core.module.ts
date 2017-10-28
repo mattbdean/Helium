@@ -4,7 +4,7 @@ import { NgModule } from '@angular/core';
 
 import { InlineSVGModule } from "ng-inline-svg";
 
-import { MdIconModule } from '@angular/material';
+import { MatIconModule } from '@angular/material';
 import { RouterModule } from "@angular/router";
 import { ConstraintIconsComponent } from "./constraint-icons.component";
 import { TableNameComponent } from './table-name.component';
@@ -15,7 +15,7 @@ import { TableService } from './table.service';
         CommonModule,
         InlineSVGModule,
         HttpClientModule,
-        MdIconModule,
+        MatIconModule,
         RouterModule
     ],
     declarations: [

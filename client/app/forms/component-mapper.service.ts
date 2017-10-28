@@ -1,10 +1,10 @@
 import { Injectable, Type } from '@angular/core';
+import { AutocompleteControlComponent } from './controls/autocomplete-control.component';
+import { CheckboxControlComponent } from './controls/checkbox-control.component';
+import { DateTimeControlComponent } from './controls/date-time-control.component';
 import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { InputControlComponent } from './controls/input-control.component';
 import { FormControlType } from './form-control-spec.interface';
-import { CheckboxControlComponent } from './controls/checkbox-control.component';
-import { DateTimeControlComponent } from './controls/date-time-control.component';
-import { AutocompleteControlComponent } from './controls/autocomplete-control.component';
 
 /**
  * Maps FormControlTypes to component types. Exists as a service instead of a

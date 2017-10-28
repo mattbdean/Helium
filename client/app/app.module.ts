@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import {
-    MdButtonModule,
-    MdIconModule,
-    MdNativeDateModule,
-    MdSidenavModule,
-    MdToolbarModule
+    MatButtonModule,
+    MatIconModule,
+    MatNativeDateModule,
+    MatSidenavModule,
+    MatToolbarModule
 } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -28,11 +28,11 @@ import 'normalize.css/normalize.css';
         CoreModule,
         CommonModule,
 
-        MdButtonModule,
-        MdIconModule,
-        MdNativeDateModule,
-        MdToolbarModule,
-        MdSidenavModule,
+        MatButtonModule,
+        MatIconModule,
+        MatNativeDateModule,
+        MatToolbarModule,
+        MatSidenavModule,
 
         TablesModule,
         FormsModule,

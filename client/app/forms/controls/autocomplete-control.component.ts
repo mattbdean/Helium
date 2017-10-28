@@ -12,20 +12,20 @@ import { AbstractFormControl } from './abstract-form-control.class';
     selector: 'autocomplete-control',
     template: `
         <div [formGroup]="group">
-            <md-form-field>
-                <input mdInput
+            <mat-form-field>
+                <input matInput
                        [type]="spec.subtype"
-                       [mdAutocomplete]="auto"
+                       [matAutocomplete]="auto"
                        [placeholder]="spec.placeholder"
                        [formControlName]="spec.formControlName"
                        [required]="spec.required">
-            </md-form-field>
+            </mat-form-field>
             
-            <md-autocomplete #auto="mdAutocomplete">
-                <md-option *ngFor="let option of currentSuggestions | async" [value]="option">
+            <mat-autocomplete #auto="matAutocomplete">
+                <mat-option *ngFor="let option of currentSuggestions | async" [value]="option">
                     {{ option }}
-                </md-option>
-            </md-autocomplete>
+                </mat-option>
+            </mat-autocomplete>
         </div>
     `
 })

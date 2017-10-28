@@ -4,7 +4,7 @@ import {
     ViewChildren
 } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { MdSnackBar, MdSnackBarRef } from '@angular/material';
+import { MatSnackBar, MatSnackBarRef } from '@angular/material';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
@@ -47,7 +47,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
     public constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private snackBar: MdSnackBar,
+        private snackBar: MatSnackBar,
         private fb: FormBuilder,
         private backend: TableService
     ) {}
@@ -117,7 +117,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     });
             })
             .flatMap((err: any | null) => {
-                let snackbarRef: MdSnackBarRef<any>;
+                let snackbarRef: MatSnackBarRef<any>;
 
                 if (err) {
                     let message = 'Unable add row';
@@ -141,7 +141,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 }
             })
             // When we finally reach the end, dismiss the snackbar
-            .subscribe((ref: MdSnackBarRef<any>) => ref.dismiss());
+            .subscribe((ref: MatSnackBarRef<any>) => ref.dismiss());
     }
 
     /**

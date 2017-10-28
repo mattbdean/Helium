@@ -1,4 +1,4 @@
-<md-card>
+<mat-card>
     <h1 class="form-title">{{ name.cleanName }}</h1>
 
     <div class="form-content">
@@ -11,24 +11,24 @@
 
             <div class="remove-button-wrapper" *ngIf="role === 'part'">
                 <button *ngIf="role === 'part'"
-                        md-icon-button
+                        mat-icon-button
                         type="button"
                         tabindex="-1"
                         title="Remove this entry"
                         (click)="removeEntry(i)">
-                    <md-icon>remove_circle</md-icon>
+                    <mat-icon>remove_circle</mat-icon>
                 </button>
             </div>
         </div>
 
         <div class="add-button-wrapper" *ngIf="role === 'part'">
             <button *ngIf="role === 'part'"
-                    md-icon-button
+                    mat-icon-button
                     type="button"
                     title="Add another entry"
                     (click)="addEntry()">
-                <md-icon color="primary">add_circle</md-icon>
+                <mat-icon color="primary">add_circle</mat-icon>
             </button>
         </div>
     </div>
-</md-card>
+</mat-card>

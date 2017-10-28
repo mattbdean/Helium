@@ -5,7 +5,7 @@ import { Observable } from 'rxjs/Rx';
 
 import * as _ from 'lodash';
 
-import { MdSidenav } from '@angular/material';
+import { MatSidenav } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
@@ -32,8 +32,8 @@ export class AppComponent implements OnDestroy, OnInit {
 
     private windowSizeSub: Subscription;
 
-    @ViewChild(MdSidenav)
-    private sidenav: MdSidenav;
+    @ViewChild(MatSidenav)
+    private sidenav: MatSidenav;
 
     private sidenavMode: 'push' | 'over' | 'side' = 'side';
 
