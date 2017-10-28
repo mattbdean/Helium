@@ -214,7 +214,6 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                 // Fall back to the spec's initial value if there is no binding
                 // for this particular control
                 const initialValue = binding ? binding.lastValue : spec.defaultValue;
-                console.log(initialValue);
 
                 // Create the actual form control. Bound controls are always
                 // disabled.

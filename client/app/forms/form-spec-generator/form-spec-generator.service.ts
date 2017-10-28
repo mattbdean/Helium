@@ -49,10 +49,9 @@ export class FormSpecGeneratorService {
             let type: FormControlType = 'text';
             let subtype: string | undefined;
             let enumValues: string[] | undefined;
-            let initialValue: any | undefined;
             let disabled = false;
             let autocompleteValues: Observable<string[]> | undefined;
-            let defaultValue;
+            let defaultValue: any = h.defaultValue;
 
             const constantName = ((h.defaultValue || {}) as any).constantName;
             if (h.type === 'datetime' && constantName !== undefined) {
@@ -63,8 +62,6 @@ export class FormSpecGeneratorService {
                     default:
                         throw new Error('Unknown special default value: ' + constantName);
                 }
-            } else {
-                defaultValue = h.defaultValue;
             }
 
             const foreignKey = meta.constraints.find(
@@ -87,7 +84,8 @@ export class FormSpecGeneratorService {
                     // An initial value of 'undefined' looks exactly the same as
                     // an initial value of false, except the user will expect an
                     // unchecked checkbox to represent 'false' instead of null.
-                    initialValue = false;
+                    if (defaultValue === null || defaultValue === undefined)
+                        defaultValue = false;
                     break;
                 case 'date':
                 case 'datetime':

@@ -106,7 +106,8 @@ describe('FormSpecGeneratorService', () => {
                 placeholder: 'bar',
                 validation: [],
                 required: false,
-                disabled: false
+                disabled: false,
+                defaultValue: null
             };
             expect(formSpec).to.deep.equal(expected);
         });
@@ -121,7 +122,8 @@ describe('FormSpecGeneratorService', () => {
                 placeholder: 'bar',
                 validation: [Validators.required],
                 required: true,
-                disabled: false
+                disabled: false,
+                defaultValue: null
             };
             expect(formSpec).to.deep.equal(expected);
         });
@@ -166,7 +168,8 @@ describe('FormSpecGeneratorService', () => {
                 validation: [],
                 enumValues,
                 required: false,
-                disabled: false
+                disabled: false,
+                defaultValue: null
             };
 
             expect(formSpec).to.deep.equal(expected);
@@ -181,7 +184,7 @@ describe('FormSpecGeneratorService', () => {
 
             formSpec.validation.should.have.lengthOf(0);
             formSpec.type.should.equal('boolean');
-            formSpec.initialValue.should.be.false;
+            formSpec.defaultValue.should.be.false;
         });
 
         it('should handle dates', () => {
@@ -212,7 +215,7 @@ describe('FormSpecGeneratorService', () => {
             } as TableHeader);
 
             formSpecNullable.type.should.equal('text');
-            expect(formSpecNullable.initialValue).to.be.null;
+            expect(formSpecNullable.defaultValue).to.be.null;
             formSpecNullable.disabled.should.be.true;
 
             // The only difference specifying nullable: false is that the initial
@@ -224,7 +227,7 @@ describe('FormSpecGeneratorService', () => {
             } as TableHeader);
 
             formSpecNonNull.type.should.equal('text');
-            expect(formSpecNonNull.initialValue).to.be.undefined;
+            expect(formSpecNonNull.defaultValue).to.be.undefined;
             formSpecNonNull.disabled.should.be.true;
         });
     });
