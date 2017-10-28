@@ -1,0 +1,61 @@
+// Remove default padding from the card so the background effect applied to the entry-containers have more significance
+$card-padding: 24px;
+mat-card {
+  padding: 0;
+
+  transition: max-height 300ms ease-in-out;
+}
+
+.form-title {
+  padding: $card-padding $card-padding 0 $card-padding;
+  margin: 3px 0;
+  font: 400 24px/32px Roboto,"Helvetica Neue",sans-serif;
+}
+
+.form-subtitle {
+  padding: 0 $card-padding;
+  margin: 3px 0;
+  font-weight: normal;
+  color: rgba(0, 0, 0, 0.54);
+  font-size: 16px;
+}
+
+.form-content {
+  margin: 15px 0;
+}
+
+// Contains a form-controls-container and a remove-button-wrapper
+.entry-container {
+  display: flex;
+  flex-direction: row;
+
+  // Give every other entry a slightly darker background to try to differentiate it from its siblings
+  &:nth-child(even) {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.form-controls-container {
+  // Give priority to the form controls rather than distributing space evenly between the controls and the remove button
+  flex-grow: 1;
+}
+
+.control-container {
+  // Re-add card padding to left and right
+  padding: 0 $card-padding;
+}
+
+.add-button-wrapper {
+  // Re-add card padding on every side besides top, and only half the original padding on the bottom
+  padding: 0 $card-padding $card-padding / 2 $card-padding;
+}
+
+.remove-button-wrapper {
+  // Vertically align the remove button and add 1/4 the original card padding
+  padding-right: $card-padding / 4;
+  align-self: center;
+}
+
+.gone {
+  display: none;
+}

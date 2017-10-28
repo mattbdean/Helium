@@ -1,9 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import {
+    Component, OnDestroy, OnInit, ViewChild
+} from '@angular/core';
 import { Observable } from 'rxjs/Rx';
 
 import * as _ from 'lodash';
 
-import { MasterTableName, TableName, TableTier } from './common/api';
+import { MatSidenav } from '@angular/material';
+import { Subscription } from 'rxjs/Subscription';
+import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
 import { TableService } from "./core/table.service";
 
@@ -14,11 +18,24 @@ interface GroupedName { tier: TableTier; names: MasterTableName[]; }
     templateUrl: 'app.component.html',
     styleUrls: ['app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnDestroy, OnInit {
     public static readonly TIER_ORDER: TableTier[] =
         ['manual', 'lookup', 'imported', 'computed', 'hidden'];
 
+    /**
+     * If the width of the browser (in pixels) is above this value, the sidenav
+     * will always be shown.
+     */
+    public static readonly ALWAYS_SHOW_SIDENAV_WIDTH = 1480;
+
     public groupedNames: Observable<GroupedName[]>;
+
+    private windowSizeSub: Subscription;
+
+    @ViewChild(MatSidenav)
+    private sidenav: MatSidenav;
+
+    private sidenavMode: 'push' | 'over' | 'side' = 'side';
 
     public constructor(
         private backend: TableService
@@ -45,5 +62,32 @@ export class AppComponent implements OnInit {
                     })
                     .value();
             });
+
+        this.windowSizeSub = Observable
+            .fromEvent(window, 'resize')
+            // Start with a value so adjustSidenav gets called on init
+            .startWith(-1)
+            .subscribe(() => {
+                this.adjustSidenav();
+            });
+    }
+
+    public ngOnDestroy() {
+        this.windowSizeSub.unsubscribe();
+    }
+
+    public onSidenavLinkClicked() {
+        if (this.sidenavMode !== 'side')
+            this.sidenav.opened = false;
+    }
+
+    public toggleSidenav() {
+        this.sidenav.opened = !this.sidenav.opened;
+    }
+
+    private adjustSidenav() {
+        const alwaysShow = window.innerWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
+        this.sidenavMode = alwaysShow ? 'side' : 'over';
+        this.sidenav.opened = alwaysShow;
     }
 }

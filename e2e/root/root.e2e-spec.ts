@@ -12,7 +12,7 @@ describe('Root page', () => {
 
     it('should display welcome message', () => {
         page.navigateTo();
-        expect(page.getToolbarText()).to.eventually.equal('Helium');
+        expect(page.getToolbarText()).to.eventually.include('Helium');
 
     });
 

@@ -16,6 +16,7 @@ module.exports = function (config) {
             require('@angular/cli/plugins/karma')
         ],
         browserDisconnectTimeout: 30000,
+        browserNoActivityTimeout: 30000,
         client: {
             clearContext: false
         },

@@ -4,6 +4,7 @@ export interface TableMeta {
     totalRows: number;
     constraints: Constraint[];
     comment: string;
+    parts: TableName[];
 }
 
 /**

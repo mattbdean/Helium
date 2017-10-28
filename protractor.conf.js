@@ -7,7 +7,11 @@ exports.config = {
         './e2e/**/*.e2e-spec.ts'
     ],
     capabilities: {
-        'browserName': 'chrome'
+        'browserName': 'chrome',
+        chromeOptions: {
+            // Anything with a width over AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH will work
+            args: ['--window-size=1500,800']
+        }
     },
     directConnect: true,
     baseUrl: 'http://localhost:3000/',

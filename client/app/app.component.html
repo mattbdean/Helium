@@ -1,26 +1,32 @@
-<md-toolbar color="primary">Helium</md-toolbar>
-<md-sidenav-container>
-    <md-sidenav mode="side" opened="true" fullscreen>
+<mat-sidenav-container>
+    <mat-sidenav [mode]="sidenavMode" [disableClose]="sidenavMode === 'side'">
         <ul class="sidenav-list undecorated-list" *ngFor="let groupedName of groupedNames | async">
             <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
             <li class="table-ref-container" *ngFor="let table of groupedName.names">
                 <span class="table-ref table-ref-master row-item">
-                    <a class="table-name" [routerLink]="['/tables', table.rawName]" routerLinkActive="active-router-link">{{ table.cleanName }}</a>
-                    <a class="material-icons add-data-icon" [routerLink]="['/forms', table.rawName]" routerLinkActive="active-router-link">add</a>
+                    <a class="table-name" [routerLink]="['/tables', table.rawName]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">{{ table.cleanName }}</a>
+                    <a class="material-icons add-data-icon" [routerLink]="['/forms', table.rawName]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">add</a>
                 </span>
 
                 <ul class="undecorated-list nested-list" *ngIf="table.parts.length > 0">
                     <li class="table-ref-container" *ngFor="let part of table.parts">
                         <span class="table-ref table-ref-part row-item">
-                            <a class="table-name" [routerLink]="['/tables', part.rawName]" routerLinkActive="active-router-link">{{ part.cleanName }}</a>
+                            <a class="table-name" [routerLink]="['/tables', part.rawName]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">{{ part.cleanName }}</a>
                         </span>
                     </li>
                 </ul>
             </li>
         </ul>
-    </md-sidenav>
+    </mat-sidenav>
+
+    <mat-toolbar color="primary">
+        <button [style.visibility]="sidenavMode === 'side' ? 'hidden' : 'visible'" mat-button class="sidenav-toggle" (click)="toggleSidenav()">
+            <i class="material-icons mat-light">menu</i>
+        </button>
+        Helium
+    </mat-toolbar>
 
     <div class="router-content">
         <router-outlet></router-outlet>
     </div>
-</md-sidenav-container>
+</mat-sidenav-container>

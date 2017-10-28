@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MdIconModule, MdProgressBarModule } from '@angular/material';
+import { MatIconModule, MatProgressBarModule } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
 import { DatatableComponent } from './datatable.component';
@@ -14,8 +14,8 @@ import { NgxDatatableModule } from '@swimlane/ngx-datatable';
     imports: [
         CommonModule,
         CoreModule,
-        MdIconModule,
-        MdProgressBarModule,
+        MatIconModule,
+        MatProgressBarModule,
         NgxDatatableModule,
         ReactiveFormsModule,
         TableRoutingModule

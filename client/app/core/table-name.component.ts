@@ -7,7 +7,7 @@ import { createTableName } from '../common/util';
     templateUrl: 'table-name.component.html',
     styles: [`
         /* Make the icon match the text color */
-        md-icon { color: rgba(0, 0, 0, 0.87); }
+        mat-icon { color: rgba(0, 0, 0, 0.87); }
     `]
 })
 export class TableNameComponent implements OnChanges {

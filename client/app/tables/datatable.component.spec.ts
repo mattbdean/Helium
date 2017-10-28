@@ -1,18 +1,18 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MdProgressBarModule } from '@angular/material';
+import { MatProgressBarModule } from '@angular/material';
+import { By } from '@angular/platform-browser';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { Observable } from 'rxjs/Observable';
 
 import * as sinon from 'sinon';
 
-import { By } from '@angular/platform-browser';
 import { SqlRow, TableMeta } from '../common/api';
+import { createTableName } from '../common/util';
 import { CoreModule } from '../core/core.module';
 import { TableService } from '../core/table.service';
 import { DatatableComponent } from './datatable.component';
-import { createTableName } from '../common/util';
 
 const expect = global['chai'].expect;
 
@@ -34,14 +34,15 @@ describe('DatatableComponent', () => {
         headers: [],
         totalRows: 0,
         constraints: [],
-        comment: 'description'
+        comment: 'description',
+        parts: []
     });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 CoreModule,
-                MdProgressBarModule,
+                MatProgressBarModule,
                 NgxDatatableModule
             ],
             declarations: [

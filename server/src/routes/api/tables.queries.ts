@@ -10,7 +10,7 @@ import {
     TableHeader, TableMeta, TableName
 } from '../../common/api';
 import { BLOB_STRING_REPRESENTATION, DATE_FORMAT, DATETIME_FORMAT} from '../../common/constants';
-import { createTableName } from '../../common/util';
+import { createTableName, unflattenTableNames } from '../../common/util';
 import { Database } from '../../database.helper';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
@@ -159,19 +159,26 @@ export class TableDao {
      * Fetches a TableMeta instance for the given table.
      */
     public static async meta(name: string): Promise<TableMeta> {
-        const [headers, count, constraints, comment] = await Promise.all([
+        const [allTables, headers, count, constraints, comment] = await Promise.all([
+            TableDao.list(),
             TableDao.headers(name),
             TableDao.count(name),
             TableDao.constraints(name).then(TableDao.resolveConstraints),
             TableDao.comment(name)
         ]);
 
+        // Identify part tables for the given table name
+        const masterTables = unflattenTableNames(allTables);
+        const masterTable = masterTables.find((t) => t.rawName === name);
+        const parts = masterTable ? masterTable.parts : [];
+
         return {
             name,
             headers,
             totalRows: count,
             constraints,
-            comment
+            comment,
+            parts
         };
     }
 
@@ -217,7 +224,7 @@ export class TableDao {
         const preparedData: PreparedInsert = TableDao.prepareForInsert(headers, parts, data);
 
         return helper.transaction(async () => {
-            // Make sure we alpabetize the names so we insert master tables first
+            // Make sure we alphabetize the names so we insert master tables first
             const names = _.sortBy(Object.keys(preparedData));
 
             // Do inserts in sequence so we can guarantee that master tables
@@ -579,7 +586,10 @@ export class TableDao {
                 const sqlName = partHeaders[0].tableName;
 
                 const partRows = row.$parts[partCleanName];
-                prep[sqlName] = _.map(partRows, (r) => TableDao.prepareRow(partHeaders, r));
+
+                const prepared = _.map(partRows, (r) => TableDao.prepareRow(partHeaders, r));
+                if (prepared.length !== 0)
+                    prep[sqlName] = prepared;
             }
         }
 

@@ -3,7 +3,7 @@ import {
     ComponentFixture, fakeAsync, TestBed,
     tick
 } from '@angular/core/testing';
-import { MdSidenavModule } from '@angular/material';
+import { MatSidenavModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 
@@ -16,6 +16,7 @@ import { TableName, TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table.service';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 const expect = global['chai'].expect;
 
@@ -63,7 +64,8 @@ describe('AppComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 CoreModule,
-                MdSidenavModule,
+                MatSidenavModule,
+                NoopAnimationsModule,
                 RouterTestingModule
             ],
             declarations: [ AppComponent ],

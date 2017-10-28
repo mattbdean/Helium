@@ -13,6 +13,7 @@ import {
     BLOB_STRING_REPRESENTATION, DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
+import { createTableName } from '../src/common/util';
 import { TableDao } from '../src/routes/api/tables.queries';
 import { RequestContext } from './api.test.helper';
 
@@ -523,6 +524,20 @@ describe('API v1', () => {
                 expect(error.message).to.be.a('string');
             })
         );
+
+        it('should include part table names when applicable', () => {
+            // `datatypeshowcase` has no part tables
+            expect(meta.parts).to.be.empty;
+
+            request.basic('/tables/master', 200, (data: TableMeta) => {
+                // `master` has 2 part tables: `part` and `part2`
+                const expected: TableName[] = [
+                    createTableName('master__part'),
+                    createTableName('master__part2')
+                ];
+                expect(data.parts).to.deep.equal(expected);
+            });
+        });
     });
 
     describe('GET /api/v1/:name/column/:col', () => {

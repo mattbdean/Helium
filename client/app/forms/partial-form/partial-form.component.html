@@ -1,0 +1,34 @@
+<mat-card>
+    <h1 class="form-title">{{ name.cleanName }}</h1>
+
+    <div class="form-content">
+        <div class="entry-container" [@fade] *ngFor="let group of formArray?.controls; let i = index">
+            <div class="form-controls-container">
+                <div [ngClass]="{ 'control-container': true, gone: shouldBeHidden(spec.formControlName) }" *ngFor="let spec of formSpec">
+                    <ng-template dynamicFormControl [group]="group" [control]="spec"></ng-template>
+                </div>
+            </div>
+
+            <div class="remove-button-wrapper" *ngIf="role === 'part'">
+                <button *ngIf="role === 'part'"
+                        mat-icon-button
+                        type="button"
+                        tabindex="-1"
+                        title="Remove this entry"
+                        (click)="removeEntry(i)">
+                    <mat-icon>remove_circle</mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <div class="add-button-wrapper" *ngIf="role === 'part'">
+            <button *ngIf="role === 'part'"
+                    mat-icon-button
+                    type="button"
+                    title="Add another entry"
+                    (click)="addEntry()">
+                <mat-icon color="primary">add_circle</mat-icon>
+            </button>
+        </div>
+    </div>
+</mat-card>
