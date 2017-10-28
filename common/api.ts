@@ -7,6 +7,8 @@ export interface TableMeta {
     parts: TableName[];
 }
 
+export interface SpecialDefaultValue { constantName: string; }
+
 /**
  * DataJoint table tier. See http://docs.datajoint.io/data-definition/Data-tiers.html
  * for more.
@@ -50,6 +52,8 @@ export interface SqlRow {
 }
 
 export type TableDataType = 'string' | 'integer' | 'float' | 'date' | 'datetime' | 'boolean' | 'enum' | 'blob';
+
+export type DefaultValue = string | number | boolean | null | SpecialDefaultValue;
 
 export interface TableHeader {
     name: string;
@@ -105,7 +109,11 @@ export interface TableHeader {
     /** Database-level column comment */
     comment: string;
 
+    /** The name of the table to which this column belongs. */
     tableName: string;
+
+    /** A value that will be used if no explicit value is set on insertion time. */
+    defaultValue: DefaultValue;
 }
 
 export interface Constraint {
