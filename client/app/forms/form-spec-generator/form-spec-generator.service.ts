@@ -96,11 +96,15 @@ export class FormSpecGeneratorService {
                     type = 'date';
                     // datetime-local used for dates and times
                     subtype = h.type === 'date' ? 'date' : 'datetime-local';
-                    if (typeof defaultValue === 'string' || defaultValue === null || defaultValue === undefined) {
+                    if (typeof defaultValue === 'string' && defaultValue !== null && defaultValue !== undefined) {
                         // Parse the string into a Date
                         const format = h.type === 'date' ? DATE_FORMAT : DATETIME_FORMAT;
                         defaultValue = moment(defaultValue, format).toDate();
                     }
+
+                    // If there's nothing
+                    if (defaultValue === null || defaultValue === undefined)
+                        defaultValue = new Date();
                     break;
                 case 'blob':
                     type = 'text';
