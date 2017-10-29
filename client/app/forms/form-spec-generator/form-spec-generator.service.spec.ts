@@ -106,8 +106,7 @@ describe('FormSpecGeneratorService', () => {
                 placeholder: 'bar',
                 validation: [],
                 required: false,
-                disabled: false,
-                defaultValue: null
+                disabled: false
             };
             expect(formSpec).to.deep.equal(expected);
         });
@@ -122,8 +121,7 @@ describe('FormSpecGeneratorService', () => {
                 placeholder: 'bar',
                 validation: [Validators.required],
                 required: true,
-                disabled: false,
-                defaultValue: null
+                disabled: false
             };
             expect(formSpec).to.deep.equal(expected);
         });
@@ -168,8 +166,7 @@ describe('FormSpecGeneratorService', () => {
                 validation: [],
                 enumValues,
                 required: false,
-                disabled: false,
-                defaultValue: null
+                disabled: false
             };
 
             expect(formSpec).to.deep.equal(expected);
