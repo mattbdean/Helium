@@ -35,7 +35,7 @@ export class AppComponent implements OnDestroy, OnInit {
     @ViewChild(MatSidenav)
     private sidenav: MatSidenav;
 
-    private sidenavMode: 'push' | 'over' | 'side' = 'side';
+    public sidenavMode: 'push' | 'over' | 'side' = 'side';
 
     public constructor(
         private backend: TableService

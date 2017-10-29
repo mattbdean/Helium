@@ -34,8 +34,8 @@ import { PartialFormComponent } from '../partial-form/partial-form.component';
 })
 export class FormHostComponent implements OnDestroy, OnInit {
     public formGroup: FormGroup;
+    public names: TableName[] = [];
     private mainName: MasterTableName = null;
-    private names: TableName[] = [];
     private completedForm$ = new BehaviorSubject<object>(null);
 
     private sub: Subscription;

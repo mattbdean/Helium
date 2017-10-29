@@ -13,7 +13,7 @@ import { createTableName } from '../common/util';
 export class TableNameComponent implements OnChanges {
     @Input() public name: TableName;
 
-    private masterCleanName: string | null;
+    public masterCleanName: string | null;
 
     public ngOnChanges(changes: SimpleChanges): void {
         if (changes.name) {
