@@ -12,7 +12,7 @@ import { AbstractFormControl } from './abstract-form-control.class';
             <mat-form-field>
                 <input matInput
                        [matDatepicker]="picker"
-                       [type]="spec.subtype"
+                       type="text"
                        [placeholder]="spec.placeholder"
                        [formControlName]="spec.formControlName"
                        [required]="spec.required">
