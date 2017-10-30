@@ -29,6 +29,10 @@
         </span>
     </ng-template>
 
+    <ng-template #headerTemplateInsertLike>
+        <!-- Do nothing -->
+    </ng-template>
+
     <ng-template #cellTemplate let-row="row" let-value="value">
         <span class="special-cell" *ngIf="value === ''">null</span>
         <span *ngIf="value !== ''">{{ value }}</span>
@@ -37,6 +41,13 @@
     <ng-template #cellTemplateBlob let-row="row" let-value="value">
         <span class="special-cell" *ngIf="value === ''">null</span>
         <span class="special-cell" *ngIf="value !== ''">blob</span>
+    </ng-template>
+
+    <ng-template #cellTemplateInsertLike let-row="row" let-value="value">
+        <mat-icon
+            (click)="onInsertLike(row)"
+            class="insert-like-icon"
+            title="Copy data to a new form">add_box</mat-icon>
     </ng-template>
 </div>
 

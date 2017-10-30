@@ -53,7 +53,7 @@ export interface SqlRow {
 
 export type TableDataType = 'string' | 'integer' | 'float' | 'date' | 'datetime' | 'boolean' | 'enum' | 'blob';
 
-export type DefaultValue = string | number | boolean | null | SpecialDefaultValue;
+export type DefaultValue = string | number | boolean | null | Date | SpecialDefaultValue;
 
 export interface TableHeader {
     name: string;

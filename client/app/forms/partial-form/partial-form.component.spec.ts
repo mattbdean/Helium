@@ -23,6 +23,7 @@ import {
 } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
+import { RouterTestingModule } from '@angular/router/testing';
 
 const expect = global['chai'].expect;
 
@@ -111,7 +112,8 @@ describe('PartialFormComponent', () => {
                 MatButtonModule,
                 MatIconModule,
                 NoopAnimationsModule,
-                ReactiveFormsModule
+                ReactiveFormsModule,
+                RouterTestingModule
             ],
             providers: [
                 // Mock all of the required services

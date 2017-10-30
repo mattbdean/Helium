@@ -16,6 +16,7 @@ interface TextualHeaderStub {
     nullable?: boolean;
     maxCharacters?: number | undefined;
     enumValues?: string[] | null;
+    defaultValue?: any;
 }
 
 interface NumericHeaderStub {
@@ -55,7 +56,7 @@ const textualHeader = (h: TextualHeaderStub): TableHeader => {
         enumValues: h.enumValues || null,
         comment: '',
         tableName,
-        defaultValue: null
+        defaultValue: h.defaultValue
     };
 };
 
@@ -226,6 +227,33 @@ describe('FormSpecGeneratorService', () => {
             formSpecNonNull.type.should.equal('text');
             expect(formSpecNonNull.defaultValue).to.be.undefined;
             formSpecNonNull.disabled.should.be.true;
+        });
+
+        it('should ignore prefilled primary key data', () => {
+            const headers = [
+                textualHeader({
+                    name: 'pk',
+                    defaultValue: 'should be used'
+                }),
+                textualHeader({
+                    name: 'normal',
+                    defaultValue: 'should have ben overridden by prefilledData'
+                })
+            ];
+
+            const constraints: Constraint[] = [{
+                localColumn: 'pk',
+                type: 'primary',
+                foreignTable: 'other',
+                foreignColumn: 'other_pk'
+            }];
+
+            const prefilledData = { pk: 'foo', normal: 'bar' };
+
+            const meta = createMetaFor(headers, constraints);
+            const spec = generator.generate(meta, prefilledData);
+            expect(spec[0].defaultValue).to.equal(headers[0].defaultValue);
+            expect(spec[1].defaultValue).to.equal(prefilledData.normal);
         });
     });
 

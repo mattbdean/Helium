@@ -60,7 +60,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             this.backend.list(),
             this.route.params.map((p: Params) => p.name)
         )
-            .switchMap((data: [TableName[], string]): Observable<MasterTableName> => {
+            .switchMap((data: [TableName[], string, string]): Observable<MasterTableName> => {
                 // Try to identify a MasterTableName for the given raw SQL name
                 const allNames = data[0];
                 const currentRawName = data[1];

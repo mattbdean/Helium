@@ -3,6 +3,7 @@ import {
     Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { ActivatedRoute, Params } from '@angular/router';
 
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
@@ -85,7 +86,8 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     public constructor(
         private backend: TableService,
         private formSpecGenerator: FormSpecGeneratorService,
-        private fb: FormBuilder
+        private fb: FormBuilder,
+        private route: ActivatedRoute
     ) {}
 
     public ngOnInit() {
@@ -99,8 +101,16 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                     }
                 ));
 
-        const spec$ = meta$
-            .map(this.formSpecGenerator.generate, this);
+        const spec$ = Observable.zip(
+            meta$,
+            this.route.queryParams
+                .map((p: Params) => {
+                    // For now, only work on master tables
+                    if (p.prefilled && this.name.masterRawName === null)
+                        return JSON.parse(p.prefilled);
+                    return {};
+                })
+        ).map((data: [TableMeta, object]) => this.formSpecGenerator.generate(data[0], data[1]), this);
 
         // Combine the latest output from the FormControlSpec array generated
         // from the table name/meta and the rootGroup

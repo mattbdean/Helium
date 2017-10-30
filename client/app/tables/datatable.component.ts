@@ -12,11 +12,16 @@ import {
 import { TableService } from '../core/table.service';
 
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
+import { Router } from '@angular/router';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];
 }
 
+/**
+ * Short version of @swimlane/ngx-datatable's DataTableColumnDirective:
+ * https://github.com/swimlane/ngx-datatable/blob/master/src/components/columns/column.directive.ts
+ */
 interface DataTableHeader {
     name: string;
     prop: string;
@@ -53,8 +58,10 @@ export class DatatableComponent implements OnInit, OnDestroy {
     public tableHeaders: DataTableHeader[];
 
     @ViewChild('headerTemplate') private headerTemplate: TemplateRef<any>;
+    @ViewChild('headerTemplateInsertLike') private headerTemplateInsertLike: TemplateRef<any>;
     @ViewChild('cellTemplate') private cellTemplate: TemplateRef<any>;
     @ViewChild('cellTemplateBlob') private cellTemplateBlob: TemplateRef<any>;
+    @ViewChild('cellTemplateInsertLike') private cellTemplateInsertLike: TemplateRef<any>;
 
     /** True if this component has tried to access the table and found data */
     public exists: boolean = true;
@@ -65,8 +72,17 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
     public data: SqlRow[] = [];
 
+    /**
+     * The width in pixels of the very first column that contains a button to
+     * insert data similar to the row that its hosted in
+     */
+    private static readonly INSERT_LIKE_COLUMN_WIDTH = 40;
+    private static readonly DISPLAY_FORMAT_DATE = 'l';
+    private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
+
     constructor(
-        private backend: TableService
+        private backend: TableService,
+        private router: Router
     ) {}
 
     public ngOnInit(): void {
@@ -144,13 +160,53 @@ export class DatatableComponent implements OnInit, OnDestroy {
         this.sort = sortDirPrefix + event.sorts[0].prop;
     }
 
+    public onInsertLike(row: object) {
+        this.router.navigate(['/forms', this.name.rawName], {
+            queryParams: this.createQueryParams(row)
+        });
+    }
+
+    private createQueryParams(row: object) {
+        const reformatted = _.clone(row);
+
+        // Find all date and datetime headers and transform them from their
+        // display format to the API format
+        for (const headerName of Object.keys(reformatted)) {
+            const header = _.find(this.meta.headers, (h) => h.name === headerName);
+            if (header.type === 'date')
+                reformatted[headerName] = moment(reformatted[headerName],
+                    DatatableComponent.DISPLAY_FORMAT_DATE).format(DATE_FORMAT);
+            if (header.type === 'datetime')
+                reformatted[headerName] = moment(reformatted[headerName],
+                    DatatableComponent.DISPLAY_FORMAT_DATETIME).format(DATETIME_FORMAT);
+        }
+
+        return { prefilled: JSON.stringify(reformatted) };
+    }
+
     private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
-        return _.sortBy(_.map(headers, (h) => ({ 
-            name: h.name,
-            prop: h.name,
-            cellTemplate: h.type === 'blob' ? this.cellTemplateBlob : this.cellTemplate,
-            headerTemplate: this.headerTemplate
-        })), 'ordinalPosition');
+        const regularHeaders: any[] = _(headers)
+            .map((h) => ({
+                name: h.name,
+                prop: h.name,
+                cellTemplate: h.type === 'blob' ? this.cellTemplateBlob : this.cellTemplate,
+                headerTemplate: this.headerTemplate
+            }))
+            .sortBy('ordinalPosition')
+            .value();
+
+        // Only add the 'insert like' column for master tables
+        if (this.name.masterRawName === null)
+            regularHeaders.unshift({
+                name: '__insertLike',
+                prop: '__insertLike',
+                cellTemplate: this.cellTemplateInsertLike,
+                headerTemplate: this.headerTemplateInsertLike,
+                maxWidth: DatatableComponent.INSERT_LIKE_COLUMN_WIDTH,
+                minWidth: DatatableComponent.INSERT_LIKE_COLUMN_WIDTH,
+                resizeable: false
+            });
+        return regularHeaders;
     }
 
     private formatRows(headers: TableHeader[], rows: SqlRow[]): SqlRow[] {
@@ -163,9 +219,11 @@ export class DatatableComponent implements OnInit, OnDestroy {
                 const header = _.find(headers, (h) => h.name === headerName);
                 // Use moment to format dates and times in the default format
                 if (header.type === 'date')
-                    row[headerName] = DatatableComponent.reformat(row[headerName], DATE_FORMAT, 'l');
+                    row[headerName] = DatatableComponent.reformat(row[headerName],
+                        DATE_FORMAT, DatatableComponent.DISPLAY_FORMAT_DATE);
                 if (header.type === 'datetime')
-                    row[headerName] = DatatableComponent.reformat(row[headerName], DATETIME_FORMAT, 'LLL');
+                    row[headerName] = DatatableComponent.reformat(row[headerName],
+                        DATETIME_FORMAT, DatatableComponent.DISPLAY_FORMAT_DATETIME);
                 if (header.type === 'boolean')
                     // Resolve either the 1 or 0 to its boolean value
                     row[headerName] = !!row[headerName];

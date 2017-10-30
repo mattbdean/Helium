@@ -6,9 +6,11 @@ import * as moment from 'moment';
 
 import { Observable } from 'rxjs/Observable';
 import {
-    Constraint, TableMeta } from '../../common/api';
+    Constraint, DefaultValue, TableHeader, TableMeta
+} from '../../common/api';
 import {
-    CURRENT_TIMESTAMP, DATE_FORMAT,
+    CURRENT_TIMESTAMP,
+    DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
 import { createTableName } from '../../common/util';
@@ -31,7 +33,7 @@ export class FormSpecGeneratorService {
      * Generates one FormControlSpec for each header in the given TableMeta.
      * Does not include a submit control.
      */
-    public generate(meta: TableMeta): FormControlSpec[] {
+    public generate(meta: TableMeta, prefilledData: object = {}): FormControlSpec[] {
         return meta.headers.map((h): FormControlSpec => {
             const validators: ValidatorFn[] = [];
             let required = false;
@@ -51,22 +53,6 @@ export class FormSpecGeneratorService {
             let enumValues: string[] | undefined;
             let disabled = false;
             let autocompleteValues: Observable<string[]> | undefined;
-            let defaultValue: any = h.defaultValue;
-
-            // null values cause problems, undefined values don't.
-            if (defaultValue === null)
-                defaultValue = undefined;
-
-            const constantName = ((h.defaultValue || {}) as any).constantName;
-            if (h.type === 'datetime' && constantName !== undefined) {
-                switch (constantName) {
-                    case CURRENT_TIMESTAMP:
-                        defaultValue = new Date();
-                        break;
-                    default:
-                        throw new Error('Unknown special default value: ' + constantName);
-                }
-            }
 
             const foreignKey = meta.constraints.find(
                 (constraint) => constraint.type === 'foreign' && constraint.localColumn === h.name);
@@ -85,33 +71,15 @@ export class FormSpecGeneratorService {
                     break;
                 case 'boolean':
                     type = 'boolean';
-                    // An initial value of 'undefined' looks exactly the same as
-                    // an initial value of false, except the user will expect an
-                    // unchecked checkbox to represent 'false' instead of null.
-                    if (defaultValue === null || defaultValue === undefined)
-                        defaultValue = false;
                     break;
                 case 'date':
                 case 'datetime':
                     type = 'date';
                     // datetime-local used for dates and times
                     subtype = h.type === 'date' ? 'date' : 'datetime-local';
-                    if (typeof defaultValue === 'string' && defaultValue !== null && defaultValue !== undefined) {
-                        // Parse the string into a Date
-                        const format = h.type === 'date' ? DATE_FORMAT : DATETIME_FORMAT;
-                        defaultValue = moment(defaultValue, format).toDate();
-                    }
-
-                    // If there's nothing
-                    if (defaultValue === null || defaultValue === undefined)
-                        defaultValue = new Date();
                     break;
                 case 'blob':
                     type = 'text';
-                    // Since blobs aren't supported, we only allow entering
-                    // null values. Disable all blob controls and set the initial
-                    // value to null only if the header is nullable.
-                    defaultValue = h.nullable ? null : undefined;
                     disabled = true;
                     break;
                 default:
@@ -135,7 +103,7 @@ export class FormSpecGeneratorService {
                 required,
                 disabled,
                 autocompleteValues,
-                defaultValue
+                defaultValue: this.defaultValue(h, meta.constraints, prefilledData)
             };
 
             // Don't specifically define undefined values as undefined. Messes
@@ -182,5 +150,51 @@ export class FormSpecGeneratorService {
                 `${masterRawName}, but actually for ${tableName.masterRawName}`);
 
         return tableMeta.constraints.filter((c) => c.foreignTable === masterRawName);
+    }
+
+    /**
+     * Tries to determine the most appropriate default value for the given
+     * header. If prefilledData is given, `prefilledData[header.name]` will be
+     * used if that header is not a primary key.
+     */
+    public defaultValue(header: TableHeader, constraints: Constraint[], prefilledData: object): DefaultValue {
+        const constraint = constraints.find((c) => c.localColumn === header.name);
+
+        // Don't prepopulate the form with primary key data since the user will
+        // have to change it anyway to avoid duplicate rows
+        let defaultValue: DefaultValue = header.defaultValue;
+        if ((constraint !== undefined && constraint.type !== 'primary' || constraint === undefined) &&
+            prefilledData[header.name] !== undefined)
+            defaultValue = prefilledData[header.name];
+
+        switch (header.type) {
+            case 'blob':
+                return header.nullable ? null : undefined;
+            case 'date':
+            case 'datetime':
+                if (typeof defaultValue === 'string' && defaultValue !== undefined) {
+                    // Parse the string into a Date
+                    const format = header.type === 'date' ? DATE_FORMAT : DATETIME_FORMAT;
+                    defaultValue = moment(defaultValue, format).toISOString();
+                }
+
+                if ((defaultValue as any || {}).constantName === CURRENT_TIMESTAMP ||
+                    defaultValue === null ||
+                    defaultValue === undefined)
+
+                    // Use an ISO 8601 formatted string so any Angular Material
+                    // Date adapter can take it. If we gave it a Date object and
+                    // we switched to the Moment Date Adapter (if it comes out),
+                    // then we'd have to do some refactoring.
+                    defaultValue = new Date().toISOString();
+                break;
+            case 'boolean':
+                // An initial value of 'undefined' looks exactly the same as
+                // an initial value of false, except the user will expect an
+                // unchecked checkbox to represent 'false' instead of null.
+                defaultValue = !(defaultValue === null || defaultValue === undefined);
+        }
+
+        return defaultValue;
     }
 }

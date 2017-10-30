@@ -24,3 +24,12 @@ h1 {
   font-style: italic;
   font-weight: normal;
 }
+
+.insert-like-icon {
+  opacity: 0.3;
+  transition: opacity 0.3s ease-in;
+  cursor: pointer;
+  &:hover {
+    opacity: 1.0;
+  }
+}

@@ -13,6 +13,7 @@ import { createTableName } from '../common/util';
 import { CoreModule } from '../core/core.module';
 import { TableService } from '../core/table.service';
 import { DatatableComponent } from './datatable.component';
+import { RouterTestingModule } from '@angular/router/testing';
 
 const expect = global['chai'].expect;
 
@@ -43,7 +44,8 @@ describe('DatatableComponent', () => {
             imports: [
                 CoreModule,
                 MatProgressBarModule,
-                NgxDatatableModule
+                NgxDatatableModule,
+                RouterTestingModule
             ],
             declarations: [
                 DatatableComponent
