@@ -5,4 +5,4 @@ ignore: {}
 patch:
   'npm:uglify-js:20151024':
     - '@angular/cli > postcss-url > directory-encoder > handlebars > uglify-js':
-        patched: '2017-10-30T16:10:04.747Z'
+        patched: '2017-10-30T16:10:57.510Z'
