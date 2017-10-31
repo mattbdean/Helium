@@ -24,19 +24,35 @@ Create the file `db.conf.json` in the project root:
   "prod": {
     "user": "<database username>",
     "password": "<database password>",
-    "database": "<database name>",
+    "database": "<schema name>",
     "host": "<database hostname>"
   }
 }
 ```
 
-The database user should have access to read and insert data on the given database.
+> The database user should have access to read and insert data on the given database.
 
-Set `NODE_ENV=prod` and use the `prod` script for a production build, which enables uglifying JS and AOT compilation. You can also specify `PORT=<whatever>` to change the HTTP port. If you want to run Helium on the default HTTP port (80), you'll have to run it as root. Port 3000 is used by default.
+Run the website on [localhost:3000](http://localhost:3000):
 
 ```sh
-$ PORT=3001 NODE_ENV=prod yarn prod
+$ yarn prod
 ```
+
+Once the website is built, you can re-run it with
+
+```sh
+$ node dist
+```
+
+Change the port like this:
+
+```sh
+$ PORT=3001 yarn prod
+```
+
+Now you can access the website at [localhost:3001](http://localhost:3001).
+
+> If you want to run Helium on the default HTTP port (80), you'll have to run it as root. 
 
 ## Contributing
 
