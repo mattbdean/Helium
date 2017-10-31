@@ -252,7 +252,7 @@ describe('FormSpecGeneratorService', () => {
 
             const meta = createMetaFor(headers, constraints);
             const spec = generator.generate(meta, prefilledData);
-            expect(spec[0].defaultValue).to.equal(headers[0].defaultValue);
+            expect(spec[0].defaultValue).to.equal(prefilledData.pk);
             expect(spec[1].defaultValue).to.equal(prefilledData.normal);
         });
     });
