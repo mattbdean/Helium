@@ -103,7 +103,7 @@ export class FormSpecGeneratorService {
                 required,
                 disabled,
                 autocompleteValues,
-                defaultValue: this.defaultValue(h, meta.constraints, prefilledData)
+                defaultValue: FormSpecGeneratorService.defaultValue(h, prefilledData)
             };
 
             // Don't specifically define undefined values as undefined. Messes
@@ -157,14 +157,9 @@ export class FormSpecGeneratorService {
      * header. If prefilledData is given, `prefilledData[header.name]` will be
      * used if that header is not a primary key.
      */
-    public defaultValue(header: TableHeader, constraints: Constraint[], prefilledData: object): DefaultValue {
-        const constraint = constraints.find((c) => c.localColumn === header.name);
-
-        // Don't prepopulate the form with primary key data since the user will
-        // have to change it anyway to avoid duplicate rows
-        let defaultValue: DefaultValue = header.defaultValue;
-        if ((constraint !== undefined && constraint.type !== 'primary' || constraint === undefined) &&
-            prefilledData[header.name] !== undefined)
+    private static defaultValue(header: TableHeader, prefilledData: object): DefaultValue {
+        let defaultValue: DefaultValue;
+        if (prefilledData[header.name] !== undefined)
             defaultValue = prefilledData[header.name];
 
         switch (header.type) {
