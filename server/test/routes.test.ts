@@ -7,7 +7,7 @@ describe('routes', () => {
     let app: Application;
 
     before('create app', async () => {
-        app = createServer();
+        app = createServer({ front: true, assets: true });
     });
 
     describe('GET /*', () => {
