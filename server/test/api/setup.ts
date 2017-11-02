@@ -1,9 +1,9 @@
 import { Helium } from '../../src/helium';
 import { RequestContext } from '../api.test.helper';
-import { TestingConfigurationResolver } from '../testing-configuration-resolver';
 import * as path from 'path';
+import { JsonConfigurationResolver } from '../../src/db/json-configuration-resolver';
 
-const resolver = new TestingConfigurationResolver(path.resolve(__dirname, '../../../db.conf.json'));
+const resolver = new JsonConfigurationResolver(path.resolve(__dirname, '../../../db.conf.json'));
 
 export const setupRequestContext = async () => {
     // Always use the 'test' configuration

@@ -18,6 +18,11 @@ export class JsonConfigurationResolver extends ConfigurationResolver {
     }
 
     public async resolve(confName: string): Promise<ConnectionConf> {
+        if (process.env.TRAVIS || process.env.CI) {
+            // Automatically detect continuous integration environment
+            return Promise.resolve({ user: 'user', password: 'password', database: 'helium' });
+        }
+
         const parsed = await this.readJson(this.jsonConf);
 
         if (!parsed[confName]) {
