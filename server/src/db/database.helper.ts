@@ -1,40 +1,23 @@
-import * as fs from 'fs';
-import * as path from 'path';
-
 import * as mysql from 'mysql2/promise';
 import * as squelBuilder from 'squel';
 import { MysqlSquel, QueryBuilder } from 'squel';
 
-import { SqlRow } from './common/api';
-
-/**
- * Generic interface for mysql2 connection options. See
- * https://github.com/mysqljs/mysql/blob/master/Readme.md#connection-options
- */
-export interface DbConf {
-    [keys: string]: string;
-}
+import { SqlRow } from '../common/api';
+import { ConfigurationResolver } from './configuration-resolver';
+import { ConnectionConf } from './connection-conf.interface';
 
 export class Database {
-    /** Singleton instance */
-    private static instance: Database;
-
-    /** Database connection configuration when working with Travis-CI */
-    private static TRAVIS_CONF: DbConf =
-        { user: 'user', password: 'password', database: 'helium' };
-
     private conn: mysql.Connection;
     private connected: boolean;
-    private config: DbConf;
+    private config: ConnectionConf;
     private squel: MysqlSquel = squelBuilder.useFlavour('mysql');
 
-    // Singleton
-    private constructor() {}
+    public constructor(private resolver: ConfigurationResolver) {}
 
     /** Ensures a connection */
-    public async connect(mode: Mode | DbConf): Promise<void> {
+    public async connect(confName: string): Promise<void> {
         if (!this.conn) {
-            this.config = typeof mode === 'object' ? mode : await Database.createDbConf(mode);
+            this.config = await this.resolver.resolve(confName);
             this.conn = await mysql.createConnection(this.config);
             this.connected = true;
         }
@@ -105,47 +88,4 @@ export class Database {
     public plainString(str: string, ...values: any[]) {
         return this.squel.rstr(str, ...values);
     }
-
-    // Singleton
-    public static get(): Database {
-        if (Database.instance === undefined)
-            Database.instance = new Database();
-
-        return Database.instance;
-    }
-
-    private static async createDbConf(mode: Mode): Promise<DbConf> {
-        // Use a static configuration for Travis
-        if (process.env.TRAVIS || process.env.CI)
-            return Database.TRAVIS_CONF;
-
-        const confPath = path.resolve(__dirname, 'db.conf.json');
-        const parsed = await Database.readJson(confPath);
-
-        const modeProperty = Mode[mode].toLowerCase();
-        if (!parsed[modeProperty]) {
-            throw new Error(`Database conf (${confPath}) has no property "${modeProperty}"`);
-        }
-
-        return parsed[modeProperty];
-    }
-
-    /** Promises to read a file and parse its contents as JSON */
-    private static async readJson(file: string): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
-            fs.readFile(file, 'utf8', (err: NodeJS.ErrnoException, data: string) => {
-                if (err) return reject(err);
-                try {
-                    resolve(data);
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        }).then(JSON.parse);
-    }
-}
-
-export enum Mode {
-    PROD,
-    TEST
 }

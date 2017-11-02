@@ -2,10 +2,11 @@ import { Request, Response, Router } from 'express';
 
 import { ErrorResponse } from '../../common/responses';
 import { tables } from './tables';
+import { Database } from '../../db/database.helper';
 
-export function api(): Router {
+export function api(db: Database): Router {
     const router = Router();
-    router.use('/tables', tables());
+    router.use('/tables', tables(db));
 
     // Catch all requests to the API not handled by an API module to ensure the
     // client still receives JSON data

@@ -14,7 +14,7 @@ import {
     DATETIME_FORMAT
 } from '../../common/constants';
 import { createTableName, unflattenTableNames } from '../../common/util';
-import { Database } from '../../database.helper';
+import { Database } from '../../db/database.helper';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
 
@@ -55,20 +55,20 @@ interface PreparedRow {
     [columnName: string]: PreparedCell;
 }
 
-const helper: Database = Database.get();
-
 export class TableDao {
+    public constructor(private helper: Database) {}
+
     /**
      * Returns an array of all available table names
      */
-    public static async list(): Promise<TableName[]> {
+    public async list(): Promise<TableName[]> {
         // db.conn is a PromiseConnection that wraps a Connection. A
         // Connection has a property `config`
-        const result = await helper.execute((squel) =>
+        const result = await this.helper.execute((squel) =>
             squel.select()
                 .from('INFORMATION_SCHEMA.tables')
                 .field('table_name')
-                .where('TABLE_SCHEMA = ?', helper.databaseName()));
+                .where('TABLE_SCHEMA = ?', this.helper.databaseName()));
 
         /*
         Transform this:
@@ -102,25 +102,25 @@ export class TableDao {
      * column/direction
      * @returns {Promise<SqlRow[]>} A promise that resolves to the requested data
      */
-    public static async content(name: string,
-                                page: number = 1,
-                                limit: number = 25,
-                                sort?: Sort | undefined): Promise<SqlRow[]> {
+    public async content(name: string,
+                         page: number = 1,
+                         limit: number = 25,
+                         sort?: Sort | undefined): Promise<SqlRow[]> {
 
-        const rows = await helper.execute((squel) => {
+        const rows = await this.helper.execute((squel) => {
             // Create our basic query
             let query = squel
                 .select()
                 // Make sure we escape the table name so that we're less vulnerable to
                 // SQL injection
-                .from(helper.escapeId(name))
+                .from(this.helper.escapeId(name))
                 // Pagination
                 .limit(limit)
                 .offset((page - 1) * limit);
 
             if (sort !== undefined) {
                 // Specify a sort if provided
-                query = query.order(helper.escapeId(sort.by), sort.direction === 'asc');
+                query = query.order(this.helper.escapeId(sort.by), sort.direction === 'asc');
             }
 
             return query;
@@ -128,7 +128,7 @@ export class TableDao {
 
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
-        const headers: TableHeader[] = await TableDao.headers(name);
+        const headers: TableHeader[] = await this.headers(name);
         const blobHeaders = _(headers)
             .filter((h) => h.type === 'blob')
             .map((h) => h.name)
@@ -161,13 +161,15 @@ export class TableDao {
     /**
      * Fetches a TableMeta instance for the given table.
      */
-    public static async meta(name: string): Promise<TableMeta> {
+    public async meta(name: string): Promise<TableMeta> {
         const [allTables, headers, count, constraints, comment] = await Promise.all([
-            TableDao.list(),
-            TableDao.headers(name),
-            TableDao.count(name),
-            TableDao.constraints(name).then(TableDao.resolveConstraints),
-            TableDao.comment(name)
+            this.list(),
+            this.headers(name),
+            this.count(name),
+            // For some reason `this` becomes undefined in the resolveConstraints
+            // function if we do this.constraints(name).then(this.resolveConstraints)
+            this.constraints(name).then((result) => this.resolveConstraints(result)),
+            this.comment(name)
         ]);
 
         // Identify part tables for the given table name
@@ -188,15 +190,15 @@ export class TableDao {
     /**
      * Fetches all distinct values from one column. Useful for autocomplete.
      */
-    public static async columnContent(table: string, column: string): Promise<Array<string | number>> {
+    public async columnContent(table: string, column: string): Promise<Array<string | number>> {
         // SELECT DISTINCT $col FROM $table ORDER BY $col ASC
-        const result = await helper.execute((squel) =>
+        const result = await this.helper.execute((squel) =>
             squel
                 .select()
                 .distinct()
-                .from(helper.escapeId(table))
-                .field(helper.escapeId(column))
-                .order(helper.escapeId(column))
+                .from(this.helper.escapeId(table))
+                .field(this.helper.escapeId(column))
+                .order(this.helper.escapeId(column))
 
         );
 
@@ -210,23 +212,23 @@ export class TableDao {
      * Inserts a row into a given table. The given data will be verified before
      * inserting.
      */
-    public static async insertRow(table: string, data: SqlRow) {
-        const headers = await TableDao.headers(table);
+    public async insertRow(table: string, data: SqlRow) {
+        const headers = await this.headers(table);
         if (headers.length === 0) {
             const error = new Error('no such table') as any;
             error.isInternal = true;
             error.code = 'NO_SUCH_TABLE';
             throw error;
         }
-        const parts = await TableDao.partTableHeaders(table);
+        const parts = await this.partTableHeaders(table);
 
         // Make sure that the given data adheres to the headers
-        const schema = TableDao.compileSchemaFor(headers, parts);
+        const schema = this.compileSchemaFor(headers, parts);
         joi.assert(data, schema);
 
-        const preparedData: PreparedInsert = TableDao.prepareForInsert(headers, parts, data);
+        const preparedData: PreparedInsert = this.prepareForInsert(headers, parts, data);
 
-        return helper.transaction(async () => {
+        return this.helper.transaction(async () => {
             // Make sure we alphabetize the names so we insert master tables first
             const names = _.sortBy(Object.keys(preparedData));
 
@@ -235,9 +237,9 @@ export class TableDao {
             for (const name of names) {
                 const rows = preparedData[name];
 
-                await helper.execute((squel) => {
+                await this.helper.execute((squel) => {
                     return squel.insert()
-                        .into(helper.escapeId(name))
+                        .into(this.helper.escapeId(name))
                         .setFieldsRows(rows);
                 });
             }
@@ -291,12 +293,12 @@ export class TableDao {
      * @param partTableHeaders An object that maps the clean name of each part
      *                         table to all of that table's headers.
      */
-    private static compileSchemaFor(headers: TableHeader[], partTableHeaders: PartTableHeaders): Schema {
+    private compileSchemaFor(headers: TableHeader[], partTableHeaders: PartTableHeaders): Schema {
 
         // There could be a column called $parts, ignore this
         headers = _.filter(headers, (h) => h.name !== '$parts');
         const keys = _.map(headers, (h) => h.name);
-        const values = _.map(headers, TableDao.schemaFromHeader);
+        const values = _.map(headers, this.schemaFromHeader);
 
         // Make all non-nullable properties required
         for (let i = 0; i < headers.length; i++) {
@@ -319,7 +321,7 @@ export class TableDao {
             // In theory, this method could be recursed several times, but in
             // practice, DataJoint does not allow part tables of part tables.
             const ptableValues = _.map(partTableNames, (name) => {
-                return joi.array().items(TableDao.compileSchemaFor(partTableHeaders[name], {}));
+                return joi.array().items(this.compileSchemaFor(partTableHeaders[name], {}));
             });
 
             // Allow any part tables to be specified using the $parts key
@@ -344,7 +346,7 @@ export class TableDao {
      * of accepting blobs at face value, blobs are forbidden unless the column
      * is nullable and the value is null.
      */
-    private static schemaFromHeader(h: TableHeader): AnySchema {
+    private schemaFromHeader(h: TableHeader): AnySchema {
         switch (h.type) {
             case 'string':
                 return joi.string()
@@ -383,15 +385,15 @@ export class TableDao {
      * Gets a list of constraints on a given table. Currently, only primary keys,
      * foreign keys, and unique constraints are recognized.
      */
-    private static async constraints(name: string): Promise<Constraint[]> {
-        const result = await helper.execute((squel) => {
+    private async constraints(name: string): Promise<Constraint[]> {
+        const result = await this.helper.execute((squel) => {
             return squel.select()
                 .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
                     .field('COLUMN_NAME')
                     .field('CONSTRAINT_NAME')
                     .field('REFERENCED_TABLE_NAME')
                     .field('REFERENCED_COLUMN_NAME')
-                .where('CONSTRAINT_SCHEMA = ?', helper.databaseName())
+                .where('CONSTRAINT_SCHEMA = ?', this.helper.databaseName())
                 .where('TABLE_NAME = ?', name)
                 .order('ORDINAL_POSITION');
         });
@@ -421,14 +423,14 @@ export class TableDao {
      *
      * Note that if there are no foreign key constraints
      */
-    private static async resolveConstraints(originals: Constraint[]): Promise<Constraint[]> {
+    private async resolveConstraints(originals: Constraint[]): Promise<Constraint[]> {
         // Keep tables in cache once we look them up to prevent any unnecessary
         // lookups
         const cache: { [tableName: string]: Constraint[] } = {};
 
         // Return constraints from cache, otherwise look them up
         const getConstraints = (name: string): Promise<Constraint[]> => {
-            return cache[name] ? Promise.resolve(cache[name]) : TableDao.constraints(name);
+            return cache[name] ? Promise.resolve(cache[name]) : this.constraints(name);
         };
 
         const resolved: Constraint[] = [];
@@ -464,23 +466,23 @@ export class TableDao {
     }
 
     /** Fetches a table's comment, or an empty string if none exists */
-    private static async comment(name: string): Promise<string> {
-        const result = await helper.execute((squel) =>
+    private async comment(name: string): Promise<string> {
+        const result = await this.helper.execute((squel) =>
             squel.select()
                 .from('INFORMATION_SCHEMA.TABLES')
                 .field('TABLE_COMMENT')
                 .where('TABLE_NAME = ?', name)
-                .where('TABLE_SCHEMA = ?', helper.databaseName())
+                .where('TABLE_SCHEMA = ?', this.helper.databaseName())
         );
 
         return result[0].TABLE_COMMENT;
     }
 
     /** Counts the amount of rows in a table */
-    private static async count(name: string): Promise<number> {
-        const result = await helper.execute((squel) =>
+    private async count(name: string): Promise<number> {
+        const result = await this.helper.execute((squel) =>
             squel.select()
-                .from(helper.escapeId(name))
+                .from(this.helper.escapeId(name))
                 .field('COUNT(*)')
         );
         // This query returns only one row
@@ -497,11 +499,11 @@ export class TableDao {
      *   baz: [ <all headers for foo__baz> ]
      * }
      */
-    private static async partTableHeaders(masterName: string): Promise<PartTableHeaders> {
+    private async partTableHeaders(masterName: string): Promise<PartTableHeaders> {
         // '%' is a SQL metacharacter that matches 0 or more characters, so
         // 'foo__%' will return any headers associated with the part tables of
         // 'foo'.
-        const partHeaders = await TableDao.headers(masterName + '__%');
+        const partHeaders = await this.headers(masterName + '__%');
 
         // Group the headers by their table names
         const grouped: PartTableHeaders = {};
@@ -523,7 +525,7 @@ export class TableDao {
      * `name` is used in a 'LIKE' expression and therefore can contain
      * metacharacters like '%'.
      */
-    private static async headers(name: string): Promise<TableHeader[]> {
+    private async headers(name: string): Promise<TableHeader[]> {
         const fields = [
             'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
             'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
@@ -531,7 +533,7 @@ export class TableDao {
             'COLUMN_DEFAULT'
         ];
 
-        const result = await helper.execute((squel) => {
+        const result = await this.helper.execute((squel) => {
             let query = squel.select().from('INFORMATION_SCHEMA.columns');
 
             for (const field of fields) {
@@ -539,7 +541,7 @@ export class TableDao {
             }
 
             return query
-                .where('TABLE_SCHEMA = ?', helper.databaseName())
+                .where('TABLE_SCHEMA = ?', this.helper.databaseName())
                 .where('TABLE_NAME LIKE ?', name)
                 .order('ORDINAL_POSITION');
         });
@@ -573,6 +575,79 @@ export class TableDao {
         });
     }
 
+    private prepareForInsert(headers: TableHeader[],
+                             partTableHeaders: PartTableHeaders,
+                             row: SqlRow): PreparedInsert {
+
+        const masterTableName = headers[0].tableName;
+        const prep: PreparedInsert = {};
+        prep[masterTableName] = [this.prepareRow(headers, row)];
+
+        // Since `typeof null === 'object'`
+        if (row.$parts !== null && typeof row.$parts === 'object') {
+            // row.$parts is an object whose keys are the clean name of the
+            // table and whose values is an array of objects that fit the schema
+            // for the table
+            for (const partCleanName of Object.keys(row.$parts)) {
+                const partHeaders = partTableHeaders[partCleanName];
+                if (partHeaders === undefined)
+                    throw new Error(`expected headers for part table "${partCleanName}"`);
+                const sqlName = partHeaders[0].tableName;
+
+                const partRows = row.$parts[partCleanName];
+
+                const prepared = _.map(partRows, (r) => this.prepareRow(partHeaders, r));
+                if (prepared.length !== 0)
+                    prep[sqlName] = prepared;
+            }
+        }
+
+        return prep;
+    }
+
+    private prepareRow(headers: TableHeader[], row: SqlRow): PreparedRow {
+        const prepped: PreparedRow = {};
+        const headerNames: string[] = _.map(headers, 'name');
+
+        for (const column of Object.keys(row)) {
+            // $parts is a special property, ignore it
+            if (column === '$parts') continue;
+
+            if (headerNames.indexOf(column) < 0)
+                throw new Error('unknown column: ' + column);
+
+            const header = _.find(headers, (h) => h.name === column);
+            if (header === undefined)
+                throw new Error('could not find header for column: ' + column);
+
+            // Make sure to escape the column name here
+            prepped[this.helper.escapeId(header.name)] = this.prepareCell(header, row[column]);
+        }
+        return prepped;
+    }
+
+    private prepareCell(header: TableHeader, value: any): PreparedCell {
+        if (header.type === 'datetime') {
+            return this.helper.plainString('STR_TO_DATE(?, ?)', value, '%Y-%m-%d %H:%i:%s');
+        } else if (header.type === 'date') {
+            return this.helper.plainString('STR_TO_DATE(?, ?)', value, '%Y-%m-%d');
+        } else if (header.rawType === 'tinyint(1)') {
+            // We can't return a boolean here since apparently MySQL doesn't like
+            // that. Instead, treat true/false values like we would a SQL
+            // function
+            return this.helper.plainString(value === true ? 'TRUE' : 'FALSE');
+        } else if (header.numericScale && header.numericScale === 0) {
+            return parseInt(value, 10);
+        } else if (header.isNumerical) {
+            return parseFloat(value);
+        } else if (header.isTextual) {
+            return value === null ? null : value.toString();
+        }
+
+        throw new Error(`Could not prepare value with type of ${header.type} ` +
+            `(${header.tableName}: ${header.name}`);
+    }
+
     private static identifyDefaultValue(rawType: string, type: TableDataType, rawDefault: string): DefaultValue {
         if (rawDefault === CURRENT_TIMESTAMP && rawType === 'datetime')
             return { constantName: CURRENT_TIMESTAMP };
@@ -596,79 +671,6 @@ export class TableDao {
         }
 
         throw new Error(`Could not determine default header for type=${type}`);
-    }
-
-    private static prepareForInsert(headers: TableHeader[],
-                                    partTableHeaders: PartTableHeaders,
-                                    row: SqlRow): PreparedInsert {
-
-        const masterTableName = headers[0].tableName;
-        const prep: PreparedInsert = {};
-        prep[masterTableName] = [TableDao.prepareRow(headers, row)];
-
-        // Since `typeof null === 'object'`
-        if (row.$parts !== null && typeof row.$parts === 'object') {
-            // row.$parts is an object whose keys are the clean name of the
-            // table and whose values is an array of objects that fit the schema
-            // for the table
-            for (const partCleanName of Object.keys(row.$parts)) {
-                const partHeaders = partTableHeaders[partCleanName];
-                if (partHeaders === undefined)
-                    throw new Error(`expected headers for part table "${partCleanName}"`);
-                const sqlName = partHeaders[0].tableName;
-
-                const partRows = row.$parts[partCleanName];
-
-                const prepared = _.map(partRows, (r) => TableDao.prepareRow(partHeaders, r));
-                if (prepared.length !== 0)
-                    prep[sqlName] = prepared;
-            }
-        }
-
-        return prep;
-    }
-
-    private static prepareRow(headers: TableHeader[], row: SqlRow): PreparedRow {
-        const prepped: PreparedRow = {};
-        const headerNames: string[] = _.map(headers, 'name');
-
-        for (const column of Object.keys(row)) {
-            // $parts is a special property, ignore it
-            if (column === '$parts') continue;
-
-            if (headerNames.indexOf(column) < 0)
-                throw new Error('unknown column: ' + column);
-
-            const header = _.find(headers, (h) => h.name === column);
-            if (header === undefined)
-                throw new Error('could not find header for column: ' + column);
-
-            // Make sure to escape the column name here
-            prepped[helper.escapeId(header.name)] = TableDao.prepareCell(header, row[column]);
-        }
-        return prepped;
-    }
-
-    private static prepareCell(header: TableHeader, value: any): PreparedCell {
-        if (header.type === 'datetime') {
-            return helper.plainString('STR_TO_DATE(?, ?)', value, '%Y-%m-%d %H:%i:%s');
-        } else if (header.type === 'date') {
-            return helper.plainString('STR_TO_DATE(?, ?)', value, '%Y-%m-%d');
-        } else if (header.rawType === 'tinyint(1)') {
-            // We can't return a boolean here since apparently MySQL doesn't like
-            // that. Instead, treat true/false values like we would a SQL
-            // function
-            return helper.plainString(value === true ? 'TRUE' : 'FALSE');
-        } else if (header.numericScale && header.numericScale === 0) {
-            return parseInt(value, 10);
-        } else if (header.isNumerical) {
-            return parseFloat(value);
-        } else if (header.isTextual) {
-            return value === null ? null : value.toString();
-        }
-
-        throw new Error(`Could not prepare value with type of ${header.type} ` +
-            `(${header.tableName}: ${header.name}`);
     }
 
     private static parseType(rawType: string): TableDataType {

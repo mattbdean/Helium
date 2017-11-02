@@ -18,7 +18,7 @@ describe('Tables page', () => {
         // '/tables/person', but rather to '/tables/%23person'
         const tableName = (await page.getTableNames())[0];
         await page.clickSidebarLink(tableName, 'table');
-        await expect(browser.getCurrentUrl()).to.eventually.include.all('/tables/', tableName);
+        await expect(browser.getCurrentUrl()).to.eventually.include.all('/tables', tableName);
         await expect(page.getHeaderText()).to.eventually.equal(tableName);
         await expect(page.isDatatableVisible()).to.eventually.be.true;
     });

@@ -4,18 +4,20 @@ import {
     ErrorResponse,
     PaginatedResponse
 } from '../../common/responses';
+import { Database } from '../../db/database.helper';
 import { debug, NODE_ENV, NodeEnv } from '../../env';
 import { Sort, TableDao } from './tables.queries';
 
 const TABLE_NAME_REGEX = /^[A-Za-z0-9_#~]*$/;
 
-export function tables(): Router {
+export function tables(db: Database): Router {
     const r = Router();
+    const dao = new TableDao(db);
     r.use(paginate.middleware(25, 100));
 
     r.get('/', async (req: Request, res: Response) => {
         try {
-            res.json(await TableDao.list());
+            res.json(await dao.list());
         } catch (err) {
             internalError(res, err, {
                 message: 'Could not execute request',
@@ -42,7 +44,7 @@ export function tables(): Router {
         }
 
         try {
-            const data = await TableDao.content(name, req.query.page, req.query.limit, sort);
+            const data = await dao.content(name, req.query.page, req.query.limit, sort);
             const response: PaginatedResponse<any> = {
                 size: data.length,
                 data
@@ -68,7 +70,7 @@ export function tables(): Router {
             if (!verifyTableName(name, res)) return;
 
             try {
-                res.json(await TableDao.meta(name));
+                res.json(await dao.meta(name));
             } catch (e) {
                 if (e.code && e.code === 'ER_NO_SUCH_TABLE')
                     return sendError(res, 404, {
@@ -104,7 +106,7 @@ export function tables(): Router {
             return send400('inserting data into part tables directly is forbidden');
 
         try {
-            await TableDao.insertRow(table, req.body);
+            await dao.insertRow(table, req.body);
             res.status(200).send({});
         } catch (e) {
             // TODO never write anything this ugly again
@@ -170,7 +172,7 @@ export function tables(): Router {
         if (!verifyTableName(req.params.name, res)) return;
 
         try {
-            res.json(await TableDao.columnContent(req.params.name, req.params.col));
+            res.json(await dao.columnContent(req.params.name, req.params.col));
         } catch (e) {
             const input = {
                 name: req.params.name,

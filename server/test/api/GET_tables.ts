@@ -25,8 +25,8 @@ const ALL_TABLES = [
 
 export default function() {
     let request: RequestContext;
-    before(() => {
-        request = setupRequestContext();
+    before(async () => {
+        request = await setupRequestContext();
     });
 
     describe('GET /api/v1/tables', () => {

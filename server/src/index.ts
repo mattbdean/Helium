@@ -10,14 +10,18 @@ import * as listEndpoints from 'express-list-endpoints';
 import * as _ from 'lodash';
 import * as yargs from 'yargs';
 
-import { Database, Mode } from './database.helper';
-import { createServer } from './server';
+import { Database } from './db/database.helper';
+import { JsonConfigurationResolver } from './db/json-configuration-resolver';
+import { Helium } from './helium';
+import { ModuleConfig } from './module-config.interface';
 
 // Catch unhandled Promises
 process.on('unhandledRejection', (reason) => {
     log("Unhandled Promise rejection: ");
     throw reason;
 });
+
+const JSON_CONF_NAME = 'db.conf.json';
 
 // Parse optstring and handle --help with yargs
 const argv = yargs
@@ -43,28 +47,28 @@ interface AppMeta {
 const bootstrap = async (options: any, metadata: AppMeta) => {
     log(chalk.bold(`Starting ${metadata.name} v${metadata.version}`));
 
+    const resolver = new JsonConfigurationResolver(JSON_CONF_NAME);
+
+    // A null value for modules loads all modules
+    const modules: ModuleConfig | null = null;
+    const app = new Helium(modules, resolver);
+
     try {
-        const db = Database.get();
-        await db.connect(Mode.PROD);
+        await app.start('prod');
     } catch (ex) {
-        fatalError('Could not connect to database: ' + ex.message);
+        fatalError('Unable to start: ' + ex.message);
     }
 
-    const app = await createServer() as Application;
-    app.listen(options.port, () => {
+    app.express.listen(options.port, () => {
         logEndpoints(app);
         log('\nMagic is happening on port ' + chalk.bold(options.port.toString()));
     }).on('error', fatalError);
 };
 
-/**
- * Logs a list of available endpoints to stdout
- *
- * @param  {object} app Express app
- */
-const logEndpoints = (app) => {
+/** Logs a list of available endpoints to stdout */
+const logEndpoints = (app: Helium) => {
     log('Available endpoints:\n');
-    const endpoints = _.sortBy(listEndpoints(app), (e: any) => e.path);
+    const endpoints = _.sortBy(listEndpoints(app.express), (e: any) => e.path);
     for (const e of endpoints) {
         log(`  ${_.join(e.methods, ', ')} ${e.path}`);
     }

@@ -14,8 +14,10 @@ const randomInt = () => Math.round((Math.random() * 10000000));
 
 export default function() {
     let request: RequestContext;
-    before(() => {
-        request = setupRequestContext();
+    let tableDao: TableDao;
+    before(async () => {
+        request = await setupRequestContext();
+        tableDao = new TableDao(request.app.database);
     });
 
     describe('PUT /api/v1/tables/:name/data', () => {
@@ -160,7 +162,7 @@ export default function() {
             }));
 
             // Query the part table and make sure both were inserted
-            const content = await TableDao.content('master__part', 1, 1000);
+            const content = await tableDao.content('master__part', 1, 1000);
 
             for (const partId of partIds) {
                 expect(_.find(content, (row) => row['part_pk'] === partId)).to.exist;

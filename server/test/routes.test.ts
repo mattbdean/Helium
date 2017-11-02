@@ -1,13 +1,12 @@
-import { Application } from 'express';
 import * as request from 'supertest';
-
-import { createServer } from '../src/server';
+import { Helium } from '../src/helium';
 
 describe('routes', () => {
-    let app: Application;
+    let app: Helium;
 
     before('create app', async () => {
-        app = createServer({ front: true, assets: true });
+        app = new Helium({ front: true });
+        await app.start();
     });
 
     describe('GET /*', () => {
@@ -15,7 +14,7 @@ describe('routes', () => {
         it('should respond with HTML', async () => {
             const randomRoutes = ['/', '/table', '/foo'];
             for (const route of randomRoutes) {
-                await request(app)
+                await request(app.express)
                         .get(route)
                         .expect(200)
                         .expect('Content-Type', /html/);
@@ -23,7 +22,7 @@ describe('routes', () => {
         });
 
         it('should respond with 404 when the Accept header is not for HTML', () => {
-            return request(app)
+            return request(app.express)
                 .get('/foo')
                 .accept('foo/bar')
                 .expect(404)

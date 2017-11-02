@@ -11,15 +11,17 @@ import { SHOWCASE_TABLE } from './shared';
 
 export default function() {
     let request: RequestContext;
-    before(() => {
-        request = setupRequestContext();
+    let tableDao: TableDao;
+    before(async () => {
+        request = await setupRequestContext();
+        tableDao = new TableDao(request.app.database);
     });
 
     describe('GET /api/v1/tables/:name/data', () => {
         let meta: TableMeta;
 
         before(async () => {
-            meta = await TableDao.meta(SHOWCASE_TABLE);
+            meta = await tableDao.meta(SHOWCASE_TABLE);
         });
 
         it('should return an array of SqlRows', () => {
@@ -76,7 +78,7 @@ export default function() {
             // Use the most complex table without any dates for this specific
             // test
             const table = 'product';
-            const tableMeta = await TableDao.meta(table);
+            const tableMeta = await tableDao.meta(table);
 
             const doRequest = (header: TableHeader, sort: 'asc' | 'desc'): Promise<void> =>
                 request.spec({
