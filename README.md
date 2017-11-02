@@ -9,7 +9,7 @@
 
 ## Quickstart
 
-Make sure to have [yarn](https://yarnpkg.com/lang/en/docs/install/) and [Node.js](https://nodejs.org/en/download/) (6.11.5 or higher) installed.
+Make sure to have [yarn](https://yarnpkg.com/lang/en/docs/install/) and [Node.js](https://nodejs.org/en/download/) (version 8 or higher) installed.
 
 ```sh
 $ git clone https://github.com/mattbdean/Helium
