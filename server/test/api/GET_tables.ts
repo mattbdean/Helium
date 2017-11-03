@@ -29,7 +29,7 @@ export default function() {
         request = await setupRequestContext();
     });
 
-    describe.only('GET /api/v1/tables', () => {
+    describe('GET /api/v1/tables', () => {
         it('should return an array of TableNames', () =>
             request.basic('/tables', 200, (data: TableNameParams[]) => {
                 expect(Array.isArray(data)).to.be.true;

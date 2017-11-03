@@ -5,10 +5,10 @@ import {
     SqlRow, TableHeader, TableMeta
 } from '../../src/common/api';
 import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
+import { TableName } from '../../src/common/table-name.class';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
 import { SHOWCASE_TABLE } from './shared';
-import { TableName } from '../../src/common/table-name.class';
 
 export default function() {
     let request: RequestContext;
