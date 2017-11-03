@@ -1,4 +1,4 @@
-import { TableName } from './table-name';
+import { TableName } from './table-name.class';
 
 export interface TableMeta {
     name: string;

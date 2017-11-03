@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as _ from 'lodash';
 
 import { TableTier } from '../../common/api';
-import { TableName } from '../../common/table-name';
+import { TableName } from '../../common/table-name.class';
 
 describe('TableName', () => {
     const tables = ['foo', '#foo', '_foo', '__foo', '~foo'];

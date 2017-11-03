@@ -9,7 +9,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
-import { TableName } from '../../common/table-name';
+import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table.service';
 import { FormHostComponent } from './form-host.component';
 

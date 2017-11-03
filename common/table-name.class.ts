@@ -1,14 +1,8 @@
 import { BaseTableName, TableTier } from './api';
 import { TABLE_TIER_PREFIX_MAPPING } from './constants';
+import { TableNameParams } from './table-name-params.interface';
 
 const masterPartSeparator = '__';
-
-export interface TableNameParams {
-    rawName: string;
-    tier: TableTier;
-    cleanName: string;
-    masterRawName: string | null;
-}
 
 export class TableName implements BaseTableName {
     public readonly rawName: string;

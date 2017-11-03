@@ -1,7 +1,8 @@
+import * as path from 'path';
+
+import { JsonConfigurationResolver } from '../../src/db/json-configuration-resolver';
 import { Helium } from '../../src/helium';
 import { RequestContext } from '../api.test.helper';
-import * as path from 'path';
-import { JsonConfigurationResolver } from '../../src/db/json-configuration-resolver';
 
 const resolver = new JsonConfigurationResolver(path.resolve(__dirname, '../../../db.conf.json'));
 

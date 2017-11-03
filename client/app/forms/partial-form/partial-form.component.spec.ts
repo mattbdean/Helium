@@ -23,7 +23,7 @@ import {
 } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
-import { TableName } from '../../common/table-name';
+import { TableName } from '../../common/table-name.class';
 
 const expect = global['chai'].expect;
 

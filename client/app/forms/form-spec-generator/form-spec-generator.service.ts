@@ -17,7 +17,7 @@ import { TableService } from '../../core/table.service';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';
-import { TableName } from '../../common/table-name';
+import { TableName } from '../../common/table-name.class';
 
 /**
  * This service is responsible for generating FormControlSpecs given a

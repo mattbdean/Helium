@@ -15,7 +15,7 @@ import { Observable } from 'rxjs/Observable';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
-import { TableName } from './common/table-name';
+import { TableName } from './common/table-name.class';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table.service';
 

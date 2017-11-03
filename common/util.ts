@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 
 import { MasterTableName } from './api';
-import { TableName } from './table-name';
+import { TableName } from './table-name.class';
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tests are located with server-side tests

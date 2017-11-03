@@ -1,9 +1,9 @@
-import { TableName } from '../../src/common/table-name';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
 
 import { expect } from 'chai';
 import * as _ from 'lodash';
+import { TableNameParams } from '../../src/common/table-name-params.interface';
 
 const ALL_TABLES = [
     'customer',
@@ -29,9 +29,9 @@ export default function() {
         request = await setupRequestContext();
     });
 
-    describe('GET /api/v1/tables', () => {
-        it('should return an array of TableNames', () => {
-            return request.basic('/tables', 200, (data: TableName[]) => {
+    describe.only('GET /api/v1/tables', () => {
+        it('should return an array of TableNames', () =>
+            request.basic('/tables', 200, (data: TableNameParams[]) => {
                 expect(Array.isArray(data)).to.be.true;
                 expect(_.map(data, 'rawName')).to.deep.equal(_.sortBy(ALL_TABLES));
 
@@ -49,7 +49,7 @@ export default function() {
                         }
                     }
                 }
-            });
-        });
+            })
+        );
     });
 }

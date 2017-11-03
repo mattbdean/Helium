@@ -13,7 +13,7 @@ import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
-import { TableName } from '../../common/table-name';
+import { TableName } from '../../common/table-name.class';
 import { unflattenTableNames } from '../../common/util';
 import { Database } from '../../db/database.helper';
 

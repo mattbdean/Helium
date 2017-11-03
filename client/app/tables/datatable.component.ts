@@ -13,7 +13,7 @@ import {
 import { TableService } from '../core/table.service';
 
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
-import { TableName } from '../common/table-name';
+import { TableName } from '../common/table-name.class';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];

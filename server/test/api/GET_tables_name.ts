@@ -8,7 +8,7 @@ import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
 import { SHOWCASE_TABLE } from './shared';
-import { TableName } from '../../src/common/table-name';
+import { TableName } from '../../src/common/table-name.class';
 
 export default function() {
     let request: RequestContext;
