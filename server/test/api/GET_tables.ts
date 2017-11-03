@@ -1,9 +1,9 @@
-import { TableName } from '../../src/common/api';
+import { TableName } from '../../src/common/table-name';
 import { RequestContext } from '../api.test.helper';
+import { setupRequestContext } from './setup';
 
 import { expect } from 'chai';
 import * as _ from 'lodash';
-import { setupRequestContext } from './setup';
 
 const ALL_TABLES = [
     'customer',

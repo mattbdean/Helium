@@ -7,13 +7,14 @@ import { FunctionBlock } from 'squel';
 
 import {
     Constraint, ConstraintType, DefaultValue, SqlRow, TableDataType,
-    TableHeader, TableMeta, TableName
+    TableHeader, TableMeta
 } from '../../common/api';
 import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
-import { createTableName, unflattenTableNames } from '../../common/util';
+import { TableName } from '../../common/table-name';
+import { unflattenTableNames } from '../../common/util';
 import { Database } from '../../db/database.helper';
 
 const joi = BaseJoi.extend(JoiDateExtensions);
@@ -85,7 +86,7 @@ export class TableDao {
             { rawName: '_baz', ... }
         ]
          */
-        return _.map(result, (row: any): TableName => createTableName(row.table_name));
+        return _.map(result, (row: any): TableName => new TableName(row.table_name));
     }
 
     /**
@@ -509,7 +510,7 @@ export class TableDao {
         const grouped: PartTableHeaders = {};
 
         for (const header of partHeaders) {
-            const cleanName = createTableName(header.tableName).cleanName;
+            const cleanName = new TableName(header.tableName).cleanName;
 
             if (grouped[cleanName] === undefined)
                 grouped[cleanName] = [header];

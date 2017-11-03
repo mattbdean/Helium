@@ -15,11 +15,11 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import {
-    MasterTableName, TableHeader, TableMeta,
-    TableName
+    MasterTableName, TableHeader, TableMeta
 } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { createTableName, unflattenTableNames } from '../../common/util';
+import { TableName } from '../../common/table-name';
+import { unflattenTableNames } from '../../common/util';
 import { TableService } from '../../core/table.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
 
@@ -94,7 +94,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 // The TableName array we use to create PartialFormComponents
                 // is comprised of the mainName (as a TableName instead of a
                 // MasterTableName) and its parts.
-                this.names = [createTableName(mainName.rawName), ...this.mainName.parts];
+                this.names = [new TableName(mainName.rawName), ...this.mainName.parts];
             });
 
         this.submitSub = this.completedForm$
@@ -171,7 +171,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
 
         // Add all part tables to the $parts object under the clean name
         for (const partTable of partTableNames) {
-            const cleanName = createTableName(partTable).cleanName;
+            const cleanName = new TableName(partTable).cleanName;
             processed['$parts'][cleanName] = form[partTable];
         }
 

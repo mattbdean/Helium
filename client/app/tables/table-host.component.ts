@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { TableName } from '../common/api';
-import { createTableName } from '../common/util';
+import { TableName } from '../common/table-name';
 
 @Component({
     templateUrl: 'table-host.component.html',
@@ -14,7 +13,7 @@ export class TableHostComponent implements OnInit {
 
     public ngOnInit(): void {
         this.route.params.subscribe((params: Params) => {
-            this.selectedTable = params.name ? createTableName(params.name) : null;
+            this.selectedTable = params.name ? new TableName(params.name) : null;
         });
     }
 }

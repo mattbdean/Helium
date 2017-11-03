@@ -10,13 +10,14 @@ import { RouterTestingModule } from '@angular/router/testing';
 import * as _ from 'lodash';
 import * as sinon from 'sinon';
 
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable } from 'rxjs/Observable';
 import { AppComponent } from './app.component';
-import { TableName, TableTier } from './common/api';
+import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
+import { TableName } from './common/table-name';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table.service';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 const expect = global['chai'].expect;
 
@@ -37,7 +38,7 @@ describe('AppComponent', () => {
 
     /** Dynamically create TableName objects based on the given TableTiers */
     const createTableNames = (...tiers: TableTier[]): TableName[] => {
-        return _.map(tiers, (t, index): TableName => ({
+        return _.map(tiers, (t, index): TableName => new TableName({
             rawName: prefixFor(t) + 'table_' + index,
             tier: t,
             cleanName: 'table_' + index,

@@ -11,7 +11,8 @@ import { Subscription } from 'rxjs/Subscription';
 
 import * as _ from 'lodash';
 
-import { TableMeta, TableName } from '../../common/api';
+import { TableMeta } from '../../common/api';
+import { TableName } from '../../common/table-name';
 import { TableService } from '../../core/table.service';
 import { FormControlSpec } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';

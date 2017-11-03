@@ -7,12 +7,12 @@ import { MatButtonModule, MatIconModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
 import { Constraint } from '../../common/api';
-import { createTableName } from '../../common/util';
 import { TableService } from '../../core/table.service';
 import { ComponentMapperService } from '../component-mapper/component-mapper.service';
 import { AbstractFormControl } from '../dynamic-controls/abstract-form-control.class';
@@ -23,7 +23,7 @@ import {
 } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
-import { RouterTestingModule } from '@angular/router/testing';
+import { TableName } from '../../common/table-name';
 
 const expect = global['chai'].expect;
 
@@ -91,7 +91,7 @@ describe('PartialFormComponent', () => {
     /** Initializes the component by calling its ngOnChanges method. */
     const initComponent = (role: 'master' | 'part') => {
         comp.ngOnChanges({
-            namePropertyBinding: new SimpleChange(null, createTableName(role), true),
+            namePropertyBinding: new SimpleChange(null, new TableName(role), true),
             rootGroupPropertyBinding: new SimpleChange(null, rootGroup, true),
             // Include to be complete but there is no listener for role
             role: new SimpleChange(null, role, true)

@@ -2,14 +2,13 @@ import { expect } from 'chai';
 import * as _ from 'lodash';
 
 import {
-    SqlRow, TableHeader, TableMeta,
-    TableName
+    SqlRow, TableHeader, TableMeta
 } from '../../src/common/api';
 import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
-import { createTableName } from '../../src/common/util';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
 import { SHOWCASE_TABLE } from './shared';
+import { TableName } from '../../src/common/table-name';
 
 export default function() {
     let request: RequestContext;
@@ -184,8 +183,8 @@ export default function() {
             request.basic('/tables/master', 200, (data: TableMeta) => {
                 // `master` has 2 part tables: `part` and `part2`
                 const expected: TableName[] = [
-                    createTableName('master__part'),
-                    createTableName('master__part2')
+                    new TableName('master__part'),
+                    new TableName('master__part2')
                 ];
                 expect(data.parts).to.deep.equal(expected);
             });

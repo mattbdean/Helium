@@ -6,8 +6,9 @@ import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import * as _ from 'lodash';
 
-import { SqlRow, TableMeta, TableName } from '../common/api';
+import { SqlRow, TableMeta } from '../common/api';
 import { PaginatedResponse } from '../common/responses';
+import { TableName } from '../common/table-name';
 
 /**
  * This class provides a clean way to interact with the JSON API using Angular's
