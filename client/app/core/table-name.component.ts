@@ -17,7 +17,7 @@ export class TableNameComponent implements OnChanges {
     public ngOnChanges(changes: SimpleChanges): void {
         if (changes.name) {
             const newName = changes.name.currentValue;
-            this.masterCleanName = newName.masterRawName === null ? null :
+            this.masterCleanName = !newName.isPartTable() ? null :
                 new TableName(newName.masterRawName).cleanName;
         }
     }

@@ -8,7 +8,7 @@ import { TableName } from './table-name.class';
 ////////////////////////////////////////////////////////////////////////////////
 
 export const unflattenTableNames = (names: TableName[]): MasterTableName[] => {
-    const partitioned = _.partition(names, (n) => n.masterRawName === null);
+    const partitioned = _.partition(names, (n) => !n.isPartTable());
     const masters = _.map(partitioned[0], (n): MasterTableName => ({
         rawName: n.rawName,
         tier: n.tier,
