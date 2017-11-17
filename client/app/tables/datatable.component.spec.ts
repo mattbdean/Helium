@@ -2,6 +2,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatProgressBarModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
+import { RouterTestingModule } from '@angular/router/testing';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 
 import { Observable } from 'rxjs/Observable';
@@ -9,11 +10,10 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
 import { SqlRow, TableMeta } from '../common/api';
-import { createTableName } from '../common/util';
+import { TableName } from '../common/table-name.class';
 import { CoreModule } from '../core/core.module';
 import { TableService } from '../core/table.service';
 import { DatatableComponent } from './datatable.component';
-import { RouterTestingModule } from '@angular/router/testing';
 
 const expect = global['chai'].expect;
 
@@ -63,7 +63,7 @@ describe('DatatableComponent', () => {
 
     it('should pull in the metadata when given a name', () => {
         expect(comp.meta).to.be.null;
-        comp.name = createTableName('foo');
+        comp.name = new TableName('foo');
 
         const stub = sinon.stub(service, 'meta')
             .returns(Observable.of<TableMeta>(mockTableMeta()));

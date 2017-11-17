@@ -1,3 +1,5 @@
+import { TableName } from './table-name.class';
+
 export interface TableMeta {
     name: string;
     headers: TableHeader[];
@@ -30,14 +32,6 @@ export interface BaseTableName {
      * prefix.
      */
     cleanName: string;
-}
-
-export interface TableName extends BaseTableName {
-    /**
-     * If this table represents a part table, the name of the master table. Null
-     * if not a part table.
-     */
-    masterRawName: string | null;
 }
 
 export interface MasterTableName extends BaseTableName {

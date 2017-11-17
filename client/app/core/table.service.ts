@@ -6,8 +6,10 @@ import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import * as _ from 'lodash';
 
-import { SqlRow, TableMeta, TableName } from '../common/api';
+import { SqlRow, TableMeta } from '../common/api';
 import { PaginatedResponse } from '../common/responses';
+import { TableNameParams } from '../common/table-name-params.interface';
+import { TableName } from '../common/table-name.class';
 
 /**
  * This class provides a clean way to interact with the JSON API using Angular's
@@ -23,14 +25,16 @@ export class TableService {
     public list(): Observable<TableName[]> {
         // If the ReplaySubject hasn't been subscribed to before
         if (!this._listCache.observers.length) {
-            this.get<TableName[]>('/tables').subscribe(
-                (data) => this._listCache.next(data),
-                (err) => {
-                    this._listCache.error(err);
-                    // Recreate the Subject since sending any error will prevent
-                    // any more data from being transmitted
-                    this._listCache = new ReplaySubject(1);
-                }
+            this.get<TableNameParams[]>('/tables')
+                .map((params) => params.map((p) => new TableName(p)))
+                .subscribe(
+                    (data) => this._listCache.next(data),
+                    (err) => {
+                        this._listCache.error(err);
+                        // Recreate the Subject since sending any error will prevent
+                        // any more data from being transmitted
+                        this._listCache = new ReplaySubject(1);
+                    }
             );
         }
 

@@ -1,6 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { TableName } from '../common/api';
-import { createTableName } from '../common/util';
+import { TableName } from '../common/table-name.class';
 
 @Component({
     selector: 'table-name',
@@ -18,8 +17,8 @@ export class TableNameComponent implements OnChanges {
     public ngOnChanges(changes: SimpleChanges): void {
         if (changes.name) {
             const newName = changes.name.currentValue;
-            this.masterCleanName = newName.masterRawName === null ? null :
-                createTableName(newName.masterRawName).cleanName;
+            this.masterCleanName = !newName.isPartTable() ? null :
+                new TableName(newName.masterRawName).cleanName;
         }
     }
 }

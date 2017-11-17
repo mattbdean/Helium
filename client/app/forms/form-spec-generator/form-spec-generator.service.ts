@@ -13,11 +13,11 @@ import {
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
-import { createTableName } from '../../common/util';
 import { TableService } from '../../core/table.service';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';
+import { TableName } from '../../common/table-name.class';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -144,7 +144,7 @@ export class FormSpecGeneratorService {
             // The given TableMeta is for a master table, nothing to do
             return [];
 
-        const tableName = createTableName(tableMeta.name);
+        const tableName = new TableName(tableMeta.name);
         if (tableName.masterRawName !== masterRawName)
             throw new Error(`Given TableMeta was not a part table of ` +
                 `${masterRawName}, but actually for ${tableName.masterRawName}`);

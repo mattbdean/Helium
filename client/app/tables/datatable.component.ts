@@ -5,14 +5,15 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import { HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs/Subject';
 import {
-    Constraint, SqlRow, TableHeader, TableMeta, TableName
+    Constraint, SqlRow, TableHeader, TableMeta
 } from '../common/api';
 import { TableService } from '../core/table.service';
 
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
-import { Router } from '@angular/router';
+import { TableName } from '../common/table-name.class';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];

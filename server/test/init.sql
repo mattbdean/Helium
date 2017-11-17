@@ -100,8 +100,6 @@ CREATE TABLE master__part2(
     FOREIGN KEY (master) REFERENCES master(pk)
 );
 
-CREATE TABLE column_name_test(`$parts` INTEGER PRIMARY KEY);
-
 CREATE TABLE defaults_test(
     pk INTEGER PRIMARY KEY AUTO_INCREMENT,
     `int` INTEGER DEFAULT 5,

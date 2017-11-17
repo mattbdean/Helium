@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import * as request from 'supertest';
 import { Response } from 'supertest';
 import { ErrorResponse } from '../src/common/responses';
+import { Helium } from '../src/helium';
 
 export interface ApiRequest {
     /** HTTP request method. Defaults to 'GET' */
@@ -22,10 +23,10 @@ export interface ApiRequest {
 }
 
 export class RequestContext {
-    public constructor(public app: any) {}
+    public constructor(public app: Helium) {}
 
     public spec(conf: ApiRequest) {
-        return request(this.app)
+        return request(this.app.express)
             // get(path), post(path), put(path), etc.
             [(conf.method || 'GET').toLowerCase()]('/api/v1' + conf.relPath)
             // Add a query string if applicable

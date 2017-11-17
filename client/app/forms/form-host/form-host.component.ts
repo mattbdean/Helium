@@ -15,11 +15,11 @@ import * as _ from 'lodash';
 import * as moment from 'moment';
 
 import {
-    MasterTableName, TableHeader, TableMeta,
-    TableName
+    MasterTableName, TableHeader, TableMeta
 } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { createTableName, unflattenTableNames } from '../../common/util';
+import { TableName } from '../../common/table-name.class';
+import { unflattenTableNames } from '../../common/util';
 import { TableService } from '../../core/table.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
 
@@ -94,7 +94,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 // The TableName array we use to create PartialFormComponents
                 // is comprised of the mainName (as a TableName instead of a
                 // MasterTableName) and its parts.
-                this.names = [createTableName(mainName.rawName), ...this.mainName.parts];
+                this.names = [new TableName(mainName.rawName), ...this.mainName.parts];
             });
 
         this.submitSub = this.completedForm$
@@ -144,40 +144,6 @@ export class FormHostComponent implements OnDestroy, OnInit {
             .subscribe((ref: MatSnackBarRef<any>) => ref.dismiss());
     }
 
-    /**
-     * This function transforms form data from the format represented by Angular
-     * into a format the API expects.
-     */
-    public prepareSubmit(form: object): object {
-        // The only thing we're guaranteed here is that there will be exactly
-        // one master table entry
-        const master = form[this.mainName.rawName][0];
-
-        const processed: object = {};
-
-        // Transfer all master properties to the root of the processed form
-        for (const key of Object.keys(master)) {
-            processed[key] = master[key];
-        }
-
-        // Identify any part table names
-        const partTableNames = Object.keys(form)
-            .filter((k) => k !== this.mainName.rawName);
-
-        // Add the special $parts key for part tables
-        if (partTableNames.length > 0) {
-            processed['$parts'] = {};
-        }
-
-        // Add all part tables to the $parts object under the clean name
-        for (const partTable of partTableNames) {
-            const cleanName = createTableName(partTable).cleanName;
-            processed['$parts'][cleanName] = form[partTable];
-        }
-
-        return processed;
-    }
-
     public ngOnDestroy() {
         this.sub.unsubscribe();
     }
@@ -198,7 +164,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
         const preformatted = FormHostComponent.preformatAll(raw, metadata);
 
         // Send the submitted form up into the pipeline
-        this.completedForm$.next(this.prepareSubmit(preformatted));
+        this.completedForm$.next(preformatted);
     }
 
     /**

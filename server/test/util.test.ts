@@ -2,53 +2,16 @@ import * as _ from 'lodash';
 
 import { expect } from 'chai';
 
-import { MasterTableName, TableName, TableTier } from '../../common/api';
-import { createTableName } from '../src/common/util';
+import { MasterTableName } from '../../common/api';
+import { TableName } from '../../common/table-name.class';
 import { unflattenTableNames } from '../../common/util';
 
 describe('common/util', () => {
-    describe('createTableName', () => {
-        const tables = ['foo', '#foo', '_foo', '__foo', '~foo'];
-        const expectedTypes: TableTier[] =
-            ['manual', 'lookup', 'imported', 'computed', 'hidden'];
-
-        it('should correctly identify the tier and clean name of a table', () => {
-            const names = _.map(tables, (t) => createTableName(t));
-
-            expect(_.map(names, (n) => n.tier)).to.deep.equal(expectedTypes);
-
-            for (const name of names) {
-                expect(name.cleanName).to.equal('foo');
-                expect(name.masterRawName).to.be.null;
-            }
-        });
-
-        it('should correctly handle part tables', () => {
-            const names = _.map(tables, (t) => createTableName(t + '__part'));
-            expect(_.map(names, (n) => n.tier)).to.deep.equal(expectedTypes);
-
-            for (const name of names) {
-                expect(name.cleanName).to.equal('part');
-                expect(name.masterRawName).to.match(/foo$/);
-            }
-        });
-
-        it('should acknowledge a maximum of one part table', () => {
-            const name = createTableName('__foo__part__other');
-            expect(name).to.deep.equal({
-                rawName: '__foo__part__other',
-                tier: 'computed',
-                cleanName: 'part__other',
-                masterRawName: '__foo'
-            });
-        });
-    });
-
     describe('unflattenTableNames', () => {
         it('should properly assign part tables to their correct masters', () => {
             const tables: TableName[] = _.map(
                 ['#foo', '#foo__bar', '#foo__bar__baz', '_qux'],
-                (n) => createTableName(n));
+                (n) => new TableName(n));
 
             const expected: MasterTableName[] = [
                 {
@@ -56,18 +19,18 @@ describe('common/util', () => {
                     tier: 'lookup',
                     cleanName: 'foo',
                     parts: [
-                        {
+                        new TableName({
                             rawName: '#foo__bar',
                             tier: 'lookup',
                             cleanName: 'bar',
                             masterRawName: '#foo'
-                        },
-                        {
+                        }),
+                        new TableName({
                             rawName: '#foo__bar__baz',
                             tier: 'lookup',
                             cleanName: 'bar__baz',
                             masterRawName: '#foo'
-                        }
+                        })
                     ]
                 },
                 {
@@ -81,7 +44,7 @@ describe('common/util', () => {
         });
 
         it('should throw an error when given a part table with a master', () => {
-            const tables: TableName[] = [createTableName('foo__bar')];
+            const tables: TableName[] = [new TableName('foo__bar')];
 
             expect(() => unflattenTableNames(tables)).to.throw(Error);
         });
