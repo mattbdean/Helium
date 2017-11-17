@@ -11,6 +11,6 @@ export class RootPage extends SidebarPage {
     }
 
     public getToolbarText(): wdpromise.Promise<string> {
-        return element(by.css('.mat-toolbar-row')).getText();
+        return element(by.css('.mat-toolbar-single-row')).getText();
     }
 }

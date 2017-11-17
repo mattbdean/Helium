@@ -6,6 +6,7 @@ import { expect } from 'chai';
 import * as _ from 'lodash';
 import { InlineSVGModule } from 'ng-inline-svg';
 
+import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Constraint, ConstraintType } from '../common/api';
 import { ConstraintIconsComponent } from './constraint-icons.component';
@@ -33,11 +34,12 @@ describe('ConstraintIconsComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 InlineSVGModule,
-                RouterTestingModule
+                RouterTestingModule,
+                HttpClientModule
             ],
             declarations: [ ConstraintIconsComponent ],
             providers: [
-                { provide: APP_BASE_HREF, useValue: '/' }
+                { provide: APP_BASE_HREF, useValue: '/' },
             ]
         });
 

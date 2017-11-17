@@ -1,4 +1,5 @@
---compilers ts:ts-node/register
+--require ts-node/register
 --require source-map-support/register
 --require env-test
 server/test/**/*.ts
+--exit
