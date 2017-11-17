@@ -44,6 +44,7 @@ export default function() {
 
         let lastPk: number;
 
+        /** Returns some pseudo-random data that can be inserted into SHOWCASE_TABLE */
         const createSampleData = (): SqlRow => {
             if (lastPk === undefined)
             // Generate base PK in the range [100..10,000,000]
@@ -63,12 +64,18 @@ export default function() {
             };
         };
 
+        /**
+         * Tries to insert exactly one row into SHOWCASE_TABLE and fetch it
+         * using the API
+         */
         const insertAndRetrieve = async (data: SqlRow): Promise<SqlRow> => {
             await request.spec({
                 method: 'PUT',
                 relPath: `/tables/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 200,
-                data
+                data: {
+                    [SHOWCASE_TABLE]: [data]
+                }
             });
 
             const res = await request.spec({
@@ -98,7 +105,7 @@ export default function() {
             expect(fromDb.time).to.equal(data.time);
         });
 
-        it('should allow the user to insert blob data', () => {
+        it('should not allow the user to insert blob data', () => {
             const data = createSampleData();
             data.blob = 'foo';
 
@@ -106,7 +113,9 @@ export default function() {
                 method: 'PUT',
                 relPath: `/tables/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 400,
-                data,
+                data: {
+                    [SHOWCASE_TABLE]: [data]
+                },
                 validate: (err: ErrorResponse) => {
                     expect(err.message).to.include('blob');
                 }
@@ -115,9 +124,11 @@ export default function() {
 
         it('shouldn\'t allow specifying unknown columns', () => {
             return tryInsert('customer', 400, (randomId) => ({
-                customer_id: randomId,
-                name: 'Joe Smith',
-                other: 42 // this column doesn't exist
+                customer: [{
+                    customer_id: randomId,
+                    name: 'Joe Smith',
+                    other: 42 // this column doesn't exist
+                }]
             }), (error: ErrorResponse) => {
                 expect(error.message).to.include('other');
             });
@@ -129,9 +140,11 @@ export default function() {
                 relPath: `/tables/blob_test/data`,
                 expectedStatus: 400,
                 data: {
-                    pk: randomInt(),
-                    blob_nullable: null,
-                    blob_not_null: 'hello'
+                    blob_test: [{
+                        pk: randomInt(),
+                        blob_nullable: null,
+                        blob_not_null: 'hello'
+                    }]
                 },
                 validate: (err: ErrorResponse) => {
                     expect(err.message).to.include('blob');
@@ -152,13 +165,11 @@ export default function() {
             const partIds = [randomInt(), randomInt()];
 
             await tryInsert('master', 200, (masterPk) => ({
-                pk: masterPk,
-                $parts: {
-                    part: [
-                        { part_pk: partIds[0], master: masterPk },
-                        { part_pk: partIds[1], master: masterPk }
-                    ]
-                }
+                master: [{ pk: masterPk }],
+                master__part: [
+                    { part_pk: partIds[0], master: masterPk },
+                    { part_pk: partIds[1], master: masterPk }
+                ]
             }));
 
             // Query the part table and make sure both were inserted
@@ -171,8 +182,10 @@ export default function() {
 
         it('should disallow specifically entering data into a part table', () => {
             return tryInsert('master__part', 400, (randomId) => ({
-                part_pk: randomId,
-                master: randomId + 1
+                master__part: [{
+                    part_pk: randomId,
+                    master: randomId + 1
+                }]
             }), (error: ErrorResponse) => {
                 expect(error.message).to.include('part table');
             });
@@ -180,29 +193,8 @@ export default function() {
 
         it('should disallow entering part tables that don\'t reference the master table PK', () => {
             return tryInsert('master', 400, (masterPk) => ({
-                pk: masterPk,
-                $parts: {
-                    part: [
-                        { part_pk: randomInt(), master: randomInt() }
-                    ]
-                }
-            }));
-        });
-
-        it('shouldn\'t allow inserting data where the column name is $parts', () => {
-            return tryInsert('column_name_test', 400, (masterPk) => ({
-                // This table's only column is its primary key whose name is '$parts'
-                $parts: masterPk
-            }), (error: ErrorResponse) => {
-                expect(error.message).to.contain('not allowed');
-            });
-        });
-
-        it('should dissalow specifying $parts when the master table has no part tables', () => {
-            return tryInsert('customer', 400, (randomId) => ({
-                customer_id: randomId,
-                name: 'Some Guy',
-                $parts: []
+                master: [ { pk: masterPk }],
+                master__part: [{ part_pk: randomInt(), master: randomInt() }]
             }));
         });
     });

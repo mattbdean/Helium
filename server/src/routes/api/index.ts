@@ -1,8 +1,8 @@
 import { Request, Response, Router } from 'express';
 
 import { ErrorResponse } from '../../common/responses';
-import { tables } from './tables';
 import { Database } from '../../db/database.helper';
+import { tables } from './tables';
 
 export function api(db: Database): Router {
     const router = Router();

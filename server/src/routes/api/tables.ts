@@ -6,7 +6,9 @@ import {
 } from '../../common/responses';
 import { Database } from '../../db/database.helper';
 import { debug, NODE_ENV, NodeEnv } from '../../env';
+import { ErrorCode } from './error-code.enum';
 import { Sort, TableDao } from './tables.queries';
+import { ValidationError } from './validation-error';
 
 const TABLE_NAME_REGEX = /^[A-Za-z0-9_#~]*$/;
 
@@ -110,15 +112,27 @@ export function tables(db: Database): Router {
             res.status(200).send({});
         } catch (e) {
             // TODO never write anything this ugly again
-            if (e.isInternal && e.code === 'NO_SUCH_TABLE') {
-                return sendError(res, 404, {
-                    message: 'that table doesn\'t exist',
-                    input: {
-                        name: table,
-                        data: req.body
-                    }
-                });
+            if (e instanceof ValidationError) {
+                switch (e.code) {
+                    case ErrorCode.NO_SUCH_TABLE:
+                        return sendError(res, 404, {
+                            message: 'that table doesn\'t exist',
+                            input: {
+                                name: table,
+                                data: req.body
+                            }
+                        });
+                    default:
+                        return sendError(res, 400, {
+                            message: e.message,
+                            input: {
+                                name: table,
+                                data: req.body
+                            }
+                        });
+                }
             }
+
             if (e.code) {
                 switch (e.code) {
                     case 'ER_BAD_FIELD_ERROR':

@@ -16,7 +16,6 @@ const ALL_TABLES = [
     'master',
     'master__part',
     'master__part2',
-    'column_name_test',
     'defaults_test',
     '#test_lookup',
     '_test_imported',

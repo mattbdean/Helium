@@ -58,52 +58,6 @@ describe('FormHostComponent', () => {
         de = fixture.debugElement;
     });
 
-    describe('prepareSubmit', () => {
-        it('should put all master table properties into one object', () => {
-            // Only tell the component about a fictional master table
-            const stub = sinon.stub(service, 'list')
-                .returns(tableNamesObservable('master'));
-
-            fixture.detectChanges();
-            expect(stub).to.have.been.calledOnce;
-
-            const masterEntry = {
-                foo: 1,
-                bar: 2
-            };
-
-            const rawForm = {
-                master: [ masterEntry ]
-            };
-
-            expect(comp.prepareSubmit(rawForm)).to.deep.equal(masterEntry);
-        });
-
-        it('should add all part tables to $parts', () => {
-            // Tell the component about a master and part table
-            sinon.stub(service, 'list')
-                .returns(tableNamesObservable('master', 'master__part'));
-            fixture.detectChanges();
-
-            const masterEntry = { foo: 1 };
-            const partEntries = [{ bar: 1 }, { bar: 2 }];
-
-            const rawForm = {
-                master: [masterEntry],
-                master__part: partEntries
-            };
-
-            const expected = {
-                foo: 1,
-                $parts: {
-                    part: partEntries
-                }
-            };
-
-            expect(comp.prepareSubmit(rawForm)).to.deep.equal(expected);
-        });
-    });
-
     describe('submit button', () => {
         it('should be disabled when the form is invalid', () => {
             const assertReaction = (formHasErrors: boolean) => {
