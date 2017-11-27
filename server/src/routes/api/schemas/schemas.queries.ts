@@ -4,15 +4,15 @@ import * as moment from 'moment';
 import {
     Constraint, ConstraintType, DefaultValue, SqlRow, TableDataType,
     TableHeader, TableMeta
-} from '../../common/api';
+} from '../../../common/api';
 import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
-} from '../../common/constants';
-import { TableName } from '../../common/table-name.class';
-import { unflattenTableNames } from '../../common/util';
-import { Database } from '../../db/database.helper';
-import { TableInputValidator } from './table-input.validator';
+} from '../../../common/constants';
+import { TableName } from '../../../common/table-name.class';
+import { unflattenTableNames } from '../../../common/util';
+import { Database } from '../../../db/database.helper';
+import { TableInputValidator } from './schema-input.validator';
 
 /**
  * Simple interface for describing the way some data is to be organized

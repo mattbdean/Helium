@@ -4,16 +4,16 @@ import { merge, pick } from 'lodash';
 import {
     ErrorResponse,
     PaginatedResponse
-} from '../../common/responses';
-import { Database } from '../../db/database.helper';
-import { debug, NODE_ENV, NodeEnv } from '../../env';
-import { ErrorCode } from './error-code.enum';
-import { Sort, TableDao } from './tables.queries';
-import { ValidationError } from './validation-error';
+} from '../../../common/responses';
+import { Database } from '../../../db/database.helper';
+import { debug, NODE_ENV, NodeEnv } from '../../../env';
+import { ErrorCode } from '../error-code.enum';
+import { ValidationError } from '../validation-error';
+import { Sort, TableDao } from './schemas.queries';
 
 const TABLE_NAME_REGEX = /^[A-Za-z0-9_#~]*$/;
 
-export function tables(db: Database): Router {
+export function schemas(db: Database): Router {
     const r = Router();
     const dao = new TableDao(db);
     r.use(paginate.middleware(25, 100));

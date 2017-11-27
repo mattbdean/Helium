@@ -5,7 +5,7 @@ import * as moment from 'moment';
 import { SqlRow } from '../../src/common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../src/common/constants';
 import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
-import { TableDao } from '../../src/routes/api/tables.queries';
+import { TableDao } from '../../src/routes/api/schemas/schemas.queries';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
 import { BASE_SCHEMA, SHOWCASE_TABLE } from './shared';

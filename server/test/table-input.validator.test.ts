@@ -9,8 +9,8 @@ import { inspect } from 'util';
 import { TableHeader } from '../src/common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../src/common/constants';
 import { TableName } from '../src/common/table-name.class';
-import { TableInputValidator } from '../src/routes/api/table-input.validator';
-import { TableDao } from '../src/routes/api/tables.queries';
+import { TableInputValidator } from '../src/routes/api/schemas/schema-input.validator';
+import { TableDao } from '../src/routes/api/schemas/schemas.queries';
 
 chai.use(chaiAsPromised);
 

@@ -1,15 +1,15 @@
 import * as BaseJoi from 'joi';
-import { AnySchema, ArraySchema, ObjectSchema, ValidationResult } from 'joi';
+import { AnySchema, ArraySchema, ObjectSchema } from 'joi';
 import * as JoiDateExtensions from 'joi-date-extensions';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { TableHeader } from '../../common/api';
-import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { TableInsert } from '../../common/table-insert.interface';
-import { TableName } from '../../common/table-name.class';
-import { ErrorCode } from './error-code.enum';
-import { TableDao } from './tables.queries';
-import { ValidationError } from './validation-error';
+import { TableHeader } from '../../../common/api';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../../common/constants';
+import { TableInsert } from '../../../common/table-insert.interface';
+import { TableName } from '../../../common/table-name.class';
+import { ErrorCode } from '../error-code.enum';
+import { ValidationError } from '../validation-error';
+import { TableDao } from './schemas.queries';
 
 /**
  * This class attempts to validate input to be inserted into the database.

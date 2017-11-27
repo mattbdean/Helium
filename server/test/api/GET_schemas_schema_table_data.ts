@@ -4,7 +4,7 @@ import * as _ from 'lodash';
 import { SqlRow, TableHeader, TableMeta } from '../../src/common/api';
 import { BLOB_STRING_REPRESENTATION } from '../../src/common/constants';
 import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
-import { TableDao } from '../../src/routes/api/tables.queries';
+import { TableDao } from '../../src/routes/api/schemas/schemas.queries';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
 import { BASE_SCHEMA, SHOWCASE_TABLE } from './shared';

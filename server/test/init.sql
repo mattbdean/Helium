@@ -83,7 +83,7 @@ CREATE TABLE blob_test(
     `blob_not_null` TINYBLOB NOT NULL
 );
 
-# Create a few empty tables for the test of sorting the different types
+# Create a few empty schemas for the test of sorting the different types
 CREATE TABLE `#test_lookup`(pk INTEGER PRIMARY KEY);
 CREATE TABLE _test_imported(pk INTEGER PRIMARY KEY);
 CREATE TABLE __test_computed(pk INTEGER PRIMARY KEY);
