@@ -8,7 +8,7 @@ import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
 import { TableName } from '../../src/common/table-name.class';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
-import { SHOWCASE_TABLE } from './shared';
+import { BASE_SCHEMA, SHOWCASE_TABLE } from './shared';
 
 export default function() {
     let request: RequestContext;
@@ -16,10 +16,10 @@ export default function() {
         request = await setupRequestContext();
     });
 
-    describe('GET /api/v1/tables/:name', () => {
+    describe('GET /api/v1/schemas/:schema/:table', () => {
         let meta: TableMeta;
         before(async () => {
-            meta = (await request.basic(`/tables/${SHOWCASE_TABLE}`, 200)).body;
+            meta = (await request.basic(`/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}`, 200)).body;
         });
 
         it('should include table headers', () => {
@@ -78,8 +78,8 @@ export default function() {
             request.spec({
                 method: 'GET',
                 expectedStatus: 200,
-                relPath: '/tables/' + SHOWCASE_TABLE + '/data',
-                query: { limit: "100" },
+                relPath: `/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}/data`,
+                query: { limit: '100' },
                 validate: (result: PaginatedResponse<SqlRow[]>) => {
                     // This will fail if we have more than 100 rows
                     expect(result.size).to.equal(meta.totalRows);
@@ -88,7 +88,7 @@ export default function() {
         );
 
         it('should include an array of Constraints', () => {
-            return request.basic(`/tables/order`, 200, (res: TableMeta) => {
+            return request.basic(`/schemas/${BASE_SCHEMA}/order`, 200, (res: TableMeta) => {
                 const constraints = res.constraints;
                 expect(constraints).to.exist;
                 // 4 PK, 3 FK's, 1 unique
@@ -123,7 +123,7 @@ export default function() {
         });
 
         it('should resolve FK constraints to the original table', async () => {
-            await request.basic('/tables/shipment', 200, (data: TableMeta) => {
+            await request.basic(`/schemas/${BASE_SCHEMA}/shipment`, 200, (data: TableMeta) => {
                 const grouped = _.groupBy(data.constraints, 'localColumn');
                 // order_id has no other containers between `shipment` and its
                 // home table
@@ -144,7 +144,7 @@ export default function() {
                 }]);
             });
 
-            await request.basic('/tables/organization', 200, (data: TableMeta) => {
+            await request.basic(`/schemas/${BASE_SCHEMA}/organization`, 200, (data: TableMeta) => {
                 // `organization` is the only table that contains a Constraint
                 // where localColumn !== foreignColumn
                 const c = data.constraints.find((c2) =>
@@ -160,18 +160,18 @@ export default function() {
         });
 
         it('should include a comment when applicable', async () => {
-            await request.basic('/tables/organization', 200, (data: TableMeta) => {
+            await request.basic(`/schemas/${BASE_SCHEMA}/organization`, 200, (data: TableMeta) => {
                 expect(data.comment).to.equal('');
             });
 
-            await request.basic(`/tables/${SHOWCASE_TABLE}`, 200, (data: TableMeta) => {
+            await request.basic(`/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}`, 200, (data: TableMeta) => {
                 expect(data.comment).to.equal('a table with diverse data');
             });
         });
 
         it('should 404 when given a non-existent table', () =>
-            request.basic('/tables/foobar', 404, (error: ErrorResponse) => {
-                expect(error.input).to.deep.equal({ name: 'foobar' });
+            request.basic(`/schemas/${BASE_SCHEMA}/foobar`, 404, (error: ErrorResponse) => {
+                expect(error.input).to.deep.equal({ schema: BASE_SCHEMA, table: 'foobar' });
                 expect(error.message).to.be.a('string');
             })
         );
@@ -180,7 +180,7 @@ export default function() {
             // `datatypeshowcase` has no part tables
             expect(meta.parts).to.be.empty;
 
-            request.basic('/tables/master', 200, (data: TableMeta) => {
+            request.basic(`/schemas/${BASE_SCHEMA}/master`, 200, (data: TableMeta) => {
                 // `master` has 2 part tables: `part` and `part2`
                 const expected: TableName[] = [
                     new TableName('master__part'),
@@ -191,7 +191,7 @@ export default function() {
         });
 
         it('should include default values for headers', () => {
-            return request.basic('/tables/defaults_test', 200, (data: TableMeta) => {
+            return request.basic(`/schemas/${BASE_SCHEMA}/defaults_test`, 200, (data: TableMeta) => {
                 const headers = data.headers;
 
                 const expectDefault = (name: string, expectedDefault: any) => {

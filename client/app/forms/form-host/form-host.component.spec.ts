@@ -22,7 +22,7 @@ describe('FormHostComponent', () => {
     let de: DebugElement;
 
     const tableServiceStub = {
-        list: (): Observable<any> => Observable.throw('Not stubbed')
+        tables: (name: string): Observable<any> => Observable.throw('Not stubbed')
     };
 
     const snackbarStub = {};
@@ -67,7 +67,7 @@ describe('FormHostComponent', () => {
                 expect(de.query(By.css('button')).nativeElement.disabled).to.equal(formHasErrors);
             };
 
-            sinon.stub(service, 'list')
+            sinon.stub(service, 'tables')
                 .returns(tableNamesObservable('master'));
 
             fixture.detectChanges();

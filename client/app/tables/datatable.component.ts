@@ -14,6 +14,7 @@ import { TableService } from '../core/table.service';
 
 import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
 import { TableName } from '../common/table-name.class';
+import { SCHEMA } from '../to-be-removed';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];
@@ -104,7 +105,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
             // Pause pageInfo
             .do(() => { pauser.next(true); })
             .switchMap((name) => {
-                return this.backend.meta(name.rawName)
+                return this.backend.meta(SCHEMA, name.rawName)
                     .catch((err: HttpErrorResponse) => {
                         this.exists = false;
 
@@ -133,7 +134,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
         this.pageInfoSub = pausable.switchMap((params: [TableMeta, TableName, number, string]) => {
             // params is an array: [meta, name, pageNumber, sort]
-            return this.backend.content(params[1].rawName, params[2], this.limit, params[3])
+            return this.backend.content(SCHEMA, params[1].rawName, params[2], this.limit, params[3])
                 // TODO Handle this properly
                 .catch((err) => { throw err; })
                 .map((rows: SqlRow[]) => {

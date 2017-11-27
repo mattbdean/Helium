@@ -16,6 +16,7 @@ import { TableService } from './table.service';
 describe('TableService', () => {
     let service: TableService;
     let http: HttpTestingController;
+    const schemaName = 'baz';
     const tableName = 'foobar';
 
     beforeEach(() => {
@@ -54,31 +55,31 @@ describe('TableService', () => {
         });
     };
 
-    describe('list', () => {
-        it('should request GET /api/v1/tables', () => {
-            service.list().subscribe();
-            expectGet('/api/v1/tables');
+    describe('schemas', () => {
+        it('should request GET /api/v1/schemas', () => {
+            service.schemas().subscribe();
+            expectGet('/api/v1/schemas');
         });
+    });
 
-        it('should cache the request values', fakeAsync(() => {
-            service.list().subscribe();
-            tick();
-            service.list().subscribe();
-            expectGet('/api/v1/tables');
-        }));
+    describe('tables', () => {
+        it('should request GET /api/v1/schemas/:schema', () => {
+            service.tables(schemaName).subscribe();
+            expectGet(`/api/v1/schemas/${schemaName}`);
+        });
     });
 
     describe('meta', () => {
-        it('should request GET /api/v1/tables/:table', () => {
-            service.meta(tableName).subscribe();
-            expectGet(`/api/v1/tables/${tableName}`);
+        it('should request GET /api/v1/schemas/:schema/:table', () => {
+            service.meta(schemaName, tableName).subscribe();
+            expectGet(`/api/v1/schemas/${schemaName}/${tableName}`);
         });
     });
 
     describe('content', () => {
-        it('should request GET /api/v1/tables/:table/data', () => {
-            service.content(tableName).subscribe();
-            expectGet(`/api/v1/tables/${tableName}/data`, {
+        it('should request GET /api/v1/schemas/:schema/:table/data', () => {
+            service.content(schemaName, tableName).subscribe();
+            expectGet(`/api/v1/schemas/${schemaName}/${tableName}/data`, {
                 page: 1,
                 limit: 25
             });
@@ -86,8 +87,8 @@ describe('TableService', () => {
 
         it('should include filters when requested', () => {
             // Include pageNumber, limit, and sort, respectively
-            service.content(tableName, 2, 50, '-foo').subscribe();
-            expectGet(`/api/v1/tables/${tableName}/data`, {
+            service.content(schemaName, tableName, 2, 50, '-foo').subscribe();
+            expectGet(`/api/v1/schemas/${schemaName}/${tableName}/data`, {
                 page: 2,
                 limit: 50,
                 sort: '-foo'
@@ -96,16 +97,16 @@ describe('TableService', () => {
     });
 
     describe('columnValues', () => {
-        it('should request GET /api/v1/tables/', () => {
-            service.columnValues(tableName, 'col').subscribe();
-            expectGet(`/api/v1/tables/${tableName}/column/col`);
+        it('should request GET /api/v1/schemas/:schema/:table/column/:col', () => {
+            service.columnValues(schemaName, tableName, 'col').subscribe();
+            expectGet(`/api/v1/schemas/${schemaName}/${tableName}/column/col`);
         });
     });
 
     describe('submitRow', () => {
-        it('should request PUT /api/v1/tables/:table/data', () => {
+        it('should request PUT /api/v1/schemas/:schema/:table/data', () => {
             const body = { foo: 'bar', baz: 4, qux: false };
-            service.submitRow(tableName, body).subscribe();
+            service.submitRow(schemaName, tableName, body).subscribe();
             http.expectOne((r: HttpRequest<any>): boolean => {
                 if (r.method !== 'PUT') return false;
                 return _.isEqual(r.body, body);

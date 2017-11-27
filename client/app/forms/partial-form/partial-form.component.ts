@@ -14,6 +14,7 @@ import * as _ from 'lodash';
 import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table.service';
+import { SCHEMA } from '../../to-be-removed';
 import { FormControlSpec } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 
@@ -94,7 +95,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     public ngOnInit() {
         const meta$ = this.name$
             .switchMap((name: TableName): Observable<TableMeta> =>
-                this.backend.meta(name.rawName)
+                this.backend.meta(SCHEMA, name.rawName)
                     .catch((err) => {
                         // TODO handle better
                         console.error(err);

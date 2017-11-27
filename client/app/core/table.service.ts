@@ -2,7 +2,6 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Observable } from 'rxjs/Observable';
-import { ReplaySubject } from 'rxjs/ReplaySubject';
 
 import * as _ from 'lodash';
 
@@ -11,59 +10,50 @@ import { PaginatedResponse } from '../common/responses';
 import { TableNameParams } from '../common/table-name-params.interface';
 import { TableName } from '../common/table-name.class';
 
+const encode = encodeURIComponent;
+
 /**
  * This class provides a clean way to interact with the JSON API using Angular's
  * Http service.
  */
 @Injectable()
 export class TableService {
-    private _listCache = new ReplaySubject<TableName[]>(1);
-
     constructor(private http: HttpClient) {}
 
-    /** Fetches a list of all tables */
-    public list(): Observable<TableName[]> {
-        // If the ReplaySubject hasn't been subscribed to before
-        if (!this._listCache.observers.length) {
-            this.get<TableNameParams[]>('/tables')
-                .map((params) => params.map((p) => new TableName(p)))
-                .subscribe(
-                    (data) => this._listCache.next(data),
-                    (err) => {
-                        this._listCache.error(err);
-                        // Recreate the Subject since sending any error will prevent
-                        // any more data from being transmitted
-                        this._listCache = new ReplaySubject(1);
-                    }
-            );
-        }
+    public schemas(): Observable<string[]> {
+        return this.get('/schemas');
+    }
 
-        return this._listCache;
+    /** Fetches a list of all tables */
+    public tables(tableName: string): Observable<TableName[]> {
+        return this.get<TableNameParams[]>(`/schemas/${tableName}`)
+            .map((params) => params.map((p) => new TableName(p)));
     }
 
     /** Fetches meta for a given table */
-    public meta(name: string): Observable<TableMeta> {
-        return this.get(`/tables/${encodeURIComponent(name)}`);
+    public meta(schema: string, table: string): Observable<TableMeta> {
+        return this.get(`/schemas/${encode(schema)}/${encode(table)}`);
     }
 
     /** Fetches paginated data from a given table */
-    public content(name: string, page: number = 1, limit: number = 25, sort?: string): Observable<SqlRow[]> {
-        return this.get(`/tables/${encodeURIComponent(name)}/data`, {
+    public content(schema: string, table: string, page: number = 1,
+                   limit: number = 25, sort?: string): Observable<SqlRow[]> {
+        return this.get(`/schemas/${encode(schema)}/${encode(table)}/data`, {
             page, limit, sort
         }).map((data: PaginatedResponse<SqlRow[]>) => data.data);
     }
 
-    public columnValues(table: string, column: string): Observable<any[]> {
-        return this.get(`/tables/${encodeURIComponent(table)}/column/${encodeURIComponent(column)}`);
+    public columnValues(schema: string, table: string, column: string): Observable<any[]> {
+        return this.get(`/schemas/${encode(schema)}/${encode(table)}/column/${encode(column)}`);
     }
 
     /**
      * Attempts to add a row to the database for a given table. The table must
      * exist and the body must have the shape of a SqlRow.
      */
-    public submitRow(tableName: string, body: SqlRow): Observable<void> {
+    public submitRow(schema: string, tableName: string, body: SqlRow): Observable<void> {
         return this.http.put(
-            `/api/v1/tables/${encodeURIComponent(tableName)}/data`,
+            `/api/v1/${encode(schema)}/${encode(tableName)}/data`,
             body,
             {
                 headers: new HttpHeaders({

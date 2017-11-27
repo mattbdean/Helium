@@ -6,7 +6,7 @@ import { tables } from './tables';
 
 export function api(db: Database): Router {
     const router = Router();
-    router.use('/tables', tables(db));
+    router.use('/schemas', tables(db));
 
     // Catch all requests to the API not handled by an API module to ensure the
     // client still receives JSON data

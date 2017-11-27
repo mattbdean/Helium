@@ -4,6 +4,7 @@ import { setupRequestContext } from './setup';
 import { expect } from 'chai';
 import * as _ from 'lodash';
 import { TableNameParams } from '../../src/common/table-name-params.interface';
+import { BASE_SCHEMA } from './shared';
 
 const ALL_TABLES = [
     'customer',
@@ -28,9 +29,9 @@ export default function() {
         request = await setupRequestContext();
     });
 
-    describe('GET /api/v1/tables', () => {
+    describe('GET /api/v1/schemas/:schema', () => {
         it('should return an array of TableNames', () =>
-            request.basic('/tables', 200, (data: TableNameParams[]) => {
+            request.basic('/schemas/' + BASE_SCHEMA, 200, (data: TableNameParams[]) => {
                 expect(Array.isArray(data)).to.be.true;
                 expect(_.map(data, 'rawName')).to.deep.equal(_.sortBy(ALL_TABLES));
 

@@ -2,10 +2,7 @@ import { Validators } from '@angular/forms';
 
 import { expect } from 'chai';
 
-import {
-    Constraint, TableDataType, TableHeader,
-    TableMeta
-} from '../../common/api';
+import { Constraint, TableHeader, TableMeta } from '../../common/api';
 import { TableService } from '../../core/table.service';
 import { FormControlSpec } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from './form-spec-generator.service';

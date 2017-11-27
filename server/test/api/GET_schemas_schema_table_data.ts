@@ -7,7 +7,7 @@ import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
 import { TableDao } from '../../src/routes/api/tables.queries';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
-import { SHOWCASE_TABLE } from './shared';
+import { BASE_SCHEMA, SHOWCASE_TABLE } from './shared';
 
 export default function() {
     let request: RequestContext;
@@ -17,17 +17,17 @@ export default function() {
         tableDao = new TableDao(request.app.database);
     });
 
-    describe('GET /api/v1/tables/:name/data', () => {
+    describe('GET /api/v1/schemas/:schema/:table/data', () => {
         let meta: TableMeta;
 
         before(async () => {
-            meta = await tableDao.meta(SHOWCASE_TABLE);
+            meta = await tableDao.meta(BASE_SCHEMA, SHOWCASE_TABLE);
         });
 
         it('should return an array of SqlRows', () => {
             return request.spec({
                 method: 'GET',
-                relPath: '/tables/' + SHOWCASE_TABLE + '/data',
+                relPath: `/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 200,
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
                     expect(response.size).to.equal(response.data.length);
@@ -58,9 +58,9 @@ export default function() {
         it('should support limiting via query', () => {
             return request.spec({
                 method: 'GET',
-                relPath: '/tables/' + SHOWCASE_TABLE + '/data',
+                relPath: `/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 200,
-                query: { limit: "2" },
+                query: { limit: '2' },
                 validate: (response: PaginatedResponse<SqlRow[]>) => {
                     expect(response.size).to.be.at.most(2);
                 }
@@ -78,12 +78,12 @@ export default function() {
             // Use the most complex table without any dates for this specific
             // test
             const table = 'product';
-            const tableMeta = await tableDao.meta(table);
+            const tableMeta = await tableDao.meta(BASE_SCHEMA, table);
 
             const doRequest = (header: TableHeader, sort: 'asc' | 'desc'): Promise<void> =>
                 request.spec({
                     method: 'GET',
-                    relPath: `/tables/${table}/data`,
+                    relPath: `/schemas/${BASE_SCHEMA}/${table}/data`,
                     expectedStatus: 200,
                     // sort ascending with sort=name, descending with sort=-name
                     query: { sort: (sort === 'desc' ? '-' : '') + header.name },
@@ -103,11 +103,17 @@ export default function() {
         it('should throw a 400 when sorting by a column that doesn\'t exist', async () => {
             return request.spec({
                 method: 'GET',
-                relPath: `/tables/${encodeURIComponent(SHOWCASE_TABLE)}/data`,
+                relPath: `/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}/data`,
                 query: { sort: 'foobar' },
                 expectedStatus: 400,
                 validate: (err: ErrorResponse) => {
-                    expect(err.input).to.deep.equal({ sort: 'foobar' });
+                    expect(err.input).to.deep.equal({
+                        limit: 25,
+                        page: 1,
+                        schema: BASE_SCHEMA,
+                        table: SHOWCASE_TABLE,
+                        sort: 'foobar'
+                    });
                 }
             });
         });

@@ -13,8 +13,6 @@ import { TableName } from '../../common/table-name.class';
 import { unflattenTableNames } from '../../common/util';
 import { Database } from '../../db/database.helper';
 import { TableInputValidator } from './table-input.validator';
-import { ValidationError } from './validation-error';
-import { ErrorCode } from './error-code.enum';
 
 /**
  * Simple interface for describing the way some data is to be organized
@@ -32,40 +30,26 @@ export class TableDao {
         this.validator = new TableInputValidator(this);
     }
 
+    public async schemas(): Promise<string[]> {
+        return (await this.helper.executeRaw('SHOW SCHEMAS;'))
+            .map((row: SqlRow) => row[Object.keys(row)[0]]);
+    }
+
     /**
      * Returns an array of all available table names
      */
-    public async list(): Promise<TableName[]> {
+    public async tables(db: string): Promise<TableName[]> {
         // db.conn is a PromiseConnection that wraps a Connection. A
         // Connection has a property `config`
-        const result = await this.helper.execute((squel) =>
-            squel.select()
-                .from('INFORMATION_SCHEMA.tables')
-                .field('table_name')
-                .where('TABLE_SCHEMA = ?', this.helper.databaseName()));
-
-        /*
-        Transform this:
-        [
-            { table_name: 'foo' },
-            { table_name: '#bar' },
-            { table_name: '_baz' }
-        ]
-
-        Into an array of TableNames:
-        [
-            { rawName: 'foo', ... }
-            { rawName: '#bar', ... }
-            { rawName: '_baz', ... }
-        ]
-         */
-        return _.map(result, (row: any): TableName => new TableName(row.table_name));
+        const result = await this.helper.executeRaw('SHOW TABLES FROM ' + this.helper.escapeId(db));
+        return _.map(result, (row: SqlRow): TableName => new TableName(row[Object.keys(row)[0]]));
     }
 
     /**
      * Fetches the data from the table
      *
-     * @param {string} name Table name
+     * @param {string} schema Database name
+     * @param {string} table Table name
      * @param {number} page Which page to request. Pages are 1-indexed, so 0 is
      * an invalid page, 1 is the first page, 2 is the second, and so on. A "page"
      * is pretty arbitrary since what data is included depends heavily on
@@ -76,7 +60,8 @@ export class TableDao {
      * column/direction
      * @returns {Promise<SqlRow[]>} A promise that resolves to the requested data
      */
-    public async content(name: string,
+    public async content(schema: string,
+                         table: string,
                          page: number = 1,
                          limit: number = 25,
                          sort?: Sort | undefined): Promise<SqlRow[]> {
@@ -87,7 +72,7 @@ export class TableDao {
                 .select()
                 // Make sure we escape the table name so that we're less vulnerable to
                 // SQL injection
-                .from(this.helper.escapeId(name))
+                .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
                 // Pagination
                 .limit(limit)
                 .offset((page - 1) * limit);
@@ -102,7 +87,7 @@ export class TableDao {
 
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
-        const headers: TableHeader[] = await this.headers(name);
+        const headers: TableHeader[] = await this.headers(schema, table);
         const blobHeaders = _(headers)
             .filter((h) => h.type === 'blob')
             .map((h) => h.name)
@@ -135,24 +120,24 @@ export class TableDao {
     /**
      * Fetches a TableMeta instance for the given table.
      */
-    public async meta(name: string): Promise<TableMeta> {
+    public async meta(schema: string, table: string): Promise<TableMeta> {
         const [allTables, headers, count, constraints, comment] = await Promise.all([
-            this.list(),
-            this.headers(name),
-            this.count(name),
+            this.tables(schema),
+            this.headers(schema, table),
+            this.count(schema, table),
             // For some reason `this` becomes undefined in the resolveConstraints
             // function if we do this.constraints(name).then(this.resolveConstraints)
-            this.constraints(name).then((result) => this.resolveConstraints(result)),
-            this.comment(name)
+            this.constraints(schema, table).then((result) => this.resolveConstraints(schema, result)),
+            this.comment(schema, table)
         ]);
 
         // Identify part tables for the given table name
         const masterTables = unflattenTableNames(allTables);
-        const masterTable = masterTables.find((t) => t.rawName === name);
+        const masterTable = masterTables.find((t) => t.rawName === table);
         const parts = masterTable ? masterTable.parts : [];
 
         return {
-            name,
+            name: table,
             headers,
             totalRows: count,
             constraints,
@@ -164,16 +149,17 @@ export class TableDao {
     /**
      * Fetches all distinct values from one column. Useful for autocomplete.
      */
-    public async columnContent(table: string, column: string): Promise<Array<string | number>> {
+    public async columnContent(schema: string, table: string, column: string):
+        Promise<Array<string | number>> {
+
         // SELECT DISTINCT $col FROM $table ORDER BY $col ASC
         const result = await this.helper.execute((squel) =>
             squel
                 .select()
                 .distinct()
-                .from(this.helper.escapeId(table))
+                .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
                 .field(this.helper.escapeId(column))
                 .order(this.helper.escapeId(column))
-
         );
 
         // Each row is a document mapping the column to its value. In this case, we
@@ -186,14 +172,9 @@ export class TableDao {
      * Inserts a row into a given table. The given data will be verified before
      * inserting.
      */
-    public async insertRow(table: string, data: any) {
-        const headers = await this.headers(table);
-        if (headers.length === 0) {
-            throw new ValidationError('no such table', ErrorCode.NO_SUCH_TABLE);
-        }
-
+    public async insertRow(schema: string, table: string, data: any) {
         // Make sure that the given data adheres to the headers
-        const preparedData = await this.validator.validate(data);
+        const preparedData = await this.validator.validate(schema, data);
 
         return this.helper.transaction(async () => {
             // Make sure we alphabetize the names so we insert master tables first
@@ -208,7 +189,7 @@ export class TableDao {
 
                 await this.helper.execute((squel) => {
                     return squel.insert()
-                        .into(this.helper.escapeId(name))
+                        .into(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
                         .setFieldsRows(rows);
                 });
             }
@@ -220,7 +201,7 @@ export class TableDao {
      * `name` is used in a 'LIKE' expression and therefore can contain
      * metacharacters like '%'.
      */
-    public async headers(name: string): Promise<TableHeader[]> {
+    public async headers(schema: string, name: string): Promise<TableHeader[]> {
         const fields = [
             'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
             'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
@@ -236,7 +217,7 @@ export class TableDao {
             }
 
             return query
-                .where('TABLE_SCHEMA = ?', this.helper.databaseName())
+                .where('TABLE_SCHEMA = ?', schema)
                 .where('TABLE_NAME LIKE ?', name)
                 .order('ORDINAL_POSITION');
         });
@@ -289,7 +270,7 @@ export class TableDao {
      * Gets a list of constraints on a given table. Currently, only primary keys,
      * foreign keys, and unique constraints are recognized.
      */
-    private async constraints(name: string): Promise<Constraint[]> {
+    private async constraints(schema: string, table: string): Promise<Constraint[]> {
         const result = await this.helper.execute((squel) => {
             return squel.select()
                 .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
@@ -297,8 +278,8 @@ export class TableDao {
                     .field('CONSTRAINT_NAME')
                     .field('REFERENCED_TABLE_NAME')
                     .field('REFERENCED_COLUMN_NAME')
-                .where('CONSTRAINT_SCHEMA = ?', this.helper.databaseName())
-                .where('TABLE_NAME = ?', name)
+                .where('CONSTRAINT_SCHEMA = ?', schema)
+                .where('TABLE_NAME = ?', table)
                 .order('ORDINAL_POSITION');
         });
 
@@ -327,14 +308,14 @@ export class TableDao {
      *
      * Note that if there are no foreign key constraints
      */
-    private async resolveConstraints(originals: Constraint[]): Promise<Constraint[]> {
+    private async resolveConstraints(schema: string, originals: Constraint[]): Promise<Constraint[]> {
         // Keep tables in cache once we look them up to prevent any unnecessary
         // lookups
         const cache: { [tableName: string]: Constraint[] } = {};
 
         // Return constraints from cache, otherwise look them up
-        const getConstraints = (name: string): Promise<Constraint[]> => {
-            return cache[name] ? Promise.resolve(cache[name]) : this.constraints(name);
+        const getConstraints = (table: string): Promise<Constraint[]> => {
+            return cache[table] ? Promise.resolve(cache[table]) : this.constraints(schema, table);
         };
 
         const resolved: Constraint[] = [];
@@ -370,23 +351,23 @@ export class TableDao {
     }
 
     /** Fetches a table's comment, or an empty string if none exists */
-    private async comment(name: string): Promise<string> {
+    private async comment(schema: string, table: string): Promise<string> {
         const result = await this.helper.execute((squel) =>
             squel.select()
                 .from('INFORMATION_SCHEMA.TABLES')
                 .field('TABLE_COMMENT')
-                .where('TABLE_NAME = ?', name)
-                .where('TABLE_SCHEMA = ?', this.helper.databaseName())
+                .where('TABLE_NAME = ?', table)
+                .where('TABLE_SCHEMA = ?', schema)
         );
 
         return result[0].TABLE_COMMENT;
     }
 
     /** Counts the amount of rows in a table */
-    private async count(name: string): Promise<number> {
+    private async count(schema: string, table: string): Promise<number> {
         const result = await this.helper.execute((squel) =>
             squel.select()
-                .from(this.helper.escapeId(name))
+                .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
                 .field('COUNT(*)')
         );
         // This query returns only one row

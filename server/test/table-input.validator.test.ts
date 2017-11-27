@@ -36,6 +36,8 @@ describe('TableInputValidator', () => {
             throw new Error(`Expected a validation error: value = ${v} (${typeof v})`);
     };
 
+    const SCHEMA = '<schema>';
+
     describe('validate', () => {
         const testData: { [tableName: string]: TableHeader[] } = {
             // the _ prefix is to make sure that this works with any tier of DJ
@@ -94,7 +96,7 @@ describe('TableInputValidator', () => {
             // Mirror the functionality of a real TableDao. Instead of looking
             // up data from a database, we're working with fake metadata (defined above).
             const fakeDao = {
-                headers: async (name: string): Promise<TableHeader[]> => {
+                headers: async (schema: string, name: string): Promise<TableHeader[]> => {
                     const headers = testData[name];
                     if (!headers)
                         throw new Error(`Table ${name} does not exist`);
@@ -107,7 +109,7 @@ describe('TableInputValidator', () => {
 
         it('should require an object', async () => {
             for (const invalidInput of [null, undefined, 0, true, false])
-                await expect(validator.validate(invalidInput)).to.be.rejectedWith(Error);
+                await expect(validator.validate(SCHEMA, invalidInput)).to.be.rejectedWith(Error);
         });
 
         it('should return the validated data in their proper types', async () => {
@@ -120,7 +122,7 @@ describe('TableInputValidator', () => {
                 }]
             };
 
-            expect(await validator.validate(input)).to.deep.equal({
+            expect(await validator.validate(SCHEMA, input)).to.deep.equal({
                 _master: [{
                     pk: 1234, // the string '1234' should be converted to a number
                     foo: 'abcd',
@@ -137,7 +139,7 @@ describe('TableInputValidator', () => {
             };
 
             // Make sure it doesn't throw an error
-            return validator.validate(input);
+            return validator.validate(SCHEMA, input);
         });
 
         it('should not allow part tables by itself', () => {
@@ -149,7 +151,7 @@ describe('TableInputValidator', () => {
                 }]
             };
 
-            return expect(validator.validate(input)).to.be.rejectedWith(Error);
+            return expect(validator.validate(SCHEMA, input)).to.be.rejectedWith(Error);
         });
 
         it('should reject non-existent tables', () => {
@@ -157,7 +159,7 @@ describe('TableInputValidator', () => {
                 unknown_table: [{ foo: 123 }]
             };
 
-            return expect(validator.validate(input)).to.be.rejectedWith(Error);
+            return expect(validator.validate(SCHEMA, input)).to.be.rejectedWith(Error);
         });
 
         it('should ensure that all part tables belong to the master table', () => {
@@ -166,7 +168,7 @@ describe('TableInputValidator', () => {
                 _other__part: [ { pk: 0 } ]
             };
 
-            return expect(validator.validate(input)).to.be.rejectedWith(Error);
+            return expect(validator.validate(SCHEMA, input)).to.be.rejectedWith(Error);
         });
 
         it('should allow exactly one master table input and zero or more part table inputs', async () => {
@@ -194,11 +196,11 @@ describe('TableInputValidator', () => {
             ];
 
             for (const inputShape of valid) {
-                await validator.validate(createInput(inputShape));
+                await validator.validate(SCHEMA, createInput(inputShape));
             }
 
             for (const inputShape of invalid) {
-                await expect(validator.validate(createInput(inputShape)))
+                await expect(validator.validate(SCHEMA, createInput(inputShape)))
                     .to.be.rejectedWith(Error);
             }
         });

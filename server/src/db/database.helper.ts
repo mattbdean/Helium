@@ -30,8 +30,6 @@ export class Database {
         return this.conn.end();
     }
 
-    public databaseName(): string { return this.config.database; }
-
     /**
      * Executes the string value of the Squel QueryBuilder and returns the
      * result
@@ -40,6 +38,17 @@ export class Database {
         const query = createQuery(this.squel).toParam();
 
         const result = await this.conn.execute(query.text, query.values);
+
+        // result[0] is an array of BinaryRows, result[1] is metadata
+        return result[0] as SqlRow[];
+    }
+
+    /**
+     * Executes the given SQL query. If the query has any user input
+     * whatsoever, {@link execute} should be used instead.
+     */
+    public async executeRaw(query: string): Promise<SqlRow[]> {
+        const result = await this.conn.execute(query);
 
         // result[0] is an array of BinaryRows, result[1] is metadata
         return result[0] as SqlRow[];

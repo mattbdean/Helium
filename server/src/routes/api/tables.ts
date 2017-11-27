@@ -1,5 +1,6 @@
 import { Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
+import { merge, pick } from 'lodash';
 import {
     ErrorResponse,
     PaginatedResponse
@@ -19,7 +20,7 @@ export function tables(db: Database): Router {
 
     r.get('/', async (req: Request, res: Response) => {
         try {
-            res.json(await dao.list());
+            res.json(await dao.schemas());
         } catch (err) {
             internalError(res, err, {
                 message: 'Could not execute request',
@@ -28,8 +29,20 @@ export function tables(db: Database): Router {
         }
     });
 
-    r.get('/:name/data', async (req: Request, res: Response) => {
-        const name: string = req.params.name;
+    r.get('/:schema', async (req: Request, res: Response) => {
+        try {
+            res.json(await dao.tables(req.params.schema));
+        } catch (err) {
+            internalError(res, err, {
+                message: 'Could not execute request',
+                input: {}
+            });
+        }
+    });
+
+    r.get('/:schema/:table/data', async (req: Request, res: Response) => {
+        const schema: string = req.params.schema;
+        const name: string = req.params.table;
 
         if (!verifyTableName(name, res)) return;
 
@@ -46,69 +59,66 @@ export function tables(db: Database): Router {
         }
 
         try {
-            const data = await dao.content(name, req.query.page, req.query.limit, sort);
+            const data = await dao.content(schema, name, req.query.page, req.query.limit, sort);
             const response: PaginatedResponse<any> = {
                 size: data.length,
                 data
             };
             res.json(response);
         } catch (err) {
-            if (err.code && err.code === "ER_BAD_FIELD_ERROR")
+            const input = merge(
+                pick(req.params, ['schema', 'table']),
+                pick(req.query, ['sort', 'limit', 'page'])
+            );
+
+            if (err.code && err.code === 'ER_BAD_FIELD_ERROR')
                 return sendError(res, 400, {
                     message: 'Cannot sort: no such column name',
-                    input: { sort: req.query.sort }
+                    input
                 });
 
             internalError(res, err, {
                 message: 'Could not execute request',
-                input: { name: req.params.name }
+                input
             });
         }
     });
 
-    r.get('/:name', async (req: Request, res: Response) => {
+    r.get('/:schema/:table', async (req: Request, res: Response) => {
+        const schema = req.params.schema;
+        const table = req.params.table;
+        if (!verifyTableName(table, res)) return;
+
         try {
-            const name = req.params.name;
-            if (!verifyTableName(name, res)) return;
-
-            try {
-                res.json(await dao.meta(name));
-            } catch (e) {
-                if (e.code && e.code === 'ER_NO_SUCH_TABLE')
-                    return sendError(res, 404, {
-                        message: 'No such table',
-                        input: { name }
-                    });
-                return internalError(res, e, {
-                    message: 'Unable to execute request',
-                    input: { name }
+            res.json(await dao.meta(schema, table));
+        } catch (e) {
+            const input = pick(req.params, ['schema', 'table']);
+            if (e.code && e.code === 'ER_NO_SUCH_TABLE')
+                return sendError(res, 404, {
+                    message: 'No such table',
+                    input
                 });
-            }
-        } catch (err) {
-            internalError(res, err, {
-                message: 'Could not execute request',
-                input: {
-                    name: req.params.name
-                }
+            return internalError(res, e, {
+                message: 'Unable to execute request',
+                input
             });
         }
     });
 
-    r.put('/:name/data', async (req, res) => {
-        const table: string = req.params.name;
+    r.put('/:schema/:table/data', async (req, res) => {
+        const schema: string = req.params.schema;
+        const table: string = req.params.table;
         if (!verifyTableName(table, res)) return;
 
         const send400 = (message: string) =>
             sendError(res, 400, { message, input: {
-                name: table,
+                schema,
+                table,
                 data: req.body
             }});
 
-        if (table.indexOf('__') > 0)
-            return send400('inserting data into part tables directly is forbidden');
-
         try {
-            await dao.insertRow(table, req.body);
+            await dao.insertRow(schema, table, req.body);
             res.status(200).send({});
         } catch (e) {
             // TODO never write anything this ugly again
@@ -175,23 +185,21 @@ export function tables(db: Database): Router {
             return internalError(res, e, {
                 message: 'Could not execute request',
                 input: {
-                    name: req.params.name,
+                    schema: req.params.schema,
+                    table: req.params.table,
                     data: req.body
                 }
             });
         }
     });
 
-    r.get('/:name/column/:col', async (req, res) => {
-        if (!verifyTableName(req.params.name, res)) return;
+    r.get('/:schema/:table/column/:col', async (req, res) => {
+        if (!verifyTableName(req.params.schema, res)) return;
 
         try {
-            res.json(await dao.columnContent(req.params.name, req.params.col));
+            res.json(await dao.columnContent(req.params.schema, req.params.table, req.params.col));
         } catch (e) {
-            const input = {
-                name: req.params.name,
-                col: req.params.col
-            };
+            const input = pick(req.params, ['schema', 'table', 'col']);
 
             // Try to handle any errors thrown while fetching the data
             if (e.code) {

@@ -8,7 +8,7 @@ import { ErrorResponse, PaginatedResponse } from '../../src/common/responses';
 import { TableDao } from '../../src/routes/api/tables.queries';
 import { RequestContext } from '../api.test.helper';
 import { setupRequestContext } from './setup';
-import { SHOWCASE_TABLE } from './shared';
+import { BASE_SCHEMA, SHOWCASE_TABLE } from './shared';
 
 const randomInt = () => Math.round((Math.random() * 10000000));
 
@@ -20,7 +20,7 @@ export default function() {
         tableDao = new TableDao(request.app.database);
     });
 
-    describe('PUT /api/v1/tables/:name/data', () => {
+    describe('PUT /api/v1/schemas/:schema/:table/data', () => {
         /**
          * Attempts to insert some data into the table via the API.
          *
@@ -35,7 +35,7 @@ export default function() {
             const randomId = randomInt();
             return request.spec({
                 method: 'PUT',
-                relPath: `/tables/${table}/data`,
+                relPath: `/schemas/${BASE_SCHEMA}/${table}/data`,
                 expectedStatus,
                 data: createData(randomId),
                 validate
@@ -71,7 +71,7 @@ export default function() {
         const insertAndRetrieve = async (data: SqlRow): Promise<SqlRow> => {
             await request.spec({
                 method: 'PUT',
-                relPath: `/tables/${SHOWCASE_TABLE}/data`,
+                relPath: `/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 200,
                 data: {
                     [SHOWCASE_TABLE]: [data]
@@ -111,7 +111,7 @@ export default function() {
 
             return request.spec({
                 method: 'PUT',
-                relPath: `/tables/${SHOWCASE_TABLE}/data`,
+                relPath: `/schemas/${BASE_SCHEMA}/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 400,
                 data: {
                     [SHOWCASE_TABLE]: [data]
@@ -137,7 +137,7 @@ export default function() {
         it('shouldn\'t allow the user to insert any data into a table with a non-null blob column', () => {
             return request.spec({
                 method: 'PUT',
-                relPath: `/tables/blob_test/data`,
+                relPath: `/schemas/${BASE_SCHEMA}/blob_test/data`,
                 expectedStatus: 400,
                 data: {
                     blob_test: [{
@@ -152,10 +152,17 @@ export default function() {
             });
         });
 
-        it('shouldn\'t allow the user to submit data to a table that doesn\'t exist', () => {
-            return request.spec({
+        it('shouldn\'t allow the user to submit data to a table or schema that doesn\'t exist', async () => {
+            await request.spec({
                 method: 'PUT',
-                relPath: '/tables/blablabla/data',
+                relPath: `/schemas/${BASE_SCHEMA}/blablabla/data`,
+                expectedStatus: 404,
+                data: {}
+            });
+
+            await request.spec({
+                method: 'PUT',
+                relPath: `/schemas/blablabla/${SHOWCASE_TABLE}/data`,
                 expectedStatus: 404,
                 data: {}
             });
@@ -173,7 +180,7 @@ export default function() {
             }));
 
             // Query the part table and make sure both were inserted
-            const content = await tableDao.content('master__part', 1, 1000);
+            const content = await tableDao.content(BASE_SCHEMA, 'master__part', 1, 1000);
 
             for (const partId of partIds) {
                 expect(_.find(content, (row) => row['part_pk'] === partId)).to.exist;

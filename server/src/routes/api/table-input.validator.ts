@@ -86,7 +86,7 @@ export class TableInputValidator {
      * data gathered from the initial validation. Any Error thrown because of
      * Joi will have the `isJoi` and `details` properties.
      */
-    public async validate(data: any): Promise<TableInsert> {
+    public async validate(db: string, data: any): Promise<TableInsert> {
         if (data === null || data === undefined || typeof data !== 'object')
             throw new ValidationError('Expecting a defined, non-null object, got ' + data,
                 ErrorCode.WRONG_TYPE);
@@ -112,7 +112,7 @@ export class TableInputValidator {
         // Fetch all metadata belonging to all the tables here. The headers for
         // tableNames[i] are located at allHeaders[i].
         const allHeaders: TableHeader[][] = await Promise.all(
-            tableNames.map((name) => this.helper.headers(name.rawName), this));
+            tableNames.map((name) => this.helper.headers(db, name.rawName), this));
 
         const keys = tableNames.map((n) => n.rawName);
         const values = tableNames.map((n, index) => {

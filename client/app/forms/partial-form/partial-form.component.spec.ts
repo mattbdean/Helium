@@ -71,7 +71,7 @@ describe('PartialFormComponent', () => {
     };
 
     const tableServiceStub = {
-        meta: (rawName: string): Observable<MockTableMeta> =>
+        meta: (schema: string, rawName: string): Observable<MockTableMeta> =>
             Observable.of({ name: rawName })
     };
 

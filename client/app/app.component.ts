@@ -9,7 +9,8 @@ import { MatSidenav } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
-import { TableService } from "./core/table.service";
+import { TableService } from './core/table.service';
+import { SCHEMA } from './to-be-removed';
 
 interface GroupedName { tier: TableTier; names: MasterTableName[]; }
 
@@ -42,7 +43,7 @@ export class AppComponent implements OnDestroy, OnInit {
     ) {}
 
     public ngOnInit() {
-        this.groupedNames = this.backend.list()
+        this.groupedNames = this.backend.tables(SCHEMA)
             .map(unflattenTableNames)
             // Start with an empty array so the template has something to do
             // before we get actual data

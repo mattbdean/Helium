@@ -13,11 +13,12 @@ import {
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
+import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table.service';
+import { SCHEMA } from '../../to-be-removed';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';
-import { TableName } from '../../common/table-name.class';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -89,7 +90,7 @@ export class FormSpecGeneratorService {
 
             if (foreignKey !== undefined) {
                 autocompleteValues = this.backend.columnValues(
-                    foreignKey.foreignTable, foreignKey.foreignColumn);
+                    SCHEMA, foreignKey.foreignTable, foreignKey.foreignColumn);
                 type = 'autocomplete';
             }
 

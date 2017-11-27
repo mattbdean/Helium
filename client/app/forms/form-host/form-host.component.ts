@@ -21,6 +21,7 @@ import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { unflattenTableNames } from '../../common/util';
 import { TableService } from '../../core/table.service';
+import { SCHEMA } from '../../to-be-removed';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
 
 /**
@@ -57,7 +58,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
         this.formGroup = this.fb.group({});
 
         this.sub = Observable.combineLatest(
-            this.backend.list(),
+            this.backend.tables(SCHEMA),
             this.route.params.map((p: Params) => p.name)
         )
             .switchMap((data: [TableName[], string, string]): Observable<MasterTableName> => {
@@ -101,7 +102,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             // Only allow non-null and non-undefined values
             .filter((form) => form !== undefined && form !== null)
             .switchMap((form: any) => {
-                return this.backend.submitRow(this.mainName.rawName, form)
+                return this.backend.submitRow(SCHEMA, this.mainName.rawName, form)
                     // Assume no error
                     .mapTo(null)
                     // Handle any errors

@@ -56,7 +56,7 @@ describe('AppComponent', () => {
     const counts = _.countBy(types);
 
     const serviceStub = {
-        list: (): Observable<TableName[]> => Observable.of(
+        tables: (name: string): Observable<TableName[]> => Observable.of(
             createTableNames(...types)
         )
     };
@@ -83,7 +83,7 @@ describe('AppComponent', () => {
     });
 
     it('should automatically pull in all available tables', fakeAsync(() => {
-        const spy = sinon.spy(service, 'list');
+        const spy = sinon.spy(service, 'tables');
         fixture.detectChanges();
         tick();
         expect(spy).to.have.been.calledOnce;
