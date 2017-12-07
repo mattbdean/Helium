@@ -1,26 +1,60 @@
-import { Request, Response, Router } from 'express';
+import { NextFunction, Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
 import { merge, pick } from 'lodash';
 import {
     ErrorResponse,
     PaginatedResponse
 } from '../../../common/responses';
-import { Database } from '../../../db/database.helper';
+import { DatabaseHelper } from '../../../db/database.helper';
 import { debug, NODE_ENV, NodeEnv } from '../../../env';
+import { DaoFactory } from '../dao.factory';
 import { ErrorCode } from '../error-code.enum';
 import { ValidationError } from '../validation-error';
-import { Sort, TableDao } from './schemas.queries';
+import { SchemaDao, Sort } from './schema.dao';
 
-const TABLE_NAME_REGEX = /^[A-Za-z0-9_#~]*$/;
-
-export function schemas(db: Database): Router {
+export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();
-    const dao = new TableDao(db);
+
+    /**
+     * Routing callback "middleware" that only passes control to the next
+     * callback if the request has an active session and that session has a
+     * database associated with it
+     */
+    const requireActiveSession = (req: Request, res: Response, next: NextFunction) => {
+        if (!req.isAuthenticated()) {
+            // Require an active session
+            const resp: ErrorResponse = {
+                message: 'Not logged in',
+                input: {}
+            };
+            res.status(401).json(resp);
+        } else if (req.isAuthenticated() && !db.hasPool(req.user)) {
+            // The user may be sending the Cookie header but there may not be a
+            // valid session attached
+            req.logout();
+
+            const resp: ErrorResponse = {
+                message: 'No database connection associated with this session',
+                input: {}
+            };
+            res.status(401).json(resp);
+        } else {
+            // All good
+            next();
+        }
+    };
+
+    // All endpoints defined here must have an active session
+    r.use(requireActiveSession);
+
+    const daoFor = (req: Request): SchemaDao => daoFactory(db, req.user);
+
+    // Limit 25 records by default, allowing a maximum of 100
     r.use(paginate.middleware(25, 100));
 
     r.get('/', async (req: Request, res: Response) => {
         try {
-            res.json(await dao.schemas());
+            res.json(await daoFor(req).schemas());
         } catch (err) {
             internalError(res, err, {
                 message: 'Could not execute request',
@@ -31,20 +65,24 @@ export function schemas(db: Database): Router {
 
     r.get('/:schema', async (req: Request, res: Response) => {
         try {
-            res.json(await dao.tables(req.params.schema));
+            res.json(await daoFor(req).tables(req.params.schema));
         } catch (err) {
-            internalError(res, err, {
-                message: 'Could not execute request',
-                input: {}
-            });
+            if (err.code === 'ER_DBACCESS_DENIED_ERROR') {
+                return sendError(res, 404, {
+                    message: 'Cannot access schema',
+                    input: { schema: req.params.schema } });
+            } else {
+                internalError(res, err, {
+                    message: 'Could not execute request',
+                    input: {}
+                });
+            }
         }
     });
 
     r.get('/:schema/:table/data', async (req: Request, res: Response) => {
         const schema: string = req.params.schema;
         const name: string = req.params.table;
-
-        if (!verifyTableName(name, res)) return;
 
         let sort: Sort | undefined;
         if (req.query.sort) {
@@ -59,7 +97,12 @@ export function schemas(db: Database): Router {
         }
 
         try {
-            const data = await dao.content(schema, name, req.query.page, req.query.limit, sort);
+            const data = await daoFor(req).content(schema, name, {
+                page: req.query.page,
+                limit: req.query.limit,
+                sort
+            });
+
             const response: PaginatedResponse<any> = {
                 size: data.length,
                 data
@@ -71,11 +114,17 @@ export function schemas(db: Database): Router {
                 pick(req.query, ['sort', 'limit', 'page'])
             );
 
-            if (err.code && err.code === 'ER_BAD_FIELD_ERROR')
-                return sendError(res, 400, {
-                    message: 'Cannot sort: no such column name',
-                    input
-                });
+            if (err.code) {
+                if (err.code === 'ER_DBACCESS_DENIED_ERROR')
+                    return sendError(res, 404, { message: 'database not found', input });
+                else if (err.code === 'ER_NO_SUCH_TABLE')
+                    return sendError(res, 404, { message: 'no such table', input });
+                else if (err.code === 'ER_BAD_FIELD_ERROR')
+                    return sendError(res, 400, {
+                        message: 'Cannot sort: no such column name',
+                        input
+                    });
+            }
 
             internalError(res, err, {
                 message: 'Could not execute request',
@@ -87,13 +136,12 @@ export function schemas(db: Database): Router {
     r.get('/:schema/:table', async (req: Request, res: Response) => {
         const schema = req.params.schema;
         const table = req.params.table;
-        if (!verifyTableName(table, res)) return;
 
         try {
-            res.json(await dao.meta(schema, table));
+            res.json(await daoFor(req).meta(schema, table));
         } catch (e) {
             const input = pick(req.params, ['schema', 'table']);
-            if (e.code && e.code === 'ER_NO_SUCH_TABLE')
+            if (e.code && (e.code === 'ER_NO_SUCH_TABLE' || e.code === 'ER_DBACCESS_DENIED_ERROR'))
                 return sendError(res, 404, {
                     message: 'No such table',
                     input
@@ -108,7 +156,6 @@ export function schemas(db: Database): Router {
     r.put('/:schema/:table/data', async (req, res) => {
         const schema: string = req.params.schema;
         const table: string = req.params.table;
-        if (!verifyTableName(table, res)) return;
 
         const send400 = (message: string) =>
             sendError(res, 400, { message, input: {
@@ -118,7 +165,7 @@ export function schemas(db: Database): Router {
             }});
 
         try {
-            await dao.insertRow(schema, table, req.body);
+            await daoFor(req).insertRow(schema, req.body);
             res.status(200).send({});
         } catch (e) {
             // TODO never write anything this ugly again
@@ -194,10 +241,8 @@ export function schemas(db: Database): Router {
     });
 
     r.get('/:schema/:table/column/:col', async (req, res) => {
-        if (!verifyTableName(req.params.schema, res)) return;
-
         try {
-            res.json(await dao.columnContent(req.params.schema, req.params.table, req.params.col));
+            res.json(await daoFor(req).columnContent(req.params.schema, req.params.table, req.params.col));
         } catch (e) {
             const input = pick(req.params, ['schema', 'table', 'col']);
 
@@ -205,13 +250,18 @@ export function schemas(db: Database): Router {
             if (e.code) {
                 switch (e.code) {
                     case 'ER_BAD_FIELD_ERROR':
-                        return sendError(res, 400, {
+                        return sendError(res, 404, {
                             message: 'no such column',
                             input
                         });
                     case 'ER_NO_SUCH_TABLE':
-                        return sendError(res, 400, {
+                        return sendError(res, 404, {
                             message: 'no such table',
+                            input
+                        });
+                    case 'ER_DBACCESS_DENIED_ERROR':
+                        return sendError(res, 404, {
+                            message: 'no such schema',
                             input
                         });
                 }
@@ -239,23 +289,6 @@ export function schemas(db: Database): Router {
 
     const sendError = (res: Response, code: number, data: ErrorResponse) => {
         res.status(code).json(data);
-    };
-
-    /**
-     * Verifies that a given table name is valid. If the table is determined to
-     * be invalid, a 400 response will be sent and this function will return
-     * false.
-     */
-    const verifyTableName = (name: string, res: Response): boolean => {
-        if (!TABLE_NAME_REGEX.test(name)) {
-            sendError(res, 400, {
-                message: 'table name must be entirely alphanumeric and optionally ' +
-                    'prefixed with "~" or "#"',
-                input: { name }
-            });
-            return false;
-        }
-        return true;
     };
 
     return r;

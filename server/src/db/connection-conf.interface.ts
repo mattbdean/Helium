@@ -14,7 +14,4 @@ export interface ConnectionConf {
 
     /** The password of that MySQL user */
     password: string;
-
-    /** Name of the database to use for this connection (Optional). */
-    database: string;
 }

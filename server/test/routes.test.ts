@@ -3,9 +3,8 @@ import { Helium } from '../src/helium';
 
 describe('routes', () => {
     let app: Helium;
-
-    before('create app', async () => {
-        app = new Helium({ front: true });
+    before(async () => {
+        app = new Helium();
         await app.start();
     });
 

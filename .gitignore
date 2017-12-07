@@ -18,10 +18,6 @@
 /server/src/common
 /server/src/public
 
-# Sensitive files
-/db.conf.json
-/server/src/db.conf.json
-
 # Package manager error logs
 yarn-error.log
 npm-debug.log

@@ -10,10 +10,9 @@ import { TableHeader } from '../src/common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../src/common/constants';
 import { TableName } from '../src/common/table-name.class';
 import { TableInputValidator } from '../src/routes/api/schemas/schema-input.validator';
-import { TableDao } from '../src/routes/api/schemas/schemas.queries';
+import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
 
 chai.use(chaiAsPromised);
-
 const expect = chai.expect;
 
 describe('TableInputValidator', () => {
@@ -93,7 +92,7 @@ describe('TableInputValidator', () => {
         });
 
         beforeEach(() => {
-            // Mirror the functionality of a real TableDao. Instead of looking
+            // Mirror the functionality of a real SchemaDao. Instead of looking
             // up data from a database, we're working with fake metadata (defined above).
             const fakeDao = {
                 headers: async (schema: string, name: string): Promise<TableHeader[]> => {
@@ -103,7 +102,7 @@ describe('TableInputValidator', () => {
 
                     return headers;
                 }
-            } as any as TableDao;
+            } as any as SchemaDao;
             validator = new TableInputValidator(fakeDao);
         });
 
@@ -241,16 +240,6 @@ describe('TableInputValidator', () => {
             // }
             joi.assert([], schema);
         });
-
-        // it.only('foo', () => {
-        //     // const schema = TableInputValidator.schemaForTable(headers);
-        //     // console.log(schema.validate(entry()));
-        //
-        //     const schema = TableInputValidator.schemaForTableArray(headers, new TableName('#foo__bar'));
-        //     console.log(new TableName('foo__bar').isPartTable());
-        //     // console.log(schema.validate(_.range(3).map(entry)));
-        //     console.log(schema.validate([]));
-        // });
     });
 
     describe('schemaForTable', () => {

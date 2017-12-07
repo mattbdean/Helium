@@ -7,25 +7,30 @@ import { Helium } from '../src/helium';
 export interface ApiRequest {
     /** HTTP request method. Defaults to 'GET' */
     method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'HEAD' | 'OPTIONS' | 'DELETE';
+
     /** Path relative to "/api/v1" */
     relPath: string;
+
     /** Expected HTTP status code (200, 404, etc.) */
     expectedStatus: number;
+
     /**
      * Validate the content of the API response. Passes the `error` property if
      * expectedStatus isn't 2XX, otherwise passes the `data` property.
      */
     validate?: (dataOrError: any) => void;
+
     /** Parameters for the query string */
     query?: { [value: string]: string };
+
     /** Data to be sent in the request body */
     data?: any;
 }
 
 export class RequestContext {
-    public constructor(public app: Helium) {}
+    public constructor(public readonly app: Helium) {}
 
-    public spec(conf: ApiRequest) {
+    public spec(conf: ApiRequest): Promise<request.Response> {
         return request(this.app.express)
             // get(path), post(path), put(path), etc.
             [(conf.method || 'GET').toLowerCase()]('/api/v1' + conf.relPath)
@@ -64,9 +69,10 @@ export class RequestContext {
             });
     }
 
-    public basic(relPath: string,
-                 expectedStatus: number,
-                 validate?: (dataOrError: any) => void) {
+    /** Performs a basic GET request. */
+    public get(relPath: string,
+               expectedStatus: number,
+               validate?: (dataOrError: any) => void) {
         return this.spec({
             method: 'GET',
             relPath,

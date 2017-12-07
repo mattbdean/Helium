@@ -62,7 +62,8 @@ CREATE TABLE shipment(
   FOREIGN KEY (order_id, organization_id, customer_id, product_id) REFERENCES `order`(order_id, organization_id, customer_id, product_id)
 );
 
-# Create table with all known supported datatypes
+# Create table with all known supported datatypes (expect for non-null blobs,
+# which aren't supported)
 CREATE TABLE datatypeshowcase(
   `pk` INTEGER UNSIGNED PRIMARY KEY NOT NULL COMMENT 'pk column',
   `integer` INTEGER UNIQUE COMMENT 'integer column',

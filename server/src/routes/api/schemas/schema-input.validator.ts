@@ -9,7 +9,7 @@ import { TableInsert } from '../../../common/table-insert.interface';
 import { TableName } from '../../../common/table-name.class';
 import { ErrorCode } from '../error-code.enum';
 import { ValidationError } from '../validation-error';
-import { TableDao } from './schemas.queries';
+import { SchemaDao } from './schema.dao';
 
 /**
  * This class attempts to validate input to be inserted into the database.
@@ -65,7 +65,7 @@ import { TableDao } from './schemas.queries';
 export class TableInputValidator {
     private static joi = BaseJoi.extend(JoiDateExtensions);
 
-    public constructor(private helper: TableDao) {}
+    public constructor(private helper: SchemaDao) {}
 
     /**
      * Attempts to validate some input data as described in the class

@@ -11,11 +11,21 @@ import {
 } from '../../../common/constants';
 import { TableName } from '../../../common/table-name.class';
 import { unflattenTableNames } from '../../../common/util';
-import { Database } from '../../../db/database.helper';
+import { QueryHelper } from '../../../db/query-helper';
 import { TableInputValidator } from './schema-input.validator';
 
 /**
- * Simple interface for describing the way some data is to be organized
+ * Simple interface for describing the way some data is to be organized.
+ *
+ * In the case of a method rejecting with a MySQL-related error, the Error
+ * object will have a `code` property. Here are some of the common values:
+ *
+ *  - ER_DBACCESS_DENIED_ERROR (the schema doesn't exist or is inaccessible
+ *    to the user)
+ *  - ER_NO_SUCH_TABLE (the table doesn't exist)
+ *  - ER_BAD_FIELD_ERROR (a requested column doesn't exist on the table)
+ *  - ER_TABLEACCESS_DENIED_ERROR
+ *  - ER_UNKNOWN_TABLE
  */
 export interface Sort {
     direction: 'asc' | 'desc';
@@ -23,10 +33,10 @@ export interface Sort {
     by: string;
 }
 
-export class TableDao {
+export class SchemaDao {
     private validator: TableInputValidator;
 
-    public constructor(private helper: Database) {
+    public constructor(private helper: QueryHelper) {
         this.validator = new TableInputValidator(this);
     }
 
@@ -37,10 +47,13 @@ export class TableDao {
 
     /**
      * Returns an array of all available table names
+     *
+     * If this Promise rejects due to a MySQL-related error, the resulting Error
+     * object will have a code property most likely equal to
+     * 'ER_DBACCESS_DENIED_ERROR', in the case that the schema doesn't exist or
+     * the user doesn't have the ability to view that schema.
      */
     public async tables(db: string): Promise<TableName[]> {
-        // db.conn is a PromiseConnection that wraps a Connection. A
-        // Connection has a property `config`
         const result = await this.helper.executeRaw('SHOW TABLES FROM ' + this.helper.escapeId(db));
         return _.map(result, (row: SqlRow): TableName => new TableName(row[Object.keys(row)[0]]));
     }
@@ -50,21 +63,31 @@ export class TableDao {
      *
      * @param {string} schema Database name
      * @param {string} table Table name
-     * @param {number} page Which page to request. Pages are 1-indexed, so 0 is
-     * an invalid page, 1 is the first page, 2 is the second, and so on. A "page"
-     * is pretty arbitrary since what data is included depends heavily on
+     * @param {object} opts Additional options
+     * @param {number} opts.page Which page to request. Pages are 1-indexed, so
+     * 0 is an invalid page, 1 is the first page, 2 is the second, and so on. A
+     * "page" is pretty arbitrary since what data is included depends heavily on
      * `limit`.
-     *
-     * @param {number} limit How many rows to fetch in one go
-     * @param {Sort} sort If provided, will attempt to sort the results by this
-     * column/direction
-     * @returns {Promise<SqlRow[]>} A promise that resolves to the requested data
+     * @param {number} opts.limit How many rows to fetch in one go
+     * @param {Sort} opts.sort If provided, will attempt to sort the results by
+     * this column/direction
+     * @returns {Promise<SqlRow[]>} A promise that resolves to the requested
+     * data
      */
     public async content(schema: string,
                          table: string,
-                         page: number = 1,
-                         limit: number = 25,
-                         sort?: Sort | undefined): Promise<SqlRow[]> {
+                         opts: { page?: number, limit?: number, sort?: Sort} = {}): Promise<SqlRow[]> {
+
+        // Resolve each option to a non-undefined value
+        const page: number = opts.page !== undefined ? opts.page : 1;
+        const limit: number = opts.limit !== undefined ? opts.limit : 25;
+        const sort = opts.sort || null;
+
+        if (page < 1)
+            throw new Error('Expecting page >= 1');
+
+        if (limit < 0)
+            throw new Error('Expecting limit < 0');
 
         const rows = await this.helper.execute((squel) => {
             // Create our basic query
@@ -77,13 +100,18 @@ export class TableDao {
                 .limit(limit)
                 .offset((page - 1) * limit);
 
-            if (sort !== undefined) {
+            if (sort !== null) {
                 // Specify a sort if provided
                 query = query.order(this.helper.escapeId(sort.by), sort.direction === 'asc');
             }
 
             return query;
         });
+
+        // If there's no data being returned and this isn't the first page,
+        // we've gone past the last page.
+        if (rows.length === 0 && page !== 1)
+            throw new Error(`Page too high: ${page}`);
 
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
@@ -117,9 +145,7 @@ export class TableDao {
         return rows;
     }
 
-    /**
-     * Fetches a TableMeta instance for the given table.
-     */
+    /** Fetches a TableMeta instance for the given table. */
     public async meta(schema: string, table: string): Promise<TableMeta> {
         const [allTables, headers, count, constraints, comment] = await Promise.all([
             this.tables(schema),
@@ -172,26 +198,26 @@ export class TableDao {
      * Inserts a row into a given table. The given data will be verified before
      * inserting.
      */
-    public async insertRow(schema: string, table: string, data: any) {
+    public async insertRow(schema: string, data: any) {
         // Make sure that the given data adheres to the headers
         const preparedData = await this.validator.validate(schema, data);
 
-        return this.helper.transaction(async () => {
+        return this.helper.transaction(async (conn) => {
             // Make sure we alphabetize the names so we insert master tables first
             const names = _.sortBy(Object.keys(preparedData));
 
             // Do inserts in sequence so we can guarantee that master tables
             // are inserted before any part tables
-            for (const name of names) {
+            for (const tableName of names) {
                 // Prepare each row for insertion. Escape column names, transform
                 // values as appropriate, etc.
-                const rows = preparedData[name].map(this.prepareForInsert, this);
+                const rows = preparedData[tableName].map(this.prepareForInsert, this);
 
                 await this.helper.execute((squel) => {
                     return squel.insert()
-                        .into(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
+                        .into(this.helper.escapeId(schema) + '.' + this.helper.escapeId(tableName))
                         .setFieldsRows(rows);
-                });
+                }, conn);
             }
         });
     }
@@ -201,7 +227,7 @@ export class TableDao {
      * `name` is used in a 'LIKE' expression and therefore can contain
      * metacharacters like '%'.
      */
-    public async headers(schema: string, name: string): Promise<TableHeader[]> {
+    public async headers(schema: string, table: string): Promise<TableHeader[]> {
         const fields = [
             'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
             'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
@@ -218,7 +244,7 @@ export class TableDao {
 
             return query
                 .where('TABLE_SCHEMA = ?', schema)
-                .where('TABLE_NAME LIKE ?', name)
+                .where('TABLE_NAME LIKE ?', table)
                 .order('ORDINAL_POSITION');
         });
 
@@ -226,9 +252,9 @@ export class TableDao {
         // that share the same name
         return _.map(result, (row: any): TableHeader => {
             const rawType = row.COLUMN_TYPE as string;
-            const type = TableDao.parseType(rawType);
+            const type = SchemaDao.parseType(rawType);
             const isNumerical = type === 'integer' || type === 'float';
-            const defaultValue = TableDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT);
+            const defaultValue = SchemaDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT);
 
             return {
                 name: row.COLUMN_NAME as string,
@@ -244,7 +270,7 @@ export class TableDao {
                 charset: row.CHARACTER_SET_NAME as string,
                 numericPrecision: row.NUMERIC_PRECISION as number,
                 numericScale: row.NUMERIC_SCALE as number,
-                enumValues: TableDao.findEnumValues(row.COLUMN_TYPE as string),
+                enumValues: SchemaDao.findEnumValues(row.COLUMN_TYPE as string),
                 comment: row.COLUMN_COMMENT as string,
                 tableName: row.TABLE_NAME as string
             };
@@ -260,7 +286,7 @@ export class TableDao {
         for (const columnName of Object.keys(validated)) {
             // Escape the name of the column in case that name is a reserved
             // MySQL keyword like "integer."
-            result[this.helper.escapeId(columnName)] = TableDao.prepareValue(validated[columnName]);
+            result[this.helper.escapeId(columnName)] = SchemaDao.prepareValue(validated[columnName]);
         }
 
         return result;
@@ -417,7 +443,7 @@ export class TableDao {
         if (rawType === 'date') return 'date';
         if (rawType === 'datetime' || rawType === 'timestamp') return 'datetime';
         if (rawType.startsWith('enum')) return 'enum';
-        if (rawType.includes('char')) return 'string';
+        if (rawType.includes('char') || rawType.includes('text')) return 'string';
         if (rawType.includes('blob')) return 'blob';
 
         throw Error(`Could not determine TableDataType for raw type '${rawType}'`);

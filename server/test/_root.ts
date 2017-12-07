@@ -1,3 +1,5 @@
+// Install all global mocha hooks here
+
 before(async () => {
     // Catch unhandled Promises
     process.on('unhandledRejection', (reason) => {
