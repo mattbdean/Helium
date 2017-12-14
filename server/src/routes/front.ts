@@ -10,7 +10,7 @@ export function front(): Router {
                 if (err) {
                     return res.status(500)
                         .contentType('text/plain')
-                        .send('This website didn\'t go through its build process properly');
+                        .send('The website hasn\'t been built or is currently being built');
                 }
             });
         } else if (req.accepts('json')) {
