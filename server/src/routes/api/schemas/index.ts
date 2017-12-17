@@ -21,25 +21,25 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
      * database associated with it
      */
     const requireActiveSession = (req: Request, res: Response, next: NextFunction) => {
-        if (!req.isAuthenticated()) {
+        const apiKey = req.header('x-api-key');
+        if (apiKey === undefined) {
             // Require an active session
             const resp: ErrorResponse = {
-                message: 'Not logged in',
+                message: 'Please specify an X-API-Key header with your API key from POST /api/v1/login',
                 input: {}
             };
-            res.status(401).json(resp);
-        } else if (req.isAuthenticated() && !db.hasPool(req.user)) {
-            // The user may be sending the Cookie header but there may not be a
-            // valid session attached
-            req.logout();
+            return res.status(401).json(resp);
+        }
 
+        if (!db.hasPool(apiKey)) {
             const resp: ErrorResponse = {
                 message: 'No database connection associated with this session',
                 input: {}
             };
-            res.status(401).json(resp);
+            return res.status(401).json(resp);
         } else {
-            // All good
+            // All good, set expiration header
+            res.header('X-Session-Expiration', String(db.expiration(apiKey)));
             next();
         }
     };
@@ -47,7 +47,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
     // All endpoints defined here must have an active session
     r.use(requireActiveSession);
 
-    const daoFor = (req: Request): SchemaDao => daoFactory(db, req.user);
+    const daoFor = (req: Request): SchemaDao => daoFactory(db, req.header('x-api-key')!!);
 
     // Limit 25 records by default, allowing a maximum of 100
     r.use(paginate.middleware(25, 100));

@@ -1,7 +1,6 @@
 import * as chai from 'chai';
 import * as joi from 'joi';
 import { pickBy } from 'lodash';
-import * as passportStub from 'passport-stub';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as supertest from 'supertest';
@@ -32,6 +31,8 @@ describe('API v1', () => {
         input: joi.object().required()
     });
 
+    const MOCK_API_KEY = 'mockKey';
+
     beforeEach(async () => {
         app = new Helium();
 
@@ -41,7 +42,7 @@ describe('API v1', () => {
         // Always return the testing SchemaDao when trying to access the DB
         await app.start(() => schemaDao);
 
-        request = new RequestContext(app);
+        request = new RequestContext(app, MOCK_API_KEY);
     });
 
     describe('No/pre-authentication', () => {
@@ -63,7 +64,7 @@ describe('API v1', () => {
                         (val) => val !== undefined));
             };
 
-            it('should set a cookie for valid users', async () => {
+            it('should show session expiration', async () => {
                 const conf = { user: 'user', password: 'password', host: 'localhost' };
 
                 const key = 'testing-key';
@@ -71,12 +72,18 @@ describe('API v1', () => {
                     .withArgs(conf)
                     .resolves(key);
 
+                // Random value, should be present in the response headers
+                const expiration = 777;
+                const expirationStub = sinon.stub(app.database, 'expiration')
+                    .withArgs(key)
+                    .returns(expiration); 
+
                 await baseRequest(conf)
                     .expect(200)
-                    .expect('set-cookie', /^sessionId=.*$/)
+                    .expect('x-session-expiration', String(expiration))
                     .then((res: Response) => {
-                        // The body should look be an object with a single property
-                        // (apiKey)
+                        // The body should look be an object with a single
+                        // property (apiKey)
                         joi.assert(res.body, joi.object({ apiKey: key }));
                     });
 
@@ -116,22 +123,15 @@ describe('API v1', () => {
 
     describe('Post-authentication', () => {
         beforeEach(async () => {
-            const mockApiKey = 'testing-key';
-
             // Bypass Passport authentication
-            passportStub.install(app.express);
-            passportStub.login(mockApiKey);
+            (app.database as any).pools.set(MOCK_API_KEY, { mockPool: true });
 
             // Make sure that the server thinks that there is an active
             // connection for the testing key. We don't actually use any DB
             // connections since we stub SchemaDao, so this is perfectly fine.
             sinon.stub(app.database, 'hasPool')
-                .withArgs(mockApiKey)
+                .withArgs(MOCK_API_KEY)
                 .returns(true);
-        });
-
-        afterEach(() => {
-            passportStub.uninstall();
         });
 
         // Creates an Error whose 'code' property is given
@@ -146,7 +146,7 @@ describe('API v1', () => {
                 const schemasStub = sinon.stub(schemaDao, 'schemas')
                     .resolves([]);
 
-                await request.get('/schemas', 200);
+                const res = await request.get('/schemas', 200);
 
                 expect(schemasStub).to.have.been.calledOnce;
             });

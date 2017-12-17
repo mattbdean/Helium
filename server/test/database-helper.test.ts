@@ -13,6 +13,10 @@ chai.use(chaiAsPromised);
 const expect = chai.expect;
 
 describe('DatabaseHelper', () => {
+    // These tests might as well use Infinity as the max age, but we need a
+    // finite number for DatabaseHelper.expiration() tests.
+    const MAX_AGE = 60 * 60 * 1000; // 1 hour
+
     let helper: DatabaseHelper;
 
     const fakePool = (): Pool => ({
@@ -21,7 +25,7 @@ describe('DatabaseHelper', () => {
     }) as any as Pool;
 
     beforeEach(() => {
-        helper = new DatabaseHelper(Infinity);
+        helper = new DatabaseHelper(MAX_AGE);
     });
 
     describe('authenticate', () => {
@@ -131,6 +135,23 @@ describe('DatabaseHelper', () => {
 
             // All keys should have been deleted from the registry
             expect(helper.size()).to.equal(0);
+        });
+    });
+
+    describe('expiration', () => {
+        it('should return a negative number when the key doesn\'t exist', () => {
+            expect(helper.expiration('foo')).to.be.below(0);
+        });
+
+        it('should return the unix time', () => {
+            const error = 5; // 5 milliseconds of error, pretty large tbh
+
+            const key = 'mockKey';
+            (helper as any).pools.set(key, {});
+
+            const expiration = helper.expiration(key);
+            const now = Date.now();
+            expect(expiration).to.be.at.most(now + MAX_AGE).and.at.least(now + MAX_AGE - error);
         });
     });
 });

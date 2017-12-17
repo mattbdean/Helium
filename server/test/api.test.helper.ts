@@ -28,7 +28,7 @@ export interface ApiRequest {
 }
 
 export class RequestContext {
-    public constructor(public readonly app: Helium) {}
+    public constructor(public readonly app: Helium, private readonly apiKey: string) {}
 
     public spec(conf: ApiRequest): Promise<request.Response> {
         return request(this.app.express)
@@ -38,11 +38,15 @@ export class RequestContext {
             .query(conf.query)
             // Let the server know we want JSON
             .set('Accept', /application\/json/)
+            // Send our API key for every request
+            .set('X-API-Key', this.apiKey)
             // Send our data, if applicable
             .type('json')
             .send(conf.data)
             // Expect a JSON response
             .expect('Content-Type', /application\/json/)
+            // Expect our custom header to let us know when the session expires
+            .expect('X-Session-Expiration', /^[0-9a-zA-Z]+$/)
             .then((res: Response) => {
                 if (res.status === 500)
                     // Fail the test, using the request body as the subject of

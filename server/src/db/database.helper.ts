@@ -101,8 +101,39 @@ export class DatabaseHelper {
         this.pools.prune();
     }
 
+    /**
+     * Determines the current expiration of the given API key in Unix epoch time
+     * (in milliseconds).
+     * 
+     * @returns A negative number if the ky doesn't exist, otherwise the unix
+     * epoch time in milliseconds at which the key will be considered valid.
+     */
+    public expiration(key: string): number {
+        // Internally, node-lru-cache uses Symbols for "internal" properties.
+        // The 'cache' symbol is the key for the internal ES2015 Map where it
+        // stores all of the data.
+        const cacheSymbol = Symbol.for('cache');
+        const map = this.pools[cacheSymbol];
+
+        if (!map.has(key))
+            // No entry, always expired
+            return -1;
+
+        // This next section is highly dependent on the library internals.
+        // Prepare for breakage if the lib goes through major internal changes.
+        const entry = map.get(key).value;
+
+        // entry.now is the absolute epoch time when the item was inserted,
+        // entry.maxAge is maximum amount time in milliseconds that the entry
+        // had to live before it was considered expired
+        const created: number = entry.now;
+        const maxAge: number = entry.maxAge;
+        return created + maxAge;
+    }
+
     /** Extends the life of a session */
     private extendSession(key: string) {
+        // Recreate the key, thereby extending its max age
         if (this.pools.has(key))
             this.pools.set(key, this.pools.get(key)!!);
     }

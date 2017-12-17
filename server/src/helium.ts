@@ -1,11 +1,8 @@
 import * as bodyParser from 'body-parser';
-import cookieSession = require('cookie-session');
 import { Application } from 'express';
 import * as express from 'express';
 import * as helmet from 'helmet';
 import * as logger from 'morgan';
-import * as passport from 'passport';
-import { Strategy as LocalStrategy } from 'passport-local';
 import * as path from 'path';
 
 import { ConnectionConf } from './db/connection-conf.interface';
@@ -44,58 +41,17 @@ export class Helium {
         app.use(logger('dev'));
         app.use(bodyParser.urlencoded({ extended: false }));
         app.use(bodyParser.json());
-        app.use(cookieSession({
-            name: 'sessionId',
-            // TODO change for production builds
-            secret: 'super duper secret key',
-            maxAge: Helium.SESSION_LENGTH
-        }));
         app.use(helmet());
-        app.use(passport.initialize());
-        app.use(passport.session());
 
         const db = new DatabaseHelper(Helium.SESSION_LENGTH);
-        app.use('/api/v1', api(db, passport, daoFactory));
+        app.use('/api/v1', api(db, daoFactory));
         this.db = db;
-
-        passport.use(new LocalStrategy(
-            // Set this to true so that the first parameter to the callback fn
-            // will be the request object so we can grab more data from the
-            // request body
-            { passReqToCallback: true },
-            async (req, username, password, done) => {
-                const conf: ConnectionConf = {
-                    user: username,
-                    password,
-                    host: req.body.host
-                };
-
-                db.authenticate(conf)
-                    .then((key: string) => {
-                        // Successfully authenticated with the database
-                        return done(null, key);
-                    })
-                    .catch(() => {
-                        // Unable to authenticate. Use false to indicate
-                        // authentication failure
-                        return done(null, false);
-                    });
-            }
-        ));
 
         // Clear out the unused sessions every once and a while. SESSION_LENGTH
         // chosen pretty arbitrarily.
-        // setInterval(() => {
-        //     this.db!!.prune();
-        // }, Helium.SESSION_LENGTH);
-
-        // We're required to implement this
-        passport.serializeUser((key, done) => {
-            done(null, key);
-        });
-        passport.deserializeUser((key, done) => {
-            done(null, key);
-        });
+        setInterval(() => {
+            this.db!!.prune();
+        }, Helium.SESSION_LENGTH);
 
         // Mount static assets before the front() module so we can still use our
         // assets without the front()'s wildcard route catching it first
