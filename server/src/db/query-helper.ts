@@ -6,7 +6,7 @@ import { SqlRow } from '../common/api';
 export class QueryHelper {
     private static squel: MysqlSquel = squelBuilder.useFlavour('mysql');
 
-    public constructor(private pool: Pool) {}
+    public constructor(private pool: Pool, private onQuery: () => void = () => undefined) {}
 
     /**
      * Executes the string value of the Squel QueryBuilder and returns the
@@ -17,7 +17,8 @@ export class QueryHelper {
 
         const result = await (conn || this.pool).query(query.text, query.values);
 
-        // result[0] is an array of BinaryRows, result[1] is metadata
+        this.onQuery();
+
         return result as SqlRow[];
     }
 
@@ -32,6 +33,7 @@ export class QueryHelper {
      *             automatically pick one
      */
     public async executeRaw(query: string, conn?: PoolConnection): Promise<SqlRow[]> {
+        this.onQuery();
         return await (conn || this.pool).query(query);
     }
 

@@ -83,6 +83,12 @@ export class Helium {
             }
         ));
 
+        // Clear out the unused sessions every once and a while. SESSION_LENGTH
+        // chosen pretty arbitrarily.
+        // setInterval(() => {
+        //     this.db!!.prune();
+        // }, Helium.SESSION_LENGTH);
+
         // We're required to implement this
         passport.serializeUser((key, done) => {
             done(null, key);

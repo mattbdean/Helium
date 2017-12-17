@@ -19,7 +19,12 @@ export class DatabaseHelper {
     public constructor(private readonly sessionLengthMs: number) {
         this.pools = LRU({
             maxAge: this.sessionLengthMs,
-            dispose: (key: string, pool: Pool) => pool.end()
+            dispose: (key: string, pool: Pool) => pool.end(),
+            // Since we extend a session by doing cache.set(key, cache.get(key)),
+            // the pool will be disposed every time we refresh the session. This
+            // property disables that. Only pools that expire or are explicitly
+            // removed will be disposed.
+            noDisposeOnSet: true
         });
     }
 
@@ -62,7 +67,9 @@ export class DatabaseHelper {
         if (!this.hasPool(key))
             throw new Error(`No pool with key '${key}'`);
 
-        return new QueryHelper(this.pools.get(key)!!);
+        // Return a QueryHelper that extends the session for this key every time
+        // a query is executed
+        return new QueryHelper(this.pools.get(key)!!, () => this.extendSession(key));
     }
 
     /** Checks if a pool exists for a given key */
@@ -87,6 +94,17 @@ export class DatabaseHelper {
     /** Closes all connection pools */
     public async closeAll() {
         this.pools.reset();
+    }
+
+    /** Manually removes all expired sessions */
+    public prune() {
+        this.pools.prune();
+    }
+
+    /** Extends the life of a session */
+    private extendSession(key: string) {
+        if (this.pools.has(key))
+            this.pools.set(key, this.pools.get(key)!!);
     }
 
     // noinspection JSMethodCanBeStatic
