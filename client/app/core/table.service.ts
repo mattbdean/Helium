@@ -9,6 +9,7 @@ import { SqlRow, TableMeta } from '../common/api';
 import { PaginatedResponse } from '../common/responses';
 import { TableNameParams } from '../common/table-name-params.interface';
 import { TableName } from '../common/table-name.class';
+import { AuthService } from './auth.service';
 
 const encode = encodeURIComponent;
 
@@ -18,7 +19,7 @@ const encode = encodeURIComponent;
  */
 @Injectable()
 export class TableService {
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private auth: AuthService) {}
 
     public schemas(): Observable<string[]> {
         return this.get('/schemas');
@@ -58,7 +59,8 @@ export class TableService {
             {
                 headers: new HttpHeaders({
                     // Make sure the API knows we're sending JSON
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-API-Key': this.auth.apiKey
                 })
             }
         ).mapTo(null);
@@ -76,7 +78,8 @@ export class TableService {
         for (const key of Object.keys(used)) {
             params = params.set(key, used[key]);
         }
-        return this.http.get(`/api/v1${relPath}`, { params })
+        const headers = { 'X-API-Key': this.auth.apiKey };
+        return this.http.get(`/api/v1${relPath}`, { params, headers })
             .map((res) => res as T);
     }
 }

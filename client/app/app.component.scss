@@ -5,6 +5,11 @@
   flex-direction: column;
 }
 
+mat-toolbar {
+  display: flex;
+  justify-content: space-between;
+}
+
 mat-sidenav-container {
   flex-grow: 1;
 

@@ -1,0 +1,16 @@
+$card-width: 300px;
+
+.login-form-card {
+  max-width: $card-width;
+  margin: 0 auto;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+@media all and (max-width: $card-width + 100px) {
+  .form-container {
+    width: 80vw;
+  }
+}

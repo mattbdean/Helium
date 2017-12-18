@@ -20,10 +20,14 @@
     </mat-sidenav>
 
     <mat-toolbar color="primary">
-        <button [style.visibility]="sidenavMode === 'side' ? 'hidden' : 'visible'" mat-button class="sidenav-toggle" (click)="toggleSidenav()">
-            <i class="material-icons mat-light">menu</i>
-        </button>
-        Helium
+        <span>
+            <button [style.visibility]="sidenavMode === 'side' ? 'hidden' : 'visible'" mat-button class="sidenav-toggle" (click)="toggleSidenav()">
+                <i class="material-icons mat-light">menu</i>
+            </button>
+            Helium
+        </span>
+
+        <button *ngIf="auth.current !== null" class="logout-button" mat-button (click)="logout()">Logout</button>
     </mat-toolbar>
 
     <div class="router-content">

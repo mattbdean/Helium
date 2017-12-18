@@ -1,6 +1,7 @@
 import {
     Component, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs/Rx';
 
 import * as _ from 'lodash';
@@ -9,6 +10,7 @@ import { MatSidenav } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
+import { AuthService } from './core/auth.service';
 import { TableService } from './core/table.service';
 import { SCHEMA } from './to-be-removed';
 
@@ -39,11 +41,15 @@ export class AppComponent implements OnDestroy, OnInit {
     public sidenavMode: 'push' | 'over' | 'side' = 'side';
 
     public constructor(
-        private backend: TableService
+        private backend: TableService,
+        private auth: AuthService,
+        private router: Router
     ) {}
 
     public ngOnInit() {
-        this.groupedNames = this.backend.tables(SCHEMA)
+        this.groupedNames = this.auth.changes()
+            .filter((data) => data !== null)
+            .flatMap(() => this.backend.tables(SCHEMA))
             .map(unflattenTableNames)
             // Start with an empty array so the template has something to do
             // before we get actual data
@@ -84,6 +90,11 @@ export class AppComponent implements OnDestroy, OnInit {
 
     public toggleSidenav() {
         this.sidenav.opened = !this.sidenav.opened;
+    }
+
+    public logout() {
+        this.auth.logout();
+        this.router.navigate(['/login']);
     }
 
     private adjustSidenav() {

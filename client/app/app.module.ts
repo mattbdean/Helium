@@ -9,6 +9,7 @@ import {
 } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { LoginModule } from './login/login.module';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -34,6 +35,7 @@ import 'normalize.css/normalize.css';
         MatToolbarModule,
         MatSidenavModule,
 
+        LoginModule,
         TablesModule,
         FormsModule,
         AppRoutingModule

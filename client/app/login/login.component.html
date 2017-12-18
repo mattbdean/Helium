@@ -1,0 +1,25 @@
+<mat-card class="login-form-card">
+    <form novalidate [formGroup]="form" (ngSubmit)="onLogin(form.value)">
+        <div>
+            <mat-form-field>
+                <input placeholder="Username" matInput formControlName="username" required>
+            </mat-form-field>
+        </div>
+
+        <div>
+            <mat-form-field>
+                <input type="password" placeholder="Password" matInput formControlName="password" required>
+            </mat-form-field>
+        </div>
+
+        <div>
+            <mat-form-field>
+                <input placeholder="Host" matInput formControlName="host">
+            </mat-form-field>
+        </div>
+
+        <div>
+            <button type="submit" mat-raised-button color="primary" [disabled]="form.invalid">Login</button>
+        </div>
+    </form>
+</mat-card>
