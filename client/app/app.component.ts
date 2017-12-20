@@ -33,7 +33,7 @@ export class AppComponent implements OnDestroy, OnInit {
 
     public groupedNames: Observable<GroupedName[]>;
 
-    private windowSizeSub: Subscription;
+    private adjustSidenavSub: Subscription;
 
     @ViewChild(MatSidenav)
     private sidenav: MatSidenav;
@@ -70,17 +70,17 @@ export class AppComponent implements OnDestroy, OnInit {
                     .value();
             });
 
-        this.windowSizeSub = Observable
+        const windowResize$ = Observable
             .fromEvent(window, 'resize')
             // Start with a value so adjustSidenav gets called on init
-            .startWith(-1)
-            .subscribe(() => {
-                this.adjustSidenav();
-            });
+            .startWith(-1);
+
+        this.adjustSidenavSub = Observable.merge(windowResize$, this.auth.changes())
+            .subscribe(() => { this.adjustSidenav(); });
     }
 
     public ngOnDestroy() {
-        this.windowSizeSub.unsubscribe();
+        this.adjustSidenavSub.unsubscribe();
     }
 
     public onSidenavLinkClicked() {
@@ -98,8 +98,12 @@ export class AppComponent implements OnDestroy, OnInit {
     }
 
     private adjustSidenav() {
-        const alwaysShow = window.innerWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
-        this.sidenavMode = alwaysShow ? 'side' : 'over';
-        this.sidenav.opened = alwaysShow;
+        if (!this.auth.loggedIn) {
+            this.sidenav.opened = false;
+        } else {
+            const alwaysShow = window.innerWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
+            this.sidenavMode = alwaysShow ? 'side' : 'over';
+            this.sidenav.opened = alwaysShow;
+        }
     }
 }

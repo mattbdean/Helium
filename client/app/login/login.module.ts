@@ -8,7 +8,7 @@ import {
     MatInputModule,
     MatSnackBarModule
 } from '@angular/material';
-import { CoreModule } from './../core/core.module';
+import { CoreModule } from '../core/core.module';
 import { LoginRoutingModule } from './login-routing.module';
 import { LoginComponent } from './login.component';
 
