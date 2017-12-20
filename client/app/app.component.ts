@@ -41,8 +41,8 @@ export class AppComponent implements OnDestroy, OnInit {
     public sidenavMode: 'push' | 'over' | 'side' = 'side';
 
     public constructor(
+        public auth: AuthService,
         private backend: TableService,
-        private auth: AuthService,
         private router: Router
     ) {}
 
