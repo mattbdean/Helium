@@ -153,14 +153,12 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
         }
     });
 
-    r.put('/:schema/:table/data', async (req, res) => {
+    r.put('/:schema/data', async (req, res) => {
         const schema: string = req.params.schema;
-        const table: string = req.params.table;
 
         const send400 = (message: string) =>
             sendError(res, 400, { message, input: {
                 schema,
-                table,
                 data: req.body
             }});
 
@@ -174,18 +172,12 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
                     case ErrorCode.NO_SUCH_TABLE:
                         return sendError(res, 404, {
                             message: 'that table doesn\'t exist',
-                            input: {
-                                name: table,
-                                data: req.body
-                            }
+                            input: { data: req.body }
                         });
                     default:
                         return sendError(res, 400, {
                             message: e.message,
-                            input: {
-                                name: table,
-                                data: req.body
-                            }
+                            input: { data: req.body }
                         });
                 }
             }
@@ -207,8 +199,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
                         // send an internal server error
                         debug({
                             message: 'generated invalid SQL',
-                            data: req.body,
-                            table
+                            data: req.body
                         });
                         break;
                     case 'ER_DATA_TOO_LONG':
@@ -233,7 +224,6 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
                 message: 'Could not execute request',
                 input: {
                     schema: req.params.schema,
-                    table: req.params.table,
                     data: req.body
                 }
             });

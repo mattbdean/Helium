@@ -10,7 +10,7 @@ describe('TableName', () => {
         ['manual', 'lookup', 'imported', 'computed', 'hidden'];
 
     it('should correctly identify the tier and clean name of a table', () => {
-        const names = _.map(tables, (t) => new TableName(t));
+        const names = _.map(tables, (t) => new TableName('schema', t));
 
         expect(_.map(names, (n) => n.tier)).to.deep.equal(expectedTypes);
 
@@ -21,7 +21,7 @@ describe('TableName', () => {
     });
 
     it('should correctly handle part tables', () => {
-        const names = _.map(tables, (t) => new TableName(t + '__part'));
+        const names = _.map(tables, (t) => new TableName('schema', t + '__part'));
         expect(_.map(names, (n) => n.tier)).to.deep.equal(expectedTypes);
 
         for (const name of names) {
@@ -31,8 +31,8 @@ describe('TableName', () => {
     });
 
     it('should acknowledge a maximum of one part table', () => {
-        const name = new TableName('__foo__part__other');
-        expect(name).to.deep.equal(new TableName({
+        const name = new TableName('schema', '__foo__part__other');
+        expect(name).to.deep.equal(new TableName('schema', {
             rawName: '__foo__part__other',
             tier: 'computed',
             cleanName: 'part__other',

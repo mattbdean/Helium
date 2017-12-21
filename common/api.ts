@@ -1,6 +1,7 @@
 import { TableName } from './table-name.class';
 
 export interface TableMeta {
+    schema: string;
     name: string;
     headers: TableHeader[];
     totalRows: number;
@@ -18,6 +19,9 @@ export interface SpecialDefaultValue { constantName: string; }
 export type TableTier = 'lookup' | 'manual' | 'imported' | 'computed' | 'hidden';
 
 export interface BaseTableName {
+    /** The schema which this table belongs to */
+    schema: string;
+
     /** The name used in SQL */
     rawName: string;
 

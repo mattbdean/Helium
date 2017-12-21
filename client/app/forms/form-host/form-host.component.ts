@@ -21,7 +21,6 @@ import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { unflattenTableNames } from '../../common/util';
 import { TableService } from '../../core/table.service';
-import { SCHEMA } from '../../to-be-removed';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
 
 /**
@@ -58,15 +57,15 @@ export class FormHostComponent implements OnDestroy, OnInit {
         this.formGroup = this.fb.group({});
 
         this.sub = Observable.combineLatest(
-            this.backend.tables(SCHEMA),
-            this.route.params.map((p: Params) => p.name)
+            this.route.params.switchMap((params) => this.backend.tables(params.schema)),
+            this.route.params
         )
-            .switchMap((data: [TableName[], string, string]): Observable<MasterTableName> => {
+            .switchMap((data: [TableName[], Params]): Observable<MasterTableName> => {
                 // Try to identify a MasterTableName for the given raw SQL name
                 const allNames = data[0];
-                const currentRawName = data[1];
+                const { schema, table } = data[1];
 
-                const currentName = allNames.find((n) => n.rawName === currentRawName);
+                const currentName = allNames.find((n) => n.schema === schema && n.rawName === table );
                 if (currentName === undefined || currentName.masterRawName !== null) {
                     // The user has navigated to a table that doesn't exist or a
                     // part table
@@ -83,7 +82,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
 
                 const masterTableNames = unflattenTableNames(allNames);
                 const currentMaster =
-                    masterTableNames.find((n) => n.rawName === currentRawName);
+                    masterTableNames.find((n) => n.schema === schema && n.rawName === table);
                 return Observable.of(currentMaster);
             })
             .subscribe((mainName: MasterTableName) => {
@@ -95,14 +94,14 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 // The TableName array we use to create PartialFormComponents
                 // is comprised of the mainName (as a TableName instead of a
                 // MasterTableName) and its parts.
-                this.names = [new TableName(mainName.rawName), ...this.mainName.parts];
+                this.names = [new TableName(mainName.schema, mainName.rawName), ...this.mainName.parts];
             });
 
         this.submitSub = this.completedForm$
             // Only allow non-null and non-undefined values
             .filter((form) => form !== undefined && form !== null)
             .switchMap((form: any) => {
-                return this.backend.submitRow(SCHEMA, this.mainName.rawName, form)
+                return this.backend.submitRow(this.mainName.schema, this.mainName.rawName, form)
                     // Assume no error
                     .mapTo(null)
                     // Handle any errors
@@ -137,7 +136,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     return snackbarRef.onAction()
                         // Navigate to /tables/:name when 'VIEW' is clicked
                         .flatMap(() => Observable.fromPromise(
-                            this.router.navigate(['/tables', this.mainName.rawName])))
+                            this.router.navigate(['/tables', this.mainName.schema, this.mainName.rawName])))
                         .mapTo(snackbarRef);
                 }
             })

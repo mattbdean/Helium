@@ -211,7 +211,7 @@ describe('TableInputValidator', () => {
 
         it('should allow exactly 1 entry for master tables', () => {
             // '#' prefix chosen at random
-            const tableName = new TableName('#foo');
+            const tableName = new TableName('schema', '#foo');
 
             const schema = TableInputValidator.schemaForTableArray(headers, tableName);
 
@@ -230,7 +230,7 @@ describe('TableInputValidator', () => {
         });
 
         it('should allow zero or more entries for part tables', () => {
-            const tableName = new TableName('#foo__bar');
+            const tableName = new TableName('schema', '#foo__bar');
             const schema = TableInputValidator.schemaForTableArray(headers, tableName);
 
             // for (let i = 0; i < 3; i++) {

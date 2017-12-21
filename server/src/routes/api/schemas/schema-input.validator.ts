@@ -92,7 +92,7 @@ export class TableInputValidator {
                 ErrorCode.WRONG_TYPE);
 
         // Convert all keys to TableName objects
-        const tableNames = Object.keys(data).map((n) => new TableName(n.toString()));
+        const tableNames = Object.keys(data).map((n) => new TableName(db, n.toString()));
         const [parts, masters] = _.partition(tableNames, (n) => n.isPartTable());
 
         // Make sure only one master table was specified

@@ -18,7 +18,7 @@ export class TableNameComponent implements OnChanges {
         if (changes.name) {
             const newName = changes.name.currentValue;
             this.masterCleanName = !newName.isPartTable() ? null :
-                new TableName(newName.masterRawName).cleanName;
+                new TableName(newName.schema, newName.masterRawName).cleanName;
         }
     }
 }

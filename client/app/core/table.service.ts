@@ -34,7 +34,7 @@ export class TableService {
     /** Fetches a list of all tables in the given schema */
     public tables(schema: string): Observable<TableName[]> {
         return this.get<TableNameParams[]>(`/schemas/${schema}`)
-            .map((params) => params.map((p) => new TableName(p)));
+            .map((params) => params.map((p) => new TableName(schema, p)));
     }
 
     /** Fetches meta for a given table */
@@ -60,7 +60,7 @@ export class TableService {
      */
     public submitRow(schema: string, tableName: string, body: SqlRow): Observable<void> {
         return this.http.put(
-            `/api/v1/${encode(schema)}/${encode(tableName)}/data`,
+            `/api/v1/schemas/${encode(schema)}/data`,
             body,
             {
                 headers: new HttpHeaders({

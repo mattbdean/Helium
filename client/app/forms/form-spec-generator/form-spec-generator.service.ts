@@ -15,7 +15,6 @@ import {
 } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table.service';
-import { SCHEMA } from '../../to-be-removed';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';
@@ -90,7 +89,7 @@ export class FormSpecGeneratorService {
 
             if (foreignKey !== undefined) {
                 autocompleteValues = this.backend.columnValues(
-                    SCHEMA, foreignKey.foreignTable, foreignKey.foreignColumn);
+                    meta.schema, foreignKey.foreignTable, foreignKey.foreignColumn);
                 type = 'autocomplete';
             }
 
@@ -145,7 +144,7 @@ export class FormSpecGeneratorService {
             // The given TableMeta is for a master table, nothing to do
             return [];
 
-        const tableName = new TableName(tableMeta.name);
+        const tableName = new TableName(tableMeta.schema, tableMeta.name);
         if (tableName.masterRawName !== masterRawName)
             throw new Error(`Given TableMeta was not a part table of ` +
                 `${masterRawName}, but actually for ${tableName.masterRawName}`);

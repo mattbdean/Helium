@@ -55,7 +55,7 @@ export class SchemaDao {
      */
     public async tables(db: string): Promise<TableName[]> {
         const result = await this.helper.executeRaw('SHOW TABLES FROM ' + this.helper.escapeId(db));
-        return _.map(result, (row: SqlRow): TableName => new TableName(row[Object.keys(row)[0]]));
+        return _.map(result, (row: SqlRow): TableName => new TableName(db, row[Object.keys(row)[0]]));
     }
 
     /**
@@ -163,6 +163,7 @@ export class SchemaDao {
         const parts = masterTable ? masterTable.parts : [];
 
         return {
+            schema,
             name: table,
             headers,
             totalRows: count,

@@ -49,11 +49,13 @@ describe('SchemaDao', () => {
 
     describe('tables', () => {
         it('should return an array of table names when a schema exists', async () => {
-            const data = await dao.tables('helium');
+            const schemaName = 'helium';
+            const data = await dao.tables(schemaName);
 
             // The TableName constructor has its own tests, don't go into too
             // much detail here
             const schema = joi.array().items(joi.object({
+                schema: schemaName, // should be exactly the value of 'db'
                 rawName: joi.string(),
                 tier: joi.string().regex(/lookup|manual|imported|computed|hidden/),
                 cleanName: joi.string(),
@@ -131,22 +133,24 @@ describe('SchemaDao', () => {
 
     describe('meta', () => {
         it('should return a TableMeta object with fully resolved constraints', async () => {
+            const schemaName = 'helium';
             const tableName = 'shipment';
             const cols = 6;
             // Technically there's only 2 constraints but Helium doesn't
             // recognize compound keys yet
             const numConstraints = 5;
-            const data = await dao.meta('helium', tableName);
+            const data = await dao.meta(schemaName, tableName);
 
             // Very basic schema to make sure we have the basics down
             const schema = joi.object({
+                schema: joi.only(schemaName),
                 name: joi.only(tableName),
                 headers: joi.array().length(cols),
                 totalRows: joi.number().integer().min(0),
                 constraints: joi.array().length(numConstraints),
                 comment: joi.string().allow(''),
                 parts: joi.array().length(0)
-            }).requiredKeys('name', 'headers', 'totalRows', 'constraints', 'comment', 'parts');
+            }).requiredKeys('schema', 'name', 'headers', 'totalRows', 'constraints', 'comment', 'parts');
 
             joi.assert(data, schema);
 

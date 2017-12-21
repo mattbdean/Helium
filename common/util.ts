@@ -10,6 +10,7 @@ import { TableName } from './table-name.class';
 export const unflattenTableNames = (names: TableName[]): MasterTableName[] => {
     const partitioned = _.partition(names, (n) => !n.isPartTable());
     const masters = _.map(partitioned[0], (n): MasterTableName => ({
+        schema: n.schema,
         rawName: n.rawName,
         tier: n.tier,
         cleanName: n.cleanName,
