@@ -97,10 +97,16 @@ export class AuthService {
 
     /**
      * Returns an observable that listens to changes in the API key and its
-     * expiration.
+     * expiration. When the user logs in, the Observable with yield true, and
+     * the opposite when the user logs out.
      */
-    public changes(): Observable<AuthData> {
-        return this.authData$;
+    public watchAuthState(): Observable<boolean> {
+        // Each response received by TableService updates the expiration, and
+        // therefore updates the observable. Make sure to only listen for
+        // distinct values to prevent an infinite loop.
+        return this.authData$
+            .map((data) => data !== null)
+            .distinctUntilChanged();
     }
 
     /** Updates the storage service and the BehaviorSubject */
@@ -110,7 +116,7 @@ export class AuthService {
             this.storage.clear();
         } else {
             this.storage.set(AuthService.KEY_API_KEY, data.apiKey);
-            this.storage.set(AuthService.KEY_EXPIRATION, String(data.expiration));
+            this.storage.set(AuthService.KEY_EXPIRATION, String(data.expiration.getTime()));
         }
 
         this.authData$.next(data);

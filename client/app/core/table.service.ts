@@ -20,7 +20,8 @@ const encode = encodeURIComponent;
  * This class provides a clean way to interact with the JSON API using Angular's
  * HttpClient service.
  *
- * Upon each response, the
+ * Upon each response, the session expiration is updated according to the value
+ * of the custom X-Session-Expiration header sent with API responses.
  */
 @Injectable()
 export class TableService {
@@ -30,9 +31,9 @@ export class TableService {
         return this.get('/schemas');
     }
 
-    /** Fetches a list of all tables */
-    public tables(tableName: string): Observable<TableName[]> {
-        return this.get<TableNameParams[]>(`/schemas/${tableName}`)
+    /** Fetches a list of all tables in the given schema */
+    public tables(schema: string): Observable<TableName[]> {
+        return this.get<TableNameParams[]>(`/schemas/${schema}`)
             .map((params) => params.map((p) => new TableName(p)));
     }
 

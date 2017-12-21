@@ -1,20 +1,22 @@
 import {
-    Component, OnDestroy, OnInit, ViewChild
+    Component, ElementRef, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs/Rx';
 
+import { Observable } from 'rxjs/Rx';
 import * as _ from 'lodash';
 
+import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatSidenav } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
 import { AuthService } from './core/auth.service';
 import { TableService } from './core/table.service';
-import { SCHEMA } from './to-be-removed';
 
 interface GroupedName { tier: TableTier; names: MasterTableName[]; }
+
+interface SchemaInfo { availableSchemas: string[], selectedSchema: string; }
 
 @Component({
     selector: 'app',
@@ -33,7 +35,11 @@ export class AppComponent implements OnDestroy, OnInit {
 
     public groupedNames: Observable<GroupedName[]>;
 
+    public schemas: string[] = [];
+
     private adjustSidenavSub: Subscription;
+    private formGroup: FormGroup;
+    private schemaControl: AbstractControl;
 
     @ViewChild(MatSidenav)
     private sidenav: MatSidenav;
@@ -47,10 +53,51 @@ export class AppComponent implements OnDestroy, OnInit {
     ) {}
 
     public ngOnInit() {
-        this.groupedNames = this.auth.changes()
-            .filter((data) => data !== null)
-            .flatMap(() => this.backend.tables(SCHEMA))
-            .map(unflattenTableNames)
+        // Fetch available schemas when the user logs in
+        const schemas$: Observable<string[] | null> = this.auth.watchAuthState()
+            .switchMap((isLoggedIn) => {
+                if (isLoggedIn) {
+                    return this.backend.schemas();
+                } else {
+                    return Observable.of(null);
+                }
+            });
+
+        // Use a form group and <form> element so we can more easily update and
+        // read the selected schema
+        this.formGroup = new FormGroup({
+            schemaSelect: new FormControl()
+        });
+
+        this.schemaControl = this.formGroup.get('schemaSelect');
+        const selectedSchema$ = this.schemaControl.valueChanges;
+
+        const schemaInfo$: Observable<SchemaInfo | null> = Observable.combineLatest(
+            schemas$,
+            selectedSchema$
+        ).filter((data: [string[] | null, string | null]) => {
+            // data[0] is an array of available schemas, data[1] is the
+            // currently selected schema. Only emit data when both are non-null
+            // or both are null. The only time one of these is null is when the
+            // user logs out, and is immediately followed by more data coming
+            // through the observable
+            return (data[0] !== null) === (data[1] !== null);
+        })
+            .map((data: [string[] | null, string | null]) => {
+                // Break the nested array structure up into an object. When both
+                // elements are null, simply return null.
+                if (data[0] === null || data[1] === null)
+                    return null;
+                return { availableSchemas: data[0], selectedSchema: data[1] };
+            });
+
+        this.groupedNames = schemaInfo$
+            .switchMap((info: SchemaInfo | null) => {
+                if (info === null)
+                    return Observable.of([]);
+                else
+                    return this.backend.tables(info.selectedSchema);
+            }).map(unflattenTableNames)
             // Start with an empty array so the template has something to do
             // before we get actual data
             .startWith([])
@@ -70,12 +117,22 @@ export class AppComponent implements OnDestroy, OnInit {
                     .value();
             });
 
+        // Listen for the user logging in and automatically select a schema for
+        // them
+        schemas$.subscribe((schemas) => {
+            if (schemas !== null && this.schemaControl.value === null)
+                this.schemaControl.setValue(AppComponent.determineDefaultSchema(schemas));
+            this.schemas = schemas;
+        });
+
         const windowResize$ = Observable
             .fromEvent(window, 'resize')
             // Start with a value so adjustSidenav gets called on init
             .startWith(-1);
 
-        this.adjustSidenavSub = Observable.merge(windowResize$, this.auth.changes())
+        // When the window is resized or the user logs in or out, adjust the
+        // sidenav.
+        this.adjustSidenavSub = Observable.merge(windowResize$, this.auth.watchAuthState())
             .subscribe(() => { this.adjustSidenav(); });
     }
 
@@ -93,8 +150,15 @@ export class AppComponent implements OnDestroy, OnInit {
     }
 
     public logout() {
+        // Log the user out
         this.auth.logout();
-        this.router.navigate(['/login']);
+
+        // We don't know if the next user will have access to the selected
+        // schema
+        this.schemaControl.reset();
+
+        // Automatically redirect to the login page
+        return this.router.navigate(['/login']);
     }
 
     private adjustSidenav() {
@@ -105,5 +169,20 @@ export class AppComponent implements OnDestroy, OnInit {
             this.sidenavMode = alwaysShow ? 'side' : 'over';
             this.sidenav.opened = alwaysShow;
         }
+    }
+
+    /**
+     * Tries to determine the best schema to select by default. Selects the
+     * first schema
+     * @param {string[]} all A list of all schemas available to the user
+     */
+    private static determineDefaultSchema(all: string[]) {
+        const sorted = _.sortBy(all);
+
+        // Use the first schema when sorted alphabetically. Prefer not to use
+        // information_schema since most users probably don't care about this
+        if (sorted[0].toLocaleLowerCase() === 'information_schema' && sorted.length > 0)
+            return sorted[1];
+        return sorted[0];
     }
 }
