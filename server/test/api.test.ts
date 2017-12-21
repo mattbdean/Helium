@@ -74,7 +74,7 @@ describe('API v1', () => {
 
                 // Random value, should be present in the response headers
                 const expiration = 777;
-                const expirationStub = sinon.stub(app.database, 'expiration')
+                sinon.stub(app.database, 'expiration')
                     .withArgs(key)
                     .returns(expiration); 
 
@@ -146,7 +146,7 @@ describe('API v1', () => {
                 const schemasStub = sinon.stub(schemaDao, 'schemas')
                     .resolves([]);
 
-                const res = await request.get('/schemas', 200);
+                await request.get('/schemas', 200);
 
                 expect(schemasStub).to.have.been.calledOnce;
             });
@@ -283,7 +283,7 @@ describe('API v1', () => {
                 const stub = sinon.stub(schemaDao, 'insertRow').resolves();
                 await request.spec({
                     method: 'PUT',
-                    relPath: '/schemas/foo/bar/data',
+                    relPath: '/schemas/foo/data',
                     expectedStatus: 200,
                     data
                 });
@@ -300,7 +300,7 @@ describe('API v1', () => {
                 const stub = sinon.stub(schemaDao, 'insertRow').rejects(error);
                 await request.spec({
                     method: 'PUT',
-                    relPath: '/schemas/foo/bar/data',
+                    relPath: '/schemas/foo/data',
                     expectedStatus: 400,
                     data
                 });
