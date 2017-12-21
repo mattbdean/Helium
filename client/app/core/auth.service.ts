@@ -60,13 +60,20 @@ export class AuthService {
         return data === null ? null : data.apiKey;
     }
 
-    /** The expiraton date of the API key, or null if there is none */
-    public get expiration(): Date {
+    /** The expiration date of the API key, or null if there is none */
+    public get expiration(): Date | null {
         const data = this.authData$.getValue();
         return data === null ? null : data.expiration;
     }
 
-    /** Attempts to log in usign the given connection configuration */
+    /** Returns the API key, or throws an Error if there is none. */
+    public requireApiKey(): string {
+        if (this.apiKey === null)
+            throw new Error('Expected an API key, found nothing');
+        return this.apiKey;
+    }
+
+    /** Attempts to log in using the given connection configuration */
     public login(data: { username: string, password: string, host: string }) {
         // Specify observe: 'response' to get the full response, not just the
         // body
@@ -107,5 +114,11 @@ export class AuthService {
         }
 
         this.authData$.next(data);
+    }
+
+    public updateExpiration(unixTime: number) {
+        if (!this.loggedIn)
+            throw new Error('not logged in, refusing to update expiration');
+        this.update({ apiKey: this.apiKey, expiration: new Date(unixTime) });
     }
 }

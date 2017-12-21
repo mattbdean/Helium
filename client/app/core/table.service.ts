@@ -1,4 +1,7 @@
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import {
+    HttpClient, HttpHeaders, HttpParams,
+    HttpResponse
+} from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Observable } from 'rxjs/Observable';
@@ -15,7 +18,9 @@ const encode = encodeURIComponent;
 
 /**
  * This class provides a clean way to interact with the JSON API using Angular's
- * Http service.
+ * HttpClient service.
+ *
+ * Upon each response, the
  */
 @Injectable()
 export class TableService {
@@ -60,10 +65,13 @@ export class TableService {
                 headers: new HttpHeaders({
                     // Make sure the API knows we're sending JSON
                     'Content-Type': 'application/json',
-                    'X-API-Key': this.auth.apiKey
-                })
+                    'X-API-Key': this.auth.requireApiKey()
+                }),
+                observe: 'response'
             }
-        ).mapTo(null);
+        )
+            .do((res) => this.updateSession(res))
+            .mapTo(null);
     }
 
     /**
@@ -78,8 +86,20 @@ export class TableService {
         for (const key of Object.keys(used)) {
             params = params.set(key, used[key]);
         }
-        const headers = { 'X-API-Key': this.auth.apiKey };
-        return this.http.get(`/api/v1${relPath}`, { params, headers })
-            .map((res) => res as T);
+        const headers = { 'X-API-Key': this.auth.requireApiKey() };
+        return this.http.get(`/api/v1${relPath}`, { params, headers, observe: 'response' })
+            .do((res) => this.updateSession(res))
+            .map((res) => res.body as T);
+    }
+
+    private updateSession<T>(res: HttpResponse<T>): T {
+        const newExpiration = res.headers.get('X-Session-Expiration');
+        // This header is the unix time at which the session expires
+        if (newExpiration !== null) {
+            const time = parseInt(newExpiration, 10);
+            this.auth.updateExpiration(time);
+        }
+
+        return res.body as T;
     }
 }

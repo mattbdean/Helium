@@ -3,7 +3,7 @@ import {
     HttpClientTestingModule,
     HttpTestingController
 } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { expect } from 'chai';
 import { AuthData } from './auth-data.interface';
 import { AuthService } from './auth.service';
@@ -112,7 +112,7 @@ describe('AuthService', () => {
     });
 });
 
-class MockStorageService {
+export class MockStorageService {
     private data: { [key: string]: string } = {};
 
     public get(key: string) { return this.data[key]; }
