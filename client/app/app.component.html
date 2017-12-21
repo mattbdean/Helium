@@ -14,7 +14,7 @@
                 </mat-select>
             </mat-form-field>
         </form>
-        <ul tabindex="-1" class="sidenav-list undecorated-list" *ngFor="let groupedName of groupedNames | async">
+        <ul tabindex="-1" class="sidenav-list undecorated-list" *ngFor="let groupedName of groupedNames">
             <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
             <li class="table-ref-container" *ngFor="let table of groupedName.names">
                 <span class="table-ref table-ref-master row-item">

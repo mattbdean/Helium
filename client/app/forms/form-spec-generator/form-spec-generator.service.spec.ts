@@ -25,6 +25,7 @@ interface NumericHeaderStub {
 const tableName = 'foo';
 
 const createMetaFor = (headers: TableHeader[], constraints: Constraint[] = []): TableMeta => ({
+    schema: 'foo',
     name: tableName,
     headers,
     totalRows: -1,

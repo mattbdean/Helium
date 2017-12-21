@@ -94,7 +94,7 @@ describe('PartialFormComponent', () => {
     /** Initializes the component by calling its ngOnChanges method. */
     const initComponent = (role: 'master' | 'part') => {
         comp.ngOnChanges({
-            namePropertyBinding: new SimpleChange(null, new TableName(role), true),
+            namePropertyBinding: new SimpleChange(null, new TableName('schema', role), true),
             rootGroupPropertyBinding: new SimpleChange(null, rootGroup, true),
             // Include to be complete but there is no listener for role
             role: new SimpleChange(null, role, true)

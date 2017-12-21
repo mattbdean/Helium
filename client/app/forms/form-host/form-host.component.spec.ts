@@ -1,6 +1,6 @@
 import { Component, DebugElement, Input } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -28,7 +28,7 @@ describe('FormHostComponent', () => {
     const snackbarStub = {};
 
     const tableNamesObservable = (...rawNames: string[]) => {
-        return Observable.of(rawNames.map((n) => new TableName(n)));
+        return Observable.of(rawNames.map((n) => new TableName('schema', n)));
     };
 
     beforeEach(() => {

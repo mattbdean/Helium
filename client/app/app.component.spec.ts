@@ -1,21 +1,26 @@
 import { DebugElement } from '@angular/core';
 import {
-    ComponentFixture, fakeAsync, TestBed,
-    tick
+    ComponentFixture, fakeAsync, TestBed, tick
 } from '@angular/core/testing';
-import { MatSidenavModule, MatToolbarModule } from '@angular/material';
+import { ReactiveFormsModule } from '@angular/forms';
+import {
+    MatFormFieldModule,
+    MatSelectModule, MatSidenavModule,
+    MatToolbarModule
+} from '@angular/material';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import * as _ from 'lodash';
+import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Observable } from 'rxjs/Observable';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
 import { TableName } from './common/table-name.class';
+import { AuthService } from './core/auth.service';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table.service';
 
@@ -26,6 +31,7 @@ describe('AppComponent', () => {
     let comp: AppComponent;
     let de: DebugElement;
     let service: TableService;
+    let auth: AuthService;
 
     // TABLE_TIER_PREFIX_MAPPING maps prefixes to tiers, invert it so we can
     // map tiers to prefixes
@@ -37,9 +43,11 @@ describe('AppComponent', () => {
     const prefixFor = (t: TableTier): string => tierToPrefixMapping[t] || '';
 
     /** Dynamically create TableName objects based on the given TableTiers */
-    const createTableNames = (...tiers: TableTier[]): TableName[] => {
-        return _.map(tiers, (t, index): TableName => new TableName({
-            rawName: prefixFor(t) + 'table_' + index,
+    const createTableNames = (schema: string, ...tiers: TableTier[]): TableName[] => {
+        return _.map(tiers, (t, index): TableName => new TableName(schema, {
+            // Include the schema name in the raw name for the sake of testing.
+            // In the real world, this probably isn't going to happen
+            rawName: prefixFor(t) + schema + '_table_' + index,
             tier: t,
             cleanName: 'table_' + index,
             masterRawName: null
@@ -52,27 +60,39 @@ describe('AppComponent', () => {
         'computed', 'manual', 'imported', 'hidden'
     ];
 
+    const schemas = ['schema1', 'schema2'];
+
     /** The amount of times each type is included in `types` */
     const counts = _.countBy(types);
 
     const serviceStub = {
-        tables: (name: string): Observable<TableName[]> => Observable.of(
-            createTableNames(...types)
+        schemas: () => Observable.of(schemas),
+        tables: (schema: string): Observable<TableName[]> => Observable.of(
+            createTableNames(schema, ...types)
         )
+    };
+
+    const authStub = {
+        // Always logged in
+        watchAuthState: () => Observable.of(true)
     };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 CoreModule,
+                MatSelectModule,
+                MatFormFieldModule,
                 MatSidenavModule,
                 MatToolbarModule,
                 NoopAnimationsModule,
-                RouterTestingModule
+                ReactiveFormsModule,
+                RouterTestingModule,
             ],
             declarations: [ AppComponent ],
             providers: [
-                { provide: TableService, useValue: serviceStub }
+                { provide: TableService, useValue: serviceStub },
+                { provide: AuthService, useValue: authStub }
             ]
         });
 
@@ -80,18 +100,26 @@ describe('AppComponent', () => {
         comp = fixture.componentInstance;
         de = fixture.debugElement;
         service = de.injector.get(TableService);
+        auth = de.injector.get(AuthService);
     });
 
-    it('should automatically pull in all available tables', fakeAsync(() => {
-        const spy = sinon.spy(service, 'tables');
+    it('should automatically pull in all available schemas and load the first one', fakeAsync(() => {
+        const schemasSpy = sinon.spy(service, 'schemas');
+        const tablesSpy = sinon.spy(service, 'tables');
         fixture.detectChanges();
         tick();
-        expect(spy).to.have.been.calledOnce;
+        expect(schemasSpy).to.have.been.called;
+
+        // Should automatically set the schema
+        const expectedSchema = schemas[0];
+        expect(comp.schemaControl.value).to.equal(expectedSchema);
+        expect(tablesSpy).to.have.been.calledWithExactly(expectedSchema);
+
     }));
 
     it('should create a section for each tier', fakeAsync(() => {
-        fixture.detectChanges();
         tick();
+        fixture.detectChanges();
 
         const listElements = de.queryAll(By.css('ul li'));
 

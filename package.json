@@ -13,7 +13,7 @@
     "start": "node dist",
     "test": "yarn test:server && yarn test:client && yarn e2e",
     "test:server": "gulp testPrep && TS_NODE_PROJECT=server/tsconfig.json nyc mocha --opts server/test/mocha.opts",
-    "test:client": "ng test --single-run true",
+    "test:client": "ng test --single-run true --sourcemaps false",
     "test:client:live": "ng test --single-run false",
     "snyk-protect": "snyk protect",
     "prepublish": "npm run snyk-protect"

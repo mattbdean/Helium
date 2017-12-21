@@ -1,10 +1,10 @@
 import {
-    Component, ElementRef, OnDestroy, OnInit, ViewChild
+    Component, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { Observable } from 'rxjs/Rx';
 import * as _ from 'lodash';
+import { Observable } from 'rxjs/Rx';
 
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatSidenav } from '@angular/material';
@@ -16,7 +16,7 @@ import { TableService } from './core/table.service';
 
 interface GroupedName { tier: TableTier; names: MasterTableName[]; }
 
-interface SchemaInfo { availableSchemas: string[], selectedSchema: string; }
+interface SchemaInfo { availableSchemas: string[]; selectedSchema: string; }
 
 @Component({
     selector: 'app',
@@ -33,13 +33,13 @@ export class AppComponent implements OnDestroy, OnInit {
      */
     public static readonly ALWAYS_SHOW_SIDENAV_WIDTH = 1480;
 
-    public groupedNames: Observable<GroupedName[]>;
+    public groupedNames: GroupedName[];
 
     public schemas: string[] = [];
 
     private adjustSidenavSub: Subscription;
     private formGroup: FormGroup;
-    private schemaControl: AbstractControl;
+    public schemaControl: AbstractControl;
 
     @ViewChild(MatSidenav)
     private sidenav: MatSidenav;
@@ -91,7 +91,7 @@ export class AppComponent implements OnDestroy, OnInit {
                 return { availableSchemas: data[0], selectedSchema: data[1] };
             });
 
-        this.groupedNames = schemaInfo$
+        schemaInfo$
             .switchMap((info: SchemaInfo | null) => {
                 if (info === null)
                     return Observable.of([]);
@@ -115,7 +115,10 @@ export class AppComponent implements OnDestroy, OnInit {
                         return position;
                     })
                     .value();
-            });
+            })
+            // Usually I'd prefer to use the AsyncPipe but for whatever reason
+            // I can't get it to subscribe during testing
+            .subscribe((names) => { this.groupedNames = names; });
 
         // Listen for the user logging in and automatically select a schema for
         // them
