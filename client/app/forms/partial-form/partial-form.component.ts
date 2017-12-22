@@ -148,7 +148,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                         // what Observable
                         const b = {
                             controlName: binding.localColumn,
-                            valueChanges: masterGroup.controls[binding.foreignColumn].valueChanges,
+                            valueChanges: masterGroup.controls[binding.ref.column].valueChanges,
                             subscriptions: [],
                             lastValue: ''
                         };

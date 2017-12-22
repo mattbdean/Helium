@@ -88,8 +88,9 @@ export class FormSpecGeneratorService {
             }
 
             if (foreignKey !== undefined) {
+                const ref = foreignKey.ref;
                 autocompleteValues = this.backend.columnValues(
-                    meta.schema, foreignKey.foreignTable, foreignKey.foreignColumn);
+                    ref.schema, ref.table, ref.column);
                 type = 'autocomplete';
             }
 
@@ -135,11 +136,12 @@ export class FormSpecGeneratorService {
      *
      * @param {string} masterRawName The SQL name of the master table's name. If
      *                               null, an empty array will be returned
+     *                               (signifying this table is a master table).
      * @param {TableMeta} tableMeta The metadata for the part table
      * @returns {Constraint[]} An array of binding constraints in this master/
      *                         part relationship.
      */
-    public bindingConstraints(masterRawName: string, tableMeta: TableMeta): Constraint[] {
+    public bindingConstraints(masterRawName: string | null, tableMeta: TableMeta): Constraint[] {
         if (masterRawName === null)
             // The given TableMeta is for a master table, nothing to do
             return [];
@@ -149,7 +151,7 @@ export class FormSpecGeneratorService {
             throw new Error(`Given TableMeta was not a part table of ` +
                 `${masterRawName}, but actually for ${tableName.masterRawName}`);
 
-        return tableMeta.constraints.filter((c) => c.foreignTable === masterRawName);
+        return tableMeta.constraints.filter((c) => c.ref !== null && c.ref.table === masterRawName);
     }
 
     /**

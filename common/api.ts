@@ -120,11 +120,15 @@ export interface Constraint {
 
     type: ConstraintType;
 
-    /** The table this constraint references, or null if this is not a foreign key */
-    foreignTable: string | null;
-
-    /** The referenced column in [foreignTable], or null if this is not a foreign key */
-    foreignColumn: string | null;
+    /**
+     * If this is a foreign key constraint, the primary key this constraint
+     * references.
+     */
+    ref: {
+        schema: string,
+        table: string,
+        column: string
+    } | null;
 }
 
 export type ConstraintType = 'primary' | 'foreign' | 'unique';

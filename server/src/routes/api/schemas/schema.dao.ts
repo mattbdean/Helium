@@ -153,7 +153,7 @@ export class SchemaDao {
             this.count(schema, table),
             // For some reason `this` becomes undefined in the resolveConstraints
             // function if we do this.constraints(name).then(this.resolveConstraints)
-            this.constraints(schema, table).then((result) => this.resolveConstraints(schema, result)),
+            this.constraints(schema, table).then((result) => this.resolveConstraints(result)),
             this.comment(schema, table)
         ]);
 
@@ -303,6 +303,7 @@ export class SchemaDao {
                 .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
                     .field('COLUMN_NAME')
                     .field('CONSTRAINT_NAME')
+                    .field('REFERENCED_TABLE_SCHEMA')
                     .field('REFERENCED_TABLE_NAME')
                     .field('REFERENCED_COLUMN_NAME')
                 .where('CONSTRAINT_SCHEMA = ?', schema)
@@ -321,28 +322,39 @@ export class SchemaDao {
             return {
                 type,
                 localColumn: row.COLUMN_NAME as string,
-                foreignTable: row.REFERENCED_TABLE_NAME as string,
-                foreignColumn: row.REFERENCED_COLUMN_NAME as string
+                ref: type !== 'foreign' ? null : {
+                    schema: row.REFERENCED_TABLE_SCHEMA as string,
+                    table: row.REFERENCED_TABLE_NAME as string,
+                    column: row.REFERENCED_COLUMN_NAME as string
+                }
             };
         });
     }
 
     /**
-     * Attempts to resolve foreign key constraints to their origins. For example,
-     * if tableA.foo references tableB.bar and tableB.bar references tableC.baz,
-     * the returned array will include a Constraint that maps tableA.foo to
-     * tableC.baz instead of tableB.bar.
+     * Attempts to simplify foreign key reference chains. For
+     * example, if tableA.foo (FK) references tableB.bar (PK and FK), and
+     * tableB.bar references tableC.baz (PK), the returned array will replace
+     * the original Constraint with one that declares tableA.foo as a FK
+     * that references the PK tableC.baz.
      *
-     * Note that if there are no foreign key constraints
+     * Note that if there are no foreign key constraints this method does
+     * nothing.
+     *
+     * This method is public only for testing.
      */
-    private async resolveConstraints(schema: string, originals: Constraint[]): Promise<Constraint[]> {
+    public async resolveConstraints(originals: Constraint[]): Promise<Constraint[]> {
         // Keep tables in cache once we look them up to prevent any unnecessary
         // lookups
-        const cache: { [tableName: string]: Constraint[] } = {};
+        const cache: { [tableId: string]: Constraint[] } = {};
+
+        const tableId = (schemaName: string, tableName: string) =>
+            `${schemaName}.${tableName}`;
 
         // Return constraints from cache, otherwise look them up
-        const getConstraints = (table: string): Promise<Constraint[]> => {
-            return cache[table] ? Promise.resolve(cache[table]) : this.constraints(schema, table);
+        const getConstraints = (otherSchema, otherTable: string): Promise<Constraint[]> => {
+            const id = tableId(otherSchema, otherTable);
+            return cache[id] ? Promise.resolve(cache[id]) : this.constraints(otherSchema, otherTable);
         };
 
         const resolved: Constraint[] = [];
@@ -361,17 +373,23 @@ export class SchemaDao {
                 return temp;
             };
 
+            const original = c;
             let current: Constraint = c;
             let previous: Constraint | undefined;
 
             // Navigate up the hierarchy until we find a PK constraint.
             while (current.type !== 'primary') {
                 previous = current;
-                current = findConstraint(current.foreignColumn!!, await getConstraints(current.foreignTable!!));
+                current = findConstraint(current.ref!!.column,
+                    await getConstraints(current.ref!!.schema, current.ref!!.table));
             }
 
-            if (previous !== undefined)
+            if (previous !== undefined) {
+                // We've found the last FK in the reference chain. All we have
+                // to do now is update the localColumn to the original's
+                previous.localColumn = original.localColumn;
                 resolved.push(previous);
+            }
         }
 
         return resolved;

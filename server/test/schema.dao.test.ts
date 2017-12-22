@@ -154,19 +154,6 @@ describe('SchemaDao', () => {
 
             joi.assert(data, schema);
 
-            // In the actual schema:
-            // 1. shipment.product_id ==>   order.product_id
-            // 2.    order.product_id ==> product.product_id
-            //
-            // We expect to see:
-            // 1. shipment.product_id ==> product.product_id
-
-            const constraint = find(data.constraints, (c: Constraint) =>
-                c.type === 'foreign' &&
-                c.foreignTable === 'product' &&
-                c.foreignColumn === 'product_id');
-
-            expect(constraint).to.not.be.undefined;
         });
 
         it('should include TableNames for part tables when applicable', async () => {
@@ -184,6 +171,52 @@ describe('SchemaDao', () => {
         it('should throw an Error when the table doesn\'t exist', async () => {
             const error = await expect(dao.meta('helium', 'unknown_table')).to.eventually.be.rejected;
             expect(error.code).to.equal('ER_NO_SUCH_TABLE');
+        });
+    });
+
+    describe('resolveConstraints', () => {
+        it('should resolve reference chains within the same schema', async () => {
+            const constraints = (await dao.meta('helium', 'shipment')).constraints;
+            const resolved = await dao.resolveConstraints(constraints);
+
+            // In the actual schema:
+            // 1. shipment.product_id ==>   order.product_id
+            // 2.    order.product_id ==> product.product_id
+            //
+            // We expect to see:
+            // 1. shipment.product_id ==> product.product_id
+
+            expect(resolved).to.deep.include({
+                type: 'foreign',
+                localColumn: 'product_id',
+                ref: {
+                    schema: 'helium',
+                    table: 'product',
+                    column: 'product_id'
+                }
+            });
+        });
+
+        it('should resolve reference chains that involve more than one schema', async () => {
+            const constraints = (await dao.meta('helium2', 'cross_schema_ref_test')).constraints;
+            const resolved = await dao.resolveConstraints(constraints);
+
+            // In the actual schema:
+            // 1. helium2.cross_schema_ref_test.fk ==> helium.order.customer_id
+            // 2.         helium.order.customer_id ==> helium.customer.customer_id
+            //
+            // We expect to see:
+            // 1. helium2.cross_schema_ref_test.fk ==> helium.customer.customer_id
+
+            expect(resolved).to.deep.include({
+                type: 'foreign',
+                localColumn: 'fk',
+                ref: {
+                    schema: 'helium',
+                    table: 'customer',
+                    column: 'customer_id'
+                }
+            });
         });
     });
 

@@ -242,8 +242,11 @@ describe('FormSpecGeneratorService', () => {
             const constraints: Constraint[] = [{
                 localColumn: 'pk',
                 type: 'primary',
-                foreignTable: 'other',
-                foreignColumn: 'other_pk'
+                ref: {
+                    schema: 'schema',
+                    table: 'other',
+                    column: 'other_pk'
+                }
             }];
 
             const prefilledData = { pk: 'foo', normal: 'bar' };
@@ -263,20 +266,27 @@ describe('FormSpecGeneratorService', () => {
         });
 
         it('should pick out FK constraints', () => {
+            const schema = 'schema';
             const mockMeta = {
                 name: 'master__part',
                 constraints: [
                     // throw in two FK constraints that reference master
                     {
+                        ref: {
+                            schema,
+                            column: 'part_fk1',
+                            table: 'master'
+                        },
                         localColumn: 'part_fk1',
-                        foreignTable: 'master',
-                        foreignColumn: 'master_pk1',
                         type: 'foreign'
                     },
                     {
                         localColumn: 'part_fk2',
-                        foreignTable: 'master',
-                        foreignColumn: 'master_pk2',
+                        ref: {
+                            schema,
+                            table: 'master',
+                            column: 'master_pk2'
+                        },
                         type: 'foreign'
                     },
                     // should not be included since it's a unique constraint and
@@ -284,15 +294,17 @@ describe('FormSpecGeneratorService', () => {
                     {
                         localColumn: 'part_unique',
                         type: 'unique',
-                        foreignTable: null,
-                        foreignColumn: null
+                        ref: null
                     },
                     // should not be included since it's a FK that references a
                     // table that isn't the master table
                     {
                         localColumn: 'part_fk3',
-                        foreignTable: 'not_master',
-                        foreignColumn: 'foo',
+                        ref: {
+                            schema,
+                            table: 'not_master',
+                            column: 'foo'
+                        },
                         type: 'foreign'
                     }
                 ]
