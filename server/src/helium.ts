@@ -5,10 +5,9 @@ import * as helmet from 'helmet';
 import * as logger from 'morgan';
 import * as path from 'path';
 
-import { ConnectionConf } from './db/connection-conf.interface';
 import { DatabaseHelper } from './db/database.helper';
+import { api } from './routes/api';
 import { DaoFactory } from './routes/api/dao.factory';
-import { api } from './routes/api/index';
 import { SchemaDao } from './routes/api/schemas/schema.dao';
 import { front } from './routes/front';
 

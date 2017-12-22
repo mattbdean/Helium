@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
+import { ErrorResponse } from '../../../../../client/app/common/responses';
+import { ConnectionConf } from '../../../db/connection-conf.interface';
 import { DatabaseHelper } from '../../../db/database.helper';
-import { ErrorResponse } from './../../../../../client/app/common/responses';
-import { ConnectionConf } from './../../../db/connection-conf.interface';
 
 export function loginRouter(db: DatabaseHelper): Router {
     const r = Router();

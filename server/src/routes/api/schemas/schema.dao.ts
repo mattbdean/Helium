@@ -279,59 +279,6 @@ export class SchemaDao {
     }
 
     /**
-     * Returns a new SqlRow whose keys are escaped as if they were reserved
-     * keywords and whose values have been transformed by {@link #prepareValue}
-     */
-    private prepareForInsert(validated: SqlRow): SqlRow {
-        const result: SqlRow = {};
-        for (const columnName of Object.keys(validated)) {
-            // Escape the name of the column in case that name is a reserved
-            // MySQL keyword like "integer."
-            result[this.helper.escapeId(columnName)] = SchemaDao.prepareValue(validated[columnName]);
-        }
-
-        return result;
-    }
-
-    /**
-     * Gets a list of constraints on a given table. Currently, only primary keys,
-     * foreign keys, and unique constraints are recognized.
-     */
-    private async constraints(schema: string, table: string): Promise<Constraint[]> {
-        const result = await this.helper.execute((squel) => {
-            return squel.select()
-                .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
-                    .field('COLUMN_NAME')
-                    .field('CONSTRAINT_NAME')
-                    .field('REFERENCED_TABLE_SCHEMA')
-                    .field('REFERENCED_TABLE_NAME')
-                    .field('REFERENCED_COLUMN_NAME')
-                .where('CONSTRAINT_SCHEMA = ?', schema)
-                .where('TABLE_NAME = ?', table)
-                .order('ORDINAL_POSITION');
-        });
-
-        return _.map(result, (row: any): Constraint => {
-            let type: ConstraintType = 'foreign';
-
-            if (row.CONSTRAINT_NAME === 'PRIMARY')
-                type = 'primary';
-            else if (row.CONSTRAINT_NAME === row.COLUMN_NAME)
-                type = 'unique';
-
-            return {
-                type,
-                localColumn: row.COLUMN_NAME as string,
-                ref: type !== 'foreign' ? null : {
-                    schema: row.REFERENCED_TABLE_SCHEMA as string,
-                    table: row.REFERENCED_TABLE_NAME as string,
-                    column: row.REFERENCED_COLUMN_NAME as string
-                }
-            };
-        });
-    }
-
-    /**
      * Attempts to simplify foreign key reference chains. For
      * example, if tableA.foo (FK) references tableB.bar (PK and FK), and
      * tableB.bar references tableC.baz (PK), the returned array will replace
@@ -393,6 +340,59 @@ export class SchemaDao {
         }
 
         return resolved;
+    }
+
+    /**
+     * Returns a new SqlRow whose keys are escaped as if they were reserved
+     * keywords and whose values have been transformed by {@link #prepareValue}
+     */
+    private prepareForInsert(validated: SqlRow): SqlRow {
+        const result: SqlRow = {};
+        for (const columnName of Object.keys(validated)) {
+            // Escape the name of the column in case that name is a reserved
+            // MySQL keyword like "integer."
+            result[this.helper.escapeId(columnName)] = SchemaDao.prepareValue(validated[columnName]);
+        }
+
+        return result;
+    }
+
+    /**
+     * Gets a list of constraints on a given table. Currently, only primary keys,
+     * foreign keys, and unique constraints are recognized.
+     */
+    private async constraints(schema: string, table: string): Promise<Constraint[]> {
+        const result = await this.helper.execute((squel) => {
+            return squel.select()
+                .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
+                    .field('COLUMN_NAME')
+                    .field('CONSTRAINT_NAME')
+                    .field('REFERENCED_TABLE_SCHEMA')
+                    .field('REFERENCED_TABLE_NAME')
+                    .field('REFERENCED_COLUMN_NAME')
+                .where('CONSTRAINT_SCHEMA = ?', schema)
+                .where('TABLE_NAME = ?', table)
+                .order('ORDINAL_POSITION');
+        });
+
+        return _.map(result, (row: any): Constraint => {
+            let type: ConstraintType = 'foreign';
+
+            if (row.CONSTRAINT_NAME === 'PRIMARY')
+                type = 'primary';
+            else if (row.CONSTRAINT_NAME === row.COLUMN_NAME)
+                type = 'unique';
+
+            return {
+                type,
+                localColumn: row.COLUMN_NAME as string,
+                ref: type !== 'foreign' ? null : {
+                    schema: row.REFERENCED_TABLE_SCHEMA as string,
+                    table: row.REFERENCED_TABLE_NAME as string,
+                    column: row.REFERENCED_COLUMN_NAME as string
+                }
+            };
+        });
     }
 
     /** Fetches a table's comment, or an empty string if none exists */
