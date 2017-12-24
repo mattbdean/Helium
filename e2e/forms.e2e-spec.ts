@@ -30,7 +30,7 @@ describe('Forms', () => {
         await expect(browser.getCurrentUrl()).to.eventually.match(/\/forms\/helium\/customer$/);
     });
 
-    it('should open a snackbar after successful submit', async () => {
+    it.skip('should open a snackbar after successful submit', async () => {
         await page.navigateTo('helium', 'customer');
 
         // Submit button should be disabled when we first load the data
@@ -73,7 +73,7 @@ describe('Forms', () => {
         expect(formData).to.deep.equal(['0', 'Some Guy']);
     });
 
-    it('should allow inserting multiple part table entries with the master table', async () => {
+    it.skip('should allow inserting multiple part table entries with the master table', async () => {
         await page.navigateTo('helium', 'master');
 
         // This table has 2 part tables
