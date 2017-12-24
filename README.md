@@ -18,21 +18,6 @@ $ git checkout tags/v1.0.0-alpha
 $ yarn install
 ```
 
-Create the file `db.conf.json` in the project root:
-
-```json
-{
-  "prod": {
-    "user": "<database username>",
-    "password": "<database password>",
-    "database": "<schema name>",
-    "host": "<database hostname>"
-  }
-}
-```
-
-> The database user should have access to read and insert data on the given database.
-
 Run the website on [localhost:3000](http://localhost:3000):
 
 ```sh
