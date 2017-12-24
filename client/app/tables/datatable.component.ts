@@ -162,7 +162,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
     }
 
     public onInsertLike(row: object) {
-        this.router.navigate(['/forms', this.name.rawName], {
+        return this.router.navigate(['/forms', this.name.schema, this.name.rawName], {
             queryParams: this.createQueryParams(row)
         });
     }

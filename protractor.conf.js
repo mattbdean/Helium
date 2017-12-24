@@ -7,7 +7,7 @@ exports.config = {
         './e2e/**/*.e2e-spec.ts'
     ],
     capabilities: {
-        'browserName': 'chrome',
+        browserName: 'chrome',
         chromeOptions: {
             // Anything with a width over AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH will work
             args: ['--window-size=1500,800']
@@ -22,9 +22,14 @@ exports.config = {
         ui: 'bdd',
         timeout: 30000
     },
+    SELENIUM_PROMISE_MANAGER: false,
     beforeLaunch: () => {
         require('ts-node').register({
             project: 'e2e/tsconfig.e2e.json'
+        });
+        process.on('unhandledRejection', (reason) => {
+            process.stderr.write("Unhandled Promise rejection:\n");
+            throw reason;
         });
     },
     onPrepare: () => {
