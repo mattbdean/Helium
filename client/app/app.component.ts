@@ -38,7 +38,7 @@ export class AppComponent implements OnDestroy, OnInit {
     public schemas: string[] = [];
 
     private adjustSidenavSub: Subscription;
-    private formGroup: FormGroup;
+    public formGroup: FormGroup;
     public schemaControl: AbstractControl;
 
     @ViewChild(MatSidenav)

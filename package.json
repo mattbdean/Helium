@@ -11,7 +11,7 @@
     "e2e:prepped:debug": "node --inspect-brk node_modules/.bin/protractor protractor.conf.js",
     "prod": "gulp build && ng build --prod && node dist",
     "start": "node dist",
-    "test": "yarn test:server && yarn test:client && yarn e2e",
+    "test": "yarn test:server && yarn test:client && yarn e2e && ng build --prod",
     "test:server": "gulp testPrep && TS_NODE_PROJECT=server/tsconfig.json nyc mocha --opts server/test/mocha.opts",
     "test:client": "ng test --single-run true --sourcemaps false",
     "test:client:live": "ng test --single-run false",
