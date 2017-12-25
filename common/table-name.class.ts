@@ -5,13 +5,15 @@ import { TableNameParams } from './table-name-params.interface';
 const masterPartSeparator = '__';
 
 export class TableName implements BaseTableName {
+    public readonly schema: string;
     public readonly rawName: string;
     public readonly tier: TableTier;
     public readonly cleanName: string;
     public readonly masterRawName: string | null;
 
-    public constructor(parameters: string | TableNameParams) {
+    public constructor(schema: string, parameters: string | TableNameParams) {
         const resolved = TableName.resolve(parameters);
+        this.schema = schema;
         this.rawName = resolved.rawName;
         this.tier = resolved.tier;
         this.cleanName = resolved.cleanName;

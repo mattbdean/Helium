@@ -6,6 +6,7 @@ import { expect } from 'chai';
 import * as _ from 'lodash';
 import { InlineSVGModule } from 'ng-inline-svg';
 
+import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Constraint, ConstraintType } from '../common/api';
 import { ConstraintIconsComponent } from './constraint-icons.component';
@@ -21,8 +22,11 @@ describe('ConstraintIconsComponent', () => {
             constrs.push({
                 type,
                 localColumn: 'constr_' + i,
-                foreignTable: type === 'foreign' ? 'table_' + i : null,
-                foreignColumn: type === 'foreign' ? 'column_' + i : null
+                ref: type !== 'foreign' ? null : {
+                    schema: 'schema',
+                    table: 'table_' + i,
+                    column: 'column_' + i
+                }
             });
         }
 
@@ -33,11 +37,12 @@ describe('ConstraintIconsComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 InlineSVGModule,
-                RouterTestingModule
+                RouterTestingModule,
+                HttpClientModule
             ],
             declarations: [ ConstraintIconsComponent ],
             providers: [
-                { provide: APP_BASE_HREF, useValue: '/' }
+                { provide: APP_BASE_HREF, useValue: '/' },
             ]
         });
 
@@ -97,8 +102,8 @@ describe('ConstraintIconsComponent', () => {
             } else {
                 // Make sure titles for foreign key constraints mention what
                 // they reference
-                expect(title).to.contain(constr.foreignTable);
-                expect(title).to.contain(constr.foreignColumn);
+                expect(title).to.contain(constr.ref.table);
+                expect(title).to.contain(constr.ref.column);
             }
         }
     });
@@ -111,6 +116,6 @@ describe('ConstraintIconsComponent', () => {
         const icon = fixture.debugElement.query(By.css('.header-icon'));
         expect(icon).to.not.be.null;
 
-        expect(icon.nativeElement.getAttribute('href')).to.equal('/tables/' + constr.foreignTable);
+        expect(icon.nativeElement.getAttribute('href')).to.equal(`/tables/${constr.ref.schema}/${constr.ref.table}`);
     });
 });

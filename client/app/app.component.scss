@@ -5,6 +5,11 @@
   flex-direction: column;
 }
 
+mat-toolbar {
+  display: flex;
+  justify-content: space-between;
+}
+
 mat-sidenav-container {
   flex-grow: 1;
 
@@ -17,6 +22,14 @@ mat-sidenav {
   box-shadow: 3px 0 6px rgba(0,0,0,.24);
   // Sidenav must have a fixed width for larger screens to display properly without a manual window resize
   width: 240px;
+}
+
+.schema-selector-container {
+  margin: 10px 10px 0 10px;
+}
+
+.schema-selector {
+  width: 100%;
 }
 
 .sidenav-toggle {

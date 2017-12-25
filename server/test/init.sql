@@ -12,6 +12,11 @@ GRANT ALL ON *.* TO 'user'@'localhost' IDENTIFIED BY 'password';
 DROP USER 'user'@'localhost';
 # Create the user again to ensure that the user exists
 GRANT ALL ON helium.* TO 'user'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL ON helium2.* TO 'user'@'localhost';
+
+# Other DB for cross-schema testing
+DROP DATABASE IF EXISTS helium2;
+CREATE DATABASE helium2 CHARACTER SET utf8;
 
 # Ensure an empty database
 DROP DATABASE IF EXISTS helium;
@@ -62,7 +67,8 @@ CREATE TABLE shipment(
   FOREIGN KEY (order_id, organization_id, customer_id, product_id) REFERENCES `order`(order_id, organization_id, customer_id, product_id)
 );
 
-# Create table with all known supported datatypes
+# Create table with all known supported datatypes (expect for non-null blobs,
+# which aren't supported)
 CREATE TABLE datatypeshowcase(
   `pk` INTEGER UNSIGNED PRIMARY KEY NOT NULL COMMENT 'pk column',
   `integer` INTEGER UNIQUE COMMENT 'integer column',
@@ -83,7 +89,7 @@ CREATE TABLE blob_test(
     `blob_not_null` TINYBLOB NOT NULL
 );
 
-# Create a few empty tables for the test of sorting the different types
+# Create a few empty schemas for the test of sorting the different types
 CREATE TABLE `#test_lookup`(pk INTEGER PRIMARY KEY);
 CREATE TABLE _test_imported(pk INTEGER PRIMARY KEY);
 CREATE TABLE __test_computed(pk INTEGER PRIMARY KEY);
@@ -152,3 +158,17 @@ INSERT INTO datatypeshowcase VALUES
   (101, NULL, 11.1, 1,    '2017-07-05', NOW(), 'b',  NULL,    NULL,          'another string2'),
   (102, 5,    55.5, 0,    '2017-07-05', NOW(), 'b',  x'1234', NULL,          'another string2'),
   (110, NULL, NULL, NULL, NULL,         NULL,  NULL, NULL,    NULL,          'mostly null data in this row');
+
+# Create tables for the 2nd schema
+USE helium2;
+
+# The only purpose of this data is that it
+CREATE TABLE cross_schema_ref_test(
+    pk INTEGER PRIMARY KEY,
+    fk INTEGER,
+    FOREIGN KEY (fk) REFERENCES helium.order(customer_id)
+);
+
+INSERT INTO cross_schema_ref_test(pk, fk) VALUES
+    (100, 0),
+    (101, 1);

@@ -1,6 +1,9 @@
+import { AuthGuard } from './auth-guard.service';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { AuthService } from './auth.service';
+import { StorageService } from './storage.service';
 
 import { InlineSVGModule } from "ng-inline-svg";
 
@@ -26,7 +29,12 @@ import { TableService } from './table.service';
         ConstraintIconsComponent,
         TableNameComponent
     ],
-    providers: [TableService]
+    providers: [
+        AuthGuard,
+        AuthService,
+        TableService,
+        StorageService
+    ]
 })
 export class CoreModule {
 }

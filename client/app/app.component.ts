@@ -1,17 +1,22 @@
 import {
     Component, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
-import { Observable } from 'rxjs/Rx';
+import { Router } from '@angular/router';
 
 import * as _ from 'lodash';
+import { Observable } from 'rxjs/Rx';
 
+import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatSidenav } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
-import { TableService } from "./core/table.service";
+import { AuthService } from './core/auth.service';
+import { TableService } from './core/table.service';
 
 interface GroupedName { tier: TableTier; names: MasterTableName[]; }
+
+interface SchemaInfo { availableSchemas: string[]; selectedSchema: string; }
 
 @Component({
     selector: 'app',
@@ -28,9 +33,13 @@ export class AppComponent implements OnDestroy, OnInit {
      */
     public static readonly ALWAYS_SHOW_SIDENAV_WIDTH = 1480;
 
-    public groupedNames: Observable<GroupedName[]>;
+    public groupedNames: GroupedName[];
 
-    private windowSizeSub: Subscription;
+    public schemas: string[] = [];
+
+    private adjustSidenavSub: Subscription;
+    private formGroup: FormGroup;
+    public schemaControl: AbstractControl;
 
     @ViewChild(MatSidenav)
     private sidenav: MatSidenav;
@@ -38,12 +47,57 @@ export class AppComponent implements OnDestroy, OnInit {
     public sidenavMode: 'push' | 'over' | 'side' = 'side';
 
     public constructor(
-        private backend: TableService
+        public auth: AuthService,
+        private backend: TableService,
+        private router: Router
     ) {}
 
     public ngOnInit() {
-        this.groupedNames = this.backend.list()
-            .map(unflattenTableNames)
+        // Fetch available schemas when the user logs in
+        const schemas$: Observable<string[] | null> = this.auth.watchAuthState()
+            .switchMap((isLoggedIn) => {
+                if (isLoggedIn) {
+                    return this.backend.schemas();
+                } else {
+                    return Observable.of(null);
+                }
+            });
+
+        // Use a form group and <form> element so we can more easily update and
+        // read the selected schema
+        this.formGroup = new FormGroup({
+            schemaSelect: new FormControl()
+        });
+
+        this.schemaControl = this.formGroup.get('schemaSelect');
+        const selectedSchema$ = this.schemaControl.valueChanges;
+
+        const schemaInfo$: Observable<SchemaInfo | null> = Observable.combineLatest(
+            schemas$,
+            selectedSchema$
+        ).filter((data: [string[] | null, string | null]) => {
+            // data[0] is an array of available schemas, data[1] is the
+            // currently selected schema. Only emit data when both are non-null
+            // or both are null. The only time one of these is null is when the
+            // user logs out, and is immediately followed by more data coming
+            // through the observable
+            return (data[0] !== null) === (data[1] !== null);
+        })
+            .map((data: [string[] | null, string | null]) => {
+                // Break the nested array structure up into an object. When both
+                // elements are null, simply return null.
+                if (data[0] === null || data[1] === null)
+                    return null;
+                return { availableSchemas: data[0], selectedSchema: data[1] };
+            });
+
+        schemaInfo$
+            .switchMap((info: SchemaInfo | null) => {
+                if (info === null)
+                    return Observable.of([]);
+                else
+                    return this.backend.tables(info.selectedSchema);
+            }).map(unflattenTableNames)
             // Start with an empty array so the template has something to do
             // before we get actual data
             .startWith([])
@@ -61,19 +115,32 @@ export class AppComponent implements OnDestroy, OnInit {
                         return position;
                     })
                     .value();
-            });
+            })
+            // Usually I'd prefer to use the AsyncPipe but for whatever reason
+            // I can't get it to subscribe during testing
+            .subscribe((names) => { this.groupedNames = names; });
 
-        this.windowSizeSub = Observable
+        // Listen for the user logging in and automatically select a schema for
+        // them
+        schemas$.subscribe((schemas) => {
+            if (schemas !== null && this.schemaControl.value === null)
+                this.schemaControl.setValue(AppComponent.determineDefaultSchema(schemas));
+            this.schemas = schemas;
+        });
+
+        const windowResize$ = Observable
             .fromEvent(window, 'resize')
             // Start with a value so adjustSidenav gets called on init
-            .startWith(-1)
-            .subscribe(() => {
-                this.adjustSidenav();
-            });
+            .startWith(-1);
+
+        // When the window is resized or the user logs in or out, adjust the
+        // sidenav.
+        this.adjustSidenavSub = Observable.merge(windowResize$, this.auth.watchAuthState())
+            .subscribe(() => { this.adjustSidenav(); });
     }
 
     public ngOnDestroy() {
-        this.windowSizeSub.unsubscribe();
+        this.adjustSidenavSub.unsubscribe();
     }
 
     public onSidenavLinkClicked() {
@@ -85,9 +152,40 @@ export class AppComponent implements OnDestroy, OnInit {
         this.sidenav.opened = !this.sidenav.opened;
     }
 
+    public logout() {
+        // Log the user out
+        this.auth.logout();
+
+        // We don't know if the next user will have access to the selected
+        // schema
+        this.schemaControl.reset();
+
+        // Automatically redirect to the login page
+        return this.router.navigate(['/login']);
+    }
+
     private adjustSidenav() {
-        const alwaysShow = window.innerWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
-        this.sidenavMode = alwaysShow ? 'side' : 'over';
-        this.sidenav.opened = alwaysShow;
+        if (!this.auth.loggedIn) {
+            this.sidenav.opened = false;
+        } else {
+            const alwaysShow = window.innerWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
+            this.sidenavMode = alwaysShow ? 'side' : 'over';
+            this.sidenav.opened = alwaysShow;
+        }
+    }
+
+    /**
+     * Tries to determine the best schema to select by default. Selects the
+     * first schema
+     * @param {string[]} all A list of all schemas available to the user
+     */
+    private static determineDefaultSchema(all: string[]) {
+        const sorted = _.sortBy(all);
+
+        // Use the first schema when sorted alphabetically. Prefer not to use
+        // information_schema since most users probably don't care about this
+        if (sorted[0].toLocaleLowerCase() === 'information_schema' && sorted.length > 0)
+            return sorted[1];
+        return sorted[0];
     }
 }

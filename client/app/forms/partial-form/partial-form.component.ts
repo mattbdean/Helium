@@ -94,7 +94,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     public ngOnInit() {
         const meta$ = this.name$
             .switchMap((name: TableName): Observable<TableMeta> =>
-                this.backend.meta(name.rawName)
+                this.backend.meta(name.schema, name.rawName)
                     .catch((err) => {
                         // TODO handle better
                         console.error(err);
@@ -148,7 +148,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                         // what Observable
                         const b = {
                             controlName: binding.localColumn,
-                            valueChanges: masterGroup.controls[binding.foreignColumn].valueChanges,
+                            valueChanges: masterGroup.controls[binding.ref.column].valueChanges,
                             subscriptions: [],
                             lastValue: ''
                         };

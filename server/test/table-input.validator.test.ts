@@ -9,11 +9,10 @@ import { inspect } from 'util';
 import { TableHeader } from '../src/common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../src/common/constants';
 import { TableName } from '../src/common/table-name.class';
-import { TableInputValidator } from '../src/routes/api/table-input.validator';
-import { TableDao } from '../src/routes/api/tables.queries';
+import { TableInputValidator } from '../src/routes/api/schemas/schema-input.validator';
+import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
 
 chai.use(chaiAsPromised);
-
 const expect = chai.expect;
 
 describe('TableInputValidator', () => {
@@ -35,6 +34,8 @@ describe('TableInputValidator', () => {
         if (!result.error)
             throw new Error(`Expected a validation error: value = ${v} (${typeof v})`);
     };
+
+    const SCHEMA = '<schema>';
 
     describe('validate', () => {
         const testData: { [tableName: string]: TableHeader[] } = {
@@ -91,23 +92,23 @@ describe('TableInputValidator', () => {
         });
 
         beforeEach(() => {
-            // Mirror the functionality of a real TableDao. Instead of looking
+            // Mirror the functionality of a real SchemaDao. Instead of looking
             // up data from a database, we're working with fake metadata (defined above).
             const fakeDao = {
-                headers: async (name: string): Promise<TableHeader[]> => {
+                headers: async (schema: string, name: string): Promise<TableHeader[]> => {
                     const headers = testData[name];
                     if (!headers)
                         throw new Error(`Table ${name} does not exist`);
 
                     return headers;
                 }
-            } as any as TableDao;
+            } as any as SchemaDao;
             validator = new TableInputValidator(fakeDao);
         });
 
         it('should require an object', async () => {
             for (const invalidInput of [null, undefined, 0, true, false])
-                await expect(validator.validate(invalidInput)).to.be.rejectedWith(Error);
+                await expect(validator.validate(SCHEMA, invalidInput)).to.be.rejectedWith(Error);
         });
 
         it('should return the validated data in their proper types', async () => {
@@ -120,7 +121,7 @@ describe('TableInputValidator', () => {
                 }]
             };
 
-            expect(await validator.validate(input)).to.deep.equal({
+            expect(await validator.validate(SCHEMA, input)).to.deep.equal({
                 _master: [{
                     pk: 1234, // the string '1234' should be converted to a number
                     foo: 'abcd',
@@ -137,7 +138,7 @@ describe('TableInputValidator', () => {
             };
 
             // Make sure it doesn't throw an error
-            return validator.validate(input);
+            return validator.validate(SCHEMA, input);
         });
 
         it('should not allow part tables by itself', () => {
@@ -149,7 +150,7 @@ describe('TableInputValidator', () => {
                 }]
             };
 
-            return expect(validator.validate(input)).to.be.rejectedWith(Error);
+            return expect(validator.validate(SCHEMA, input)).to.be.rejectedWith(Error);
         });
 
         it('should reject non-existent tables', () => {
@@ -157,7 +158,7 @@ describe('TableInputValidator', () => {
                 unknown_table: [{ foo: 123 }]
             };
 
-            return expect(validator.validate(input)).to.be.rejectedWith(Error);
+            return expect(validator.validate(SCHEMA, input)).to.be.rejectedWith(Error);
         });
 
         it('should ensure that all part tables belong to the master table', () => {
@@ -166,7 +167,7 @@ describe('TableInputValidator', () => {
                 _other__part: [ { pk: 0 } ]
             };
 
-            return expect(validator.validate(input)).to.be.rejectedWith(Error);
+            return expect(validator.validate(SCHEMA, input)).to.be.rejectedWith(Error);
         });
 
         it('should allow exactly one master table input and zero or more part table inputs', async () => {
@@ -194,11 +195,11 @@ describe('TableInputValidator', () => {
             ];
 
             for (const inputShape of valid) {
-                await validator.validate(createInput(inputShape));
+                await validator.validate(SCHEMA, createInput(inputShape));
             }
 
             for (const inputShape of invalid) {
-                await expect(validator.validate(createInput(inputShape)))
+                await expect(validator.validate(SCHEMA, createInput(inputShape)))
                     .to.be.rejectedWith(Error);
             }
         });
@@ -210,7 +211,7 @@ describe('TableInputValidator', () => {
 
         it('should allow exactly 1 entry for master tables', () => {
             // '#' prefix chosen at random
-            const tableName = new TableName('#foo');
+            const tableName = new TableName('schema', '#foo');
 
             const schema = TableInputValidator.schemaForTableArray(headers, tableName);
 
@@ -229,7 +230,7 @@ describe('TableInputValidator', () => {
         });
 
         it('should allow zero or more entries for part tables', () => {
-            const tableName = new TableName('#foo__bar');
+            const tableName = new TableName('schema', '#foo__bar');
             const schema = TableInputValidator.schemaForTableArray(headers, tableName);
 
             // for (let i = 0; i < 3; i++) {
@@ -239,16 +240,6 @@ describe('TableInputValidator', () => {
             // }
             joi.assert([], schema);
         });
-
-        // it.only('foo', () => {
-        //     // const schema = TableInputValidator.schemaForTable(headers);
-        //     // console.log(schema.validate(entry()));
-        //
-        //     const schema = TableInputValidator.schemaForTableArray(headers, new TableName('#foo__bar'));
-        //     console.log(new TableName('foo__bar').isPartTable());
-        //     // console.log(schema.validate(_.range(3).map(entry)));
-        //     console.log(schema.validate([]));
-        // });
     });
 
     describe('schemaForTable', () => {

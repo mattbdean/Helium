@@ -17,7 +17,6 @@ gulp.task('testPrep', ['common:build', 'server:testPrep']);
 gulp.task('watch', () => {
     watch({
         'common/**/*.ts': 'common:build',
-        'db.conf.json': 'server:dbconf',
         'server/src/**/*.ts': 'server:compile'
     });
 });
@@ -27,8 +26,7 @@ gulp.task('clean', () =>
         'dist',
         'server/src/common',
         'server/src/public',
-        'server/src/about.json',
-        'server/src/db.conf.json'
+        'server/src/about.json'
     ])
 );
 
@@ -43,7 +41,6 @@ gulp.task('common:build', () => {
 
 gulp.task('server:build', [
     'server:compile',
-    'server:dbconf',
     'server:about'
 ]);
 
@@ -60,21 +57,11 @@ gulp.task('server:compile', () =>
     )
 );
 
-gulp.task('server:dbconf', () =>
-    cp('db.conf.json', 'dist'),
-);
-
-gulp.task('server:dbconf:testPrep', () =>
-    cp('db.conf.json', 'server/src')
-);
-
-gulp.task('server:views:testPrep', () =>
+gulp.task('server:testPrep', () =>
     // Copy index.html so that GET /* won't throw a 404. In an actual build,
     // webpack will modify index.html and place it in this directory
     cp('client/index.html', 'server/src/public')
 );
-
-gulp.task('server:testPrep', ['server:views:testPrep', 'server:dbconf:testPrep']);
 
 gulp.task('server:about', () =>
     gulp.src('package.json')

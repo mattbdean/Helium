@@ -1,6 +1,6 @@
 import { Component, DebugElement, Input } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -22,13 +22,13 @@ describe('FormHostComponent', () => {
     let de: DebugElement;
 
     const tableServiceStub = {
-        list: (): Observable<any> => Observable.throw('Not stubbed')
+        tables: (name: string): Observable<any> => Observable.throw('Not stubbed')
     };
 
     const snackbarStub = {};
 
     const tableNamesObservable = (...rawNames: string[]) => {
-        return Observable.of(rawNames.map((n) => new TableName(n)));
+        return Observable.of(rawNames.map((n) => new TableName('schema', n)));
     };
 
     beforeEach(() => {
@@ -67,7 +67,7 @@ describe('FormHostComponent', () => {
                 expect(de.query(By.css('button')).nativeElement.disabled).to.equal(formHasErrors);
             };
 
-            sinon.stub(service, 'list')
+            sinon.stub(service, 'tables')
                 .returns(tableNamesObservable('master'));
 
             fixture.detectChanges();

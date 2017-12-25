@@ -4,20 +4,28 @@ import * as moment from 'moment';
 import {
     Constraint, ConstraintType, DefaultValue, SqlRow, TableDataType,
     TableHeader, TableMeta
-} from '../../common/api';
+} from '../../../common/api';
 import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
-} from '../../common/constants';
-import { TableName } from '../../common/table-name.class';
-import { unflattenTableNames } from '../../common/util';
-import { Database } from '../../db/database.helper';
-import { TableInputValidator } from './table-input.validator';
-import { ValidationError } from './validation-error';
-import { ErrorCode } from './error-code.enum';
+} from '../../../common/constants';
+import { TableName } from '../../../common/table-name.class';
+import { unflattenTableNames } from '../../../common/util';
+import { QueryHelper } from '../../../db/query-helper';
+import { TableInputValidator } from './schema-input.validator';
 
 /**
- * Simple interface for describing the way some data is to be organized
+ * Simple interface for describing the way some data is to be organized.
+ *
+ * In the case of a method rejecting with a MySQL-related error, the Error
+ * object will have a `code` property. Here are some of the common values:
+ *
+ *  - ER_DBACCESS_DENIED_ERROR (the schema doesn't exist or is inaccessible
+ *    to the user)
+ *  - ER_NO_SUCH_TABLE (the table doesn't exist)
+ *  - ER_BAD_FIELD_ERROR (a requested column doesn't exist on the table)
+ *  - ER_TABLEACCESS_DENIED_ERROR
+ *  - ER_UNKNOWN_TABLE
  */
 export interface Sort {
     direction: 'asc' | 'desc';
@@ -25,61 +33,61 @@ export interface Sort {
     by: string;
 }
 
-export class TableDao {
+export class SchemaDao {
     private validator: TableInputValidator;
 
-    public constructor(private helper: Database) {
+    public constructor(private helper: QueryHelper) {
         this.validator = new TableInputValidator(this);
+    }
+
+    public async schemas(): Promise<string[]> {
+        return (await this.helper.executeRaw('SHOW SCHEMAS;'))
+            .map((row: SqlRow) => row[Object.keys(row)[0]]);
     }
 
     /**
      * Returns an array of all available table names
+     *
+     * If this Promise rejects due to a MySQL-related error, the resulting Error
+     * object will have a code property most likely equal to
+     * 'ER_DBACCESS_DENIED_ERROR', in the case that the schema doesn't exist or
+     * the user doesn't have the ability to view that schema.
      */
-    public async list(): Promise<TableName[]> {
-        // db.conn is a PromiseConnection that wraps a Connection. A
-        // Connection has a property `config`
-        const result = await this.helper.execute((squel) =>
-            squel.select()
-                .from('INFORMATION_SCHEMA.tables')
-                .field('table_name')
-                .where('TABLE_SCHEMA = ?', this.helper.databaseName()));
-
-        /*
-        Transform this:
-        [
-            { table_name: 'foo' },
-            { table_name: '#bar' },
-            { table_name: '_baz' }
-        ]
-
-        Into an array of TableNames:
-        [
-            { rawName: 'foo', ... }
-            { rawName: '#bar', ... }
-            { rawName: '_baz', ... }
-        ]
-         */
-        return _.map(result, (row: any): TableName => new TableName(row.table_name));
+    public async tables(db: string): Promise<TableName[]> {
+        const result = await this.helper.executeRaw('SHOW TABLES FROM ' + this.helper.escapeId(db));
+        return _.map(result, (row: SqlRow): TableName => new TableName(db, row[Object.keys(row)[0]]));
     }
 
     /**
      * Fetches the data from the table
      *
-     * @param {string} name Table name
-     * @param {number} page Which page to request. Pages are 1-indexed, so 0 is
-     * an invalid page, 1 is the first page, 2 is the second, and so on. A "page"
-     * is pretty arbitrary since what data is included depends heavily on
+     * @param {string} schema Database name
+     * @param {string} table Table name
+     * @param {object} opts Additional options
+     * @param {number} opts.page Which page to request. Pages are 1-indexed, so
+     * 0 is an invalid page, 1 is the first page, 2 is the second, and so on. A
+     * "page" is pretty arbitrary since what data is included depends heavily on
      * `limit`.
-     *
-     * @param {number} limit How many rows to fetch in one go
-     * @param {Sort} sort If provided, will attempt to sort the results by this
-     * column/direction
-     * @returns {Promise<SqlRow[]>} A promise that resolves to the requested data
+     * @param {number} opts.limit How many rows to fetch in one go
+     * @param {Sort} opts.sort If provided, will attempt to sort the results by
+     * this column/direction
+     * @returns {Promise<SqlRow[]>} A promise that resolves to the requested
+     * data
      */
-    public async content(name: string,
-                         page: number = 1,
-                         limit: number = 25,
-                         sort?: Sort | undefined): Promise<SqlRow[]> {
+    public async content(schema: string,
+                         table: string,
+                         opts: { page?: number, limit?: number, sort?: Sort} = {}): Promise<SqlRow[]> {
+
+        // Resolve each option to a non-undefined value
+        const page: number = opts.page !== undefined ? opts.page : 1;
+        const limit: number = opts.limit !== undefined ? opts.limit : 25;
+        const sort = opts.sort || null;
+
+        if (page < 1)
+            throw new Error('Expecting page >= 1');
+
+        if (limit < 0)
+            throw new Error('Expecting limit < 0');
 
         const rows = await this.helper.execute((squel) => {
             // Create our basic query
@@ -87,12 +95,12 @@ export class TableDao {
                 .select()
                 // Make sure we escape the table name so that we're less vulnerable to
                 // SQL injection
-                .from(this.helper.escapeId(name))
+                .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
                 // Pagination
                 .limit(limit)
                 .offset((page - 1) * limit);
 
-            if (sort !== undefined) {
+            if (sort !== null) {
                 // Specify a sort if provided
                 query = query.order(this.helper.escapeId(sort.by), sort.direction === 'asc');
             }
@@ -100,9 +108,14 @@ export class TableDao {
             return query;
         });
 
+        // If there's no data being returned and this isn't the first page,
+        // we've gone past the last page.
+        if (rows.length === 0 && page !== 1)
+            throw new Error(`Page too high: ${page}`);
+
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
-        const headers: TableHeader[] = await this.headers(name);
+        const headers: TableHeader[] = await this.headers(schema, table);
         const blobHeaders = _(headers)
             .filter((h) => h.type === 'blob')
             .map((h) => h.name)
@@ -132,27 +145,26 @@ export class TableDao {
         return rows;
     }
 
-    /**
-     * Fetches a TableMeta instance for the given table.
-     */
-    public async meta(name: string): Promise<TableMeta> {
+    /** Fetches a TableMeta instance for the given table. */
+    public async meta(schema: string, table: string): Promise<TableMeta> {
         const [allTables, headers, count, constraints, comment] = await Promise.all([
-            this.list(),
-            this.headers(name),
-            this.count(name),
+            this.tables(schema),
+            this.headers(schema, table),
+            this.count(schema, table),
             // For some reason `this` becomes undefined in the resolveConstraints
             // function if we do this.constraints(name).then(this.resolveConstraints)
-            this.constraints(name).then((result) => this.resolveConstraints(result)),
-            this.comment(name)
+            this.constraints(schema, table).then((result) => this.resolveConstraints(result)),
+            this.comment(schema, table)
         ]);
 
         // Identify part tables for the given table name
         const masterTables = unflattenTableNames(allTables);
-        const masterTable = masterTables.find((t) => t.rawName === name);
+        const masterTable = masterTables.find((t) => t.rawName === table);
         const parts = masterTable ? masterTable.parts : [];
 
         return {
-            name,
+            schema,
+            name: table,
             headers,
             totalRows: count,
             constraints,
@@ -164,16 +176,17 @@ export class TableDao {
     /**
      * Fetches all distinct values from one column. Useful for autocomplete.
      */
-    public async columnContent(table: string, column: string): Promise<Array<string | number>> {
+    public async columnContent(schema: string, table: string, column: string):
+        Promise<Array<string | number>> {
+
         // SELECT DISTINCT $col FROM $table ORDER BY $col ASC
         const result = await this.helper.execute((squel) =>
             squel
                 .select()
                 .distinct()
-                .from(this.helper.escapeId(table))
+                .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
                 .field(this.helper.escapeId(column))
                 .order(this.helper.escapeId(column))
-
         );
 
         // Each row is a document mapping the column to its value. In this case, we
@@ -186,31 +199,26 @@ export class TableDao {
      * Inserts a row into a given table. The given data will be verified before
      * inserting.
      */
-    public async insertRow(table: string, data: any) {
-        const headers = await this.headers(table);
-        if (headers.length === 0) {
-            throw new ValidationError('no such table', ErrorCode.NO_SUCH_TABLE);
-        }
-
+    public async insertRow(schema: string, data: any) {
         // Make sure that the given data adheres to the headers
-        const preparedData = await this.validator.validate(data);
+        const preparedData = await this.validator.validate(schema, data);
 
-        return this.helper.transaction(async () => {
+        return this.helper.transaction(async (conn) => {
             // Make sure we alphabetize the names so we insert master tables first
             const names = _.sortBy(Object.keys(preparedData));
 
             // Do inserts in sequence so we can guarantee that master tables
             // are inserted before any part tables
-            for (const name of names) {
+            for (const tableName of names) {
                 // Prepare each row for insertion. Escape column names, transform
                 // values as appropriate, etc.
-                const rows = preparedData[name].map(this.prepareForInsert, this);
+                const rows = preparedData[tableName].map(this.prepareForInsert, this);
 
                 await this.helper.execute((squel) => {
                     return squel.insert()
-                        .into(this.helper.escapeId(name))
+                        .into(this.helper.escapeId(schema) + '.' + this.helper.escapeId(tableName))
                         .setFieldsRows(rows);
-                });
+                }, conn);
             }
         });
     }
@@ -220,7 +228,7 @@ export class TableDao {
      * `name` is used in a 'LIKE' expression and therefore can contain
      * metacharacters like '%'.
      */
-    public async headers(name: string): Promise<TableHeader[]> {
+    public async headers(schema: string, table: string): Promise<TableHeader[]> {
         const fields = [
             'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
             'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
@@ -236,8 +244,8 @@ export class TableDao {
             }
 
             return query
-                .where('TABLE_SCHEMA = ?', this.helper.databaseName())
-                .where('TABLE_NAME LIKE ?', name)
+                .where('TABLE_SCHEMA = ?', schema)
+                .where('TABLE_NAME LIKE ?', table)
                 .order('ORDINAL_POSITION');
         });
 
@@ -245,9 +253,9 @@ export class TableDao {
         // that share the same name
         return _.map(result, (row: any): TableHeader => {
             const rawType = row.COLUMN_TYPE as string;
-            const type = TableDao.parseType(rawType);
+            const type = SchemaDao.parseType(rawType);
             const isNumerical = type === 'integer' || type === 'float';
-            const defaultValue = TableDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT);
+            const defaultValue = SchemaDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT);
 
             return {
                 name: row.COLUMN_NAME as string,
@@ -263,7 +271,7 @@ export class TableDao {
                 charset: row.CHARACTER_SET_NAME as string,
                 numericPrecision: row.NUMERIC_PRECISION as number,
                 numericScale: row.NUMERIC_SCALE as number,
-                enumValues: TableDao.findEnumValues(row.COLUMN_TYPE as string),
+                enumValues: SchemaDao.findEnumValues(row.COLUMN_TYPE as string),
                 comment: row.COLUMN_COMMENT as string,
                 tableName: row.TABLE_NAME as string
             };
@@ -271,70 +279,29 @@ export class TableDao {
     }
 
     /**
-     * Returns a new SqlRow whose keys are escaped as if they were reserved
-     * keywords and whose values have been transformed by {@link #prepareValue}
-     */
-    private prepareForInsert(validated: SqlRow): SqlRow {
-        const result: SqlRow = {};
-        for (const columnName of Object.keys(validated)) {
-            // Escape the name of the column in case that name is a reserved
-            // MySQL keyword like "integer."
-            result[this.helper.escapeId(columnName)] = TableDao.prepareValue(validated[columnName]);
-        }
-
-        return result;
-    }
-
-    /**
-     * Gets a list of constraints on a given table. Currently, only primary keys,
-     * foreign keys, and unique constraints are recognized.
-     */
-    private async constraints(name: string): Promise<Constraint[]> {
-        const result = await this.helper.execute((squel) => {
-            return squel.select()
-                .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
-                    .field('COLUMN_NAME')
-                    .field('CONSTRAINT_NAME')
-                    .field('REFERENCED_TABLE_NAME')
-                    .field('REFERENCED_COLUMN_NAME')
-                .where('CONSTRAINT_SCHEMA = ?', this.helper.databaseName())
-                .where('TABLE_NAME = ?', name)
-                .order('ORDINAL_POSITION');
-        });
-
-        return _.map(result, (row: any): Constraint => {
-            let type: ConstraintType = 'foreign';
-
-            if (row.CONSTRAINT_NAME === 'PRIMARY')
-                type = 'primary';
-            else if (row.CONSTRAINT_NAME === row.COLUMN_NAME)
-                type = 'unique';
-
-            return {
-                type,
-                localColumn: row.COLUMN_NAME as string,
-                foreignTable: row.REFERENCED_TABLE_NAME as string,
-                foreignColumn: row.REFERENCED_COLUMN_NAME as string
-            };
-        });
-    }
-
-    /**
-     * Attempts to resolve foreign key constraints to their origins. For example,
-     * if tableA.foo references tableB.bar and tableB.bar references tableC.baz,
-     * the returned array will include a Constraint that maps tableA.foo to
-     * tableC.baz instead of tableB.bar.
+     * Attempts to simplify foreign key reference chains. For
+     * example, if tableA.foo (FK) references tableB.bar (PK and FK), and
+     * tableB.bar references tableC.baz (PK), the returned array will replace
+     * the original Constraint with one that declares tableA.foo as a FK
+     * that references the PK tableC.baz.
      *
-     * Note that if there are no foreign key constraints
+     * Note that if there are no foreign key constraints this method does
+     * nothing.
+     *
+     * This method is public only for testing.
      */
-    private async resolveConstraints(originals: Constraint[]): Promise<Constraint[]> {
+    public async resolveConstraints(originals: Constraint[]): Promise<Constraint[]> {
         // Keep tables in cache once we look them up to prevent any unnecessary
         // lookups
-        const cache: { [tableName: string]: Constraint[] } = {};
+        const cache: { [tableId: string]: Constraint[] } = {};
+
+        const tableId = (schemaName: string, tableName: string) =>
+            `${schemaName}.${tableName}`;
 
         // Return constraints from cache, otherwise look them up
-        const getConstraints = (name: string): Promise<Constraint[]> => {
-            return cache[name] ? Promise.resolve(cache[name]) : this.constraints(name);
+        const getConstraints = (otherSchema, otherTable: string): Promise<Constraint[]> => {
+            const id = tableId(otherSchema, otherTable);
+            return cache[id] ? Promise.resolve(cache[id]) : this.constraints(otherSchema, otherTable);
         };
 
         const resolved: Constraint[] = [];
@@ -353,40 +320,99 @@ export class TableDao {
                 return temp;
             };
 
+            const original = c;
             let current: Constraint = c;
             let previous: Constraint | undefined;
 
             // Navigate up the hierarchy until we find a PK constraint.
             while (current.type !== 'primary') {
                 previous = current;
-                current = findConstraint(current.foreignColumn!!, await getConstraints(current.foreignTable!!));
+                current = findConstraint(current.ref!!.column,
+                    await getConstraints(current.ref!!.schema, current.ref!!.table));
             }
 
-            if (previous !== undefined)
+            if (previous !== undefined) {
+                // We've found the last FK in the reference chain. All we have
+                // to do now is update the localColumn to the original's
+                previous.localColumn = original.localColumn;
                 resolved.push(previous);
+            }
         }
 
         return resolved;
     }
 
+    /**
+     * Returns a new SqlRow whose keys are escaped as if they were reserved
+     * keywords and whose values have been transformed by {@link #prepareValue}
+     */
+    private prepareForInsert(validated: SqlRow): SqlRow {
+        const result: SqlRow = {};
+        for (const columnName of Object.keys(validated)) {
+            // Escape the name of the column in case that name is a reserved
+            // MySQL keyword like "integer."
+            result[this.helper.escapeId(columnName)] = SchemaDao.prepareValue(validated[columnName]);
+        }
+
+        return result;
+    }
+
+    /**
+     * Gets a list of constraints on a given table. Currently, only primary keys,
+     * foreign keys, and unique constraints are recognized.
+     */
+    private async constraints(schema: string, table: string): Promise<Constraint[]> {
+        const result = await this.helper.execute((squel) => {
+            return squel.select()
+                .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
+                    .field('COLUMN_NAME')
+                    .field('CONSTRAINT_NAME')
+                    .field('REFERENCED_TABLE_SCHEMA')
+                    .field('REFERENCED_TABLE_NAME')
+                    .field('REFERENCED_COLUMN_NAME')
+                .where('CONSTRAINT_SCHEMA = ?', schema)
+                .where('TABLE_NAME = ?', table)
+                .order('ORDINAL_POSITION');
+        });
+
+        return _.map(result, (row: any): Constraint => {
+            let type: ConstraintType = 'foreign';
+
+            if (row.CONSTRAINT_NAME === 'PRIMARY')
+                type = 'primary';
+            else if (row.CONSTRAINT_NAME === row.COLUMN_NAME)
+                type = 'unique';
+
+            return {
+                type,
+                localColumn: row.COLUMN_NAME as string,
+                ref: type !== 'foreign' ? null : {
+                    schema: row.REFERENCED_TABLE_SCHEMA as string,
+                    table: row.REFERENCED_TABLE_NAME as string,
+                    column: row.REFERENCED_COLUMN_NAME as string
+                }
+            };
+        });
+    }
+
     /** Fetches a table's comment, or an empty string if none exists */
-    private async comment(name: string): Promise<string> {
+    private async comment(schema: string, table: string): Promise<string> {
         const result = await this.helper.execute((squel) =>
             squel.select()
                 .from('INFORMATION_SCHEMA.TABLES')
                 .field('TABLE_COMMENT')
-                .where('TABLE_NAME = ?', name)
-                .where('TABLE_SCHEMA = ?', this.helper.databaseName())
+                .where('TABLE_NAME = ?', table)
+                .where('TABLE_SCHEMA = ?', schema)
         );
 
         return result[0].TABLE_COMMENT;
     }
 
     /** Counts the amount of rows in a table */
-    private async count(name: string): Promise<number> {
+    private async count(schema: string, table: string): Promise<number> {
         const result = await this.helper.execute((squel) =>
             squel.select()
-                .from(this.helper.escapeId(name))
+                .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
                 .field('COUNT(*)')
         );
         // This query returns only one row
@@ -436,7 +462,7 @@ export class TableDao {
         if (rawType === 'date') return 'date';
         if (rawType === 'datetime' || rawType === 'timestamp') return 'datetime';
         if (rawType.startsWith('enum')) return 'enum';
-        if (rawType.includes('char')) return 'string';
+        if (rawType.includes('char') || rawType.includes('text')) return 'string';
         if (rawType.includes('blob')) return 'blob';
 
         throw Error(`Could not determine TableDataType for raw type '${rawType}'`);

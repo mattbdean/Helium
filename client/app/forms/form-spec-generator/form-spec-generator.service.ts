@@ -13,11 +13,11 @@ import {
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
+import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table.service';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';
-import { TableName } from '../../common/table-name.class';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -88,8 +88,9 @@ export class FormSpecGeneratorService {
             }
 
             if (foreignKey !== undefined) {
+                const ref = foreignKey.ref;
                 autocompleteValues = this.backend.columnValues(
-                    foreignKey.foreignTable, foreignKey.foreignColumn);
+                    ref.schema, ref.table, ref.column);
                 type = 'autocomplete';
             }
 
@@ -135,21 +136,22 @@ export class FormSpecGeneratorService {
      *
      * @param {string} masterRawName The SQL name of the master table's name. If
      *                               null, an empty array will be returned
+     *                               (signifying this table is a master table).
      * @param {TableMeta} tableMeta The metadata for the part table
      * @returns {Constraint[]} An array of binding constraints in this master/
      *                         part relationship.
      */
-    public bindingConstraints(masterRawName: string, tableMeta: TableMeta): Constraint[] {
+    public bindingConstraints(masterRawName: string | null, tableMeta: TableMeta): Constraint[] {
         if (masterRawName === null)
             // The given TableMeta is for a master table, nothing to do
             return [];
 
-        const tableName = new TableName(tableMeta.name);
+        const tableName = new TableName(tableMeta.schema, tableMeta.name);
         if (tableName.masterRawName !== masterRawName)
             throw new Error(`Given TableMeta was not a part table of ` +
                 `${masterRawName}, but actually for ${tableName.masterRawName}`);
 
-        return tableMeta.constraints.filter((c) => c.foreignTable === masterRawName);
+        return tableMeta.constraints.filter((c) => c.ref !== null && c.ref.table === masterRawName);
     }
 
     /**

@@ -3,7 +3,10 @@ import {
     ComponentFixture, fakeAsync, TestBed, tick
 } from '@angular/core/testing';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatButtonModule, MatIconModule } from '@angular/material';
+import {
+    MatButtonModule, MatCardModule,
+    MatIconModule
+} from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -13,6 +16,7 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
 import { Constraint } from '../../common/api';
+import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table.service';
 import { ComponentMapperService } from '../component-mapper/component-mapper.service';
 import { AbstractFormControl } from '../dynamic-controls/abstract-form-control.class';
@@ -23,7 +27,6 @@ import {
 } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
-import { TableName } from '../../common/table-name.class';
 
 const expect = global['chai'].expect;
 
@@ -68,7 +71,7 @@ describe('PartialFormComponent', () => {
     };
 
     const tableServiceStub = {
-        meta: (rawName: string): Observable<MockTableMeta> =>
+        meta: (schema: string, rawName: string): Observable<MockTableMeta> =>
             Observable.of({ name: rawName })
     };
 
@@ -91,7 +94,7 @@ describe('PartialFormComponent', () => {
     /** Initializes the component by calling its ngOnChanges method. */
     const initComponent = (role: 'master' | 'part') => {
         comp.ngOnChanges({
-            namePropertyBinding: new SimpleChange(null, new TableName(role), true),
+            namePropertyBinding: new SimpleChange(null, new TableName('schema', role), true),
             rootGroupPropertyBinding: new SimpleChange(null, rootGroup, true),
             // Include to be complete but there is no listener for role
             role: new SimpleChange(null, role, true)
@@ -111,6 +114,7 @@ describe('PartialFormComponent', () => {
             imports: [
                 MatButtonModule,
                 MatIconModule,
+                MatCardModule,
                 NoopAnimationsModule,
                 ReactiveFormsModule,
                 RouterTestingModule

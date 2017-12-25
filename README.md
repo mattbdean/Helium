@@ -18,21 +18,6 @@ $ git checkout tags/v1.0.0-alpha
 $ yarn install
 ```
 
-Create the file `db.conf.json` in the project root:
-
-```json
-{
-  "prod": {
-    "user": "<database username>",
-    "password": "<database password>",
-    "database": "<schema name>",
-    "host": "<database hostname>"
-  }
-}
-```
-
-> The database user should have access to read and insert data on the given database.
-
 Run the website on [localhost:3000](http://localhost:3000):
 
 ```sh
@@ -91,7 +76,7 @@ This will watch for any changes to server-side and client-side code and restart 
 
 Run unit tests with `yarn test`, or specifically with `yarn test:client`, `yarn test:server`, and `yarn e2e`.
 
-You can also run protractor with the element inspector using `yarn e2e:debug`.
+You can also run protractor and debug using `chrome://inspect` using `yarn e2e:debug`.
 
 To prevent rebuilding the website every time the e2e tests are run (what `yarn e2e` does), use two terminal windows. Run `yarn dev` on the first and `yarn e2e:prepped` (or `yarn e2e:prepped:debug`) in the second whenever necessary.
 

@@ -1,14 +1,16 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import {
-    MatButtonModule,
+    MatButtonModule, MatFormFieldModule,
     MatIconModule,
-    MatNativeDateModule,
+    MatNativeDateModule, MatSelectModule,
     MatSidenavModule,
     MatToolbarModule
 } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { LoginModule } from './login/login.module';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -27,13 +29,17 @@ import 'normalize.css/normalize.css';
         BrowserAnimationsModule,
         CoreModule,
         CommonModule,
+        ReactiveFormsModule,
 
         MatButtonModule,
         MatIconModule,
+        MatFormFieldModule,
         MatNativeDateModule,
         MatToolbarModule,
+        MatSelectModule,
         MatSidenavModule,
 
+        LoginModule,
         TablesModule,
         FormsModule,
         AppRoutingModule

@@ -1,15 +1,15 @@
 import * as BaseJoi from 'joi';
-import { AnySchema, ArraySchema, ObjectSchema, ValidationResult } from 'joi';
+import { AnySchema, ArraySchema, ObjectSchema } from 'joi';
 import * as JoiDateExtensions from 'joi-date-extensions';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { TableHeader } from '../../common/api';
-import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { TableInsert } from '../../common/table-insert.interface';
-import { TableName } from '../../common/table-name.class';
-import { ErrorCode } from './error-code.enum';
-import { TableDao } from './tables.queries';
-import { ValidationError } from './validation-error';
+import { TableHeader } from '../../../common/api';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../../common/constants';
+import { TableInsert } from '../../../common/table-insert.interface';
+import { TableName } from '../../../common/table-name.class';
+import { ErrorCode } from '../error-code.enum';
+import { ValidationError } from '../validation-error';
+import { SchemaDao } from './schema.dao';
 
 /**
  * This class attempts to validate input to be inserted into the database.
@@ -65,7 +65,7 @@ import { ValidationError } from './validation-error';
 export class TableInputValidator {
     private static joi = BaseJoi.extend(JoiDateExtensions);
 
-    public constructor(private helper: TableDao) {}
+    public constructor(private helper: SchemaDao) {}
 
     /**
      * Attempts to validate some input data as described in the class
@@ -86,13 +86,13 @@ export class TableInputValidator {
      * data gathered from the initial validation. Any Error thrown because of
      * Joi will have the `isJoi` and `details` properties.
      */
-    public async validate(data: any): Promise<TableInsert> {
+    public async validate(db: string, data: any): Promise<TableInsert> {
         if (data === null || data === undefined || typeof data !== 'object')
             throw new ValidationError('Expecting a defined, non-null object, got ' + data,
                 ErrorCode.WRONG_TYPE);
 
         // Convert all keys to TableName objects
-        const tableNames = Object.keys(data).map((n) => new TableName(n.toString()));
+        const tableNames = Object.keys(data).map((n) => new TableName(db, n.toString()));
         const [parts, masters] = _.partition(tableNames, (n) => n.isPartTable());
 
         // Make sure only one master table was specified
@@ -112,7 +112,7 @@ export class TableInputValidator {
         // Fetch all metadata belonging to all the tables here. The headers for
         // tableNames[i] are located at allHeaders[i].
         const allHeaders: TableHeader[][] = await Promise.all(
-            tableNames.map((name) => this.helper.headers(name.rawName), this));
+            tableNames.map((name) => this.helper.headers(db, name.rawName), this));
 
         const keys = tableNames.map((n) => n.rawName);
         const values = tableNames.map((n, index) => {

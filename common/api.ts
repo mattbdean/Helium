@@ -1,6 +1,7 @@
 import { TableName } from './table-name.class';
 
 export interface TableMeta {
+    schema: string;
     name: string;
     headers: TableHeader[];
     totalRows: number;
@@ -18,6 +19,9 @@ export interface SpecialDefaultValue { constantName: string; }
 export type TableTier = 'lookup' | 'manual' | 'imported' | 'computed' | 'hidden';
 
 export interface BaseTableName {
+    /** The schema which this table belongs to */
+    schema: string;
+
     /** The name used in SQL */
     rawName: string;
 
@@ -116,11 +120,15 @@ export interface Constraint {
 
     type: ConstraintType;
 
-    /** The table this constraint references, or null if this is not a foreign key */
-    foreignTable: string | null;
-
-    /** The referenced column in [foreignTable], or null if this is not a foreign key */
-    foreignColumn: string | null;
+    /**
+     * If this is a foreign key constraint, the primary key this constraint
+     * references.
+     */
+    ref: {
+        schema: string,
+        table: string,
+        column: string
+    } | null;
 }
 
 export type ConstraintType = 'primary' | 'foreign' | 'unique';

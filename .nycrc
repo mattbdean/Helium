@@ -1,6 +1,6 @@
 {
   "include": [
-    "server/**/*.ts"
+    "server/src/**/*.ts"
   ],
   "extension": [
     ".ts"

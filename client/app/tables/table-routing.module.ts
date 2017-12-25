@@ -1,10 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AuthGuard } from '../core/auth-guard.service';
 import { TableHostComponent } from './table-host.component';
 
 const routes: Routes = [
-    { path: 'tables', component: TableHostComponent },
-    { path: 'tables/:name', component: TableHostComponent }
+    {
+        path: 'tables',
+        children: [
+            { path: ':schema/:table', component: TableHostComponent },
+            { path: '', component: TableHostComponent }
+        ],
+        canActivate: [ AuthGuard ]
+    }
 ];
 
 @NgModule({

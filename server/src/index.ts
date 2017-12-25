@@ -5,23 +5,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import chalk from 'chalk';
-import { Application } from 'express';
 import * as listEndpoints from 'express-list-endpoints';
 import * as _ from 'lodash';
 import * as yargs from 'yargs';
 
-import { Database } from './db/database.helper';
-import { JsonConfigurationResolver } from './db/json-configuration-resolver';
 import { Helium } from './helium';
-import { ModuleConfig } from './module-config.interface';
 
 // Catch unhandled Promises
 process.on('unhandledRejection', (reason) => {
     log("Unhandled Promise rejection: ");
     throw reason;
 });
-
-const JSON_CONF_NAME = 'db.conf.json';
 
 // Parse optstring and handle --help with yargs
 const argv = yargs
@@ -47,14 +41,10 @@ interface AppMeta {
 const bootstrap = async (options: any, metadata: AppMeta) => {
     log(chalk.bold(`Starting ${metadata.name} v${metadata.version}`));
 
-    const resolver = new JsonConfigurationResolver(JSON_CONF_NAME);
-
-    // A null value for modules loads all modules
-    const modules: ModuleConfig | null = null;
-    const app = new Helium(modules, resolver);
+    const app = new Helium();
 
     try {
-        await app.start('prod');
+        await app.start();
     } catch (ex) {
         fatalError('Unable to start: ' + ex.message);
     }
