@@ -23,6 +23,7 @@ import { TableName } from './common/table-name.class';
 import { AuthService } from './core/auth.service';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table.service';
+import { Router } from '@angular/router';
 
 const expect = global['chai'].expect;
 
@@ -101,6 +102,9 @@ describe('AppComponent', () => {
         de = fixture.debugElement;
         service = de.injector.get(TableService);
         auth = de.injector.get(AuthService);
+
+        // Make the router always return a URL
+        sinon.stub(de.injector.get(Router), 'url').get(() => '/foo');
     });
 
     it('should automatically pull in all available schemas and load the first one', fakeAsync(() => {
