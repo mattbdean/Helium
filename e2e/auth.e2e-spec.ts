@@ -125,5 +125,20 @@ describe('Authentication', () => {
             await expect(sidenav.isVisible()).to.eventually.be.false;
             await expect(sidenav.isToggleable()).to.eventually.be.true;
         });
+
+        it('should select the schema of the schema being viewed, if there is one', async () => {
+            const expectations: Array<[string, string]> = [
+                [ '/', 'helium' ], // Default schema is chosen alphabetically
+                [ '/tables/helium2', 'helium2' ],
+                [ '/tables/helium2/cross_schema_ref_test', 'helium2' ],
+                [ '/tables/unknown_schema', 'helium' ], // Should fall back to default
+                [ '/forms/helium2', 'helium2' ]
+            ];
+
+            for (const [url, schema] of expectations) {
+                await browser.get(url);
+                await expect(sidenav.selectedSchema()).to.eventually.equal(schema);
+            }
+        });
     });
 });

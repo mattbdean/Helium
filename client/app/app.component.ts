@@ -124,7 +124,7 @@ export class AppComponent implements OnDestroy, OnInit {
         // them
         schemas$.subscribe((schemas) => {
             if (schemas !== null && this.schemaControl.value === null)
-                this.schemaControl.setValue(AppComponent.determineDefaultSchema(schemas));
+                this.schemaControl.setValue(this.determineDefaultSchema(schemas));
             this.schemas = schemas;
         });
 
@@ -175,11 +175,27 @@ export class AppComponent implements OnDestroy, OnInit {
     }
 
     /**
-     * Tries to determine the best schema to select by default. Selects the
-     * first schema
+     * Tries to determine the best schema to select by default. If the current
+     * URL indicates a schema, that is selected if available. Otherwise, the
+     * first schema that appears alphabetically is chosen. `information_schema`
+     * will never be chosen unless it's the only schema.
      * @param {string[]} all A list of all schemas available to the user
      */
-    private static determineDefaultSchema(all: string[]) {
+    private determineDefaultSchema(all: string[]) {
+        const urlTree = this.router.parseUrl(this.router.url);
+        // Get each segment of the URL. If the path is /foo/bar/baz, segments
+        // will be ['foo', 'bar', 'baz'].
+        const segments = urlTree.root.children.primary.segments.map((s) => s.path);
+
+        if (segments.length > 1 && (segments[0] === 'tables' || segments[0] === 'forms')) {
+            // The URL indicates a selected schema, pick it if the user has
+            // access to it.
+            const loadedSchema = segments[1];
+            if (all.includes(loadedSchema)) {
+                return loadedSchema;
+            }
+        }
+
         const sorted = _.sortBy(all);
 
         // Use the first schema when sorted alphabetically. Prefer not to use
