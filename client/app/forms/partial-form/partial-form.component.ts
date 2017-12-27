@@ -119,11 +119,13 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
             meta$,
             this.rootGroup$,
             spec$,
+            this.name$
         )
-            .subscribe((data: [TableMeta, FormGroup, FormControlSpec[]]) => {
+            .subscribe((data: [TableMeta, FormGroup, FormControlSpec[], TableName]) => {
                 const tableMeta = data[0];
                 this.meta = tableMeta;
                 this.formSpec = data[2];
+                const name = data[3];
 
                 // Master tables start off with one entry
                 const initialData = this.role === 'master' ?
@@ -138,7 +140,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                 if (bindings.length > 0) {
                     // The FormGroup for the master table is created first
                     const masterFormArray =
-                        data[1].controls[this.name.masterRawName] as FormArray;
+                        data[1].controls[name.masterRawName] as FormArray;
 
                     // The master table form array only contains one entry
                     const masterGroup = masterFormArray.at(0) as FormGroup;
