@@ -160,7 +160,7 @@ export class FormSpecGeneratorService {
      * used if that header is not a primary key.
      */
     private static defaultValue(header: TableHeader, prefilledData: object): DefaultValue {
-        let defaultValue: DefaultValue;
+        let defaultValue: DefaultValue = header.defaultValue;
         if (prefilledData[header.name] !== undefined)
             defaultValue = prefilledData[header.name];
 

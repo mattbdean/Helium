@@ -1,4 +1,5 @@
 import { random, range } from 'lodash';
+import * as moment from 'moment';
 import { browser, protractor } from 'protractor';
 import ExpectStatic = Chai.ExpectStatic;
 import { AuthHelper } from './helpers/auth-helper';
@@ -70,7 +71,7 @@ describe('Forms', () => {
         const formData = await form.pluck('customer_id', 'name');
 
         // First entry created by init.sql
-        expect(formData).to.deep.equal(['0', 'Some Guy']);
+        expect(formData).to.deep.equal({ customer_id: '0', name: 'Some Guy' });
     });
 
     it.skip('should allow inserting multiple part table entries with the master table', async () => {
@@ -95,5 +96,28 @@ describe('Forms', () => {
         const snackbar = await snackbarHelper.waitFor();
         expect(snackbar.action).to.not.be.null;
         expect(snackbar.action.text).to.equal('VIEW');
+    });
+
+    it('should prepopulate the form with default values', async () => {
+        await page.navigateTo('helium', 'defaults_test');
+        const data = await form.pluck(
+            'pk', 'int', 'float', 'date', 'datetime', 'datetime_now', 'boolean',
+            'enum', 'no_default'
+        );
+
+        // See helium.defaults_test definition in init.sql
+        expect(data).to.deep.equal({
+            pk: '',
+            int: '5',
+            float: '10',
+            date: '1/1/2017',
+            // datetime and datetime_now are supposed to have time components as
+            // well, but Angular Material doesn't support datetime pickers yet
+            datetime: '1/1/2017',
+            datetime_now: moment().format('M/D/YYYY'),
+            boolean: true,
+            enum: 'a',
+            no_default: ''
+        });
     });
 });
