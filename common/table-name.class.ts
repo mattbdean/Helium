@@ -1,36 +1,34 @@
 import { BaseTableName, TableTier } from './api';
 import { TABLE_TIER_PREFIX_MAPPING } from './constants';
-import { TableNameParams } from './table-name-params.interface';
+import {
+    TableNameParams,
+    TransformedName
+} from './table-name-params.interface';
 
 const masterPartSeparator = '__';
 
 export class TableName implements BaseTableName {
     public readonly schema: string;
-    public readonly rawName: string;
+
+    public readonly name: TransformedName;
+    public readonly masterName: TransformedName | null;
     public readonly tier: TableTier;
-    public readonly cleanName: string;
-    public readonly masterRawName: string | null;
 
     public constructor(schema: string, parameters: string | TableNameParams) {
         const resolved = TableName.resolve(parameters);
         this.schema = schema;
-        this.rawName = resolved.rawName;
+        this.name = resolved.name;
         this.tier = resolved.tier;
-        this.cleanName = resolved.cleanName;
-        this.masterRawName = resolved.masterRawName;
+        this.masterName = resolved.masterName;
     }
 
-    public isPartTable() { return this.masterRawName !== null; }
+    public isPartTable() { return this.masterName !== null; }
 
     private static resolve(parameters: string | TableNameParams): TableNameParams {
         if (typeof parameters === 'object')
             return parameters;
 
         const sqlName = parameters as string;
-
-        // Assume the table is a manual table and therefore has no prefix
-        let tier: TableTier = 'manual';
-        let startTrim = 0;
 
         let identifiers = [sqlName];
         if (sqlName.includes(masterPartSeparator)) {
@@ -57,31 +55,56 @@ export class TableName implements BaseTableName {
             }
         }
 
-        const masterName = identifiers[0];
+        const masterRawName = identifiers[0];
 
+        // Assume the table is a manual table and therefore has no prefix
+        let tier: TableTier = 'manual';
+        let tierPrefix: string = '';
+
+        // Try to identify what tier of table this is and what that tier's
+        // prefix is.
         for (const prefix of Object.keys(TABLE_TIER_PREFIX_MAPPING)) {
-            if (masterName.startsWith(prefix)) {
-                startTrim = prefix.length;
+            if (masterRawName.startsWith(prefix)) {
                 tier = TABLE_TIER_PREFIX_MAPPING[prefix];
+                tierPrefix = prefix;
                 break;
             }
         }
 
         const isPartTable = identifiers.length > 1;
 
-        const cleanName = isPartTable ?
-            // The second element in the identifiers array is the name of the part table
-            identifiers[1] :
-            // This is a master table, remove the prefix from the masterName
-            (startTrim === 0 ? masterName : masterName.substring(startTrim));
+        const masterName = isPartTable ?
+            // The master raw name will be the first element if this is a part
+            // table
+            TableName.transformName(identifiers[0], tierPrefix) : null;
 
-        const masterRawName = isPartTable ? identifiers[0] : null;
+        const name = TableName.transformName(
+            // The 2nd element in the array will be the part table name
+            identifiers[isPartTable ? 1 : 0],
+            // The part table name has no prefix
+            isPartTable ? '' : tierPrefix,
+            // The final raw name should be the one used in SQL (aka the
+            // original name given to us)
+            parameters);
 
         return {
-            rawName: sqlName,
+            name,
+            masterName,
             tier,
-            cleanName,
-            masterRawName
+        };
+    }
+
+    /** Transforms snake_case into CamelCase and removes any DataJoint tier prefixes. */
+    private static transformName(raw: string, prefix: string, finalRawOverride: string = raw): TransformedName {
+        // Split each part up by finding as many consecutive underscores as
+        // possible
+        const prefixRemoved = raw.slice(prefix.length);
+        const parts = prefixRemoved.split(/_+/);
+
+        return {
+            raw: finalRawOverride,
+            // Capitalize each word and join then together
+            clean: parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join('')
         };
     }
 }

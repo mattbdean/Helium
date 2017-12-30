@@ -147,9 +147,9 @@ export class FormSpecGeneratorService {
             return [];
 
         const tableName = new TableName(tableMeta.schema, tableMeta.name);
-        if (tableName.masterRawName !== masterRawName)
+        if (tableName.masterName.raw !== masterRawName)
             throw new Error(`Given TableMeta was not a part table of ` +
-                `${masterRawName}, but actually for ${tableName.masterRawName}`);
+                `${masterRawName}, but actually for ${tableName.masterName.raw}`);
 
         return tableMeta.constraints.filter((c) => c.ref !== null && c.ref.table === masterRawName);
     }

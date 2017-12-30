@@ -18,14 +18,14 @@
             <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
             <li class="table-ref-container" *ngFor="let table of groupedName.names">
                 <span class="table-ref table-ref-master row-item">
-                    <a class="table-name" tabindex="-1" [routerLink]="['/tables', table.schema, table.rawName]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">{{ table.cleanName }}</a>
-                    <a class="material-icons add-data-icon" tabindex="-1" [routerLink]="['/forms', table.schema, table.rawName]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">add</a>
+                    <a class="table-name" tabindex="-1" [routerLink]="['/tables', table.schema, table.name.raw]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">{{ table.name.clean }}</a>
+                    <a class="material-icons add-data-icon" tabindex="-1" [routerLink]="['/forms', table.schema, table.name.raw]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">add</a>
                 </span>
 
                 <ul class="undecorated-list nested-list" *ngIf="table.parts.length > 0">
                     <li class="table-ref-container" *ngFor="let part of table.parts">
                         <span class="table-ref table-ref-part row-item">
-                            <a class="table-name" tabindex="-1" [routerLink]="['/tables', part.schema, part.rawName]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">{{ part.cleanName }}</a>
+                            <a class="table-name" tabindex="-1" [routerLink]="['/tables', part.schema, part.name.raw]" routerLinkActive="active-router-link" (click)="onSidenavLinkClicked()">{{ part.name.clean }}</a>
                         </span>
                     </li>
                 </ul>

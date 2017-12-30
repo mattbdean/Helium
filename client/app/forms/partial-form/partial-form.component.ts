@@ -126,15 +126,16 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                     [this.createItem(this.formSpec)] : [];
 
                 this.formArray = this.fb.array(initialData);
-                rootFormGroup.addControl(name.rawName, this.formArray);
+                rootFormGroup.addControl(name.name.raw, this.formArray);
 
-                const bindings = this.formSpecGenerator.bindingConstraints(name.masterRawName, tableMeta);
+                const masterRawName = name.masterName ? name.masterName.raw : null;
+                const bindings = this.formSpecGenerator.bindingConstraints(masterRawName, tableMeta);
                 // If we have binding constraints, this is guaranteed to be a
                 // part table
                 if (bindings.length > 0) {
                     // The FormGroup for the master table is created first
                     const masterFormArray =
-                        rootFormGroup.controls[name.masterRawName] as FormArray;
+                        rootFormGroup.controls[name.masterName.raw] as FormArray;
 
                     // The master table form array only contains one entry
                     const masterGroup = masterFormArray.at(0) as FormGroup;

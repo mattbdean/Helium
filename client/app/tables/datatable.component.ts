@@ -104,7 +104,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
             // Pause pageInfo
             .do(() => { pauser.next(true); })
             .switchMap((name) => {
-                return this.backend.meta(name.schema, name.rawName)
+                return this.backend.meta(name.schema, name.name.raw)
                     .catch((err: HttpErrorResponse) => {
                         this.exists = false;
 
@@ -133,7 +133,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
         this.pageInfoSub = pausable.switchMap((params: [TableMeta, TableName, number, string]) => {
             // params is an array: [meta, name, pageNumber, sort]
-            return this.backend.content(params[1].schema, params[1].rawName, params[2], this.limit, params[3])
+            return this.backend.content(params[1].schema, params[1].name.raw, params[2], this.limit, params[3])
                 // TODO Handle this properly
                 .catch((err) => { throw err; })
                 .map((rows: SqlRow[]) => {
@@ -162,7 +162,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
     }
 
     public onInsertLike(row: object) {
-        return this.router.navigate(['/forms', this.name.schema, this.name.rawName], {
+        return this.router.navigate(['/forms', this.name.schema, this.name.name.raw], {
             queryParams: this.createQueryParams(row)
         });
     }
@@ -197,7 +197,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
             .value();
 
         // Only add the 'insert like' column for master tables
-        if (this.name.masterRawName === null)
+        if (this.name.masterName === null)
             regularHeaders.unshift({
                 name: '__insertLike',
                 prop: '__insertLike',

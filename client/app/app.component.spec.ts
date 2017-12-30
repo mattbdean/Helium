@@ -16,6 +16,7 @@ import * as _ from 'lodash';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
+import { Router } from '@angular/router';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
@@ -23,7 +24,6 @@ import { TableName } from './common/table-name.class';
 import { AuthService } from './core/auth.service';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table.service';
-import { Router } from '@angular/router';
 
 const expect = global['chai'].expect;
 
@@ -48,10 +48,12 @@ describe('AppComponent', () => {
         return _.map(tiers, (t, index): TableName => new TableName(schema, {
             // Include the schema name in the raw name for the sake of testing.
             // In the real world, this probably isn't going to happen
-            rawName: prefixFor(t) + schema + '_table_' + index,
+            name: {
+                raw: prefixFor(t) + schema + '_table_' + index,
+                clean: schema.charAt(0).toUpperCase() + schema.slice(1) + 'Table' + index
+            },
             tier: t,
-            cleanName: 'table_' + index,
-            masterRawName: null
+            masterName: null
         }));
     };
 

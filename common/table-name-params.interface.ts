@@ -1,8 +1,12 @@
 import { TableTier } from './api';
 
+export interface TransformedName {
+    raw: string;
+    clean: string;
+}
+
 export interface TableNameParams {
-    rawName: string;
+    name: TransformedName;
     tier: TableTier;
-    cleanName: string;
-    masterRawName: string | null;
+    masterName: TransformedName | null;
 }

@@ -1,5 +1,5 @@
 <mat-card>
-    <h1 class="form-title">{{ (name$ | async).cleanName }}</h1>
+    <h1 class="form-title">{{ (name$ | async).name.clean }}</h1>
 
     <div class="form-content">
         <div class="entry-container" [@fade] *ngFor="let group of formArray?.controls; let i = index">

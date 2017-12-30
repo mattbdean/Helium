@@ -11,18 +11,18 @@ export const unflattenTableNames = (names: TableName[]): MasterTableName[] => {
     const partitioned = _.partition(names, (n) => !n.isPartTable());
     const masters = _.map(partitioned[0], (n): MasterTableName => ({
         schema: n.schema,
-        rawName: n.rawName,
+        name: n.name,
         tier: n.tier,
-        cleanName: n.cleanName,
+        masterName: n.masterName,
         parts: []
     }));
 
     const parts: TableName[] = partitioned[1];
 
     for (const part of parts) {
-        const masterIndex = _.findIndex(masters, (m) => m.rawName === part.masterRawName);
+        const masterIndex = _.findIndex(masters, (m) => part.masterName && m.name.raw === part.masterName.raw);
         if (masterIndex < 0)
-            throw new Error(`Could not find master table with name ${part.masterRawName}`);
+            throw new Error(`Could not find master table with name ${part.masterName!!.raw}`);
 
         masters[masterIndex].parts.push(part);
     }

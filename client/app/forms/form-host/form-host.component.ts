@@ -65,8 +65,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 const availableTables = data[0];
                 const {schema, table} = data[1];
 
-                const currentName = availableTables.find((n) => n.schema === schema && n.rawName === table);
-                if (currentName === undefined || currentName.masterRawName !== null) {
+                const currentName = availableTables.find((n) => n.schema === schema && n.name.raw === table);
+                if (currentName === undefined || currentName.masterName !== null) {
                     // The user has navigated to a table that doesn't exist or a
                     // part table
                     let newPath: string[];
@@ -74,7 +74,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     if (currentName === undefined)
                         newPath = ['/tables'];
                     else
-                        newPath = ['/forms', currentName.masterRawName];
+                        newPath = ['/forms', currentName.masterName.raw];
 
                     return Observable.fromPromise(this.router.navigate(newPath))
                         .switchMapTo(Observable.never());
@@ -82,19 +82,19 @@ export class FormHostComponent implements OnDestroy, OnInit {
 
                 const masterTableNames = unflattenTableNames(availableTables);
                 const currentMaster =
-                    masterTableNames.find((n) => n.schema === schema && n.rawName === table);
+                    masterTableNames.find((n) => n.schema === schema && n.name.raw === table);
 
                 // The TableName array we use to create PartialFormComponents
                 // is comprised of the mainName (as a TableName instead of a
                 // MasterTableName) and its parts.
                 const tablesInUse = [
-                    new TableName(currentMaster.schema, currentMaster.rawName),
+                    new TableName(currentMaster.schema, currentMaster.name.raw),
                     ...currentMaster.parts
                 ];
 
                 return Observable.zip(
                     Observable.of(currentMaster),
-                    Observable.zip(...tablesInUse.map((t) => this.backend.meta(t.schema, t.rawName)))
+                    Observable.zip(...tablesInUse.map((t) => this.backend.meta(t.schema, t.name.raw)))
                 );
             }).subscribe((data: [MasterTableName, TableMeta[]]) => {
                 const [currentMaster, allMeta] = data;
@@ -113,7 +113,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             // Only allow non-null and non-undefined values
             .filter((form) => form !== undefined && form !== null)
             .switchMap((form: any) => {
-                return this.backend.submitRow(this.mainName.schema, this.mainName.rawName, form)
+                return this.backend.submitRow(this.mainName.schema, this.mainName.name.raw, form)
                     // Assume no error
                     .mapTo(null)
                     // Handle any errors
@@ -148,7 +148,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     return snackbarRef.onAction()
                         // Navigate to /tables/:name when 'VIEW' is clicked
                         .flatMap(() => Observable.fromPromise(
-                            this.router.navigate(['/tables', this.mainName.schema, this.mainName.rawName])))
+                            this.router.navigate(['/tables', this.mainName.schema, this.mainName.name.raw])))
                         .mapTo(snackbarRef);
                 }
             })

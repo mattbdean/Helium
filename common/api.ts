@@ -1,3 +1,4 @@
+import { TransformedName } from './table-name-params.interface';
 import { TableName } from './table-name.class';
 
 export interface TableMeta {
@@ -22,20 +23,15 @@ export interface BaseTableName {
     /** The schema which this table belongs to */
     schema: string;
 
-    /** The name used in SQL */
-    rawName: string;
+    name: TransformedName;
+
+    masterName: TransformedName | null;
 
     /**
      * Datajoint-specific data tier. Determined by the first one or two
      * characters of the raw name. See the TableTier docs for more.
      */
     tier: TableTier;
-
-    /**
-     * The name that should be presented to the user. Does not include tier
-     * prefix.
-     */
-    cleanName: string;
 }
 
 export interface MasterTableName extends BaseTableName {

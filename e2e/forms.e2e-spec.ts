@@ -27,7 +27,7 @@ describe('Forms', () => {
     });
 
     it('should allow us to open a form via the sidenav', async () => {
-        await sidenav.openForm('customer');
+        await sidenav.openForm('Customer');
         await expect(browser.getCurrentUrl()).to.eventually.match(/\/forms\/helium\/customer$/);
     });
 

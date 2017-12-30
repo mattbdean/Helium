@@ -17,7 +17,7 @@ describe('Tables', () => {
     });
 
     it('should be accessible from the sidenav', async () => {
-        await sidenav.browseData('order');
+        await sidenav.browseData('Order');
         await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium\/order$/);
     });
 
@@ -53,7 +53,7 @@ describe('Tables', () => {
 
         await page.navigateTo('helium', 'unknown_table');
 
-        await sidenav.browseData('order');
+        await sidenav.browseData('Order');
         await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium\/order$/);
     });
 });

@@ -15,7 +15,7 @@ import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
 chai.use(chaiAsPromised);
 const expect = chai.expect;
 
-describe('TableInputValidator', () => {
+describe('SchemaInputValidator', () => {
     const asHeader = (data: object) => data as any as TableHeader;
 
     let validator: TableInputValidator;

@@ -105,16 +105,18 @@ export class TableInputValidator {
 
         // Make sure each part table specified belongs to the master table
         for (const part of parts)
-            if (part.masterRawName !== masterTable.rawName)
+            // We created `parts` by checking if it was a part table,
+            // part.masterName is guaranteed to be non-null here
+            if (part.masterName!!.raw !== masterTable.name.raw)
                 throw new ValidationError('Part table data must be inserted ' +
                     'with the master it belongs to', ErrorCode.INVALID_PART_TABLE);
 
         // Fetch all metadata belonging to all the tables here. The headers for
         // tableNames[i] are located at allHeaders[i].
         const allHeaders: TableHeader[][] = await Promise.all(
-            tableNames.map((name) => this.helper.headers(db, name.rawName), this));
+            tableNames.map((name: TableName) => this.helper.headers(db, name.name.raw), this));
 
-        const keys = tableNames.map((n) => n.rawName);
+        const keys = tableNames.map((n) => n.name.raw);
         const values = tableNames.map((n, index) => {
             // Allow multiple entries only if the table is a part table
             return TableInputValidator.schemaForTableArray(allHeaders[index], n);
@@ -125,7 +127,7 @@ export class TableInputValidator {
 
         // The headers at tableNames[i] are located at allHeaders[i]
         const headerMap = _.zipObject(
-            tableNames.map((n) => n.rawName),
+            tableNames.map((n) => n.name.raw),
             allHeaders
         );
 

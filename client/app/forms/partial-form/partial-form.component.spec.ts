@@ -148,7 +148,7 @@ describe('PartialFormComponent', () => {
         fixture.detectChanges();
 
         // Make sure the form title gets updated
-        expect(de.query(By.css('.form-title')).nativeElement.textContent).to.equal('master');
+        expect(de.query(By.css('.form-title')).nativeElement.textContent).to.equal('Master');
     });
 
     it('should add a FormArray to the root FormGroup', fakeAsync(() => {

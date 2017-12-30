@@ -1,2 +1,2 @@
-<span *ngIf="masterCleanName">{{ masterCleanName }} <mat-icon>arrow_forward</mat-icon> {{ name.cleanName }}</span>
-<span *ngIf="!masterCleanName">{{ name.cleanName }}</span>
+<span *ngIf="masterCleanName">{{ masterCleanName }}.{{ name.name.clean }}</span>
+<span *ngIf="!masterCleanName">{{ name.name.clean }}</span>

@@ -74,7 +74,7 @@ describe('DatatableComponent', () => {
         expect(stub).to.have.been.calledOnce;
 
         // Header
-        expect(de.query(By.css('h1')).nativeElement.textContent.trim()).to.equal('foo');
+        expect(de.query(By.css('h1')).nativeElement.textContent.trim()).to.equal('Foo');
 
         // Description right under the header
         expect(de.query(By.css('.table-description')).nativeElement.textContent).to.match(/description/);

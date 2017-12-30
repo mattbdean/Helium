@@ -159,7 +159,7 @@ export class SchemaDao {
 
         // Identify part tables for the given table name
         const masterTables = unflattenTableNames(allTables);
-        const masterTable = masterTables.find((t) => t.rawName === table);
+        const masterTable = masterTables.find((t) => t.name.raw === table);
         const parts = masterTable ? masterTable.parts : [];
 
         return {

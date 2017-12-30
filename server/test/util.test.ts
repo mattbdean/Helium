@@ -17,29 +17,30 @@ describe('common/util', () => {
             const expected: MasterTableName[] = [
                 {
                     schema,
-                    rawName: '#foo',
+                    name: {
+                        raw: '#foo',
+                        clean: 'Foo'
+                    },
+                    masterName: null,
                     tier: 'lookup',
-                    cleanName: 'foo',
                     parts: [
                         new TableName(schema, {
-                            rawName: '#foo__bar',
+                            name: { raw: '#foo__bar', clean: 'Bar' },
                             tier: 'lookup',
-                            cleanName: 'bar',
-                            masterRawName: '#foo'
+                            masterName: { raw: '#foo', clean: 'Foo' }
                         }),
                         new TableName(schema, {
-                            rawName: '#foo__bar__baz',
+                            name: { raw: '#foo__bar__baz', clean: 'BarBaz' },
                             tier: 'lookup',
-                            cleanName: 'bar__baz',
-                            masterRawName: '#foo'
+                            masterName: { raw: '#foo', clean: 'Foo' },
                         })
                     ]
                 },
                 {
                     schema,
-                    rawName: '_qux',
+                    name: { raw: '_qux', clean: 'Qux' },
                     tier: 'imported',
-                    cleanName: 'qux',
+                    masterName: null,
                     parts: []
                 }
             ];

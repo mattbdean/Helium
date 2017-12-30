@@ -53,13 +53,13 @@ describe('SchemaDao', () => {
 
             // The TableName constructor has its own tests, don't go into too
             // much detail here
+            const transformedName = { raw: joi.string(), clean: joi.string() };
             const schema = joi.array().items(joi.object({
                 schema: schemaName, // should be exactly the value of 'db'
-                rawName: joi.string(),
+                name: transformedName,
                 tier: joi.string().regex(/lookup|manual|imported|computed|hidden/),
-                cleanName: joi.string(),
                 // Allow null or a string
-                masterRawName: joi.alternatives(joi.string(), joi.only(null))
+                masterName: joi.alternatives(transformedName, joi.only(null))
             }));
 
             joi.assert(data, schema);
