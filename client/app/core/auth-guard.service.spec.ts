@@ -1,4 +1,7 @@
-import { Router } from '@angular/router';
+import {
+    ActivatedRouteSnapshot, Router,
+    RouterStateSnapshot
+} from '@angular/router';
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
@@ -29,12 +32,17 @@ describe('AuthGuardService', () => {
         guard = new AuthGuard(auth, router);
     });
 
+    const activatedRouteSnapshot = {} as ActivatedRouteSnapshot;
+    const routerStateSnapshot = {} as RouterStateSnapshot;
+
+    const canActivate = () => guard.canActivate(activatedRouteSnapshot, routerStateSnapshot);
+
     describe('canActivate', () => {
         it('should reroute when not logged in', () => {
             sinon.stub(auth, 'loggedIn').get(() => false);
             const spy = sinon.spy(router, 'navigate');
 
-            expect(guard.canActivate(null, null)).to.be.false;
+            expect(canActivate()).to.be.false;
 
             expect(spy).to.have.been.calledWithExactly(['/login']);
         });
@@ -47,7 +55,7 @@ describe('AuthGuardService', () => {
             const updateSpy = sinon.spy(auth, 'update');
             const navigateSpy = sinon.spy(router, 'navigate');
 
-            expect(guard.canActivate(null, null)).to.be.false;
+            expect(canActivate()).to.be.false;
 
             // Should have called update(null) to remove the expired data
             expect(updateSpy).to.have.been.calledWithExactly(null);
@@ -61,7 +69,7 @@ describe('AuthGuardService', () => {
             sinon.stub(auth, 'loggedIn').get(() => true);
             sinon.stub(auth, 'expiration').get(() => new Date(Date.now() + 1000));
 
-            expect(guard.canActivate(null, null)).to.be.true;
+            expect(canActivate()).to.be.true;
         });
     });
 });

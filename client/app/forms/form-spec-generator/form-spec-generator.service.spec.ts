@@ -85,7 +85,7 @@ describe('FormSpecGeneratorService', () => {
 
     beforeEach(() => {
         // Mock this if necessary
-        const tableService: TableService = null;
+        const tableService: TableService = {} as TableService;
         generator = new FormSpecGeneratorService(tableService);
     });
 
@@ -178,9 +178,9 @@ describe('FormSpecGeneratorService', () => {
                 nullable: false,
             } as TableHeader);
 
-            formSpec.validation.should.have.lengthOf(0);
+            formSpec.validation!!.should.have.lengthOf(0);
             formSpec.type.should.equal('boolean');
-            formSpec.defaultValue.should.be.false;
+            formSpec.defaultValue!!.should.be.false;
         });
 
         it('should handle dates', () => {
@@ -190,7 +190,7 @@ describe('FormSpecGeneratorService', () => {
             } as TableHeader);
 
             formSpec.type.should.equal('date');
-            formSpec.subtype.should.equal('date');
+            formSpec.subtype!!.should.equal('date');
         });
 
         it('should handle datetimes', () => {
@@ -200,7 +200,7 @@ describe('FormSpecGeneratorService', () => {
             } as TableHeader);
 
             formSpec.type.should.equal('date');
-            formSpec.subtype.should.equal('datetime-local');
+            formSpec.subtype!!.should.equal('datetime-local');
         });
 
         it('should handle blobs', () => {
@@ -212,7 +212,7 @@ describe('FormSpecGeneratorService', () => {
 
             formSpecNullable.type.should.equal('text');
             expect(formSpecNullable.defaultValue).to.be.null;
-            formSpecNullable.disabled.should.be.true;
+            formSpecNullable.disabled!!.should.be.true;
 
             // The only difference specifying nullable: false is that the initial
             // value is undefined instead of null.
@@ -223,8 +223,8 @@ describe('FormSpecGeneratorService', () => {
             } as TableHeader);
 
             formSpecNonNull.type.should.equal('text');
-            expect(formSpecNonNull.defaultValue).to.be.undefined;
-            formSpecNonNull.disabled.should.be.true;
+            expect(formSpecNonNull.defaultValue).to.be.null;
+            formSpecNonNull.disabled!!.should.be.true;
         });
 
         it('should ignore prefilled primary key data', () => {

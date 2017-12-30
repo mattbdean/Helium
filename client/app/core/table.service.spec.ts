@@ -78,7 +78,7 @@ describe('TableService', () => {
     };
 
     const verifyExpirationUpdate = () => {
-        expect(auth.expiration.getTime()).to.be.above(prevExpiration);
+        expect(auth.expiration!!.getTime()).to.be.above(prevExpiration);
     };
 
     describe('schemas', () => {

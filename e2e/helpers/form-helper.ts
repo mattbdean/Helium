@@ -25,7 +25,7 @@ export class FormHelper {
                     `elements with formControlName=${controlName}, got ${actual}`);
 
             await controls.map((el, index) => {
-                return el.sendKeys(inputData[index]);
+                return el!!.sendKeys(inputData[index!!]);
             });
         }
     }
@@ -37,7 +37,7 @@ export class FormHelper {
     public async pluck(...formControlNames: string[]): Promise<{ [formControlName: string]: string | boolean | null }> {
         // Get an ElementFinder associated with each form control
         const controls = formControlNames.map((controlName) => this.formControl(controlName));
-        const values = [];
+        const values: Array<string | boolean | null> = [];
 
         for (const control of controls) {
             // Try to identify the value of every form control

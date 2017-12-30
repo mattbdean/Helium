@@ -58,7 +58,7 @@ export class TableService {
      * Attempts to add a row to the database for a given table. The table must
      * exist and the body must have the shape of a SqlRow.
      */
-    public submitRow(schema: string, tableName: string, body: SqlRow): Observable<void> {
+    public submitRow(schema: string, tableName: string, body: SqlRow): Observable<null> {
         return this.http.put(
             `/api/v1/schemas/${encode(schema)}/data`,
             body,

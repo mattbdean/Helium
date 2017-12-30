@@ -24,7 +24,7 @@ export class AuthGuard implements CanActivate {
             return this.reroute();
         
         // Check to make sure the data we have isn't expired
-        if (this.auth.expiration.getTime() < Date.now()) {
+        if (this.auth.expiration === null || this.auth.expiration.getTime() < Date.now()) {
             // If it is expired, remove the existing data and return false
             this.auth.update(null);
             return this.reroute();

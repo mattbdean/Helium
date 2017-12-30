@@ -53,10 +53,10 @@ describe('Forms', () => {
         const snackbar = await snackbarHelper.waitFor();
         expect(snackbar.message).to.not.be.empty;
         expect(snackbar.action).to.not.be.null;
-        expect(snackbar.action.text).to.equal('VIEW');
+        expect(snackbar.action!!.text).to.equal('VIEW');
 
         // Click the 'view' button
-        await snackbar.action.button.click();
+        await snackbar.action!!.button.click();
 
         // We should be redirected to the data
         await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium\/customer$/);
@@ -95,7 +95,7 @@ describe('Forms', () => {
 
         const snackbar = await snackbarHelper.waitFor();
         expect(snackbar.action).to.not.be.null;
-        expect(snackbar.action.text).to.equal('VIEW');
+        expect(snackbar.action!!.text).to.equal('VIEW');
     });
 
     it('should prepopulate the form with default values', async () => {

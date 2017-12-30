@@ -102,8 +102,8 @@ describe('ConstraintIconsComponent', () => {
             } else {
                 // Make sure titles for foreign key constraints mention what
                 // they reference
-                expect(title).to.contain(constr.ref.table);
-                expect(title).to.contain(constr.ref.column);
+                expect(title).to.contain(constr.ref!!.table);
+                expect(title).to.contain(constr.ref!!.column);
             }
         }
     });
@@ -116,6 +116,6 @@ describe('ConstraintIconsComponent', () => {
         const icon = fixture.debugElement.query(By.css('.header-icon'));
         expect(icon).to.not.be.null;
 
-        expect(icon.nativeElement.getAttribute('href')).to.equal(`/tables/${constr.ref.schema}/${constr.ref.table}`);
+        expect(icon.nativeElement.getAttribute('href')).to.equal(`/tables/${constr.ref!!.schema}/${constr.ref!!.table}`);
     });
 });

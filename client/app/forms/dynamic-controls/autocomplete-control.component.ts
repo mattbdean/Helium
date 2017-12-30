@@ -35,12 +35,15 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
     public ngOnInit(): void {
         const formControl = this.group.get(this.spec.formControlName);
 
+        if (formControl === null)
+            throw new Error(`Form control with name ${this.spec.formControlName} does not exist`);
+
         // Start with an empty string so suggestions pop up before the user has
         // to type anything
         const userInput = formControl.valueChanges
             .startWith("");
 
-        const autocompleteValues = this.spec.autocompleteValues
+        const autocompleteValues = this.spec.autocompleteValues!!
             // Convert all potential values to their string representations
             .map((values: any[]): string[] => values.map((it) => it.toString()));
 

@@ -19,13 +19,13 @@ export class AuthService {
         // Load previously stored data
         if (this.storage.has(AuthService.KEY_API_KEY) && this.storage.has(AuthService.KEY_EXPIRATION)) {
             // Parse the expiration key abUTHe 10 int
-            const expiration = parseInt(this.storage.get(AuthService.KEY_EXPIRATION), 10);
+            const expiration = parseInt(this.storage.get(AuthService.KEY_EXPIRATION)!!, 10);
 
             // Create a null AuthData if the stored data is already expired,
             // otherwise pull data from the storage provider
-            const data: AuthData = expiration < Date.now() ? null : {
-                apiKey: this.storage.get(AuthService.KEY_API_KEY),
-                expiration: new Date(parseInt(this.storage.get(AuthService.KEY_EXPIRATION), 10))
+            const data: AuthData | null = expiration < Date.now() ? null : {
+                apiKey: this.storage.get(AuthService.KEY_API_KEY)!!,
+                expiration: new Date(parseInt(this.storage.get(AuthService.KEY_EXPIRATION)!!, 10))
             };
 
             // Update the BehaviorSubject. If data is null, will also remove the
@@ -82,8 +82,11 @@ export class AuthService {
                 // This is the unix epoch time at which the session expires
                 const expiration = res.headers.get('X-Session-Expiration');
 
+                if (expiration === null)
+                    throw new Error('X-Session-Expiration header not present');
+
                 return {
-                    apiKey: res.body.apiKey,
+                    apiKey: res.body!!.apiKey,
                     expiration: new Date(parseInt(expiration, 10))
                 };
             })
@@ -110,7 +113,7 @@ export class AuthService {
     }
 
     /** Updates the storage service and the BehaviorSubject */
-    public update(data: AuthData) {
+    public update(data: AuthData | null) {
         if (data === null) {
             // Might have to change this if we start storing other data
             this.storage.clear();
@@ -125,6 +128,6 @@ export class AuthService {
     public updateExpiration(unixTime: number) {
         if (!this.loggedIn)
             throw new Error('not logged in, refusing to update expiration');
-        this.update({ apiKey: this.apiKey, expiration: new Date(unixTime) });
+        this.update({ apiKey: this.apiKey!!, expiration: new Date(unixTime) });
     }
 }

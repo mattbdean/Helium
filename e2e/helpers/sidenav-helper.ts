@@ -36,7 +36,7 @@ export class SidenavHelper {
     /** Resolves to a list of all tables being shown */
     public async tables(): Promise<TableName[]> {
         const hrefs = (await element.all(by.css('a.table-name'))
-            .map((el) => el.getAttribute('href'))) as string[];
+            .map((el) => el!!.getAttribute('href'))) as string[];
 
         return hrefs.map((href) => {
             // href is going to be something like

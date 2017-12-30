@@ -69,7 +69,7 @@ export class AppComponent implements OnDestroy, OnInit {
             schemaSelect: new FormControl()
         });
 
-        this.schemaControl = this.formGroup.get('schemaSelect');
+        this.schemaControl = this.formGroup.get('schemaSelect')!!;
         const selectedSchema$ = this.schemaControl.valueChanges;
 
         const schemaInfo$: Observable<SchemaInfo | null> = Observable.combineLatest(
@@ -83,12 +83,12 @@ export class AppComponent implements OnDestroy, OnInit {
             // through the observable
             return (data[0] !== null) === (data[1] !== null);
         })
-            .map((data: [string[] | null, string | null]) => {
+            .map((data: [string[] | null, string | null]): SchemaInfo | null => {
                 // Break the nested array structure up into an object. When both
                 // elements are null, simply return null.
                 if (data[0] === null || data[1] === null)
                     return null;
-                return { availableSchemas: data[0], selectedSchema: data[1] };
+                return { availableSchemas: data[0]!!, selectedSchema: data[1]!! };
             });
 
         schemaInfo$
@@ -125,7 +125,7 @@ export class AppComponent implements OnDestroy, OnInit {
         schemas$.subscribe((schemas) => {
             if (schemas !== null && this.schemaControl.value === null)
                 this.schemaControl.setValue(this.determineDefaultSchema(schemas));
-            this.schemas = schemas;
+            this.schemas = schemas === null ? [] : schemas;
         });
 
         const windowResize$ = Observable

@@ -7,7 +7,7 @@ import { TableName } from '../common/table-name.class';
     styleUrls: ['table-host.component.scss']
 })
 export class TableHostComponent implements OnInit {
-    public selectedTable: TableName;
+    public selectedTable: TableName | null;
 
     public constructor(public route: ActivatedRoute) {}
 

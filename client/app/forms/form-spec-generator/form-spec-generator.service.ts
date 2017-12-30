@@ -67,7 +67,7 @@ export class FormSpecGeneratorService {
                     break;
                 case 'enum':
                     type = 'enum';
-                    enumValues = h.enumValues;
+                    enumValues = h.enumValues === null ? undefined : h.enumValues;
                     break;
                 case 'boolean':
                     type = 'boolean';
@@ -88,7 +88,7 @@ export class FormSpecGeneratorService {
             }
 
             if (foreignKey !== undefined) {
-                const ref = foreignKey.ref;
+                const ref = foreignKey.ref!!;
                 autocompleteValues = this.backend.columnValues(
                     ref.schema, ref.table, ref.column);
                 type = 'autocomplete';
@@ -147,9 +147,9 @@ export class FormSpecGeneratorService {
             return [];
 
         const tableName = new TableName(tableMeta.schema, tableMeta.name);
-        if (tableName.masterName.raw !== masterRawName)
+        if (tableName.masterName!!.raw !== masterRawName)
             throw new Error(`Given TableMeta was not a part table of ` +
-                `${masterRawName}, but actually for ${tableName.masterName.raw}`);
+                `${masterRawName}, but actually for ${tableName.masterName!!.raw}`);
 
         return tableMeta.constraints.filter((c) => c.ref !== null && c.ref.table === masterRawName);
     }
@@ -166,7 +166,7 @@ export class FormSpecGeneratorService {
 
         switch (header.type) {
             case 'blob':
-                return header.nullable ? null : undefined;
+                return null;
             case 'date':
             case 'datetime':
                 if (typeof defaultValue === 'string' && defaultValue !== undefined) {

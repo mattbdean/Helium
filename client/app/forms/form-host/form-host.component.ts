@@ -35,8 +35,8 @@ import { PartialFormComponent } from '../partial-form/partial-form.component';
 export class FormHostComponent implements OnDestroy, OnInit {
     public formGroup: FormGroup;
     public metaInUse: TableMeta[] = [];
-    private mainName: MasterTableName = null;
-    private completedForm$ = new BehaviorSubject<object>(null);
+    private mainName: MasterTableName;
+    private completedForm$ = new BehaviorSubject<object | null>(null);
 
     private sub: Subscription;
     private submitSub: Subscription;
@@ -74,7 +74,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     if (currentName === undefined)
                         newPath = ['/tables'];
                     else
-                        newPath = ['/forms', currentName.masterName.raw];
+                        newPath = ['/forms', currentName.masterName!!.raw];
 
                     return Observable.fromPromise(this.router.navigate(newPath))
                         .switchMapTo(Observable.never());
@@ -83,6 +83,9 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 const masterTableNames = unflattenTableNames(availableTables);
                 const currentMaster =
                     masterTableNames.find((n) => n.schema === schema && n.name.raw === table);
+
+                if (currentMaster === undefined)
+                    throw new Error(`Could not find master table with raw name '${table}'`);
 
                 // The TableName array we use to create PartialFormComponents
                 // is comprised of the mainName (as a TableName instead of a

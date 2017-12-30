@@ -37,7 +37,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
     @Input()
     public set name(value: TableName) { this._name$.next(value); }
-    public get name(): TableName { return this._name$.getValue(); }
+    public get name(): TableName { return this._name$.getValue()!!; }
 
     public set pageNumber(value) { this._pageNumber$.next(value); }
     public get pageNumber() { return this._pageNumber$.getValue(); }
@@ -45,12 +45,12 @@ export class DatatableComponent implements OnInit, OnDestroy {
     private set sort(value) { this._sort$.next(value); }
 
     public set meta(value) { this._meta$.next(value); }
-    public get meta() { return this._meta$.getValue(); }
+    public get meta() { return this._meta$.getValue()!!; }
 
-    private _name$ = new BehaviorSubject<TableName>(null);
+    private _name$ = new BehaviorSubject<TableName | null>(null);
     private _pageNumber$ = new BehaviorSubject(1);
     private _sort$ = new BehaviorSubject(null);
-    private _meta$ = new BehaviorSubject<TableMeta>(null);
+    private _meta$ = new BehaviorSubject<TableMeta | null>(null);
 
     private nameSub: Subscription;
     private pageInfoSub: Subscription;
@@ -103,6 +103,8 @@ export class DatatableComponent implements OnInit, OnDestroy {
             .distinctUntilChanged()
             // Pause pageInfo
             .do(() => { pauser.next(true); })
+            .filter((n) => n !== null)
+            .map((m) => m!!)
             .switchMap((name) => {
                 return this.backend.meta(name.schema, name.name.raw)
                     .catch((err: HttpErrorResponse) => {
@@ -174,6 +176,9 @@ export class DatatableComponent implements OnInit, OnDestroy {
         // display format to the API format
         for (const headerName of Object.keys(reformatted)) {
             const header = _.find(this.meta.headers, (h) => h.name === headerName);
+            if (header === undefined)
+                throw new Error('Can\'t find header with name ' + headerName);
+
             if (header.type === 'date')
                 reformatted[headerName] = moment(reformatted[headerName],
                     DatatableComponent.DISPLAY_FORMAT_DATE).format(DATE_FORMAT);
@@ -218,6 +223,9 @@ export class DatatableComponent implements OnInit, OnDestroy {
             // Iterate through each cell in that row
             for (const headerName of Object.keys(row)) {
                 const header = _.find(headers, (h) => h.name === headerName);
+                if (header === undefined)
+                    throw new Error('Can\'t find header with name ' + headerName);
+
                 // Use moment to format dates and times in the default format
                 if (header.type === 'date')
                     row[headerName] = DatatableComponent.reformat(row[headerName],

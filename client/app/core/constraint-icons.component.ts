@@ -57,7 +57,7 @@ export class ConstraintIconsComponent implements OnInit {
             case 'foreign':
                 const constraint = this.requireForeignKeyConstraint();
                 return `this column references the table ` +
-                    `${constraint.ref!!.schema}.${constraint.ref.table} ` +
+                    `${constraint.ref!!.schema}.${constraint.ref!!.table} ` +
                     `(column ${constraint.ref!!.column})`;
             case 'unique':
                 return 'this column contains only unique values';
@@ -68,7 +68,7 @@ export class ConstraintIconsComponent implements OnInit {
 
     private fkRouterLink(): string[] {
         const constraint = this.requireForeignKeyConstraint();
-        return ['/tables', constraint.ref.schema, constraint.ref.table];
+        return ['/tables', constraint.ref!!.schema, constraint.ref!!.table];
     }
 
     private requireForeignKeyConstraint(): Constraint {

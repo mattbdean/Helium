@@ -19,7 +19,7 @@ export class AuthPage {
             username,
             password,
             host
-        }, (val) => !isNil(val)));
+        }, (val) => !isNil(val)) as { [formControlName: string]: string });
     }
 
     /** Clicks the 'Logout' button */
