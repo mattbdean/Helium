@@ -56,14 +56,16 @@ interface Binding {
 })
 export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     /** The table whose data we are creating a form for */
-    public get name(): TableName { return this.name$.getValue(); }
+    public get meta(): TableMeta { return this.meta$.getValue(); }
 
     /** The FormGroup from which all other controls are added */
     public get rootGroup(): FormGroup { return this.rootGroup$.getValue(); }
 
-    @Input('name')
-    public namePropertyBinding: TableName;
-    private name$ = new BehaviorSubject<TableName>(null);
+    public name$: Observable<TableName>;
+
+    @Input('meta')
+    public metaPropertyBinding: TableName;
+    private meta$ = new BehaviorSubject<TableMeta>(null);
 
     @Input('rootGroup')
     public rootGroupPropertyBinding: FormGroup;
@@ -74,8 +76,6 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
     public formSpec: FormControlSpec[];
 
-    public meta: TableMeta = null;
-
     private sub: Subscription;
     public formArray: FormArray;
 
@@ -85,62 +85,56 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     private lastValueWatchers: { [controlName: string]: Subscription } = {};
 
     public constructor(
-        private backend: TableService,
         private formSpecGenerator: FormSpecGeneratorService,
         private fb: FormBuilder,
         private route: ActivatedRoute
     ) {}
 
     public ngOnInit() {
-        const meta$ = this.name$
-            .switchMap((name: TableName): Observable<TableMeta> =>
-                this.backend.meta(name.schema, name.rawName)
-                    .catch((err) => {
-                        // TODO handle better
-                        console.error(err);
-                        return Observable.never<TableMeta>();
-                    }
-                ));
-
         const spec$ = Observable.zip(
-            meta$,
+            this.meta$,
             this.route.queryParams
                 .map((p: Params) => {
+                    const name = new TableName('(unused)', this.meta$.getValue().name);
                     // For now, only work on master tables
-                    if (p.prefilled && this.name.masterRawName === null)
+                    if (p.prefilled && !name.isPartTable())
                         return JSON.parse(p.prefilled);
                     return {};
                 })
         ).map((data: [TableMeta, object]) => this.formSpecGenerator.generate(data[0], data[1]), this);
 
+        this.name$ = this.meta$.map((m) => new TableName('(unused)', m.name));
+
         // Combine the latest output from the FormControlSpec array generated
         // from the table name/meta and the rootGroup
         this.sub = Observable.zip(
-            meta$,
+            this.meta$,
             this.rootGroup$,
             spec$,
-            this.name$
         )
-            .subscribe((data: [TableMeta, FormGroup, FormControlSpec[], TableName]) => {
-                const tableMeta = data[0];
-                this.meta = tableMeta;
-                this.formSpec = data[2];
-                const name = data[3];
+            // This is required since altering the FormGroup in the subscribe()
+            // causes its "valid" property to change while Angular is still
+            // running change detection, resulting in an error in dev mode.
+            .debounceTime(0)
+            .subscribe((data: [TableMeta, FormGroup, FormControlSpec[]]) => {
+                const [tableMeta, rootFormGroup, formSpec] = data;
+                this.formSpec = formSpec;
+                const name = new TableName('(unused)', tableMeta.name);
 
                 // Master tables start off with one entry
                 const initialData = this.role === 'master' ?
                     [this.createItem(this.formSpec)] : [];
 
                 this.formArray = this.fb.array(initialData);
-                data[1].addControl(this.name.rawName, this.formArray);
+                rootFormGroup.addControl(name.rawName, this.formArray);
 
-                const bindings = this.formSpecGenerator.bindingConstraints(this.name.masterRawName, tableMeta);
+                const bindings = this.formSpecGenerator.bindingConstraints(name.masterRawName, tableMeta);
                 // If we have binding constraints, this is guaranteed to be a
                 // part table
                 if (bindings.length > 0) {
                     // The FormGroup for the master table is created first
                     const masterFormArray =
-                        data[1].controls[name.masterRawName] as FormArray;
+                        rootFormGroup.controls[name.masterRawName] as FormArray;
 
                     // The master table form array only contains one entry
                     const masterGroup = masterFormArray.at(0) as FormGroup;
@@ -172,8 +166,8 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
         // forms
         if (changes.rootGroupPropertyBinding)
             this.rootGroup$.next(changes.rootGroupPropertyBinding.currentValue);
-        if (changes.namePropertyBinding)
-            this.name$.next(changes.namePropertyBinding.currentValue);
+        if (changes.metaPropertyBinding)
+            this.meta$.next(changes.metaPropertyBinding.currentValue);
     }
 
     public ngOnDestroy() {

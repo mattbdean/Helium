@@ -34,7 +34,7 @@ import { PartialFormComponent } from '../partial-form/partial-form.component';
 })
 export class FormHostComponent implements OnDestroy, OnInit {
     public formGroup: FormGroup;
-    public names: TableName[] = [];
+    public metaInUse: TableMeta[] = [];
     private mainName: MasterTableName = null;
     private completedForm$ = new BehaviorSubject<object>(null);
 
@@ -60,12 +60,12 @@ export class FormHostComponent implements OnDestroy, OnInit {
             this.route.params.switchMap((params) => this.backend.tables(params.schema)),
             this.route.params
         )
-            .switchMap((data: [TableName[], Params]): Observable<MasterTableName> => {
+            .switchMap((data: [TableName[], Params]) => {
                 // Try to identify a MasterTableName for the given raw SQL name
-                const allNames = data[0];
-                const { schema, table } = data[1];
+                const availableTables = data[0];
+                const {schema, table} = data[1];
 
-                const currentName = allNames.find((n) => n.schema === schema && n.rawName === table );
+                const currentName = availableTables.find((n) => n.schema === schema && n.rawName === table);
                 if (currentName === undefined || currentName.masterRawName !== null) {
                     // The user has navigated to a table that doesn't exist or a
                     // part table
@@ -80,21 +80,33 @@ export class FormHostComponent implements OnDestroy, OnInit {
                         .switchMapTo(Observable.never());
                 }
 
-                const masterTableNames = unflattenTableNames(allNames);
+                const masterTableNames = unflattenTableNames(availableTables);
                 const currentMaster =
                     masterTableNames.find((n) => n.schema === schema && n.rawName === table);
-                return Observable.of(currentMaster);
-            })
-            .subscribe((mainName: MasterTableName) => {
-                // Reinitialize the FormGroup so that we don't keep data from
-                // previously created forms
-                this.formGroup = this.fb.group({});
 
-                this.mainName = mainName;
                 // The TableName array we use to create PartialFormComponents
                 // is comprised of the mainName (as a TableName instead of a
                 // MasterTableName) and its parts.
-                this.names = [new TableName(mainName.schema, mainName.rawName), ...this.mainName.parts];
+                const tablesInUse = [
+                    new TableName(currentMaster.schema, currentMaster.rawName),
+                    ...currentMaster.parts
+                ];
+
+                return Observable.zip(
+                    Observable.of(currentMaster),
+                    Observable.zip(...tablesInUse.map((t) => this.backend.meta(t.schema, t.rawName)))
+                );
+            }).subscribe((data: [MasterTableName, TableMeta[]]) => {
+                const [currentMaster, allMeta] = data;
+
+                // Reinitialize the FormGroup so that we don't keep data from
+                // previously created forms
+                if (Object.keys(this.formGroup.controls).length > 0)
+                    this.formGroup = this.fb.group({});
+
+                // Pass this data on to the form
+                this.mainName = currentMaster;
+                this.metaInUse = allMeta;
             });
 
         this.submitSub = this.completedForm$
@@ -151,7 +163,6 @@ export class FormHostComponent implements OnDestroy, OnInit {
     public onSubmit(event: Event) {
         event.preventDefault();
         event.stopPropagation();
-        // TODO do something with the submitted form
         // formGroup.value does not contain disabled form controls (necessary
         // for blobs and bound part table foreign keys), use
         // formGroup.getRawValue() instead
@@ -165,6 +176,10 @@ export class FormHostComponent implements OnDestroy, OnInit {
 
         // Send the submitted form up into the pipeline
         this.completedForm$.next(preformatted);
+    }
+
+    public getRole(meta: TableMeta): 'master' | 'part' {
+        return new TableName('(unused)', meta.name).isPartTable() ? 'part' : 'master';
     }
 
     /**

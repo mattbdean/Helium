@@ -16,8 +16,6 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
 import { Constraint } from '../../common/api';
-import { TableName } from '../../common/table-name.class';
-import { TableService } from '../../core/table.service';
 import { ComponentMapperService } from '../component-mapper/component-mapper.service';
 import { AbstractFormControl } from '../dynamic-controls/abstract-form-control.class';
 import { DynamicFormControlDirective } from '../dynamic-form-control.directive';
@@ -70,11 +68,6 @@ describe('PartialFormComponent', () => {
         ]
     };
 
-    const tableServiceStub = {
-        meta: (schema: string, rawName: string): Observable<MockTableMeta> =>
-            Observable.of({ name: rawName })
-    };
-
     // This stub basically picks a value from availableSpecs
     const generatorServiceStub = {
         generate: (mockTableMeta: MockTableMeta): FormControlSpec[] => {
@@ -94,7 +87,7 @@ describe('PartialFormComponent', () => {
     /** Initializes the component by calling its ngOnChanges method. */
     const initComponent = (role: 'master' | 'part') => {
         comp.ngOnChanges({
-            namePropertyBinding: new SimpleChange(null, new TableName('schema', role), true),
+            metaPropertyBinding: new SimpleChange(null, { name: role }, true),
             rootGroupPropertyBinding: new SimpleChange(null, rootGroup, true),
             // Include to be complete but there is no listener for role
             role: new SimpleChange(null, role, true)
@@ -122,8 +115,7 @@ describe('PartialFormComponent', () => {
             providers: [
                 // Mock all of the required services
                 { provide: ComponentMapperService, useValue: mapperServiceStub },
-                { provide: FormSpecGeneratorService, useValue: generatorServiceStub },
-                { provide: TableService, useValue: tableServiceStub }
+                { provide: FormSpecGeneratorService, useValue: generatorServiceStub }
             ]
         }).overrideModule(BrowserDynamicTestingModule, {
             set: {
@@ -159,24 +151,32 @@ describe('PartialFormComponent', () => {
         expect(de.query(By.css('.form-title')).nativeElement.textContent).to.equal('master');
     });
 
-    it('should add a FormArray to the root FormGroup', () => {
+    it('should add a FormArray to the root FormGroup', fakeAsync(() => {
         initComponent('master');
         // Should be nothing in the rootGroup as of now
         expect(comp.rootGroup.controls).to.deep.equal({});
 
         // Apply the changes
         fixture.detectChanges();
+        tick();
 
         // Should have added a FormArray to the rootGroup whose key is the raw
         // name of the table
         expect(Object.keys(comp.rootGroup.controls)).to.deep.equal(['master']);
         expect(comp.rootGroup.controls.master).to.equal(comp.formArray);
-    });
+    }));
 
     it('should allow master tables exactly one entry', fakeAsync(() => {
+        // Set all @Input properties and detect initial changes
         initComponent('master');
         fixture.detectChanges();
+
+        // Let the Observable chain run, add the FormArray to the root FormGroup
         tick();
+
+        // Run another round of change detection to trigger entry container
+        // generation in the template
+        fixture.detectChanges();
 
         // Partial forms for master tables should include one entry container by
         // default

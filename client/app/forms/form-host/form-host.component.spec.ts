@@ -9,6 +9,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
+import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table.service';
 import { FormHostComponent } from './form-host.component';
@@ -92,7 +93,7 @@ class PartialFormMock {
     public rootGroup;
 
     @Input()
-    public name: TableName;
+    public meta: TableMeta;
 
     @Input()
     public role;

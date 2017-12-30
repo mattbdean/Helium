@@ -1,8 +1,8 @@
 <form class="centered-horizontally" novalidate [formGroup]="formGroup" (ngSubmit)="onSubmit($event)">
     <div class="form-container">
 
-        <div class="partial-form-container" *ngFor="let name of names">
-            <partial-form #partialForms [rootGroup]="formGroup" [name]="name" [role]="name.masterRawName === null ? 'master' : 'part'"></partial-form>
+        <div class="partial-form-container" *ngFor="let meta of metaInUse">
+            <partial-form #partialForms [rootGroup]="formGroup" [meta]="meta" [role]="getRole(meta)"></partial-form>
         </div>
 
         <button mat-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>
