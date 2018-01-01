@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
 import { merge, pick } from 'lodash';
+import * as joi from 'joi';
 import {
     ErrorResponse,
     PaginatedResponse
@@ -10,10 +11,18 @@ import { debug, NODE_ENV, NodeEnv } from '../../../env';
 import { DaoFactory } from '../dao.factory';
 import { ErrorCode } from '../error-code.enum';
 import { ValidationError } from '../validation-error';
-import { SchemaDao, Sort } from './schema.dao';
+import { Filter, SchemaDao, Sort } from './schema.dao';
 
 export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();
+
+    const filtersSchema = joi.array().items(
+        joi.object({
+            op: joi.string(),
+            param: joi.string(),
+            value: joi.string()
+        }).requiredKeys('op', 'param', 'value')
+    );
 
     /**
      * Routing callback "middleware" that only passes control to the next
@@ -95,13 +104,33 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
 
             sort = { by: sortStr, direction: dir };
         }
+        const input = merge(
+            pick(req.params, ['schema', 'table']),
+            pick(req.query, ['sort', 'limit', 'page', 'filters'])
+        );
+
+        // Try to parse the filters as JSON
+        let filtersInput: any[];
+        try {
+            filtersInput = req.query.filters ? JSON.parse(req.query.filters) : [];
+        } catch (err) {
+            return sendError(res, 400, { message: 'filters param has malformed JSON', input });
+        }
+
+        const result = filtersSchema.validate(filtersInput);
+
+        if (result.error) {
+            return sendError(res, 400, { message: 'filters param is invalid', input });
+        }
+
+        const filters: Filter[] = result.value;
 
         try {
             const data = await daoFor(req).content(schema, name, {
                 page: req.query.page,
                 limit: req.query.limit,
                 sort
-            });
+            }, filters);
 
             const response: PaginatedResponse<any> = {
                 size: data.length,
@@ -109,10 +138,6 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
             };
             res.json(response);
         } catch (err) {
-            const input = merge(
-                pick(req.params, ['schema', 'table']),
-                pick(req.query, ['sort', 'limit', 'page'])
-            );
 
             if (err.code) {
                 if (err.code === 'ER_DBACCESS_DENIED_ERROR')

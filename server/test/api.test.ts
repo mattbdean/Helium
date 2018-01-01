@@ -7,7 +7,7 @@ import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { QueryHelper } from '../src/db/query-helper';
 import { Helium } from '../src/helium';
-import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
+import { Filter, SchemaDao } from '../src/routes/api/schemas/schema.dao';
 import { RequestContext } from './api.test.helper';
 
 chai.use(sinonChai);
@@ -238,7 +238,7 @@ describe('API v1', () => {
                 await request.get('/schemas/foo/bar/data', 200);
 
                 expect(stub).calledWithExactly('foo', 'bar',
-                    { limit: 25, page: 1, sort: undefined });
+                    { limit: 25, page: 1, sort: undefined }, []);
             });
 
             it('should 404 when either the schema or table don\'t exist', async () => {
@@ -266,13 +266,61 @@ describe('API v1', () => {
                 });
 
                 expect(stub).calledWithExactly('foo', 'bar',
-                    { limit: 10, page: 2, sort: { by: 'baz', direction: 'desc' }});
+                    { limit: 10, page: 2, sort: { by: 'baz', direction: 'desc' }}, []);
             });
 
             it('should 400 when the sorting column doesn\'t exist', async () => {
                 sinon.stub(schemaDao, 'content')
                     .rejects(mysqlError('ER_BAD_FIELD_ERROR'));
                 await request.get('/schemas/foo/bar/data', 400);
+            });
+
+            it('should handle filters', async () => {
+                const stub = sinon.stub(schemaDao, 'content')
+                    .resolves([]);
+
+                const filters: Filter[] = [
+                    { param: 'col1', op: 'lt', value: '5' },
+                    { param: 'col2', op: 'eq', value: '6' }
+                ];
+
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 200,
+                    query: {
+                        filters: JSON.stringify(filters)
+                    }
+                });
+
+                expect(stub).to.have.been.calledWithExactly(
+                    'schema',
+                    'table',
+                    { limit: 25, page: 1, sort: undefined },
+                    filters
+                );
+            });
+
+            it('should 400 when given malformed filters', async () => {
+                sinon.stub(schemaDao, 'content')
+                    .rejects(new Error('content() should not have been called'));
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 400,
+                    query: {
+                        filters: '[ malformed JSON ]'
+                    }
+                });
+
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 400,
+                    query: {
+                        filters: '[{ "param": "foo", "op": "eq", "value": "bar", "unknown": true }]'
+                    }
+                });
             });
         });
 

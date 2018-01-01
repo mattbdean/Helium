@@ -6,7 +6,7 @@ import { orderBy, random, uniq } from 'lodash';
 import { TableInsert } from '../src/common/table-insert.interface';
 import { ConnectionConf } from '../src/db/connection-conf.interface';
 import { DatabaseHelper } from '../src/db/database.helper';
-import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
+import { Filter, SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -128,6 +128,45 @@ describe('SchemaDao', () => {
                 joi.assert(await dao.content(db, table, { limit }), schema);
             }
         });
+
+        describe('filters', () => {
+            const fetch = (filters: Filter[], tableName: string = 'datatypeshowcase') =>
+                dao.content('helium', tableName, {}, filters);
+
+            it('should limit retrieved data with filters', async () => {
+                const filter: Filter = { op: 'eq', param: 'price', value: '2.00' };
+                const data = await fetch([filter], 'product');
+
+                for (const row of data) {
+                    expect(row.price).to.be.below(2.00);
+                }
+            });
+
+            it('should allow multiple filters', async () => {
+                const filters: Filter[] = [
+                    { op: 'lt', param: 'product_id', value: '24' },
+                    { op: 'gt', param: 'product_id', value: '21' }
+                ];
+
+                const data = await fetch(filters, 'product');
+                for (const row of data) {
+                    expect(row.product_id).to.be.above(21).and.below(24);
+                }
+            });
+
+            it('should fail on unknown filter operations', async () => {
+                const filter: any = { op: 'eq2', param: 'product_id', value: '20' };
+                await expect(fetch([filter], 'product'))
+                    .to.eventually.be.rejectedWith(Error);
+            });
+
+            it('should be safe from simple SQL injection', async () => {
+                const filter: Filter = { op: 'eq', param: 'product_id\'', value: '\'20'};
+                // The column "product_id'" is unknown, so results will be empty
+                await expect(fetch([filter], 'product')).to.eventually.be.empty;
+            });
+        });
+
     });
 
     describe('meta', () => {

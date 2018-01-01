@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { Select } from 'squel';
 
 import {
     Constraint, ConstraintType, DefaultValue, SqlRow, TableDataType,
@@ -33,7 +34,20 @@ export interface Sort {
     by: string;
 }
 
+export type FilterOperation = 'lt' | 'gt' | 'eq';
+
+export interface Filter {
+    op: FilterOperation;
+    param: string;
+    value: string;
+}
+
 export class SchemaDao {
+    private static readonly FILTER_OP_MAPPING: { [op: string]: string } = {
+        lt: '<',
+        gt: '>',
+        eq: '='
+    };
     private validator: TableInputValidator;
 
     public constructor(private helper: QueryHelper) {
@@ -71,12 +85,14 @@ export class SchemaDao {
      * @param {number} opts.limit How many rows to fetch in one go
      * @param {Sort} opts.sort If provided, will attempt to sort the results by
      * this column/direction
+     * @param {Filter} filters Specify constraints on what data to retrieve
      * @returns {Promise<SqlRow[]>} A promise that resolves to the requested
      * data
      */
     public async content(schema: string,
                          table: string,
-                         opts: { page?: number, limit?: number, sort?: Sort} = {}): Promise<SqlRow[]> {
+                         opts: { page?: number, limit?: number, sort?: Sort} = {},
+                         filters: Filter[] = []): Promise<SqlRow[]> {
 
         // Resolve each option to a non-undefined value
         const page: number = opts.page !== undefined ? opts.page : 1;
@@ -103,6 +119,10 @@ export class SchemaDao {
             if (sort !== null) {
                 // Specify a sort if provided
                 query = query.order(this.helper.escapeId(sort.by), sort.direction === 'asc');
+            }
+
+            for (const filter of filters) {
+                query = SchemaDao.addFilter(query, filter);
             }
 
             return query;
@@ -417,6 +437,15 @@ export class SchemaDao {
         );
         // This query returns only one row
         return result[0]['COUNT(*)'];
+    }
+
+    private static addFilter(query: Select, filter: Filter): Select {
+        const op: string | undefined = SchemaDao.FILTER_OP_MAPPING[filter.op];
+
+        if (op === undefined)
+            throw new Error(`Unknown filter operation: ${filter.op}`);
+
+        return query.where(`? ${op} ?`, filter.param, filter.value);
     }
 
     /**

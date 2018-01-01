@@ -28,10 +28,6 @@ export class DatabaseHelper {
         });
     }
 
-    // TODO: Every 30 mins or so clean up expired pools. Right now the only way
-    // they're cleaned is if we call this.pools.get(expiredKey). We can manually
-    // remove all expired items using this.pools.prune()
-
     /**
      * Attempts to create a pool of connections with the given configuration.
      * If successful, a QueryHelper can be created for this pool via
