@@ -34,7 +34,7 @@ export interface Sort {
     by: string;
 }
 
-export type FilterOperation = 'lt' | 'gt' | 'eq';
+export type FilterOperation = 'lt' | 'gt' | 'eq' | 'is' | 'isnot';
 
 export interface Filter {
     op: FilterOperation;
@@ -43,7 +43,7 @@ export interface Filter {
 }
 
 export class SchemaDao {
-    private static readonly FILTER_OP_MAPPING: { [op: string]: string } = {
+    private static readonly SIMPLE_FILTER_OP_MAPPING: { [op: string]: string } = {
         lt: '<',
         gt: '>',
         eq: '='
@@ -122,7 +122,7 @@ export class SchemaDao {
             }
 
             for (const filter of filters) {
-                query = SchemaDao.addFilter(query, filter);
+                query = this.addFilter(query, filter);
             }
 
             return query;
@@ -439,13 +439,23 @@ export class SchemaDao {
         return result[0]['COUNT(*)'];
     }
 
-    private static addFilter(query: Select, filter: Filter): Select {
-        const op: string | undefined = SchemaDao.FILTER_OP_MAPPING[filter.op];
+    private addFilter(query: Select, filter: Filter): Select {
+        const simpleOp: string | undefined = SchemaDao.SIMPLE_FILTER_OP_MAPPING[filter.op];
 
-        if (op === undefined)
-            throw new Error(`Unknown filter operation: ${filter.op}`);
+        if (simpleOp === undefined) {
+            const { op, value } = filter;
+            if (value !== 'null')
+                throw new Error(`Unknown value for filter operation ${op}: ${value}`);
 
-        return query.where(`? ${op} ?`, filter.param, filter.value);
+            if (op === 'is')
+                return query.where(`${this.helper.escapeId(filter.param)} IS NULL`);
+            else if (op === 'isnot')
+                return query.where(`${this.helper.escapeId(filter.param)} IS NOT NULL`);
+            else
+                throw new Error(`Unknown filter operation: ${filter.op}`);
+        }
+
+        return query.where(`${this.helper.escapeId(filter.param)} ${simpleOp} ?`, filter.value);
     }
 
     /**

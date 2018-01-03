@@ -130,16 +130,145 @@ describe('SchemaDao', () => {
         });
 
         describe('filters', () => {
-            const fetch = (filters: Filter[], tableName: string = 'datatypeshowcase') =>
+            const fetch = (tableName: string, filters: Filter[]) =>
                 dao.content('helium', tableName, {}, filters);
 
-            it('should limit retrieved data with filters', async () => {
-                const filter: Filter = { op: 'eq', param: 'price', value: '2.00' };
-                const data = await fetch([filter], 'product');
+            describe('eq', () => {
+                it('should handle numbers', async () => {
+                    // Numeric equals
+                    await expect(fetch(
+                        'product',
+                        [{ param: 'product_id', op: 'eq', value: '23' }]
+                    )).to.eventually.deep.equal([{
+                        product_id: 23,
+                        product_name: 'Crackers',
+                        price: 3.49
+                    }]);
+                });
 
-                for (const row of data) {
-                    expect(row.price).to.be.below(2.00);
-                }
+                it('should handle strings (ignoring case)', async () => {
+                    // String equals (ignore case)
+                    await expect(fetch(
+                        'product',
+                        [{ param: 'product_name', op: 'eq', value: 'soda' }])
+                    ).to.eventually.deep.equal([{
+                        product_id: 22,
+                        product_name: 'Soda',
+                        price: 1.99
+                    }]);
+                });
+
+                it('should handle dates and datetimes', async () => {
+                    // Dates
+                    await expect(fetch(
+                        'shipment',
+                        [{ param: 'shipped', op: 'eq', value: '2017-07-01' }])
+                    ).to.eventually.deep.equal([{
+                        shipment_id: 30,
+                        order_id: 40,
+                        organization_id: 10,
+                        customer_id: 0,
+                        product_id: 20,
+                        shipped: '2017-07-01'
+                    }]);
+
+                    // Datetimes/timestamps
+                    const data = await fetch(
+                        'datatypeshowcase',
+                        [{ param: 'time', op: 'eq', value: '2000-01-01 12:00:00'}]
+                    );
+                    expect(data).to.have.lengthOf(1);
+                    expect(data[0].time).to.equal('2000-01-01 12:00:00');
+                });
+            });
+
+            describe('lt', () => {
+                it('should handle numbers', async () => {
+                    // Numeric less than
+                    const numericLt = await fetch(
+                        'product',
+                        [{ param: 'product_id', op: 'lt', value: '24' }]
+                    );
+
+                    for (const row of numericLt) {
+                        expect(row.product_id).to.be.below(24);
+                    }
+                });
+
+                it('should handle dates and datetimes', async () => {
+                    // Date less than
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'date', op: 'lt', value: '2017-07-02' }]
+                    )).to.eventually.have.lengthOf(1);
+
+                    // Datetime less than
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'time', op: 'lt', value: '2001-01-01 12:00:00' }]
+                    )).to.eventually.have.lengthOf(1);
+                });
+            });
+
+            describe('gt', () => {
+                it('should handle numbers', async () => {
+                    // Numeric less than
+                    const numericLt = await fetch(
+                        'product',
+                        [{ param: 'product_id', op: 'gt', value: '21' }]
+                    );
+
+                    for (const row of numericLt) {
+                        expect(row.product_id).to.be.above(21);
+                    }
+                });
+
+                it('should handle dates and datetimes', async () => {
+                    // Date less than
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'date', op: 'gt', value: '2017-07-02' }]
+                    )).to.eventually.have.lengthOf(2);
+
+                    // Datetime less than. For whatever reason MySQL says that
+                    // NULL dates are greater than any given time
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'time', op: 'gt', value: '2015-01-01 12:00:00' }]
+                    )).to.eventually.have.lengthOf(3);
+                });
+            });
+
+            describe('is', () => {
+                it('should handle nulls', async () => {
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'blob', op: 'is', value: 'null' }]
+                    )).to.eventually.have.lengthOf(2);
+                });
+
+                it('should reject when given an unrecognized value', async () => {
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'blob', op: 'is', value: '(unknown)'}]
+                    )).to.eventually.be.rejectedWith(Error);
+                });
+            });
+
+            describe('isnot', () => {
+                it('should handle nulls', async () => {
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'blob', op: 'isnot', value: 'null' }]
+                    )).to.eventually.have.lengthOf(2);
+                });
+
+                it('should reject when given an unrecognized value', async () => {
+                    await expect(fetch(
+                        'datatypeshowcase',
+                        [{ param: 'blob', op: 'isnot', value: '(unknown)'}]
+                    )).to.eventually.be.rejectedWith(Error);
+                });
             });
 
             it('should allow multiple filters', async () => {
@@ -148,7 +277,7 @@ describe('SchemaDao', () => {
                     { op: 'gt', param: 'product_id', value: '21' }
                 ];
 
-                const data = await fetch(filters, 'product');
+                const data = await fetch('product', filters);
                 for (const row of data) {
                     expect(row.product_id).to.be.above(21).and.below(24);
                 }
@@ -156,14 +285,13 @@ describe('SchemaDao', () => {
 
             it('should fail on unknown filter operations', async () => {
                 const filter: any = { op: 'eq2', param: 'product_id', value: '20' };
-                await expect(fetch([filter], 'product'))
+                await expect(fetch('product', [filter]))
                     .to.eventually.be.rejectedWith(Error);
             });
 
             it('should be safe from simple SQL injection', async () => {
                 const filter: Filter = { op: 'eq', param: 'product_id\'', value: '\'20'};
-                // The column "product_id'" is unknown, so results will be empty
-                await expect(fetch([filter], 'product')).to.eventually.be.empty;
+                await expect(fetch('product', [filter])).to.be.rejectedWith(Error);
             });
         });
 

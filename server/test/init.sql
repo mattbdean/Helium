@@ -154,10 +154,10 @@ INSERT INTO shipment (shipment_id, order_id, organization_id, customer_id, produ
 
 # Try to insert data that is as diverse as possible
 INSERT INTO datatypeshowcase VALUES
-  (100, 0,    10.0, 0,    '2017-07-01', NOW(), 'a',  x'1234', 'some string', 'another string'),
-  (101, NULL, 11.1, 1,    '2017-07-05', NOW(), 'b',  NULL,    NULL,          'another string2'),
-  (102, 5,    55.5, 0,    '2017-07-05', NOW(), 'b',  x'1234', NULL,          'another string2'),
-  (110, NULL, NULL, NULL, NULL,         NULL,  NULL, NULL,    NULL,          'mostly null data in this row');
+  (100, 0,    10.0, 0,    '2017-07-01', '2000-01-01 12:00:00', 'a',  x'1234', 'some string', 'another string'),
+  (101, NULL, 11.1, 1,    '2017-07-05', NOW(),                 'b',  NULL,    NULL,          'another string2'),
+  (102, 5,    55.5, 0,    '2017-07-05', NOW(),                 'b',  x'1234', NULL,          'another string2'),
+  (110, NULL, NULL, NULL, NULL,         NULL,                  NULL, NULL,    NULL,          'mostly null data in this row');
 
 # Create tables for the 2nd schema
 USE helium2;
