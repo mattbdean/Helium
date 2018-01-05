@@ -3,10 +3,11 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as joi from 'joi';
 import { orderBy, random, uniq } from 'lodash';
+import { Filter } from '../src/common/api';
 import { TableInsert } from '../src/common/table-insert.interface';
 import { ConnectionConf } from '../src/db/connection-conf.interface';
 import { DatabaseHelper } from '../src/db/database.helper';
-import { Filter, SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
+import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

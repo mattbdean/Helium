@@ -1,0 +1,5 @@
+<mat-card>
+    <div *ngFor="let control of formArray.controls">
+        <filter [headers]="headers" [group]="control"></filter>
+    </div>
+</mat-card>

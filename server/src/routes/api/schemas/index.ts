@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
-import { merge, pick } from 'lodash';
 import * as joi from 'joi';
+import { merge, pick } from 'lodash';
 import {
     ErrorResponse,
     PaginatedResponse
@@ -11,7 +11,8 @@ import { debug, NODE_ENV, NodeEnv } from '../../../env';
 import { DaoFactory } from '../dao.factory';
 import { ErrorCode } from '../error-code.enum';
 import { ValidationError } from '../validation-error';
-import { Filter, SchemaDao, Sort } from './schema.dao';
+import { SchemaDao, Sort } from './schema.dao';
+import { Filter } from '../../../common/api';
 
 export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();

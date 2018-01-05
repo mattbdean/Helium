@@ -7,8 +7,9 @@ import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { QueryHelper } from '../src/db/query-helper';
 import { Helium } from '../src/helium';
-import { Filter, SchemaDao } from '../src/routes/api/schemas/schema.dao';
+import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
 import { RequestContext } from './api.test.helper';
+import { Filter } from '../src/common/api';
 
 chai.use(sinonChai);
 const expect = chai.expect;

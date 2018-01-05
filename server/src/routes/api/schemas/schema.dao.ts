@@ -3,7 +3,7 @@ import * as moment from 'moment';
 import { Select } from 'squel';
 
 import {
-    Constraint, ConstraintType, DefaultValue, SqlRow, TableDataType,
+    Constraint, ConstraintType, DefaultValue, Filter, SqlRow, TableDataType,
     TableHeader, TableMeta
 } from '../../../common/api';
 import {
@@ -32,14 +32,6 @@ export interface Sort {
     direction: 'asc' | 'desc';
     /** Name of the column to sort by */
     by: string;
-}
-
-export type FilterOperation = 'lt' | 'gt' | 'eq' | 'is' | 'isnot';
-
-export interface Filter {
-    op: FilterOperation;
-    param: string;
-    value: string;
 }
 
 export class SchemaDao {

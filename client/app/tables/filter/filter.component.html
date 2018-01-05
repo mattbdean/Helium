@@ -1,0 +1,6 @@
+<div [formGroup]="group">
+    <input type="text" placeholder="Column" formControlName="param">
+    <input type="text" placeholder="Filter" formControlName="op">
+    <input type="text" placeholder="Value" formControlName="value">
+    <span>Valid? {{ group.valid }}</span>
+</div>

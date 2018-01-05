@@ -1,4 +1,5 @@
 import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { MatSnackBar } from '@angular/material';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 
 import * as _ from 'lodash';
@@ -8,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs/Subject';
 import {
-    Constraint, SqlRow, TableHeader, TableMeta
+    Constraint, Filter, SqlRow, TableHeader, TableMeta
 } from '../../common/api';
 import { TableService } from '../../core/table.service';
 
@@ -51,6 +52,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
     private _pageNumber$ = new BehaviorSubject(1);
     private _sort$ = new BehaviorSubject(null);
     private _meta$ = new BehaviorSubject<TableMeta | null>(null);
+    private _filters$ = new BehaviorSubject<Filter[]>([]);
 
     private nameSub: Subscription;
     private pageInfoSub: Subscription;
@@ -83,7 +85,8 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
     constructor(
         private backend: TableService,
-        private router: Router
+        private router: Router,
+        private snackBar: MatSnackBar
     ) {}
 
     public ngOnInit(): void {
@@ -91,7 +94,8 @@ export class DatatableComponent implements OnInit, OnDestroy {
             this._meta$,
             this._name$,
             this._pageNumber$,
-            this._sort$
+            this._sort$,
+            this._filters$.debounceTime(300)
         );
 
         // When pauser emits true, pausable will map to an Observable that never
@@ -133,16 +137,26 @@ export class DatatableComponent implements OnInit, OnDestroy {
                 pauser.next(false);
             });
 
-        this.pageInfoSub = pausable.switchMap((params: [TableMeta, TableName, number, string]) => {
-            // params is an array: [meta, name, pageNumber, sort]
-            return this.backend.content(params[1].schema, params[1].name.raw, params[2], this.limit, params[3])
-                // TODO Handle this properly
-                .catch((err) => { throw err; })
-                .map((rows: SqlRow[]) => {
-                    return this.formatRows(params[0].headers, rows);
+        this.pageInfoSub = pausable.switchMap((params: [TableMeta, TableName, number, string, Filter[]]) => {
+            const [meta, tableName, pageNumber, sort, filters] = params;
+            return this.backend.content(tableName.schema, tableName.name.raw, pageNumber, this.limit, sort, filters)
+                .map((rows) => ({rows: this.formatRows(meta.headers, rows)}))
+                .catch((err) => {
+                    return Observable.of({err, rows: []});
                 });
-        }).subscribe((data: SqlRow[]) => {
-            this.data = data;
+        }).subscribe((result: { err?: Error, rows: SqlRow[] }) => {
+            if (result.err) {
+                console.error(result.err);
+
+                let message: string = result.err.message;
+                if (result.err instanceof HttpErrorResponse) {
+                    message = `Server responded with ${result.err.status} ${result.err.statusText}`;
+                }
+
+                this.snackBar.open(message, 'OK', { duration: 5000} );
+            }
+
+            this.data = result.rows;
         });
     }
 
@@ -167,6 +181,10 @@ export class DatatableComponent implements OnInit, OnDestroy {
         return this.router.navigate(['/forms', this.name.schema, this.name.name.raw], {
             queryParams: this.createQueryParams(row)
         });
+    }
+
+    public onFiltersChanged(filters: Filter[]) {
+        this._filters$.next(filters);
     }
 
     private createQueryParams(row: object) {

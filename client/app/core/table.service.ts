@@ -8,7 +8,7 @@ import { Observable } from 'rxjs/Observable';
 
 import * as _ from 'lodash';
 
-import { SqlRow, TableMeta } from '../common/api';
+import { Filter, SqlRow, TableMeta } from '../common/api';
 import { PaginatedResponse } from '../common/responses';
 import { TableNameParams } from '../common/table-name-params.interface';
 import { TableName } from '../common/table-name.class';
@@ -43,10 +43,14 @@ export class TableService {
     }
 
     /** Fetches paginated data from a given table */
-    public content(schema: string, table: string, page: number = 1,
-                   limit: number = 25, sort?: string): Observable<SqlRow[]> {
+    public content(schema: string,
+                   table: string,
+                   page: number = 1,
+                   limit: number = 25,
+                   sort?: string,
+                   filters: Filter[] = []): Observable<SqlRow[]> {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}/data`, {
-            page, limit, sort
+            page, limit, sort, filters: JSON.stringify(filters)
         }).map((data: PaginatedResponse<SqlRow[]>) => data.data);
     }
 
