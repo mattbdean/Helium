@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
-import { TableName } from '../common/table-name.class';
+import { TableName } from '../../common/table-name.class';
 
 @Component({
     templateUrl: 'table-host.component.html',

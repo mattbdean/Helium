@@ -9,11 +9,11 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs/Subject';
 import {
     Constraint, SqlRow, TableHeader, TableMeta
-} from '../common/api';
-import { TableService } from '../core/table.service';
+} from '../../common/api';
+import { TableService } from '../../core/table.service';
 
-import { DATE_FORMAT, DATETIME_FORMAT } from '../common/constants';
-import { TableName } from '../common/table-name.class';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
+import { TableName } from '../../common/table-name.class';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];

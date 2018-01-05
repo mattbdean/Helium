@@ -4,8 +4,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatIconModule, MatProgressBarModule } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
-import { DatatableComponent } from './datatable.component';
-import { TableHostComponent } from './table-host.component';
+import { DatatableComponent } from './datatable/datatable.component';
+import { TableHostComponent } from './table-host/table-host.component';
 import { TableRoutingModule } from './table-routing.module';
 
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';

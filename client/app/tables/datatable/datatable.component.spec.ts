@@ -9,10 +9,10 @@ import { Observable } from 'rxjs/Observable';
 
 import * as sinon from 'sinon';
 
-import { SqlRow, TableMeta } from '../common/api';
-import { TableName } from '../common/table-name.class';
-import { CoreModule } from '../core/core.module';
-import { TableService } from '../core/table.service';
+import { SqlRow, TableMeta } from '../../common/api';
+import { TableName } from '../../common/table-name.class';
+import { CoreModule } from '../../core/core.module';
+import { TableService } from '../../core/table.service';
 import { DatatableComponent } from './datatable.component';
 
 const expect = global['chai'].expect;

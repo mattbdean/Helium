@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '../core/auth-guard.service';
-import { TableHostComponent } from './table-host.component';
+import { TableHostComponent } from './table-host/table-host.component';
 
 const routes: Routes = [
     {
