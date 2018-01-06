@@ -3,7 +3,7 @@ import { FilterOperation } from '../../common/api';
 
 @Injectable()
 export class FilterProviderService {
-    public filters(): Array<{ codeName: FilterOperation, displayName: string }> {
+    public operations(): Array<{ codeName: FilterOperation, displayName: string }> {
         return [
             { codeName: 'lt',    displayName: 'Less Than' },
             { codeName: 'gt',    displayName: 'Greater Than' },

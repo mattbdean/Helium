@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import {
-    MatCardModule, MatIconModule,
-    MatProgressBarModule, MatSnackBarModule
+    MatCardModule, MatCheckboxModule, MatFormFieldModule, MatIconModule,
+    MatInputModule,
+    MatProgressBarModule, MatSelectModule, MatSnackBarModule
 } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
@@ -21,8 +22,12 @@ import { FilterProviderService } from './filter-provider/filter-provider.service
         CommonModule,
         CoreModule,
         MatCardModule,
+        MatCheckboxModule,
+        MatFormFieldModule,
         MatIconModule,
+        MatInputModule,
         MatProgressBarModule,
+        MatSelectModule,
         MatSnackBarModule,
         NgxDatatableModule,
         ReactiveFormsModule,

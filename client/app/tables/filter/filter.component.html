@@ -1,6 +1,23 @@
-<div [formGroup]="group">
-    <input type="text" placeholder="Column" formControlName="param">
-    <input type="text" placeholder="Filter" formControlName="op">
-    <input type="text" placeholder="Value" formControlName="value">
-    <span>Valid? {{ group.valid }}</span>
+<div class="filter-input-container" [formGroup]="group">
+    <mat-checkbox
+        #checkbox
+        (change)="onToggle($event)"
+        title="Enable or disable this filter. A disabled filter will still show up here but won't be applied to the search.">
+    </mat-checkbox>
+
+    <mat-form-field>
+        <mat-select placeholder="Column" formControlName="param">
+            <mat-option *ngFor="let header of headers" [value]="header.name">{{ header.name }}</mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+        <mat-select placeholder="Operation" formControlName="op">
+            <mat-option *ngFor="let filterOp of ops" [value]="filterOp.codeName">{{ filterOp.displayName }}</mat-option>
+        </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+        <input matInput type="text" placeholder="Value" formControlName="value">
+    </mat-form-field>
 </div>
