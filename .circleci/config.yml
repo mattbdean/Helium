@@ -1,0 +1,9 @@
+version: 2
+jobs:
+    build:
+        docker:
+            - image: circleci/node:9-stretch-browsers
+        steps:
+            - checkout
+            - run: google-chrome-stable --version
+            - run: google-chrome --version
