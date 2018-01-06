@@ -95,7 +95,10 @@ export class DatatableComponent implements OnInit, OnDestroy {
             this._name$,
             this._pageNumber$,
             this._sort$,
-            this._filters$.debounceTime(300)
+            this._filters$
+                // Don't propagate unless there's new data
+                .distinctUntilChanged(_.isEqual)
+                .debounceTime(300)
         );
 
         // When pauser emits true, pausable will map to an Observable that never

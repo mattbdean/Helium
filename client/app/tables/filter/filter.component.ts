@@ -1,4 +1,7 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import {
+    Component, EventEmitter, Input, OnInit, Output,
+    ViewChild
+} from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatCheckbox, MatCheckboxChange } from '@angular/material';
 import { TableHeader } from '../../common/api';
@@ -19,7 +22,10 @@ export class FilterComponent implements OnInit {
     @ViewChild('checkbox')
     private checkbox: MatCheckbox;
 
-    private ops;
+    @Output()
+    private removed = new EventEmitter<boolean>(false);
+
+    public ops;
 
     public constructor(private filters: FilterProviderService) {}
 
@@ -33,5 +39,9 @@ export class FilterComponent implements OnInit {
             this.group.enable();
         else
             this.group.disable();
+    }
+
+    public requestRemove() {
+        this.removed.emit(true);
     }
 }
