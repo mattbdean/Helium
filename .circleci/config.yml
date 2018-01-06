@@ -5,5 +5,8 @@ jobs:
             - image: circleci/node:9-stretch-browsers
         steps:
             - checkout
-            - run: google-chrome-stable --version
-            - run: google-chrome --version
+            - run: yarn install
+            - run: yarn test:server
+            - run: yarn test:client --progress false
+            - run: yarn e2e --progress false
+            - run: yarn ng build --prod
