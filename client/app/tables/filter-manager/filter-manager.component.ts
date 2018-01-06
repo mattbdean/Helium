@@ -15,7 +15,7 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     public headers: TableHeader[] = [];
 
     @Output()
-    public changed = new EventEmitter<Filter>();
+    public changed = new EventEmitter<Filter[]>();
 
     private formArray: FormArray;
 
@@ -31,6 +31,13 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
             // switched tables), start over
             this.formArray = new FormArray([]);
             this.addFilter();
+
+            if (!changes.headers.firstChange) {
+                // User has switched tables, clear the filters
+                this.sub.unsubscribe();
+                this.changed.emit([]);
+            }
+
             this.sub = this.formArray.valueChanges
                 .filter(() => this.formArray.valid)
                 .subscribe((filters) => this.changed.emit(filters));

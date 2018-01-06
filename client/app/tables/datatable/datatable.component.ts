@@ -153,7 +153,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
                     message = `Server responded with ${result.err.status} ${result.err.statusText}`;
                 }
 
-                this.snackBar.open(message, 'OK', { duration: 5000} );
+                this.snackBar.open(message, 'OK', { duration: 5000 } );
             }
 
             this.data = result.rows;
