@@ -4,6 +4,12 @@ jobs:
         docker:
             - image: mattbdean/helium-test:latest
             - image: circleci/mysql:5.7-ram
+                environment:
+                    - MYSQL_ALLOW_EMPTY_PASSWORD=true
+                    - MYSQL_HOST=127.0.0.1
+                    - MYSQL_ROOT_HOST=%
+                    - MYSQL_USER=root
+
         steps:
             - checkout
             - run:
