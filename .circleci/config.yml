@@ -19,4 +19,4 @@ jobs:
             - run: yarn test:server
             - run: yarn test:client --progress false
             - run: yarn e2e --progress false
-            - run: yarn ng build --prod
+            - run: yarn ng build --prod --progress false
