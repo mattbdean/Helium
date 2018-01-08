@@ -6,6 +6,14 @@ jobs:
             - image: circleci/mysql:5.7-ram
         steps:
             - checkout
+            - run:
+                name: install dockerize
+                command: wget https://github.com/jwilder/dockerize/releases/download/${DOCKERIZE_VERSION}/dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz && tar -C /usr/local/bin -xzvf dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz && rm dockerize-linux-amd64-${DOCKERIZE_VERSION}.tar.gz
+                environment:
+                    DOCKERIZE_VERSION: v0.6.0
+            - run:
+                name: wait for DB
+                command: dockerize -wait tcp://localhost:3306 -timeout 1m
             - run: mysql -u root -p < server/test/init.sql
             - run: yarn install
             - run: yarn test:server
