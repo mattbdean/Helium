@@ -1,0 +1,35 @@
+version: 2
+jobs:
+    build:
+        docker:
+            - image: mattbdean/helium-test:latest
+            - image: circleci/mysql:5.7-ram
+              environment:
+                  - MYSQL_ALLOW_EMPTY_PASSWORD=true
+                  - MYSQL_HOST=127.0.0.1
+                  - MYSQL_ROOT_HOST=%
+                  - MYSQL_USER=root
+        steps:
+            - checkout
+            - run:
+                name: Wait for DB
+                command: dockerize -wait tcp://localhost:3306 -timeout 1m
+            - run: 
+                name: Initialize DB
+                command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - run:
+                name: Install dependencies
+                command: yarn install
+            - run:
+                name: Server tests
+                command: yarn test:server
+            - run:
+                name: Client tests
+                command: yarn test:client --progress false
+            - run:
+                name: e2e tests
+                command: yarn e2e --progress false
+            - run:
+                name: Build client in production mode
+                command: yarn ng build --prod --progress false
+
