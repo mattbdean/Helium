@@ -3,9 +3,10 @@ jobs:
     build:
         docker:
             - image: circleci/node:9-stretch-browsers
+            - image: circleci/mysql:5.7-ram
         steps:
             - checkout
-            - run: yarn config set registry https://registry.npmjs.org/
+            - run: mysql -u root -p < server/test/init.sql
             - run: yarn install
             - run: yarn test:server
             - run: yarn test:client --progress false
