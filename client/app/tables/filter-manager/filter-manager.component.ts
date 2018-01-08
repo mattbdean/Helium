@@ -21,7 +21,7 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     @Output()
     public changed = new EventEmitter<Filter[]>();
 
-    private formArray: FormArray;
+    public formArray: FormArray;
 
     private sub: Subscription;
 
