@@ -51,19 +51,7 @@ Make sure to have a MySQL database running on your local machine. Then run the c
 $ mysql -u root -p < server/test/init.sql
 ```
 
-This will (re)create a user with name `user` and password `password`, as well as the `helium` database. Then add these credentials to `db.conf.json`:
-
-```json
-{
-  "test": {
-    "user": "user",
-    "password": "password",
-    "database": "helium"
-  }
-}
-```
-
-Inside  `prod` and `test` you can specify any connection options supported by [mysqljs](https://github.com/mysqljs/mysql#connection-options).
+This will (re)create a user with name `user` and password `password`, as well as the `helium` database.
 
 Use the `dev` script for developing:
 
@@ -81,7 +69,18 @@ You can also run protractor and debug using `chrome://inspect` using `yarn e2e:d
 
 To prevent rebuilding the website every time the e2e tests are run (what `yarn e2e` does), use two terminal windows. Run `yarn dev` on the first and `yarn e2e:prepped` (or `yarn e2e:prepped:debug`) in the second whenever necessary.
 
+#### CircleCI
 
+Helium uses CircleCI for continuous integration. The Dockerfile for the container that runs the test job can be found [here](https://github.com/mattbdean/Helium/blob/master/server/test/Dockerfile). Once modified, build and push the image to DockerHub:
+
+```sh
+$ docker build -t mattbdean/helium-test server/test
+$ docker push mattbdean/helium-test
+```
+
+The next build will automatically use this new image.
+
+Config can be found at `.circleci/config.yml`.
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmattbdean%2FHelium.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmattbdean%2FHelium?ref=badge_large)

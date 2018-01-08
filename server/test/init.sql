@@ -6,13 +6,13 @@
 SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
 
 # Ensure the user exists by creating it
-GRANT ALL ON *.* TO 'user'@'localhost' IDENTIFIED BY 'password';
+GRANT ALL ON *.* TO 'user'@'%' IDENTIFIED BY 'password';
 # Drop the newly-created user (the above query can be replaced by DROP USER
 # IF EXISTS) with MySQL 5.7
-DROP USER 'user'@'localhost';
+DROP USER 'user'@'%';
 # Create the user again to ensure that the user exists
-GRANT ALL ON helium.* TO 'user'@'localhost' IDENTIFIED BY 'password';
-GRANT ALL ON helium2.* TO 'user'@'localhost';
+GRANT ALL ON helium.* TO 'user'@'%' IDENTIFIED BY 'password';
+GRANT ALL ON helium2.* TO 'user'@'%';
 
 # Other DB for cross-schema testing
 DROP DATABASE IF EXISTS helium2;

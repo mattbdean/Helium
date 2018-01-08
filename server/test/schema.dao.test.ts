@@ -2,7 +2,7 @@ import { fail } from 'assert';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as joi from 'joi';
-import { orderBy, random, uniq } from 'lodash';
+import { orderBy, random, uniq, zipObject } from 'lodash';
 import { Filter } from '../src/common/api';
 import { TableInsert } from '../src/common/table-insert.interface';
 import { ConnectionConf } from '../src/db/connection-conf.interface';
@@ -420,36 +420,57 @@ describe('SchemaDao', () => {
     describe('insertRow', () => {
         // The TableInputValidator class tests handle validation testing
 
+        /** Generate a very large random unsigned integer */
+        const randInt = () => random(10000000);
+
+        /** Resolves to the total number of rows in the table */
         const count = (schemaName: string, tableName: string) =>
             dao.meta(schemaName, tableName).then((meta) => meta.totalRows);
 
+        /**
+         * Resolves to an object that maps table names to the number of rows
+         * in that table
+         */
+        const getCounts = async (schemaName, data: TableInsert) => zipObject(
+            Object.keys(data),
+            await Promise.all(Object.keys(data).map((tableName) => count(schemaName, tableName)))
+        );
+
+        /**
+         * Tries to insert some data and verifies that the same number of
+         * entries to each table were inserted into that table.
+         */
+        const insertAndAssert = async (schema: string, data: TableInsert) => {
+            // Keep track of the amount of rows before
+            const before = await getCounts(schema, data);
+
+            // Insert the data
+            await dao.insertRow(schema, data);
+
+            // Get the amount of rows after the insert
+            const after = await getCounts(schema, data);
+
+            // Expect that the amount of rows in each table has increased by
+            // the number of entries specified
+            for (const tableName of Object.keys(data)) {
+                expect(after[tableName]).to.equal(before[tableName] + data[tableName].length);
+            }
+        };
+
         it('should insert data into the given table', async () => {
-            const before = await count('helium', 'customer');
-            const data: TableInsert = {
+            await insertAndAssert('helium', {
                 customer: [{
                     customer_id: random(100000),
                     name: 'test name'
                 }]
-            };
-            await dao.insertRow('helium', data);
-            const after = await count('helium', 'customer');
-
-            expect(after).to.equal(before + 1);
+            });
         });
 
         it('should insert all data if the main table is a master table', async () => {
-            const getCounts = (schemaName, tableNames: string[]) =>
-                Promise.all(tableNames.map((tableName) => count(schemaName, tableName)));
-
-            // Keep track of the total number of rows of each table before
-            // inserting
-            const before = await getCounts('helium', ['master', 'master__part']);
-
             // Create some random data here
-            const randInt = () => random(10000000);
             const masterPk = randInt();
 
-            const data: TableInsert = {
+            await insertAndAssert('helium', {
                 master: [{
                     pk: masterPk
                 }],
@@ -457,18 +478,14 @@ describe('SchemaDao', () => {
                     { part_pk: randInt(), master: masterPk },
                     { part_pk: randInt(), master: masterPk }
                 ]
-            };
+            });
+        });
 
-            // Insert that data
-            await dao.insertRow('helium', data);
-
-            // Make sure the new total number of rows is correct
-            const after = await getCounts('helium', ['master', 'master__part']);
-
-            // Inserted 1 rows into master
-            expect(after[0]).to.equal(before[0] + 1);
-            // Inserted 2 rows into master__part
-            expect(after[1]).to.equal(before[1] + 2);
+        it('should allow inserting zero rows into a part table', async () => {
+            await insertAndAssert('helium', {
+                master: [{ pk: random(10000000) }],
+                master__part: []
+            });
         });
     });
 

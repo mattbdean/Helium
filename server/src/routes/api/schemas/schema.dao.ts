@@ -222,6 +222,9 @@ export class SchemaDao {
             // Do inserts in sequence so we can guarantee that master tables
             // are inserted before any part tables
             for (const tableName of names) {
+                if (preparedData[tableName].length === 0)
+                    continue;
+
                 // Prepare each row for insertion. Escape column names, transform
                 // values as appropriate, etc.
                 const rows = preparedData[tableName].map(this.prepareForInsert, this);
