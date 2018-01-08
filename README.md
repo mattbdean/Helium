@@ -51,19 +51,7 @@ Make sure to have a MySQL database running on your local machine. Then run the c
 $ mysql -u root -p < server/test/init.sql
 ```
 
-This will (re)create a user with name `user` and password `password`, as well as the `helium` database. Then add these credentials to `db.conf.json`:
-
-```json
-{
-  "test": {
-    "user": "user",
-    "password": "password",
-    "database": "helium"
-  }
-}
-```
-
-Inside  `prod` and `test` you can specify any connection options supported by [mysqljs](https://github.com/mysqljs/mysql#connection-options).
+This will (re)create a user with name `user` and password `password`, as well as the `helium` database.
 
 Use the `dev` script for developing:
 
