@@ -9,6 +9,7 @@ jobs:
             - run:
                 name: wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
+            - setup_remote_docker
             - run: mysql -u root -p < server/test/init.sql
             - run: yarn install
             - run: yarn test:server
