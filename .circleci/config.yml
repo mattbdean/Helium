@@ -2,14 +2,13 @@ version: 2
 jobs:
     build:
         docker:
-            - image: circleci/node:9-stretch-browsers
+            - image: mattbdean/helium-test:latest
             - image: circleci/mysql:5.7-ram
         steps:
             - checkout
             - run:
                 name: wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
-            - setup_remote_docker
             - run: mysql -u root -p < server/test/init.sql
             - run: yarn install
             - run: yarn test:server
