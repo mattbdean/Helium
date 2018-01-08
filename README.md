@@ -83,7 +83,7 @@ To prevent rebuilding the website every time the e2e tests are run (what `yarn e
 
 #### CircleCI
 
-Helium uses CircleCI for continuous integration. The Dockerfile for the container that runs the test job can be found [here](https://github.com/mattbdean/Helium/blob/circleci-test/server/test/Dockerfile). Once modified, build and push the image to DockerHub:
+Helium uses CircleCI for continuous integration. The Dockerfile for the container that runs the test job can be found [here](https://github.com/mattbdean/Helium/blob/master/server/test/Dockerfile). Once modified, build and push the image to DockerHub:
 
 ```sh
 $ docker build -t mattbdean/helium-test server/test
