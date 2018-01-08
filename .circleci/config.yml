@@ -12,11 +12,24 @@ jobs:
         steps:
             - checkout
             - run:
-                name: wait for DB
+                name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
-            - run: mysql -u root -h 127.0.0.1 < server/test/init.sql
-            - run: yarn install
-            - run: yarn test:server
-            - run: yarn test:client --progress false
-            - run: yarn e2e --progress false
-            - run: yarn ng build --prod --progress false
+            - run: 
+                name: Initialize DB
+                command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - run:
+                name: Install dependencies
+                command: yarn install
+            - run:
+                name: Server tests
+                command: yarn test:server
+            - run:
+                name: Client tests
+                command: yarn test:client --progress false
+            - run:
+                name: e2e tests
+                command: yarn e2e --progress false
+            - run:
+                name: Build client in production mode
+                command: yarn ng build --prod --progress false
+
