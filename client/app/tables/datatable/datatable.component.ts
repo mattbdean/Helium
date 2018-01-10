@@ -98,7 +98,10 @@ export class DatatableComponent implements OnInit, OnDestroy {
             this._filters$
                 // Don't propagate unless there's new data
                 .distinctUntilChanged(_.isEqual)
-                .debounceTime(300)
+                // Disable debounce time when all filters are removed to keep
+                // UI snappy
+                .debounce((filters: Filter[]) =>
+                    Observable.timer(filters.length === 0 ? 0 : 300))
         );
 
         // When pauser emits true, pausable will map to an Observable that never
