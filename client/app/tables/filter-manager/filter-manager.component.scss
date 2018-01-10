@@ -1,4 +1,17 @@
-mat-card {
-  max-width: 700px;
-  margin: 0 auto;
+:host {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.filter-wrapper {
+  display: flex;
+  flex-direction: row;
+  margin-right: 12px;
+  margin-bottom: 12px;
+}
+
+.add-filter-button {
+  align-self: center;
 }

@@ -1,31 +1,38 @@
-<div class="filter-input-container" [formGroup]="group">
-    <mat-checkbox
-        #checkbox
-        (change)="onToggle($event)"
-        title="Enable or disable this filter. A disabled filter will still show up here but won't be applied to the search.">
-    </mat-checkbox>
+<mat-card class="filter-input-container" [formGroup]="group">
+    <div class="management-container">
+        <mat-checkbox
+            #checkbox
+            class="enabled-checkbox"
+            (change)="onToggle($event)"
+            title="Enable or disable this filter. A disabled filter will still show up here but won't be applied to the search.">
+        </mat-checkbox>
 
-    <mat-form-field>
-        <mat-select placeholder="Column" formControlName="param">
-            <mat-option *ngFor="let header of headers" [value]="header.name">{{ header.name }}</mat-option>
-        </mat-select>
-    </mat-form-field>
+        <button mat-icon-button
+                class="remove-filter-button"
+                type="button"
+                tabindex="-1"
+                title="Remove this filter"
+                (click)="requestRemove()">
+            <mat-icon>remove_circle</mat-icon>
+        </button>
+    </div>
 
-    <mat-form-field>
-        <mat-select placeholder="Operation" formControlName="op">
-            <mat-option *ngFor="let filterOp of ops" [value]="filterOp.codeName">{{ filterOp.displayName }}</mat-option>
-        </mat-select>
-    </mat-form-field>
+    <div class="control-container">
+        <mat-form-field>
+            <mat-select placeholder="Column" formControlName="param">
+                <mat-option *ngFor="let header of headers" [value]="header.name">{{ header.name }}</mat-option>
+            </mat-select>
+        </mat-form-field>
 
-    <mat-form-field>
-        <input matInput type="text" placeholder="Value" formControlName="value">
-    </mat-form-field>
+        <mat-form-field>
+            <mat-select placeholder="Operation" formControlName="op">
+                <mat-option *ngFor="let filterOp of ops" [value]="filterOp.codeName">{{ filterOp.displayName }}</mat-option>
+            </mat-select>
+        </mat-form-field>
 
-    <button mat-icon-button
-            type="button"
-            tabindex="-1"
-            title="Remove this filter"
-            (click)="requestRemove()">
-        <mat-icon>remove_circle</mat-icon>
-    </button>
-</div>
+        <mat-form-field>
+            <input matInput type="text" placeholder="Value" formControlName="value">
+        </mat-form-field>
+    </div>
+
+</mat-card>

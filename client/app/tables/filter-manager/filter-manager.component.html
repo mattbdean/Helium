@@ -1,12 +1,12 @@
-<mat-card>
-    <div *ngFor="let control of formArray.controls">
-        <filter [headers]="headers" [group]="control" (removed)="removeFilter(control)"></filter>
-    </div>
+<div class="filter-wrapper" *ngFor="let control of formArray.controls; let i = index">
+    <filter [headers]="headers" [group]="control" (removed)="removeFilter(control)"></filter>
 
-    <button mat-icon-button
+    <button *ngIf="i === formArray.controls.length - 1"
+            class="add-filter-button"
+            mat-icon-button
             type="button"
             title="Add another filter"
             (click)="addFilter()">
         <mat-icon color="primary">add_circle</mat-icon>
     </button>
-</mat-card>
+</div>
