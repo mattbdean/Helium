@@ -1,4 +1,7 @@
-import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import {
+    ApplicationRef, Component, Input, OnDestroy, OnInit, TemplateRef,
+    ViewChild
+} from '@angular/core';
 import { MatSnackBar } from '@angular/material';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 
@@ -15,6 +18,7 @@ import { TableService } from '../../core/table.service';
 
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
+import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];
@@ -66,9 +70,19 @@ export class DatatableComponent implements OnInit, OnDestroy {
     @ViewChild('cellTemplateBlob') private cellTemplateBlob: TemplateRef<any>;
     @ViewChild('cellTemplateInsertLike') private cellTemplateInsertLike: TemplateRef<any>;
 
+    @ViewChild('filterManager') private filterManager: FilterManagerComponent;
+
     /** True if this component has tried to access the table and found data */
     public exists: boolean = true;
     public loading = false;
+
+    // For whatever reason change detection doesn't work the way I expect it to.
+    // If showFilters is just a normal property, toggling is buggy. If it's
+    // defined like this, it's not. Me in the future will probably have an
+    // explanation but me in the present is very confused.
+    private _showFilters = false;
+    public get showFilters() { return this._showFilters; }
+    public set showFilters(val: boolean) { console.log(`showFilters: ${this._showFilters} -> ${val}`); this._showFilters = val; }
 
     /** How many rows to fetch per page */
     public readonly limit: number = 25;
@@ -191,6 +205,17 @@ export class DatatableComponent implements OnInit, OnDestroy {
 
     public onFiltersChanged(filters: Filter[]) {
         this._filters$.next(filters);
+
+        // Only hide if going from 1 to 0 filters
+        if (filters.length === 0 && this.filterManager.visibleFilters === 0)
+            this.showFilters = false;
+    }
+
+    public toggleFilters() {
+        this.showFilters = !this.showFilters;
+        if (this.showFilters && this.filterManager.visibleFilters === 0) {
+            this.filterManager.addFilter();
+        }
     }
 
     private createQueryParams(row: object) {

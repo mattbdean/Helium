@@ -14,6 +14,7 @@ import { TableHostComponent } from './table-host/table-host.component';
 import { TableRoutingModule } from './table-routing.module';
 
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { InlineSVGModule } from 'ng-inline-svg';
 import { FilterManagerComponent } from './filter-manager/filter-manager.component';
 import { FilterProviderService } from './filter-provider/filter-provider.service';
 import { FilterComponent } from './filter/filter.component';
@@ -22,6 +23,7 @@ import { FilterComponent } from './filter/filter.component';
     imports: [
         CommonModule,
         CoreModule,
+        InlineSVGModule,
         MatButtonModule,
         MatCardModule,
         MatCheckboxModule,

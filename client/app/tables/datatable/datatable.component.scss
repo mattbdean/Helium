@@ -33,3 +33,19 @@ h1 {
     opacity: 1.0;
   }
 }
+
+.filter-icon {
+  fill: rgba(0, 0, 0, 0.64);
+
+  &:hover {
+    fill: rgba(0, 0, 0, 0.78)
+  }
+
+  &:active {
+    fill: #000000;
+  }
+}
+
+[hidden] {
+  display: none;
+}

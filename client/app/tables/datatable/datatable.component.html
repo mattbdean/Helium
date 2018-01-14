@@ -1,9 +1,18 @@
 <mat-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></mat-progress-bar>
 <div [hidden]="!exists">
-    <h1 class="mat-display-1"><table-name [name]="name"></table-name></h1>
+    <h1 class="mat-display-1">
+        <table-name [name]="name"></table-name>
+        <button
+            mat-icon-button
+            class="filter-icon"
+            [inlineSVG]="'/assets/filter.svg'"
+            [title]="showFilters ? 'Hide filters' : 'Show filters'"
+            (click)="toggleFilters()"></button>
+    </h1>
+
     <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
 
-    <filter-manager [headers]="meta ? meta.headers : []" (changed)="onFiltersChanged($event)"></filter-manager>
+    <filter-manager #filterManager [hidden]="!showFilters" [headers]="meta ? meta.headers : []" (changed)="onFiltersChanged($event)"></filter-manager>
 
     <ngx-datatable class="material"
                    [hidden]="!exists"

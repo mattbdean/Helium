@@ -21,6 +21,8 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     @Output()
     public changed = new EventEmitter<Filter[]>();
 
+    public get visibleFilters() { return this.formArray.length; }
+
     public formArray: FormArray;
 
     private sub: Subscription;
@@ -34,7 +36,6 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
             // The headers have changed (most likely because the user has
             // switched tables), start over
             this.formArray = new FormArray([]);
-            this.addFilter();
 
             if (!changes.headers.firstChange) {
                 // User has switched tables, clear the filters
