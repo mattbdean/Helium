@@ -5,6 +5,15 @@ mat-card {
   // Minimize vertical space used while still providing enough breathing room
   padding-top: 10px;
   padding-bottom: 10px;
+
+  transition: background 300ms;
+
+  &.invalid {
+    background: rgba(0, 0, 0, 0.02);
+  }
+  &.disabled {
+    background: rgba(0, 0, 0, 0.05);
+  }
 }
 
 .control-container {

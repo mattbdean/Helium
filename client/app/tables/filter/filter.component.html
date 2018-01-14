@@ -1,4 +1,4 @@
-<mat-card class="filter-input-container" [formGroup]="group">
+<mat-card class="filter-input-container" [ngClass]="{ invalid: group.invalid && !group.disabled, disabled: group.disabled && !group.invalid }" [formGroup]="group">
     <div class="management-container">
         <mat-checkbox
             #checkbox
