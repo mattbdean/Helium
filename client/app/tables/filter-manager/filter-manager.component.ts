@@ -60,11 +60,7 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     public addFilter() {
-        this.formArray.push(new FormGroup({
-            param: new FormControl('', Validators.required),
-            op: new FormControl('', Validators.required),
-            value: new FormControl('', Validators.required)
-        }));
+        this.formArray.push(FilterManagerComponent.createFilterGroup());
     }
 
     public removeFilter(control: AbstractControl) {
@@ -72,5 +68,14 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
         // remove(AbstractControl) method so this'll work as long as we can
         // compare controls by ===
         this.formArray.removeAt(this.formArray.controls.findIndex((c) => c === control));
+    }
+
+    public static createFilterGroup() {
+        return new FormGroup({
+            param: new FormControl('', Validators.required),
+            op: new FormControl('', Validators.required),
+            value: new FormControl('', Validators.required)
+        });
+
     }
 }

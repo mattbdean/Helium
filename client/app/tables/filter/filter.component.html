@@ -30,9 +30,8 @@
             </mat-select>
         </mat-form-field>
 
-        <mat-form-field>
+        <mat-form-field [hidden]="!showCustomInput">
             <input matInput type="text" placeholder="Value" formControlName="value">
         </mat-form-field>
     </div>
-
 </mat-card>
