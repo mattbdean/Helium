@@ -15,14 +15,21 @@ import { Filter, TableHeader } from '../../common/api';
     styleUrls: ['filter-manager.component.scss']
 })
 export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
+    /**
+     * A list of all headers being shown. Passed directly to FilterComponent
+     * children.
+     */
     @Input()
     public headers: TableHeader[] = [];
 
+    /** Emits the valid filters when they've changed */
     @Output()
     public changed = new EventEmitter<Filter[]>();
 
+    /** The number of filters being shown to the user */
     public get visibleFilters() { return this.formArray.length; }
 
+    /** The root of this form */
     public formArray: FormArray;
 
     private sub: Subscription;
