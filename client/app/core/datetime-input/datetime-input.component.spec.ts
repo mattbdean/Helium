@@ -98,6 +98,16 @@ describe('DatetimeInputComponent', () => {
             expect(timeInput.nativeElement.value).to.equal('00:00');
         });
 
+        it.only('should reset the fields when given an empty string', () => {
+            fixture.detectChanges();
+
+            comp.writeValue('');
+            fixture.detectChanges();
+
+            expect(dateInput.nativeElement.value).to.equal('');
+            expect(timeInput.nativeElement.value).to.equal('');
+        });
+
         it('should throw an Error when given anything but a string', () => {
             fixture.detectChanges();
 

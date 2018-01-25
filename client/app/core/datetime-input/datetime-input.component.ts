@@ -87,6 +87,12 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
             throw new Error('datetime-input only accepts strings');
         }
 
+        if (obj === '') {
+            this.date.nativeElement.value = '';
+            this.time.nativeElement.value = '';
+            return;
+        }
+
         const m = moment(obj, DATETIME_FORMAT, true);
         if (!m.isValid()) {
             throw new Error(`Not a valid date: ${obj}. Expected Moment format ` +
