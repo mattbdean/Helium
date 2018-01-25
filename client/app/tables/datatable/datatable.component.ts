@@ -76,13 +76,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
     public exists: boolean = true;
     public loading = false;
 
-    // For whatever reason change detection doesn't work the way I expect it to.
-    // If showFilters is just a normal property, toggling is buggy. If it's
-    // defined like this, it's not. Me in the future will probably have an
-    // explanation but me in the present is very confused.
-    private _showFilters = false;
-    public get showFilters() { return this._showFilters; }
-    public set showFilters(val: boolean) { console.log(`showFilters: ${this._showFilters} -> ${val}`); this._showFilters = val; }
+    public showFilters = false;
 
     /** How many rows to fetch per page */
     public readonly limit: number = 25;
