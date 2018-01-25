@@ -1,0 +1,8 @@
+:host {
+  display: flex;
+  flex-direction: row;
+}
+
+mat-form-field {
+  flex-grow: 1;
+}

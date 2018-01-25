@@ -18,6 +18,7 @@ import * as sinon from 'sinon';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
 import { FilterProviderService } from '../filter-provider/filter-provider.service';
 import { FilterComponent } from './filter.component';
+import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
 
 describe('FilterComponent', () => {
     let fixture: ComponentFixture<FilterComponent>;
@@ -26,7 +27,7 @@ describe('FilterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [FilterComponent],
+            declarations: [FilterComponent, DatetimeInputComponent],
             imports: [
                 NoopAnimationsModule,
                 MatCardModule,

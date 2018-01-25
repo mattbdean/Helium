@@ -1,5 +1,5 @@
 import {
-    ApplicationRef, Component, Input, OnDestroy, OnInit, TemplateRef,
+    Component, Input, OnDestroy, OnInit, TemplateRef,
     ViewChild
 } from '@angular/core';
 import { MatSnackBar } from '@angular/material';

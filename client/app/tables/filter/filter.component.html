@@ -30,8 +30,11 @@
             </mat-select>
         </mat-form-field>
 
-        <mat-form-field [hidden]="!showCustomInput">
-            <input matInput type="text" placeholder="Value" formControlName="value">
-        </mat-form-field>
+        <div class="custom-input-wrapper" [hidden]="!showCustomInput">
+            <datetime-input *ngIf="getCurrentHeaderType() === 'datetime'" formControlName="value"></datetime-input>
+            <mat-form-field *ngIf="getCurrentHeaderType() !== 'datetime'">
+                <input matInput type="text" placeholder="Value" formControlName="value">
+            </mat-form-field>
+        </div>
     </div>
 </mat-card>

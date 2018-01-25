@@ -7,9 +7,13 @@ import { StorageService } from './storage/storage.service';
 
 import { InlineSVGModule } from "ng-inline-svg";
 
-import { MatIconModule } from '@angular/material';
+import {
+    MatFormFieldModule, MatIconModule,
+    MatInputModule
+} from '@angular/material';
 import { RouterModule } from "@angular/router";
 import { ConstraintIconsComponent } from "./constraint-icons/constraint-icons.component";
+import { DatetimeInputComponent } from './datetime-input/datetime-input.component';
 import { TableNameComponent } from './table-name/table-name.component';
 import { TableService } from './table/table.service';
 
@@ -19,14 +23,18 @@ import { TableService } from './table/table.service';
         InlineSVGModule,
         HttpClientModule,
         MatIconModule,
+        MatFormFieldModule,
+        MatInputModule,
         RouterModule
     ],
     declarations: [
         ConstraintIconsComponent,
+        DatetimeInputComponent,
         TableNameComponent
     ],
     exports: [
         ConstraintIconsComponent,
+        DatetimeInputComponent,
         TableNameComponent
     ],
     providers: [

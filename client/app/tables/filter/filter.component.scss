@@ -36,3 +36,7 @@ mat-card {
 .remove-filter-button, .enabled-checkbox {
   align-self: flex-end;
 }
+
+.custom-input-wrapper mat-form-field {
+  width: 100%;
+}

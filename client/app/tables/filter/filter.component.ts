@@ -4,7 +4,7 @@ import {
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import { MatCheckbox, MatCheckboxChange } from '@angular/material';
-import { FilterOperation, TableHeader } from '../../common/api';
+import { FilterOperation, TableDataType, TableHeader } from '../../common/api';
 import { FilterProviderService } from '../filter-provider/filter-provider.service';
 import { Operation } from './operation';
 
@@ -61,6 +61,22 @@ export class FilterComponent implements OnInit {
             this.group.enable();
         else
             this.group.disable();
+    }
+
+    /**
+     * Returns the type (integer, float, date, etc.) of the currently selected
+     * header, or null if there is none.
+     */
+    public getCurrentHeaderType(): TableDataType | null {
+        const currentHeader = this.group.get('param')!!.value;
+        if (currentHeader === null || currentHeader === undefined || currentHeader === '')
+            return null;
+
+        const header = this.headers.find((h) => h.name === currentHeader);
+        if (header === undefined)
+            return null;
+
+        return header.type;
     }
 
     public requestRemove() {
