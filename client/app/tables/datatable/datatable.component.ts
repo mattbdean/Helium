@@ -14,7 +14,7 @@ import { Subject } from 'rxjs/Subject';
 import {
     Constraint, Filter, SqlRow, TableHeader, TableMeta
 } from '../../common/api';
-import { TableService } from '../../core/table.service';
+import { TableService } from '../../core/table/table.service';
 
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';

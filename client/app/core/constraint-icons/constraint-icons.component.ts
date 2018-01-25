@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 
 import * as _ from 'lodash';
 
-import { Constraint, ConstraintType } from '../common/api';
+import { Constraint, ConstraintType } from '../../common/api';
 
 @Component({
     selector: 'constraint-icons',

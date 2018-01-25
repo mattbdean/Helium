@@ -14,7 +14,7 @@ import {
     DATETIME_FORMAT
 } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
-import { TableService } from '../../core/table.service';
+import { TableService } from '../../core/table/table.service';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';

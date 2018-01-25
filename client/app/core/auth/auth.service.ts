@@ -2,8 +2,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
-import { AuthData } from './auth-data.interface';
-import { StorageService } from './storage.service';
+import { AuthData } from '../auth-data/auth-data.interface';
+import { StorageService } from '../storage/storage.service';
 
 /**
  * A service that manages the current API key and its expiration.

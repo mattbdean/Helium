@@ -20,7 +20,7 @@ import {
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { unflattenTableNames } from '../../common/util';
-import { TableService } from '../../core/table.service';
+import { TableService } from '../../core/table/table.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
 
 /**

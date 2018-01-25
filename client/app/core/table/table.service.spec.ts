@@ -7,9 +7,9 @@ import { TestBed } from '@angular/core/testing';
 
 import * as _ from 'lodash';
 
-import { AuthService } from './auth.service';
-import { MockStorageService } from './auth.service.spec';
-import { StorageService } from './storage.service';
+import { AuthService } from '../auth/auth.service';
+import { MockStorageService } from '../auth/auth.service.spec';
+import { StorageService } from '../storage/storage.service';
 import { TableService } from './table.service';
 
 import { expect } from 'chai';

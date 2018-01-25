@@ -5,9 +5,9 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { expect } from 'chai';
-import { AuthData } from './auth-data.interface';
+import { AuthData } from '../auth-data/auth-data.interface';
 import { AuthService } from './auth.service';
-import { StorageService } from './storage.service';
+import { StorageService } from '../storage/storage.service';
 
 describe('AuthService', () => {
     let service: AuthService;

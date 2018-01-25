@@ -1,6 +1,6 @@
 import { browser } from 'protractor';
 import * as request from 'superagent';
-import { AuthData } from '../../client/app/core/auth-data.interface';
+import { AuthData } from '../../client/app/core/auth-data/auth-data.interface';
 import { StorageHelper } from './storage-helper';
 
 /**

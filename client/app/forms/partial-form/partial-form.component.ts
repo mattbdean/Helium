@@ -13,7 +13,7 @@ import * as _ from 'lodash';
 
 import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
-import { TableService } from '../../core/table.service';
+import { TableService } from '../../core/table/table.service';
 import { FormControlSpec } from '../form-control-spec.interface';
 import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
 

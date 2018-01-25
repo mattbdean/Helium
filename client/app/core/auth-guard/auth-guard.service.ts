@@ -6,7 +6,7 @@ import {
     RouterStateSnapshot
 } from '@angular/router';
 import { Observable } from 'rxjs/Observable';
-import { AuthService } from './auth.service';
+import { AuthService } from '../auth/auth.service';
 
 /**
  * When used as a route guard, redirects the user to the login page when the

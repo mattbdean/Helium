@@ -8,11 +8,11 @@ import { Observable } from 'rxjs/Observable';
 
 import * as _ from 'lodash';
 
-import { Filter, SqlRow, TableMeta } from '../common/api';
-import { PaginatedResponse } from '../common/responses';
-import { TableNameParams } from '../common/table-name-params.interface';
-import { TableName } from '../common/table-name.class';
-import { AuthService } from './auth.service';
+import { Filter, SqlRow, TableMeta } from '../../common/api';
+import { PaginatedResponse } from '../../common/responses';
+import { TableNameParams } from '../../common/table-name-params.interface';
+import { TableName } from '../../common/table-name.class';
+import { AuthService } from '../auth/auth.service';
 
 const encode = encodeURIComponent;
 

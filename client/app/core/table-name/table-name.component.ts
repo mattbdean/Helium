@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { TableName } from '../common/table-name.class';
+import { TableName } from '../../common/table-name.class';
 
 @Component({
     selector: 'table-name',
