@@ -5,11 +5,11 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
+import { Filter } from '../src/common/api';
 import { QueryHelper } from '../src/db/query-helper';
 import { Helium } from '../src/helium';
 import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
 import { RequestContext } from './api.test.helper';
-import { Filter } from '../src/common/api';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -49,9 +49,13 @@ describe('API v1', () => {
     describe('No/pre-authentication', () => {
         describe('GET /api/v1/*', () => {
             it('should 404 with JSON', () => {
-                request.get('/foo', 404, (body) => {
-                    expect(body).to.deep.equal({ message: 'Not found', input: {} });
-                });
+                return supertest(app.express)
+                    .get('/api/v1/foo')
+                    .expect(404)
+                    .expect('Content-Type', /application\/json/)
+                    .then((req) => {
+                        expect(req.body).to.deep.equal({ message: 'Not found', input: {} });
+                    });
             });
         });
 

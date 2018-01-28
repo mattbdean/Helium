@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 import * as paginate from 'express-paginate';
 import * as joi from 'joi';
 import { merge, pick } from 'lodash';
+import { Filter } from '../../../common/api';
 import {
     ErrorResponse,
     PaginatedResponse
@@ -12,7 +13,6 @@ import { DaoFactory } from '../dao.factory';
 import { ErrorCode } from '../error-code.enum';
 import { ValidationError } from '../validation-error';
 import { SchemaDao, Sort } from './schema.dao';
-import { Filter } from '../../../common/api';
 
 export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();
