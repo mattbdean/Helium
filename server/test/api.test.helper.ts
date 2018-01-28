@@ -48,7 +48,7 @@ export class RequestContext {
             // Expect our custom header to let us know when the session expires
             .expect('X-Session-Expiration', /^[0-9a-zA-Z]+$/)
             .then((res: Response) => {
-                if (res.status === 500)
+                if (res.status === 500 && conf.expectedStatus !== 500)
                     // Fail the test, using the request body as the subject of
                     // the expectation so that it gets logged by mocha. Use
                     // the 'deep' flag and compare to an empty object so mocha
@@ -61,7 +61,6 @@ export class RequestContext {
                     // Returned a 4XX or 5XX status code, verify shape of error
                     const body = res.body as ErrorResponse;
                     expect(Object.keys(body)).to.have.lengthOf(2);
-                    expect(body.input).to.be.an('object');
                     expect(body.message).to.be.a('string');
                 }
 

@@ -1,7 +1,10 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import {
+    NextFunction, Request, Response, Router
+} from 'express';
 import * as paginate from 'express-paginate';
 import * as joi from 'joi';
-import { merge, pick } from 'lodash';
+import { ValidationError as JoiValidationError } from 'joi';
+import { SqlRow } from '../../../../../client/app/common/api';
 import { Filter } from '../../../common/api';
 import {
     ErrorResponse,
@@ -10,12 +13,32 @@ import {
 import { DatabaseHelper } from '../../../db/database.helper';
 import { debug, NODE_ENV, NodeEnv } from '../../../env';
 import { DaoFactory } from '../dao.factory';
-import { ErrorCode } from '../error-code.enum';
 import { ValidationError } from '../validation-error';
 import { SchemaDao, Sort } from './schema.dao';
 
 export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();
+
+    /**
+     * Wraps a standard Express route handler. If the handler successfully
+     * resolves to a value, that value is sent to the response as JSON. If the
+     * handler rejects, that error is passed to the next error handling
+     * middleware.
+     *
+     * @returns A function that can be passed directly to a routing method such
+     * as `get` or `post`.
+     */
+    const wrap = (handler: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
+        return (req: Request, res: Response, next: NextFunction) => {
+            handler(req, res, next)
+                .then((data) => {
+                    res.json(data);
+                })
+                .catch((err) => {
+                    next(err);
+                });
+        };
+    };
 
     const filtersSchema = joi.array().items(
         joi.object({
@@ -35,16 +58,15 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
         if (apiKey === undefined) {
             // Require an active session
             const resp: ErrorResponse = {
-                message: 'Please specify an X-API-Key header with your API key from POST /api/v1/login',
-                input: {}
+                message: 'Please specify an X-API-Key header with your API ' +
+                    'key from POST /api/v1/login'
             };
             return res.status(401).json(resp);
         }
 
         if (!db.hasPool(apiKey)) {
             const resp: ErrorResponse = {
-                message: 'No database connection associated with this session',
-                input: {}
+                message: 'No database connection associated with this session'
             };
             return res.status(401).json(resp);
         } else {
@@ -62,38 +84,12 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
     // Limit 25 records by default, allowing a maximum of 100
     r.use(paginate.middleware(25, 100));
 
-    r.get('/', async (req: Request, res: Response) => {
-        try {
-            res.json(await daoFor(req).schemas());
-        } catch (err) {
-            internalError(res, err, {
-                message: 'Could not execute request',
-                input: {}
-            });
-        }
-    });
+    r.get('/', wrap((req: Request) => daoFor(req).schemas()));
+    r.get('/:schema', wrap((req: Request) =>
+        daoFor(req).tables(req.params.schema)));
 
-    r.get('/:schema', async (req: Request, res: Response) => {
-        try {
-            res.json(await daoFor(req).tables(req.params.schema));
-        } catch (err) {
-            if (err.code === 'ER_DBACCESS_DENIED_ERROR') {
-                return sendError(res, 404, {
-                    message: 'Cannot access schema',
-                    input: { schema: req.params.schema } });
-            } else {
-                internalError(res, err, {
-                    message: 'Could not execute request',
-                    input: {}
-                });
-            }
-        }
-    });
-
-    r.get('/:schema/:table/data', async (req: Request, res: Response) => {
-        const schema: string = req.params.schema;
-        const name: string = req.params.table;
-
+    r.get('/:schema/:table/data', wrap(async (req: Request) => {
+        // Create a Sort object, if one is specified in the query
         let sort: Sort | undefined;
         if (req.query.sort) {
             let sortStr: string = req.query.sort.trim();
@@ -105,206 +101,166 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
 
             sort = { by: sortStr, direction: dir };
         }
-        const input = merge(
-            pick(req.params, ['schema', 'table']),
-            pick(req.query, ['sort', 'limit', 'page', 'filters'])
-        );
 
         // Try to parse the filters as JSON
         let filtersInput: any[];
         try {
+            // TODO this might make us vulernable to DOS attacks involving large
+            // JSON documents as input
             filtersInput = req.query.filters ? JSON.parse(req.query.filters) : [];
         } catch (err) {
-            return sendError(res, 400, { message: 'filters param has malformed JSON', input });
+            // Rethrow as a ValidationError so the router error handler picks it
+            // up
+            throw new ValidationError('filters param has malformed JSON', 'MALFORMED_JSON', req.query.filters);
         }
 
+        // Make sure the filters have the right shape
         const result = filtersSchema.validate(filtersInput);
 
         if (result.error) {
-            return sendError(res, 400, { message: 'filters param is invalid', input });
+            throw new ValidationError('filters param is invalid', 'INVALID_FILTER');
         }
 
         const filters: Filter[] = result.value;
 
-        try {
-            const data = await daoFor(req).content(schema, name, {
-                page: req.query.page,
-                limit: req.query.limit,
-                sort
-            }, filters);
+        // We have everything we need, request the data
+        return daoFor(req).content(req.params.schema, req.params.table, {
+            page: req.query.page,
+            limit: req.query.limit,
+            sort
+        }, filters)
+            // Once we have the data, wrap it in a PaginatedResponse
+            .then((data: SqlRow[]): PaginatedResponse<any> => ({ size: data.length, data }));
+    }));
 
-            const response: PaginatedResponse<any> = {
-                size: data.length,
-                data
-            };
-            res.json(response);
-        } catch (err) {
+    r.get('/:schema/:table', wrap((req: Request) =>
+        daoFor(req).meta(req.params.schema, req.params.table)));
 
-            if (err.code) {
-                if (err.code === 'ER_DBACCESS_DENIED_ERROR')
-                    return sendError(res, 404, { message: 'database not found', input });
-                else if (err.code === 'ER_NO_SUCH_TABLE')
-                    return sendError(res, 404, { message: 'no such table', input });
-                else if (err.code === 'ER_BAD_FIELD_ERROR')
-                    return sendError(res, 400, {
-                        message: 'Cannot sort: no such column name',
-                        input
-                    });
-            }
+    r.put('/:schema/data', wrap((req: Request) =>
+        // Insert the data and return an empty JSON document
+        daoFor(req).insertRow(req.params.schema, req.body).then(() => ({}))));
 
-            internalError(res, err, {
-                message: 'Could not execute request',
-                input
-            });
+    r.get('/:schema/:table/column/:col', wrap((req) => daoFor(req).columnContent(
+            req.params.schema,
+            req.params.table,
+            req.params.col
+    )));
+
+    // This is where all error handling for the router happens
+    r.use((err, req, res, next) => {
+        if (err.isJoi) {
+            handleJoiError(res, err);
+        } else if (err instanceof ValidationError) {
+            // Known/expected errors
+            handleValidationError(res, err);
+        } else if (err.code) {
+            // MySQL-related errors
+            handleDatabaseError(req, res, err);
+        } else {
+            // Unknown/unexpected errors
+            handleInternalError(res, err);
         }
     });
 
-    r.get('/:schema/:table', async (req: Request, res: Response) => {
-        const schema = req.params.schema;
-        const table = req.params.table;
+    const handleJoiError = (res: Response, err: JoiValidationError) => {
+        // err.details is an array of all validation errors, pick out the
+        // first one to send to the user
+        res.status(400).json(createErrorResponse(err.details[0].message, err));
+    };
 
-        try {
-            res.json(await daoFor(req).meta(schema, table));
-        } catch (e) {
-            const input = pick(req.params, ['schema', 'table']);
-            if (e.code && (e.code === 'ER_NO_SUCH_TABLE' || e.code === 'ER_DBACCESS_DENIED_ERROR'))
-                return sendError(res, 404, {
-                    message: 'No such table',
-                    input
-                });
-            return internalError(res, e, {
-                message: 'Unable to execute request',
-                input
-            });
-        }
-    });
+    /**
+     * Handles errors returned by the database. The common ones are specifically
+     * checked for. Unknown error codes are handled as well.
+     */
+    const handleDatabaseError = (req: Request, res: Response, err: any) => {
+        // Create a generic message
+        let message = 'Unknown issue accessing the database' +
+            (NODE_ENV !== NodeEnv.PROD ? ` (${err.code}: ${err.message})` : '');
 
-    r.put('/:schema/data', async (req, res) => {
-        const schema: string = req.params.schema;
+        // 400 Bad Request will be used if this remains null
+        let code: number | null = null;
 
-        const send400 = (message: string) =>
-            sendError(res, 400, { message, input: {
-                schema,
-                data: req.body
-            }});
-
-        try {
-            await daoFor(req).insertRow(schema, req.body);
-            res.status(200).send({});
-        } catch (e) {
-            // TODO never write anything this ugly again
-            if (e instanceof ValidationError) {
-                switch (e.code) {
-                    case ErrorCode.NO_SUCH_TABLE:
-                        return sendError(res, 404, {
-                            message: 'that table doesn\'t exist',
-                            input: { data: req.body }
-                        });
-                    default:
-                        return sendError(res, 400, {
-                            message: e.message,
-                            input: { data: req.body }
-                        });
-                }
-            }
-
-            if (e.code) {
-                switch (e.code) {
-                    case 'ER_BAD_FIELD_ERROR':
-                        return send400('no such column');
-                    case 'ER_NO_SUCH_TABLE':
-                        return send400('no such table');
-                    case 'ER_DUP_ENTRY':
-                        return send400('duplicate entry');
-                    case 'ER_TRUNCATED_WRONG_VALUE':
-                        // No good way to directly pinpoint the cause, send the
-                        // message directly
-                        return send400(e.message);
-                    case 'ER_PARSE_ERROR':
-                        // Log the message and continue so that we eventually
-                        // send an internal server error
-                        debug({
-                            message: 'generated invalid SQL',
-                            data: req.body
-                        });
-                        break;
-                    case 'ER_DATA_TOO_LONG':
-                        // No way to get the actual column that caused the error
-                        // short of regexps, just send back the error
-                        return send400(e.message);
-                    case 'ER_NO_REFERENCED_ROW_2':
-                        // The default message may reveal too much but that's
-                        // okay for right now
-                        return send400(e.message);
-                }
-            }
-
-            // Handle any validation errors
-            if (e.isJoi) {
-                // e.details is an array of all validation errors, pick out the
-                // first one to send to the user
-                return send400(e.details[0].message);
-            }
-
-            return internalError(res, e, {
-                message: 'Could not execute request',
-                input: {
-                    schema: req.params.schema,
+        switch (err.code) {
+            case 'ER_DBACCESS_DENIED_ERROR':
+                message = 'Unable to access requested database or schema';
+                code = 404;
+                break;
+            case 'ER_BAD_FIELD_ERROR':
+                message = 'Tried to reference unknown column';
+                break;
+            case 'ER_NO_SUCH_TABLE':
+                message = 'No such table';
+                code = 404;
+                break;
+            case 'ER_DUP_ENTRY':
+                message = 'Cannot insert duplicate entry';
+                break;
+            case 'ER_TRUNCATED_WRONG_VALUE':
+                // No good way to directly pinpoint the cause, send the
+                // message directly
+                message = err.message;
+                break;
+            case 'ER_PARSE_ERROR':
+                // We should never see this unless we've seriously messed up on
+                // our side. This should be treated as an internal server error.
+                debug({
+                    message: 'generated invalid SQL',
                     data: req.body
-                }
-            });
+                });
+                return handleInternalError(res, err);
+            case 'ER_DATA_TOO_LONG':
+                // No way to get the actual column that caused the error
+                // short of regexps, just send back the error
+                message = err.message;
+                break;
+            case 'ER_NO_REFERENCED_ROW_2':
+                message = err.message;
+                // The default message may reveal too much but that's
+                // okay for right now
+                message = err.message;
+                break;
         }
-    });
 
-    r.get('/:schema/:table/column/:col', async (req, res) => {
-        try {
-            res.json(await daoFor(req).columnContent(req.params.schema, req.params.table, req.params.col));
-        } catch (e) {
-            const input = pick(req.params, ['schema', 'table', 'col']);
-
-            // Try to handle any errors thrown while fetching the data
-            if (e.code) {
-                switch (e.code) {
-                    case 'ER_BAD_FIELD_ERROR':
-                        return sendError(res, 404, {
-                            message: 'no such column',
-                            input
-                        });
-                    case 'ER_NO_SUCH_TABLE':
-                        return sendError(res, 404, {
-                            message: 'no such table',
-                            input
-                        });
-                    case 'ER_DBACCESS_DENIED_ERROR':
-                        return sendError(res, 404, {
-                            message: 'no such schema',
-                            input
-                        });
-                }
-            }
-
-            // Unknown error, fall back to 500 Internal Server Error
-            return internalError(res, e, {
-                message: 'Could not execute request',
-                input
-            });
+        // Set `code` to 400 if it hasn't been messed with
+        if (code === null) {
+            code = 400;
         }
-    });
 
-    const internalError = (res: Response, err: Error, data: ErrorResponse) => {
+        res.status(code).json(createErrorResponse(message, err));
+    };
+
+    /** Handles expected internal validation errors */
+    const handleValidationError = (res: Response, err: ValidationError) => {
+        res.status(400).json(createErrorResponse(err.message, err));
+    };
+
+    /** Handles unexpected internal errors */
+    const handleInternalError = (res: Response, err: any) => {
+        // Print to console when not in production
         debug(err);
-        const responseData = data as any;
-        if (NODE_ENV !== NodeEnv.PROD)
-            responseData.error = {
+
+        // Send 500 Internal Server Error
+        res.status(500).json(createErrorResponse('Unable to execute request', err));
+    };
+
+    /**
+     * Creates an ErrorResponse. Only assigns a value to the `error` if not in
+     * production.
+     */
+    const createErrorResponse = (message: string, err: any): ErrorResponse => {
+        // Generic JSON response
+        const data: ErrorResponse = { message: 'Unable to execute request' };
+
+        // Show error information when not in production
+        if (NODE_ENV !== NodeEnv.PROD) {
+            data.error = {
                 name: err.name,
                 message: err.message,
                 stack: err.stack ? err.stack.split('\n') : null
             };
-        res.status(500).json(data);
-    };
+        }
 
-    const sendError = (res: Response, code: number, data: ErrorResponse) => {
-        res.status(code).json(data);
+        return data;
     };
 
     return r;

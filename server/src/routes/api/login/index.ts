@@ -13,8 +13,7 @@ export function loginRouter(db: DatabaseHelper): Router {
         // Require at a bare minimum the username and password
         if (username === undefined || password === undefined) {
             const err: ErrorResponse = {
-                message: 'username or password keys not provided in form body',
-                input: { username, password }
+                message: 'username or password keys not provided in form body'
             };
             return res.status(400).json(err);
         }
@@ -38,8 +37,7 @@ export function loginRouter(db: DatabaseHelper): Router {
             // We couldn't connect, most likely due to an invalid configuration,
             // return 400.
             const resp: ErrorResponse = {
-                message: 'Unable to create a connection',
-                input: {}
+                message: 'Unable to create a connection'
             };
             return res.status(400).json(resp);
         }

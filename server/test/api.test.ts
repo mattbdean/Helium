@@ -28,8 +28,7 @@ describe('API v1', () => {
 
     // A Joi schema that mirrors the ErrorResponse interface
     const errorResponseSchema = joi.object({
-        message: joi.string().required(),
-        input: joi.object().required()
+        message: joi.string().required()
     });
 
     const MOCK_API_KEY = 'mockKey';
@@ -54,7 +53,7 @@ describe('API v1', () => {
                     .expect(404)
                     .expect('Content-Type', /application\/json/)
                     .then((req) => {
-                        expect(req.body).to.deep.equal({ message: 'Not found', input: {} });
+                        expect(req.body).to.deep.equal({ message: 'Not found' });
                     });
             });
         });
@@ -155,6 +154,15 @@ describe('API v1', () => {
 
                 expect(schemasStub).to.have.been.calledOnce;
             });
+
+            it('should throw a 500 when something goes wrong', async () => {
+                const schemasSub = sinon.stub(schemaDao, 'schemas')
+                    .rejects(Error);
+
+                await request.get('/schemas', 500);
+
+                expect(schemasSub).to.have.been.calledOnce;
+            });
         });
 
         describe('GET /api/v1/schemas/:schema', () => {
@@ -213,25 +221,25 @@ describe('API v1', () => {
                 expect(colStub).to.have.been.calledWithExactly('foo', 'bar', 'baz');
             });
 
-            it('should 404 when the schema, table, or column doesn\'t exist', async () => {
+            it('should 400 when the schema, table, or column doesn\'t exist', async () => {
                 let colStub = sinon.stub(schemaDao, 'columnContent');
 
-                const assert404 = async (code: string) => {
+                const assertCode = async (errorCode: string, httpCode: number) => {
                     // Reset any previous behavior/call history
                     colStub.reset();
                     // Make sure columnContent() always rejects with this code
-                    colStub = colStub.rejects(mysqlError(code));
+                    colStub = colStub.rejects(mysqlError(errorCode));
 
                     // Call the endpoint, ensure 404
-                    await request.get('/schemas/foo/bar/column/baz', 404);
+                    await request.get('/schemas/foo/bar/column/baz', httpCode);
 
                     // Make sure columnContent() was called
                     expect(colStub).calledWithExactly('foo', 'bar', 'baz');
                 };
 
-                await assert404('ER_DBACCESS_DENIED_ERROR'); // bad schema
-                await assert404('ER_NO_SUCH_TABLE'); // bad table
-                await assert404('ER_BAD_FIELD_ERROR'); // bad column
+                await assertCode('ER_DBACCESS_DENIED_ERROR', 404); // bad schema
+                await assertCode('ER_NO_SUCH_TABLE', 404); // bad table
+                await assertCode('ER_BAD_FIELD_ERROR', 400); // bad column
             });
         });
 

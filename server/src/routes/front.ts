@@ -14,10 +14,7 @@ export function front(): Router {
                 }
             });
         } else if (req.accepts('json')) {
-            const resp: ErrorResponse = {
-                message: 'Not found',
-                input: {}
-            };
+            const resp: ErrorResponse = { message: 'Not found' };
             return res.status(404).json(resp);
         } else {
             return res.status(404).send('Please specify an Accept header');
