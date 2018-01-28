@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response, Router } from 'express';
+import { Request, Response, Router } from 'express';
 import { ErrorResponse } from '../../../../../client/app/common/responses';
 import { ConnectionConf } from '../../../db/connection-conf.interface';
 import { DatabaseHelper } from '../../../db/database.helper';
@@ -6,11 +6,11 @@ import { DatabaseHelper } from '../../../db/database.helper';
 export function loginRouter(db: DatabaseHelper): Router {
     const r = Router();
 
-    r.post('/', async (req: Request, res: Response, next: NextFunction) => {
+    r.post('/', async (req: Request, res: Response) => {
         // Object destructuring, get these properties from request body
         const { username, password, host } = req.body;
 
-        // Requre at a bare minimum the username and password
+        // Require at a bare minimum the username and password
         if (username === undefined || password === undefined) {
             const err: ErrorResponse = {
                 message: 'username or password keys not provided in form body',
@@ -35,7 +35,7 @@ export function loginRouter(db: DatabaseHelper): Router {
                 .header('X-Session-Expiration', String(db.expiration(apiKey)))
                 .json({ apiKey });
         } catch (_) {
-            // We couldn't connect, most likely due to an invalid configuraiton,
+            // We couldn't connect, most likely due to an invalid configuration,
             // return 400.
             const resp: ErrorResponse = {
                 message: 'Unable to create a connection',
