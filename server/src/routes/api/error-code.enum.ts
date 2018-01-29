@@ -2,6 +2,8 @@ export type ErrorCode =
     // General
     'MALFORMED_JSON' |
     'WRONG_TYPE' |
+    'INVALID_PAGE' |
+    'INVALID_LIMIT' |
 
     // Filters
     'INVALID_FILTER' |

@@ -13,6 +13,7 @@ import {
 import { TableName } from '../../../common/table-name.class';
 import { unflattenTableNames } from '../../../common/util';
 import { QueryHelper } from '../../../db/query-helper';
+import { ValidationError } from '../validation-error';
 import { TableInputValidator } from './schema-input.validator';
 
 /**
@@ -92,10 +93,10 @@ export class SchemaDao {
         const sort = opts.sort || null;
 
         if (page < 1)
-            throw new Error('Expecting page >= 1');
+            throw new ValidationError('Expecting page >= 1', 'INVALID_LIMIT', { page });
 
         if (limit < 0)
-            throw new Error('Expecting limit < 0');
+            throw new ValidationError('Expecting limit < 0', 'INVALID_PAGE', { limit });
 
         const rows = await this.helper.execute((squel) => {
             // Create our basic query
@@ -123,7 +124,7 @@ export class SchemaDao {
         // If there's no data being returned and this isn't the first page,
         // we've gone past the last page.
         if (rows.length === 0 && page !== 1)
-            throw new Error(`Page too high: ${page}`);
+            throw new ValidationError(`Page too high: ${page}`, 'INVALID_PAGE');
 
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
