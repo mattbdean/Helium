@@ -1,11 +1,11 @@
-
-import { ComponentMapperService } from './component-mapper.service';
 import { AutocompleteControlComponent } from '../dynamic-controls/autocomplete-control.component';
 import { CheckboxControlComponent } from '../dynamic-controls/checkbox-control.component';
-import { DateTimeControlComponent } from '../dynamic-controls/date-time-control.component';
+import { DateControlComponent } from '../dynamic-controls/date-control.component';
+import { DatetimeControlWrapperComponent } from '../dynamic-controls/datetime-control.component';
 import { EnumeratedControlComponent } from '../dynamic-controls/enumerated-control.component';
 import { InputControlComponent } from '../dynamic-controls/input-control.component';
 import { FormControlType } from '../form-control-spec.interface';
+import { ComponentMapperService } from './component-mapper.service';
 
 describe('ComponentMapperService', () => {
     let mapper: ComponentMapperService;
@@ -21,7 +21,8 @@ describe('ComponentMapperService', () => {
                 boolean: CheckboxControlComponent,
                 enum: EnumeratedControlComponent,
                 text: InputControlComponent,
-                date: DateTimeControlComponent
+                date: DateControlComponent,
+                datetime: DatetimeControlWrapperComponent
             };
 
             for (const type of Object.keys(expected)) {

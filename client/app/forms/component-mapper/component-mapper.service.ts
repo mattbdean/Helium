@@ -1,7 +1,8 @@
 import { Injectable, Type } from '@angular/core';
 import { AutocompleteControlComponent } from '../dynamic-controls/autocomplete-control.component';
 import { CheckboxControlComponent } from '../dynamic-controls/checkbox-control.component';
-import { DateTimeControlComponent } from '../dynamic-controls/date-time-control.component';
+import { DateControlComponent } from '../dynamic-controls/date-control.component';
+import { DatetimeControlWrapperComponent } from '../dynamic-controls/datetime-control.component';
 import { EnumeratedControlComponent } from '../dynamic-controls/enumerated-control.component';
 import { InputControlComponent } from '../dynamic-controls/input-control.component';
 import { FormControlType } from '../form-control-spec.interface';
@@ -23,7 +24,9 @@ export class ComponentMapperService {
             case 'boolean':
                 return CheckboxControlComponent;
             case 'date':
-                return DateTimeControlComponent;
+                return DateControlComponent;
+            case 'datetime':
+                return DatetimeControlWrapperComponent;
             default:
                 throw new Error('No known component for type ' + type);
         }

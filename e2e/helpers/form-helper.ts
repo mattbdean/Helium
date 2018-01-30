@@ -61,6 +61,12 @@ export class FormHelper {
                     // If there's no selected value, it'll remain null
                     value = await control.element(by.css('.mat-select-value-text'))
                         .getText();
+            } else if (elementName === 'datetime-input') {
+                const date = await control.element(by.css('input[type=date]'));
+                const time = await control.element(by.css('input[type=time]'));
+
+                value = (await date.getAttribute('value')) + ' ' +
+                    (await time.getAttribute('value'));
             } else {
                 // Normal input element (probably)
                 value = await control.getAttribute('value');

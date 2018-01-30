@@ -18,6 +18,7 @@ import { TableService } from '../../core/table/table.service';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec.interface';
+import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
 
 /**
  * This service is responsible for generating FormControlSpecs given a
@@ -73,10 +74,10 @@ export class FormSpecGeneratorService {
                     type = 'boolean';
                     break;
                 case 'date':
-                case 'datetime':
                     type = 'date';
-                    // datetime-local used for dates and times
-                    subtype = h.type === 'date' ? 'date' : 'datetime-local';
+                    break;
+                case 'datetime':
+                    type = 'datetime';
                     break;
                 case 'blob':
                     type = 'text';
@@ -169,21 +170,30 @@ export class FormSpecGeneratorService {
                 return null;
             case 'date':
             case 'datetime':
-                if (typeof defaultValue === 'string' && defaultValue !== undefined) {
+                let date: Date | null = null;
+                if ((defaultValue || {} as any).constantName === CURRENT_TIMESTAMP ||
+                    defaultValue === null ||
+                    defaultValue === undefined) {
+
+                    date = new Date();
+                } else if (typeof defaultValue === 'string') {
                     // Parse the string into a Date
                     const format = header.type === 'date' ? DATE_FORMAT : DATETIME_FORMAT;
-                    defaultValue = moment(defaultValue, format).toISOString();
+                    const m = moment(defaultValue, format);
+                    if (!m.isValid()) {
+                        throw new Error('Invalid date: ' + defaultValue);
+                    }
+
+                    date = m.toDate();
                 }
 
-                if ((defaultValue as any || {}).constantName === CURRENT_TIMESTAMP ||
-                    defaultValue === null ||
-                    defaultValue === undefined)
+                if (date === null)
+                    throw new Error('Could not parse as date: ' + defaultValue);
 
-                    // Use an ISO 8601 formatted string so any Angular Material
-                    // Date adapter can take it. If we gave it a Date object and
-                    // we switched to the Moment Date Adapter (if it comes out),
-                    // then we'd have to do some refactoring.
-                    defaultValue = new Date().toISOString();
+                defaultValue = moment(date).format(
+                    header.type === 'date' ?
+                        DatetimeInputComponent.DATE_INPUT_FORMAT :
+                        DatetimeInputComponent.DATETIME_INPUT_FORMAT);
                 break;
             case 'boolean':
                 // An initial value of 'undefined' looks exactly the same as

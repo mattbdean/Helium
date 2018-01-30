@@ -18,7 +18,7 @@ import { CoreModule } from '../core/core.module';
 import { ComponentMapperService } from './component-mapper/component-mapper.service';
 import { AutocompleteControlComponent } from './dynamic-controls/autocomplete-control.component';
 import { CheckboxControlComponent } from './dynamic-controls/checkbox-control.component';
-import { DateTimeControlComponent } from './dynamic-controls/date-time-control.component';
+import { DateControlComponent } from './dynamic-controls/date-control.component';
 import { EnumeratedControlComponent } from './dynamic-controls/enumerated-control.component';
 import { InputControlComponent } from './dynamic-controls/input-control.component';
 import { DynamicFormControlDirective } from './dynamic-form-control.directive';
@@ -26,11 +26,13 @@ import { FormHostComponent } from './form-host/form-host.component';
 import { FormSpecGeneratorService } from './form-spec-generator/form-spec-generator.service';
 import { FormRoutingModule } from './forms-routing.module';
 import { PartialFormComponent } from './partial-form/partial-form.component';
+import { DatetimeControlWrapperComponent } from './dynamic-controls/datetime-control.component';
 
 const formControlComponents = [
     AutocompleteControlComponent,
     CheckboxControlComponent,
-    DateTimeControlComponent,
+    DateControlComponent,
+    DatetimeControlWrapperComponent,
     EnumeratedControlComponent,
     InputControlComponent
 ];
@@ -46,7 +48,6 @@ const formControlComponents = [
         MatDatepickerModule,
         MatIconModule,
         MatInputModule,
-        MatNativeDateModule,
         MatSelectModule,
         MatSnackBarModule,
         ReactiveFormsModule,

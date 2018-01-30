@@ -189,8 +189,7 @@ describe('FormSpecGeneratorService', () => {
                 type: 'date'
             } as TableHeader);
 
-            formSpec.type.should.equal('date');
-            formSpec.subtype!!.should.equal('date');
+            expect(formSpec.type).to.equal('date');
         });
 
         it('should handle datetimes', () => {
@@ -199,8 +198,7 @@ describe('FormSpecGeneratorService', () => {
                 type: 'datetime'
             } as TableHeader);
 
-            formSpec.type.should.equal('date');
-            formSpec.subtype!!.should.equal('datetime-local');
+            expect(formSpec.type).to.equal('datetime');
         });
 
         it('should handle blobs', () => {

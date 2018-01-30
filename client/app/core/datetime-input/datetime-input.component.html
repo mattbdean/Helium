@@ -1,6 +1,6 @@
 <mat-form-field>
-    <input #date matInput type="date" placeholder="Date" (blur)="_onTouched()">
+    <input #date matInput type="date" [placeholder]="placeholder ? placeholder : 'Date'" [required]="required" (blur)="_onTouched()">
 </mat-form-field>
 <mat-form-field>
-    <input #time matInput type="time" placeholder="Time" (blur)="_onTouched()">
+    <input #time matInput type="time" [placeholder]="placeholder ? '' : 'Time'" [required]="required" (blur)="_onTouched()">
 </mat-form-field>

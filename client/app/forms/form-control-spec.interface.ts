@@ -2,7 +2,7 @@ import { ValidatorFn } from '@angular/forms';
 import { Observable } from 'rxjs/Observable';
 import { DefaultValue } from '../common/api';
 
-export type FormControlType = 'text' | 'enum' | 'boolean' | 'date' | 'autocomplete';
+export type FormControlType = 'text' | 'enum' | 'boolean' | 'date' | 'datetime' | 'autocomplete';
 
 /**
  * Defines how a specific form control should behave.
@@ -22,7 +22,7 @@ export interface FormControlSpec {
     /** A value to prepopulate the form control with */
     defaultValue?: DefaultValue;
 
-    /** More specific input type. Not always used. */
+    /** More specific input type. Only used for the 'text' type. */
     subtype?: string;
 
     /** Simple validation functions, such as `Validators.required` */

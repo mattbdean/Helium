@@ -1,5 +1,5 @@
 import {
-    Component, ElementRef, forwardRef, OnInit, ViewChild
+    Component, ElementRef, forwardRef, Input, OnInit, Output, ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
@@ -21,18 +21,24 @@ import { DATETIME_FORMAT } from '../../common/constants';
 })
 export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
     /** Format used by <input> fields with type=date */
-    private static readonly DATE_INPUT_FORMAT = 'YYYY-MM-DD';
+    public static readonly DATE_INPUT_FORMAT = 'YYYY-MM-DD';
 
     /** Format used by <input> fields with type=time */
-    private static readonly TIME_INPUT_FORMAT = 'HH:mm';
+    public static readonly TIME_INPUT_FORMAT = 'HH:mm';
 
     /**
      * The combination of DATE_INPUT_FORMAT and TIME_INPUT_FORMAT, in that order
      * separated by a space.
      */
-    private static readonly DATETIME_INPUT_FORMAT =
+    public static readonly DATETIME_INPUT_FORMAT =
         DatetimeInputComponent.DATE_INPUT_FORMAT + ' ' +
         DatetimeInputComponent.TIME_INPUT_FORMAT;
+
+    @Input()
+    public placeholder: string = '';
+
+    @Input()
+    public required: boolean = false;
 
     /** Called when either the date or time inputs are blurred */
     public _onTouched = () => undefined;
@@ -93,19 +99,19 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
             return;
         }
 
-        const m = moment(obj, DATETIME_FORMAT, true);
+        const m = moment(obj, DatetimeInputComponent.DATETIME_INPUT_FORMAT, true);
         if (!m.isValid()) {
-            throw new Error(`Not a valid date: ${obj}. Expected Moment format ` +
-                DATETIME_FORMAT);
-        } else {
-            // Format only the date portion
-            this.date.nativeElement.value =
-                m.format(DatetimeInputComponent.DATE_INPUT_FORMAT);
-
-            // Format only the time portion
-            this.time.nativeElement.value =
-                m.format(DatetimeInputComponent.TIME_INPUT_FORMAT);
+            throw new Error(`Not a valid date: '${obj}', expecting format ` +
+                DatetimeInputComponent.DATETIME_INPUT_FORMAT);
         }
+
+        // Format only the date portion
+        this.date.nativeElement.value =
+            m.format(DatetimeInputComponent.DATE_INPUT_FORMAT);
+
+        // Format only the time portion
+        this.time.nativeElement.value =
+            m.format(DatetimeInputComponent.TIME_INPUT_FORMAT);
     }
 
     // overridden from ControlValueAccessor
