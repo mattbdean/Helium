@@ -238,10 +238,18 @@ export class TableInputValidator {
                 throw Error('Unknown data type: ' + h.type);
         }
 
+        // No undefined values
+        schema = schema.required();
+
         // Make all non-nullable properties required. Blob nullability is
         // already handled.
-        if (!h.nullable)
-            schema = schema.required();
+        if (h.type !== 'blob') {
+            if (h.nullable) {
+                schema = schema.allow(null);
+            } else {
+                schema = schema.disallow(null);
+            }
+        }
 
         return schema;
     }

@@ -362,6 +362,26 @@ describe('SchemaInputValidator', () => {
                 (v) => isNumeric(v) && Number.isFinite(parseFloat(v)));
         });
 
+        it('should handle nullable types', () => {
+            const types = ['string', 'integer', 'float', 'date', 'datetime',
+                'boolean', 'enum', 'blob'];
+
+            for (const type of types) {
+                const headerStub = {
+                    type,
+                    nullable: true,
+                    maxCharacters: 5,
+                    signed: true,
+                    enumValues: ['a', 'b']
+                };
+                const schema = TableInputValidator.schemaForHeader(asHeader(headerStub));
+
+                const result = schema.validate(null);
+                if (result.error)
+                    throw result.error;
+            }
+        });
+
         it('should handle unsigned integers', () => {
             testSchemaGen({ type: 'integer', signed: false },
                 (v) => isNumeric(v) && Number.isInteger(parseFloat(v)) && parseInt(v, 10) >= 0);
@@ -377,7 +397,7 @@ describe('SchemaInputValidator', () => {
                 // joi-date-extensions accepts numbers as valid date inputs as
                 // well as properly-formatted dates
                 (typeof v === 'number' && Number.isFinite(v)) ||
-                // 3rd paramter in moment() is 'strict mode'
+                // 3rd parameter in moment() is 'strict mode'
                 (typeof v === 'string' && moment(v, DATE_FORMAT, true).isValid()));
         });
 
@@ -386,7 +406,7 @@ describe('SchemaInputValidator', () => {
                 // joi-date-extensions accepts numbers as valid date inputs as
                 // well as properly-formatted dates
                 (typeof v === 'number' && Number.isFinite(v)) ||
-                // 3rd paramter in moment() is 'strict mode'
+                // 3rd parameter in moment() is 'strict mode'
                 (typeof v === 'string' && moment(v, DATETIME_FORMAT, true).isValid()));
         });
 
@@ -403,12 +423,12 @@ describe('SchemaInputValidator', () => {
         it('should handle non-nullable blobs', () => {
             testSchemaGen({ type: 'blob', nullable: false },
                 // All inputs are invalid for a non-nullable blob
-                (v) => false);
+                () => false);
         });
 
         it('should handle nullable blobs', () => {
             testSchemaGen({ type: 'blob', nullable: true },
-                (v) => v === null || v === undefined);
+                (v) => v === null);
         });
     });
 });
