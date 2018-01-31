@@ -1,10 +1,10 @@
-import { AutocompleteControlComponent } from '../dynamic-controls/autocomplete-control.component';
-import { CheckboxControlComponent } from '../dynamic-controls/checkbox-control.component';
-import { DateControlComponent } from '../dynamic-controls/date-control.component';
-import { DatetimeControlWrapperComponent } from '../dynamic-controls/datetime-control.component';
-import { EnumeratedControlComponent } from '../dynamic-controls/enumerated-control.component';
-import { InputControlComponent } from '../dynamic-controls/input-control.component';
-import { FormControlType } from '../form-control-spec.interface';
+import { AutocompleteControlComponent } from '../controls/autocomplete-control.component';
+import { CheckboxControlComponent } from '../controls/checkbox-control.component';
+import { DateControlComponent } from '../controls/date-control.component';
+import { DatetimeControlWrapperComponent } from '../controls/datetime-control.component';
+import { EnumeratedControlComponent } from '../controls/enumerated-control.component';
+import { InputControlComponent } from '../controls/input-control.component';
+import { FormControlType } from '../form-control-spec';
 import { ComponentMapperService } from './component-mapper.service';
 
 describe('ComponentMapperService', () => {

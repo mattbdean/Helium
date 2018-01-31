@@ -1,6 +1,6 @@
 
 import { Component } from '@angular/core';
-import { AbstractFormControl } from './abstract-form-control.class';
+import { AbstractFormControl } from './abstract-form-control';
 
 /**
  * Handles dates both with and without times.

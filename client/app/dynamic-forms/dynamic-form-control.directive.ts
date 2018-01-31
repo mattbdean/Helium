@@ -5,8 +5,8 @@ import {
 import { FormGroup } from '@angular/forms';
 
 import { ComponentMapperService } from './component-mapper/component-mapper.service';
-import { AbstractFormControl } from './dynamic-controls/abstract-form-control.class';
-import { FormControlSpec } from './form-control-spec.interface';
+import { AbstractFormControl } from './controls/abstract-form-control';
+import { FormControlSpec } from './form-control-spec';
 
 /**
  * This directive dynamically inserts an AbstractFormControl based on the given

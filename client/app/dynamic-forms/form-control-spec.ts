@@ -36,5 +36,9 @@ export interface FormControlSpec {
     /** If true, the form control will be disabled */
     disabled?: boolean;
 
+    /**
+     * An Observable that lists all values available for autocompletion. Only
+     * available when `type` is `'autocomplete'`.
+     */
     autocompleteValues?: Observable<string[]>;
 }

@@ -14,11 +14,11 @@ import {
     DATETIME_FORMAT
 } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
+import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
 import { TableService } from '../../core/table/table.service';
 import {
     FormControlSpec, FormControlType
-} from '../form-control-spec.interface';
-import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
+} from '../../dynamic-forms/form-control-spec';
 
 /**
  * This service is responsible for generating FormControlSpecs given a

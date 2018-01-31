@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { AbstractFormControl } from './abstract-form-control.class';
+import { AbstractFormControl } from './abstract-form-control';
 
 @Component({
     selector: 'input-control',

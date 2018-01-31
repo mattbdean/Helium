@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 
 import { Observable } from 'rxjs/Observable';
 
-import { AbstractFormControl } from './abstract-form-control.class';
+import { AbstractFormControl } from './abstract-form-control';
 
 /**
  * This component provides autocomplete functionality for a dynamic form. The
