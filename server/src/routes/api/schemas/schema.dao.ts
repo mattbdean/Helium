@@ -466,7 +466,7 @@ export class SchemaDao {
     }
 
     private static identifyDefaultValue(rawType: string, type: TableDataType, rawDefault: string): DefaultValue {
-        if (rawDefault === CURRENT_TIMESTAMP && rawType === 'datetime')
+        if (rawDefault === CURRENT_TIMESTAMP && (rawType === 'datetime' || rawType === 'timestamp'))
             return { constantName: CURRENT_TIMESTAMP };
 
         switch (type) {
