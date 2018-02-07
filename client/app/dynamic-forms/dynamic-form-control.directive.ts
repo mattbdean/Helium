@@ -1,6 +1,7 @@
 import {
-    ComponentFactoryResolver, ComponentRef, Directive, Input,
-    OnInit, ViewContainerRef
+    ComponentFactoryResolver, ComponentRef, Directive, Input, OnChanges,
+    SimpleChanges,
+    ViewContainerRef
 } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
@@ -15,7 +16,7 @@ import { FormControlSpec } from './form-control-spec';
 @Directive({
     selector: '[dynamicFormControl]'
 })
-export class DynamicFormControlDirective implements OnInit {
+export class DynamicFormControlDirective implements OnChanges {
     @Input()
     public control: FormControlSpec;
 
@@ -30,7 +31,10 @@ export class DynamicFormControlDirective implements OnInit {
         private componentMapper: ComponentMapperService
     ) {}
 
-    public ngOnInit() {
+    public ngOnChanges(changes: SimpleChanges) {
+        if (!changes.control.firstChange)
+            this.container.clear();
+
         const component = this.componentMapper.componentFor(this.control.type);
 
         const factory = this.resolver.resolveComponentFactory(component);

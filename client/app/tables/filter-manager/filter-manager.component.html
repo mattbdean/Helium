@@ -1,5 +1,5 @@
 <div class="filter-wrapper" *ngFor="let control of formArray.controls; let i = index">
-    <filter [headers]="headers" [group]="control" (removed)="removeFilter(control)"></filter>
+    <filter [meta]="meta" [group]="control" (removed)="removeFilter(control)"></filter>
 
     <button *ngIf="i === formArray.controls.length - 1"
             class="add-filter-button"

@@ -15,7 +15,8 @@ import {
 } from '@angular/platform-browser/animations';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
-import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
+import { TableMeta } from '../../common/api';
+import { DynamicFormsModule } from '../../dynamic-forms/dynamic-forms.module';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
 import { FilterProviderService } from '../filter-provider/filter-provider.service';
 import { FilterComponent } from './filter.component';
@@ -27,8 +28,9 @@ describe('FilterComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [FilterComponent, DatetimeInputComponent],
+            declarations: [FilterComponent],
             imports: [
+                DynamicFormsModule,
                 NoopAnimationsModule,
                 MatCardModule,
                 MatCheckboxModule,
@@ -45,6 +47,9 @@ describe('FilterComponent', () => {
 
         fixture = TestBed.createComponent(FilterComponent);
         comp = fixture.componentInstance;
+        comp.meta = {
+            headers: []
+        } as any as TableMeta;
         comp.group = FilterManagerComponent.createFilterGroup();
         de = fixture.debugElement;
     });
@@ -62,7 +67,6 @@ describe('FilterComponent', () => {
         // Unchecking the checkbox should disable it
         el.click();
         expect(spy).to.have.been.calledOnce;
-        expect(comp.group.enabled).to.be.false;
     });
 
     it('should send an event via `removed` when the remove button is clicked', fakeAsync(() => {

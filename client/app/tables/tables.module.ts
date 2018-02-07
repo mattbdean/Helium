@@ -4,8 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import {
     MatButtonModule,
     MatCardModule, MatCheckboxModule, MatFormFieldModule, MatIconModule,
-    MatInputModule,
-    MatProgressBarModule, MatSelectModule, MatSnackBarModule
+    MatProgressBarModule, MatSelectModule
 } from '@angular/material';
 
 import { CoreModule } from '../core/core.module';
@@ -15,6 +14,7 @@ import { TableRoutingModule } from './table-routing.module';
 
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { InlineSVGModule } from 'ng-inline-svg';
+import { DynamicFormsModule } from '../dynamic-forms/dynamic-forms.module';
 import { FilterManagerComponent } from './filter-manager/filter-manager.component';
 import { FilterProviderService } from './filter-provider/filter-provider.service';
 import { FilterComponent } from './filter/filter.component';
@@ -23,16 +23,15 @@ import { FilterComponent } from './filter/filter.component';
     imports: [
         CommonModule,
         CoreModule,
+        DynamicFormsModule,
         InlineSVGModule,
         MatButtonModule,
         MatCardModule,
         MatCheckboxModule,
         MatFormFieldModule,
         MatIconModule,
-        MatInputModule,
         MatProgressBarModule,
         MatSelectModule,
-        MatSnackBarModule,
         NgxDatatableModule,
         ReactiveFormsModule,
         TableRoutingModule

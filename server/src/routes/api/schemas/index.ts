@@ -44,7 +44,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
         joi.object({
             op: joi.string(),
             param: joi.string(),
-            value: joi.string()
+            value: joi.alternatives(joi.string(), joi.boolean())
         }).requiredKeys('op', 'param', 'value')
     );
 

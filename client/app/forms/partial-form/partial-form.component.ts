@@ -14,7 +14,7 @@ import * as _ from 'lodash';
 import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
 import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
-import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
+import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';
 
 interface Binding {
     controlName: string;

@@ -6,8 +6,9 @@ import {
     AbstractControl, FormArray, FormControl, FormGroup,
     Validators
 } from '@angular/forms';
+import { isEqual } from 'lodash';
 import { Subscription } from 'rxjs/Subscription';
-import { Filter, TableHeader } from '../../common/api';
+import { Filter, TableMeta } from '../../common/api';
 
 @Component({
     selector: 'filter-manager',
@@ -20,7 +21,7 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
      * children.
      */
     @Input()
-    public headers: TableHeader[] = [];
+    public meta: TableMeta;
 
     /** Emits the valid filters when they've changed */
     @Output()
@@ -39,24 +40,38 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     public ngOnChanges(changes: SimpleChanges): void {
-        if (changes.headers) {
+        if (changes.meta) {
             // The headers have changed (most likely because the user has
             // switched tables), start over
             this.formArray = new FormArray([]);
 
-            if (!changes.headers.firstChange) {
+            if (!changes.meta.firstChange) {
                 // User has switched tables, clear the filters
                 this.sub.unsubscribe();
                 this.changed.emit([]);
             }
 
             this.sub = this.formArray.valueChanges
+                .distinctUntilChanged(isEqual)
                 .map(() => {
                     return this.formArray.controls
                         // Only use data that is both valid and enabled
-                        .filter((control) => control.valid && control.enabled)
+                        .filter((group: FormGroup) => {
+                            // Filter out invalid and disabled filters
+                            if (!group.valid) return false;
+
+                            // Because of the way disabling works
+                            for (const controlName of Object.keys(group.controls)) {
+                                if (group.controls[controlName].disabled)
+                                    return false;
+                            }
+
+                            return true;
+                        })
                         .map((control) => control.value);
                 })
+                .distinctUntilChanged(isEqual)
+                .do((it) => { console.log('formArray.valueChanges', it, this.formArray.errors); })
                 // Notify listeners that the filters have changed
                 .subscribe((filters) => this.changed.emit(filters));
         }

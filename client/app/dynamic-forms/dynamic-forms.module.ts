@@ -21,6 +21,7 @@ import { DatetimeControlWrapperComponent } from './controls/datetime-control.com
 import { EnumeratedControlComponent } from './controls/enumerated-control.component';
 import { InputControlComponent } from './controls/input-control.component';
 import { DynamicFormControlDirective } from './dynamic-form-control.directive';
+import { FormSpecGeneratorService } from './form-spec-generator/form-spec-generator.service';
 
 const formControlComponents = [
     AutocompleteControlComponent,
@@ -93,6 +94,7 @@ const formControlComponents = [
     ],
     providers: [
         ComponentMapperService,
+        FormSpecGeneratorService
     ],
     // The only components we need to insert dynamically are the form control
     // components.

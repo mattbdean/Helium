@@ -335,6 +335,24 @@ describe('API v1', () => {
                     }
                 });
             });
+
+            it('should handle an empty array of filters', async () => {
+                const stub = sinon.stub(schemaDao, 'content')
+                    .resolves([]);
+
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 200,
+                    query: {
+                        filters: '[]'
+                    }
+                });
+
+                expect(stub).to.have.been.calledWithExactly('schema', 'table', {
+                    page: 1, limit: 25, sort: undefined
+                }, []);
+            });
         });
 
         describe('PUT /api/v1/schemas/:schema/:table/data', () => {

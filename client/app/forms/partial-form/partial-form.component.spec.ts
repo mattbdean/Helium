@@ -23,7 +23,7 @@ import {
     FormControlSpec,
     FormControlType
 } from '../../dynamic-forms/form-control-spec';
-import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
+import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
 
 const expect = global['chai'].expect;

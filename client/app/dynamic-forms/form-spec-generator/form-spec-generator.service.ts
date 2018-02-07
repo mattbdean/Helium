@@ -18,7 +18,7 @@ import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input
 import { TableService } from '../../core/table/table.service';
 import {
     FormControlSpec, FormControlType
-} from '../../dynamic-forms/form-control-spec';
+} from '../form-control-spec';
 
 /**
  * This service is responsible for generating FormControlSpecs given a

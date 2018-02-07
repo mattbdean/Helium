@@ -4,7 +4,7 @@ import { expect } from 'chai';
 
 import { Constraint, TableHeader, TableMeta } from '../../common/api';
 import { TableService } from '../../core/table/table.service';
-import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
+import { FormControlSpec } from '../form-control-spec';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 
 /** Special interface to make creating actual textual TableHeader instances easier */

@@ -12,7 +12,7 @@
 
     <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
 
-    <filter-manager #filterManager [hidden]="!showFilters" [headers]="meta ? meta.headers : []" (changed)="onFiltersChanged($event)"></filter-manager>
+    <filter-manager #filterManager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
 
     <ngx-datatable class="material"
                    [hidden]="!exists"

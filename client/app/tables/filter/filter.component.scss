@@ -1,6 +1,5 @@
 mat-card {
-  max-width: 350px;
-  min-width: 250px;
+  width: 250px;
 
   // Minimize vertical space used while still providing enough breathing room
   padding-top: 10px;
@@ -8,7 +7,7 @@ mat-card {
 
   transition: background 300ms;
 
-  &.invalid {
+  &.ng-invalid {
     background: rgba(0, 0, 0, 0.02);
   }
   &.disabled {
@@ -37,6 +36,6 @@ mat-card {
   align-self: flex-end;
 }
 
-.custom-input-wrapper mat-form-field {
+::ng-deep mat-form-field {
   width: 100%;
 }

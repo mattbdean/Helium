@@ -1,4 +1,4 @@
-<mat-card class="filter-input-container" [ngClass]="{ invalid: group.invalid && !group.disabled, disabled: group.disabled && !group.invalid }" [formGroup]="group">
+<mat-card class="filter-input-container" [class.disabled]="group.disabled" [formGroup]="group">
     <div class="management-container">
         <mat-checkbox
             #checkbox
@@ -20,7 +20,7 @@
     <div class="control-container">
         <mat-form-field>
             <mat-select placeholder="Column" formControlName="param">
-                <mat-option *ngFor="let header of headers" [value]="header.name">{{ header.name }}</mat-option>
+                <mat-option *ngFor="let header of meta.headers" [value]="header.name">{{ header.name }}</mat-option>
             </mat-select>
         </mat-form-field>
 
@@ -30,17 +30,8 @@
             </mat-select>
         </mat-form-field>
 
-        <div class="custom-input-wrapper" [hidden]="!showUserInput" [ngSwitch]="inputType">
-            <!-- Datetime input -->
-            <datetime-input *ngSwitchCase="'datetime'" formControlName="value"></datetime-input>
-
-            <!-- Hidden input -->
-            <input *ngSwitchCase="'none'" type="hidden" formControlName="value">
-
-            <!-- Normal text input -->
-            <mat-form-field *ngSwitchDefault>
-                <input matInput type="text" placeholder="Value" formControlName="value">
-            </mat-form-field>
+        <div class="custom-input-wrapper" [hidden]="!showUserInput">
+            <ng-template dynamicFormControl [group]="group" [control]="currentSpec"></ng-template>
         </div>
     </div>
 </mat-card>
