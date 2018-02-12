@@ -15,8 +15,7 @@ export function api(db: DatabaseHelper, daoFactory: DaoFactory): Router {
     // client still receives JSON data
     router.get('/*', (req: Request, res: Response) => {
         const resp: ErrorResponse = {
-            message: 'Not found',
-            input: {}
+            message: 'Not found'
         };
 
         res.status(404).json(resp);

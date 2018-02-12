@@ -1,6 +1,7 @@
 export interface ErrorResponse {
     message: string;
-    input: any;
+    error?: any;
+    relevantInput?: any;
 }
 
 export interface PaginatedResponse<T> {

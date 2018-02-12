@@ -89,7 +89,7 @@ export class TableInputValidator {
     public async validate(db: string, data: any): Promise<TableInsert> {
         if (data === null || data === undefined || typeof data !== 'object')
             throw new ValidationError('Expecting a defined, non-null object, got ' + data,
-                ErrorCode.WRONG_TYPE);
+                'WRONG_TYPE');
 
         // Convert all keys to TableName objects
         const tableNames = Object.keys(data).map((n) => new TableName(db, n.toString()));
@@ -99,7 +99,7 @@ export class TableInputValidator {
         if (masters.length !== 1)
             throw new ValidationError(
                 'Expecting exactly 1 master table, got ' + masters.length,
-                ErrorCode.ONLY_ONE_MASTER_TABLE);
+                'ONLY_ONE_MASTER_TABLE');
 
         const masterTable = masters[0];
 
@@ -109,7 +109,7 @@ export class TableInputValidator {
             // part.masterName is guaranteed to be non-null here
             if (part.masterName!!.raw !== masterTable.name.raw)
                 throw new ValidationError('Part table data must be inserted ' +
-                    'with the master it belongs to', ErrorCode.INVALID_PART_TABLE);
+                    'with the master it belongs to', 'INVALID_PART_TABLE');
 
         // Fetch all metadata belonging to all the tables here. The headers for
         // tableNames[i] are located at allHeaders[i].
@@ -238,10 +238,18 @@ export class TableInputValidator {
                 throw Error('Unknown data type: ' + h.type);
         }
 
+        // No undefined values
+        schema = schema.required();
+
         // Make all non-nullable properties required. Blob nullability is
         // already handled.
-        if (!h.nullable)
-            schema = schema.required();
+        if (h.type !== 'blob') {
+            if (h.nullable) {
+                schema = schema.allow(null);
+            } else {
+                schema = schema.disallow(null);
+            }
+        }
 
         return schema;
     }

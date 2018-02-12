@@ -1,0 +1,12 @@
+<div class="filter-wrapper" *ngFor="let control of formArray.controls; let i = index">
+    <filter [meta]="meta" [group]="control" (removed)="removeFilter(control)"></filter>
+
+    <button *ngIf="i === formArray.controls.length - 1"
+            class="add-filter-button"
+            mat-icon-button
+            type="button"
+            title="Add another filter"
+            (click)="addFilter()">
+        <mat-icon color="primary">add_circle</mat-icon>
+    </button>
+</div>

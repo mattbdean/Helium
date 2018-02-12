@@ -11,8 +11,8 @@ import { MatSidenav } from '@angular/material';
 import { Subscription } from 'rxjs/Subscription';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
-import { AuthService } from './core/auth.service';
-import { TableService } from './core/table.service';
+import { AuthService } from './core/auth/auth.service';
+import { TableService } from './core/table/table.service';
 
 interface GroupedName { tier: TableTier; names: MasterTableName[]; }
 

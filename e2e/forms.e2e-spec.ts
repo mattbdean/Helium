@@ -110,11 +110,9 @@ describe('Forms', () => {
             pk: '',
             int: '5',
             float: '10',
-            date: '1/1/2017',
-            // datetime and datetime_now are supposed to have time components as
-            // well, but Angular Material doesn't support datetime pickers yet
-            datetime: '1/1/2017',
-            datetime_now: moment().format('M/D/YYYY'),
+            date: '2017-01-01',
+            datetime: '2017-01-01 12:00',
+            datetime_now: moment().format('YYYY-MM-DD HH:mm'),
             boolean: true,
             enum: 'a',
             no_default: ''

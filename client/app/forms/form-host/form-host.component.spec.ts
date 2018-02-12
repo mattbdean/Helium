@@ -11,7 +11,7 @@ import * as sinon from 'sinon';
 
 import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
-import { TableService } from '../../core/table.service';
+import { TableService } from '../../core/table/table.service';
 import { FormHostComponent } from './form-host.component';
 
 const expect = global['chai'].expect;

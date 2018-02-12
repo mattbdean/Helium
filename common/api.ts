@@ -128,3 +128,11 @@ export interface Constraint {
 }
 
 export type ConstraintType = 'primary' | 'foreign' | 'unique';
+
+export type FilterOperation = 'lt' | 'gt' | 'eq' | 'is' | 'isnot';
+
+export interface Filter {
+    op: FilterOperation;
+    param: string;
+    value: string;
+}

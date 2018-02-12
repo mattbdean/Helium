@@ -1,0 +1,47 @@
+.special-cell {
+  background-color: #E0E0E0;
+  font-family: "Roboto Mono", Consolas, Monaco, "Courier New", monospace;
+  font-size: 0.8rem;
+  padding: 3px;
+  border-radius: 4px;
+}
+
+.header-container {
+  min-height: 35px;
+  cursor: pointer;
+}
+
+h1 {
+  margin-bottom: 25px;
+}
+
+.not-found-container {
+  text-align: center;
+}
+
+.table-description {
+  font-size: 1.1rem;
+  font-style: italic;
+  font-weight: normal;
+}
+
+.insert-like-icon {
+  opacity: 0.3;
+  transition: opacity 0.3s ease-in;
+  cursor: pointer;
+  &:hover {
+    opacity: 1.0;
+  }
+}
+
+.filter-icon {
+  fill: rgba(0, 0, 0, 0.64);
+
+  &:hover {
+    fill: rgba(0, 0, 0, 0.78)
+  }
+
+  &:active {
+    fill: #000000;
+  }
+}

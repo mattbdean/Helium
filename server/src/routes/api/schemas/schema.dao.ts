@@ -1,8 +1,9 @@
 import * as _ from 'lodash';
 import * as moment from 'moment';
+import { Select } from 'squel';
 
 import {
-    Constraint, ConstraintType, DefaultValue, SqlRow, TableDataType,
+    Constraint, ConstraintType, DefaultValue, Filter, SqlRow, TableDataType,
     TableHeader, TableMeta
 } from '../../../common/api';
 import {
@@ -12,6 +13,7 @@ import {
 import { TableName } from '../../../common/table-name.class';
 import { unflattenTableNames } from '../../../common/util';
 import { QueryHelper } from '../../../db/query-helper';
+import { ValidationError } from '../validation-error';
 import { TableInputValidator } from './schema-input.validator';
 
 /**
@@ -34,6 +36,11 @@ export interface Sort {
 }
 
 export class SchemaDao {
+    private static readonly SIMPLE_FILTER_OP_MAPPING: { [op: string]: string } = {
+        lt: '<',
+        gt: '>',
+        eq: '='
+    };
     private validator: TableInputValidator;
 
     public constructor(private helper: QueryHelper) {
@@ -71,12 +78,14 @@ export class SchemaDao {
      * @param {number} opts.limit How many rows to fetch in one go
      * @param {Sort} opts.sort If provided, will attempt to sort the results by
      * this column/direction
+     * @param {Filter} filters Specify constraints on what data to retrieve
      * @returns {Promise<SqlRow[]>} A promise that resolves to the requested
      * data
      */
     public async content(schema: string,
                          table: string,
-                         opts: { page?: number, limit?: number, sort?: Sort} = {}): Promise<SqlRow[]> {
+                         opts: { page?: number, limit?: number, sort?: Sort} = {},
+                         filters: Filter[] = []): Promise<SqlRow[]> {
 
         // Resolve each option to a non-undefined value
         const page: number = opts.page !== undefined ? opts.page : 1;
@@ -84,10 +93,10 @@ export class SchemaDao {
         const sort = opts.sort || null;
 
         if (page < 1)
-            throw new Error('Expecting page >= 1');
+            throw new ValidationError('Expecting page >= 1', 'INVALID_LIMIT', { page });
 
         if (limit < 0)
-            throw new Error('Expecting limit < 0');
+            throw new ValidationError('Expecting limit < 0', 'INVALID_PAGE', { limit });
 
         const rows = await this.helper.execute((squel) => {
             // Create our basic query
@@ -105,13 +114,17 @@ export class SchemaDao {
                 query = query.order(this.helper.escapeId(sort.by), sort.direction === 'asc');
             }
 
+            for (const filter of filters) {
+                query = this.addFilter(query, filter);
+            }
+
             return query;
         });
 
         // If there's no data being returned and this isn't the first page,
         // we've gone past the last page.
         if (rows.length === 0 && page !== 1)
-            throw new Error(`Page too high: ${page}`);
+            throw new ValidationError(`Page too high: ${page}`, 'INVALID_PAGE');
 
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
@@ -422,6 +435,25 @@ export class SchemaDao {
         return result[0]['COUNT(*)'];
     }
 
+    private addFilter(query: Select, filter: Filter): Select {
+        const simpleOp: string | undefined = SchemaDao.SIMPLE_FILTER_OP_MAPPING[filter.op];
+
+        if (simpleOp === undefined) {
+            const { op, value } = filter;
+            if (value !== 'null')
+                throw new Error(`Unknown value for filter operation ${op}: ${value}`);
+
+            if (op === 'is')
+                return query.where(`${this.helper.escapeId(filter.param)} IS NULL`);
+            else if (op === 'isnot')
+                return query.where(`${this.helper.escapeId(filter.param)} IS NOT NULL`);
+            else
+                throw new Error(`Unknown filter operation: ${filter.op}`);
+        }
+
+        return query.where(`${this.helper.escapeId(filter.param)} ${simpleOp} ?`, filter.value);
+    }
+
     /**
      * Transform simple JS types into their real MySQL values. Right now, all
      * this does is turn the boolean `true` into the number `1` and the boolean
@@ -434,7 +466,7 @@ export class SchemaDao {
     }
 
     private static identifyDefaultValue(rawType: string, type: TableDataType, rawDefault: string): DefaultValue {
-        if (rawDefault === CURRENT_TIMESTAMP && rawType === 'datetime')
+        if (rawDefault === CURRENT_TIMESTAMP && (rawType === 'datetime' || rawType === 'timestamp'))
             return { constantName: CURRENT_TIMESTAMP };
 
         switch (type) {

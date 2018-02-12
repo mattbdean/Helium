@@ -1,0 +1,41 @@
+mat-card {
+  width: 250px;
+
+  // Minimize vertical space used while still providing enough breathing room
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+  transition: background 300ms;
+
+  &.ng-invalid {
+    background: rgba(0, 0, 0, 0.02);
+  }
+  &.disabled {
+    background: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.control-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.management-container {
+  display: flex;
+  justify-content: space-between;
+
+  // Not enough space between the placeholder text for 'Column' when it has text in it
+  margin-bottom: 5px;
+}
+
+.enabled-checkbox {
+  padding: 8px;
+}
+
+.remove-filter-button, .enabled-checkbox {
+  align-self: flex-end;
+}
+
+::ng-deep mat-form-field {
+  width: 100%;
+}

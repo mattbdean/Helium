@@ -16,14 +16,14 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
 import { Constraint } from '../../common/api';
-import { ComponentMapperService } from '../component-mapper/component-mapper.service';
-import { AbstractFormControl } from '../dynamic-controls/abstract-form-control.class';
-import { DynamicFormControlDirective } from '../dynamic-form-control.directive';
+import { ComponentMapperService } from '../../dynamic-forms/component-mapper/component-mapper.service';
+import { AbstractFormControl } from '../../dynamic-forms/controls/abstract-form-control';
+import { DynamicFormControlDirective } from '../../dynamic-forms/dynamic-form-control.directive';
 import {
     FormControlSpec,
     FormControlType
-} from '../form-control-spec.interface';
-import { FormSpecGeneratorService } from '../form-spec-generator/form-spec-generator.service';
+} from '../../dynamic-forms/form-control-spec';
+import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
 
 const expect = global['chai'].expect;

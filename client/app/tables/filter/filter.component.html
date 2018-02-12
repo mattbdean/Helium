@@ -1,0 +1,37 @@
+<mat-card class="filter-input-container" [class.disabled]="group.disabled" [formGroup]="group">
+    <div class="management-container">
+        <mat-checkbox
+            #checkbox
+            class="enabled-checkbox"
+            (change)="onToggle($event)"
+            title="Enable or disable this filter. A disabled filter will still show up here but won't be applied to the search.">
+        </mat-checkbox>
+
+        <button mat-icon-button
+                class="remove-filter-button"
+                type="button"
+                tabindex="-1"
+                title="Remove this filter"
+                (click)="requestRemove()">
+            <mat-icon>remove_circle</mat-icon>
+        </button>
+    </div>
+
+    <div class="control-container">
+        <mat-form-field>
+            <mat-select placeholder="Column" formControlName="param">
+                <mat-option *ngFor="let header of meta.headers" [value]="header.name">{{ header.name }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <mat-form-field>
+            <mat-select placeholder="Operation" formControlName="op">
+                <mat-option *ngFor="let filterOp of ops" [value]="filterOp.codeName">{{ filterOp.displayName }}</mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <div class="custom-input-wrapper" [hidden]="!showUserInput">
+            <ng-template dynamicFormControl [group]="group" [control]="currentSpec"></ng-template>
+        </div>
+    </div>
+</mat-card>

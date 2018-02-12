@@ -5,6 +5,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
+import { Filter } from '../src/common/api';
 import { QueryHelper } from '../src/db/query-helper';
 import { Helium } from '../src/helium';
 import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
@@ -27,8 +28,7 @@ describe('API v1', () => {
 
     // A Joi schema that mirrors the ErrorResponse interface
     const errorResponseSchema = joi.object({
-        message: joi.string().required(),
-        input: joi.object().required()
+        message: joi.string().required()
     });
 
     const MOCK_API_KEY = 'mockKey';
@@ -48,9 +48,13 @@ describe('API v1', () => {
     describe('No/pre-authentication', () => {
         describe('GET /api/v1/*', () => {
             it('should 404 with JSON', () => {
-                request.get('/foo', 404, (body) => {
-                    expect(body).to.deep.equal({ message: 'Not found', input: {} });
-                });
+                return supertest(app.express)
+                    .get('/api/v1/foo')
+                    .expect(404)
+                    .expect('Content-Type', /application\/json/)
+                    .then((req) => {
+                        expect(req.body).to.deep.equal({ message: 'Not found' });
+                    });
             });
         });
 
@@ -150,6 +154,15 @@ describe('API v1', () => {
 
                 expect(schemasStub).to.have.been.calledOnce;
             });
+
+            it('should throw a 500 when something goes wrong', async () => {
+                const schemasSub = sinon.stub(schemaDao, 'schemas')
+                    .rejects(Error);
+
+                await request.get('/schemas', 500);
+
+                expect(schemasSub).to.have.been.calledOnce;
+            });
         });
 
         describe('GET /api/v1/schemas/:schema', () => {
@@ -208,25 +221,25 @@ describe('API v1', () => {
                 expect(colStub).to.have.been.calledWithExactly('foo', 'bar', 'baz');
             });
 
-            it('should 404 when the schema, table, or column doesn\'t exist', async () => {
+            it('should 400 when the schema, table, or column doesn\'t exist', async () => {
                 let colStub = sinon.stub(schemaDao, 'columnContent');
 
-                const assert404 = async (code: string) => {
+                const assertCode = async (errorCode: string, httpCode: number) => {
                     // Reset any previous behavior/call history
                     colStub.reset();
                     // Make sure columnContent() always rejects with this code
-                    colStub = colStub.rejects(mysqlError(code));
+                    colStub = colStub.rejects(mysqlError(errorCode));
 
                     // Call the endpoint, ensure 404
-                    await request.get('/schemas/foo/bar/column/baz', 404);
+                    await request.get('/schemas/foo/bar/column/baz', httpCode);
 
                     // Make sure columnContent() was called
                     expect(colStub).calledWithExactly('foo', 'bar', 'baz');
                 };
 
-                await assert404('ER_DBACCESS_DENIED_ERROR'); // bad schema
-                await assert404('ER_NO_SUCH_TABLE'); // bad table
-                await assert404('ER_BAD_FIELD_ERROR'); // bad column
+                await assertCode('ER_DBACCESS_DENIED_ERROR', 404); // bad schema
+                await assertCode('ER_NO_SUCH_TABLE', 404); // bad table
+                await assertCode('ER_BAD_FIELD_ERROR', 400); // bad column
             });
         });
 
@@ -238,7 +251,7 @@ describe('API v1', () => {
                 await request.get('/schemas/foo/bar/data', 200);
 
                 expect(stub).calledWithExactly('foo', 'bar',
-                    { limit: 25, page: 1, sort: undefined });
+                    { limit: 25, page: 1, sort: undefined }, []);
             });
 
             it('should 404 when either the schema or table don\'t exist', async () => {
@@ -266,13 +279,79 @@ describe('API v1', () => {
                 });
 
                 expect(stub).calledWithExactly('foo', 'bar',
-                    { limit: 10, page: 2, sort: { by: 'baz', direction: 'desc' }});
+                    { limit: 10, page: 2, sort: { by: 'baz', direction: 'desc' }}, []);
             });
 
             it('should 400 when the sorting column doesn\'t exist', async () => {
                 sinon.stub(schemaDao, 'content')
                     .rejects(mysqlError('ER_BAD_FIELD_ERROR'));
                 await request.get('/schemas/foo/bar/data', 400);
+            });
+
+            it('should handle filters', async () => {
+                const stub = sinon.stub(schemaDao, 'content')
+                    .resolves([]);
+
+                const filters: Filter[] = [
+                    { param: 'col1', op: 'lt', value: '5' },
+                    { param: 'col2', op: 'eq', value: '6' }
+                ];
+
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 200,
+                    query: {
+                        filters: JSON.stringify(filters)
+                    }
+                });
+
+                expect(stub).to.have.been.calledWithExactly(
+                    'schema',
+                    'table',
+                    { limit: 25, page: 1, sort: undefined },
+                    filters
+                );
+            });
+
+            it('should 400 when given malformed filters', async () => {
+                sinon.stub(schemaDao, 'content')
+                    .rejects(new Error('content() should not have been called'));
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 400,
+                    query: {
+                        filters: '[ malformed JSON ]'
+                    }
+                });
+
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 400,
+                    query: {
+                        filters: '[{ "param": "foo", "op": "eq", "value": "bar", "unknown": true }]'
+                    }
+                });
+            });
+
+            it('should handle an empty array of filters', async () => {
+                const stub = sinon.stub(schemaDao, 'content')
+                    .resolves([]);
+
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/schema/table/data',
+                    expectedStatus: 200,
+                    query: {
+                        filters: '[]'
+                    }
+                });
+
+                expect(stub).to.have.been.calledWithExactly('schema', 'table', {
+                    page: 1, limit: 25, sort: undefined
+                }, []);
             });
         });
 
