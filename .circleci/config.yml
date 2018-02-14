@@ -27,12 +27,12 @@ jobs:
                 name: Client tests
                 command: yarn test:client --progress false
             - run:
+                name: Upload code coverage
+                command: yarn codecov --disable=gcov
+            - run:
                 name: e2e tests
                 command: yarn e2e --progress false
             - run:
                 name: Build client in production mode
                 command: yarn ng build --prod --progress false
-            - run:
-                name: Upload code coverage
-                command: yarn codecov --disable=gcov
 
