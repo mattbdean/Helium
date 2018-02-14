@@ -32,4 +32,7 @@ jobs:
             - run:
                 name: Build client in production mode
                 command: yarn ng build --prod --progress false
+            - run:
+                name: Upload code coverage
+                command: yarn gulp codecov
 

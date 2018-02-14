@@ -14,5 +14,6 @@
     "lcov"
   ],
   "sourceMap": true,
-  "instrument": true
+  "instrument": true,
+  "report-dir": "coverage/server"
 }

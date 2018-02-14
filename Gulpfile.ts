@@ -1,7 +1,9 @@
 import * as del from 'del';
+import * as lcovMerger from 'lcov-result-merger';
 
 import * as gulp from 'gulp';
 import * as about from 'gulp-about';
+import * as codecov from 'gulp-codecov';
 import * as tsc from 'gulp-typescript';
 import * as merge from 'merge2';
 import * as runSequence from 'run-sequence';
@@ -67,6 +69,12 @@ gulp.task('server:about', () =>
     gulp.src('package.json')
         .pipe(about())
         .pipe(gulp.dest('server/src'))
+);
+
+gulp.task('codecov', () =>
+    gulp.src('./coverage/**/lcov.info')
+        .pipe(lcovMerger())
+        .pipe(codecov())
 );
 
 /** Options specific for compiling a TypeScript project */
