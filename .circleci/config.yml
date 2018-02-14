@@ -34,5 +34,5 @@ jobs:
                 command: yarn ng build --prod --progress false
             - run:
                 name: Upload code coverage
-                command: yarn gulp codecov
+                command: yarn codecov --disable=gcov
 
