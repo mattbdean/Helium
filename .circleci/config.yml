@@ -20,19 +20,27 @@ jobs:
             - run:
                 name: Install dependencies
                 command: yarn install
+#            - run:
+#                name: Server tests
+#                command: yarn test:server
+#            - run:
+#                name: Client tests
+#                command: yarn test:client --progress false
+#            - run:
+#                name: Upload code coverage
+#                command: yarn codecov --disable=gcov
+#            - run:
+#                name: e2e tests
+#                command: yarn e2e --progress false
+#            - run:
+#                name: Build client in production mode
+#                command: yarn ng build --prod --progress false
+            - setup_remote_docker
             - run:
-                name: Server tests
-                command: yarn test:server
-            - run:
-                name: Client tests
-                command: yarn test:client --progress false
-            - run:
-                name: Upload code coverage
-                command: yarn codecov --disable=gcov
-            - run:
-                name: e2e tests
-                command: yarn e2e --progress false
-            - run:
-                name: Build client in production mode
-                command: yarn ng build --prod --progress false
+                name: Login to DockerHub
+                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            - run: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
+            - run: docker run -d mattbdean/helium:latest-dev
+            - run: yarn e2e:prepped
+            - run: docker kill $(docker ps -q)
 
