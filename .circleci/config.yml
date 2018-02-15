@@ -40,7 +40,7 @@ jobs:
                 name: Login to DockerHub
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
             - run: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
-            - run: docker run -d mattbdean/helium:latest-dev
+            - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
             - run: yarn e2e:prepped
             - run: docker kill $(docker ps -q)
 
