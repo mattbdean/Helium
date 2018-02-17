@@ -1,6 +1,21 @@
 version: 2
+restore_deps_cache: &restore_deps_cache
+    keys:
+        - deps-{{ .Revision }}
 jobs:
-    build:
+    cache-deps:
+        docker:
+            - image: mattbdean/helium-test:latest
+        steps:
+            - checkout
+            - run:
+                name: Install dependencies
+                command: yarn install
+            - save_cache:
+                key: deps-{{ .Revision }}
+                paths:
+                    - "node_modules"
+    test-integration:
         docker:
             - image: mattbdean/helium-test:latest
             - image: circleci/mysql:5.7-ram
@@ -14,33 +29,86 @@ jobs:
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
-            - run: 
+            - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - restore_cache:
+                <<: *restore_deps_cache
             - run:
-                name: Install dependencies
-                command: yarn install
-#            - run:
-#                name: Server tests
-#                command: yarn test:server
-#            - run:
-#                name: Client tests
-#                command: yarn test:client --progress false
+                name: Server tests
+                command: yarn test:server
+            - run:
+                name: Client tests
+                command: yarn test:client --progress false
 #            - run:
 #                name: Upload code coverage
 #                command: yarn codecov --disable=gcov
 #            - run:
-#                name: e2e tests
-#                command: yarn e2e --progress false
-#            - run:
 #                name: Build client in production mode
 #                command: yarn ng build --prod --progress false
+#            - run:
+#                name: e2e tests
+#                command: yarn e2e --progress false
+#            - setup_remote_docker
+#            - run:
+#                name: Login to DockerHub
+#                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+#            - run: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
+#            - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
+#            - run: yarn e2e:prepped
+#            - run: docker kill $(docker ps -q)
+    build-docker:
+        docker:
+            - image: mattbdean/helium-test:latest
+        steps:
+            - checkout
             - setup_remote_docker
-            - run:
-                name: Login to DockerHub
-                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            - run: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
-            - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
-            - run: yarn e2e:prepped
-            - run: docker kill $(docker ps -q)
+            - restore_cache:
+                <<: *restore_deps_cache
+            - run: |
+                docker build mattbdean/helium:latest-dev:${CIRCLE_BRANCH} .
+                mkdir -p docker-cache
+                docker save -o docker-cache/built-image.tar mattbdean/helium:latest-dev:${CIRCLE_BRANCH}
+            - save_cache:
+                key: docker-cache-{{ .Revision }}
+                paths:
+                    - "docker-cache"
 
+    test-e2e:
+        docker:
+            - image: mattbdean/helium-test:latest
+            - image: circleci/mysql:5.7-ram
+              environment:
+                  - MYSQL_ALLOW_EMPTY_PASSWORD=true
+                  - MYSQL_HOST=127.0.0.1
+                  - MYSQL_ROOT_HOST=%
+                  - MYSQL_USER=root
+        steps:
+            - run:
+                name: Wait for DB
+                command: dockerize -wait tcp://localhost:3306 -timeout 1m
+            - run:
+                name: Initialize DB
+                command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - restore_cache:
+                <<: *restore_deps_cache
+            - restore_cache:
+                -keys: docker-cache-{{ .Revision }}
+            - run: docker load -i docker-cache/built-image.tar
+            - run: docker run mattbdean/helium:latest-dev:${CIRCLE_BRANCH} -d
+            - run: docker ps
+
+workflows:
+    version: 2
+    build:
+        jobs:
+            - cache-deps
+            - test-integration:
+                requires:
+                    - cache-deps
+            - build-docker:
+                requires:
+                    - cache-deps
+            - test-e2e:
+                requires:
+                    - build-docker
