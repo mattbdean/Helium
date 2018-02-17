@@ -88,9 +88,6 @@ workflows:
             - test-integration:
                 requires:
                     - cache-preinstalled
-            - build-docker:
-                requires:
-                    - cache-preinstalled
             - test-e2e:
                 requires:
-                    - build-docker
+                    - cache-preinstalled
