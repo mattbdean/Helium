@@ -66,7 +66,7 @@ jobs:
             - restore_cache:
                 <<: *restore_deps_cache
             - run: |
-                docker build mattbdean/helium:latest-dev:${CIRCLE_BRANCH} .
+                docker build -t mattbdean/helium:latest-dev:${CIRCLE_BRANCH} .
                 mkdir -p docker-cache
                 docker save -o docker-cache/built-image.tar mattbdean/helium:latest-dev:${CIRCLE_BRANCH}
             - save_cache:
