@@ -95,7 +95,7 @@ jobs:
             - restore_cache:
                 -keys: docker-cache-{{ .Revision }}
             - run: docker load -i docker-cache/built-image.tar
-            - run: docker run mattbdean/helium:latest-dev:${CIRCLE_BRANCH} -d
+            - run: docker run mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -d
             - run: docker ps
 
 workflows:
