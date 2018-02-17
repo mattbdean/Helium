@@ -103,7 +103,7 @@ jobs:
             - restore_cache:
                 <<: *restore_deps_cache
             - restore_cache:
-                - keys:
+                keys:
                     - docker-cache-{{ .Revision }}
             - run: docker load -i docker-cache/built-image.tar
             - run: docker run mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -d
