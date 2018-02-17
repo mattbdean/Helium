@@ -1,21 +1,26 @@
 version: 2
-restore_repo_cache: &restore_repo_cache
+restore_deps_cache: &restore_deps_cache
     keys:
-        - preinstalled-{{ .Revision }}
+        - deps-{{ checksum "yarn.lock" }}
 jobs:
     cache-preinstalled:
         docker:
             - image: mattbdean/helium-test:latest
         steps:
             - checkout
+            # Use cached dependencies if there are any
+            - restore_cache:
+                <<: *restore_deps_cache
+            # If there was no cache install everything
             - run:
                 name: Install dependencies
                 command: yarn install
+            # Save the cache here
             - save_cache:
-                key: preinstalled-{{ .Revision }}
+                key: deps-{{ checksum "yarn.lock" }}
                 paths:
-                    - "."
-    test-client:
+                    - "node_modules"
+    test-integration:
         docker:
             - image: mattbdean/helium-test:latest
             - image: circleci/mysql:5.7-ram
@@ -25,6 +30,7 @@ jobs:
                   - MYSQL_ROOT_HOST=%
                   - MYSQL_USER=root
         steps:
+            - checkout
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
@@ -32,7 +38,7 @@ jobs:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - restore_cache:
-                <<: *restore_repo_cache
+                <<: *restore_deps_cache
             - run:
                 name: Server tests
                 command: yarn test:server
@@ -61,9 +67,9 @@ jobs:
             - image: mattbdean/helium-test:latest
         steps:
             - checkout
-            - setup_remote_docker
             - restore_cache:
-                <<: *restore_repo_cache
+                <<: *restore_deps_cache
+            - setup_remote_docker
             - run: |
                 docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
                 mkdir -p docker-cache
@@ -83,6 +89,7 @@ jobs:
                   - MYSQL_ROOT_HOST=%
                   - MYSQL_USER=root
         steps:
+            - checkout
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
@@ -90,7 +97,7 @@ jobs:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - restore_cache:
-                <<: *restore_repo_cache
+                <<: *restore_deps_cache
             - restore_cache:
                 -keys: docker-cache-{{ .Revision }}
             - run: docker load -i docker-cache/built-image.tar
