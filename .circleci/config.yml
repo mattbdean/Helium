@@ -62,47 +62,17 @@ jobs:
 #            - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
 #            - run: yarn e2e:prepped
 #            - run: docker kill $(docker ps -q)
-    build-docker:
-        docker:
-            - image: mattbdean/helium-test:latest
+    test-e2e:
+        machine: true
         steps:
             - checkout
-            - restore_cache:
-                <<: *restore_deps_cache
-            - setup_remote_docker
+#            - setup_remote_docker
             - run:
                 name: Build Docker image
                 command: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
-            - run:
-                name: Save Docker image to cache
-                command: |
-                    mkdir -p docker-cache
-                    docker save -o docker-cache/built-image.tar mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
-            - save_cache:
-                key: docker-cache-{{ .Revision }}
-                paths:
-                    - "docker-cache"
-
-    test-e2e:
-        docker:
-            - image: mattbdean/helium-test:latest
-            - image: circleci/mysql:5.7-ram
-              environment:
-                  - MYSQL_ALLOW_EMPTY_PASSWORD=true
-                  - MYSQL_HOST=127.0.0.1
-                  - MYSQL_ROOT_HOST=%
-                  - MYSQL_USER=root
-        steps:
-            - checkout
-            - restore_cache:
-                <<: *restore_deps_cache
-            - restore_cache:
-                keys:
-                    - docker-cache-{{ .Revision }}
-            - setup_remote_docker
-            - run: docker load -i docker-cache/built-image.tar
             - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
             - run: docker ps
+            - run: mysql --version
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
