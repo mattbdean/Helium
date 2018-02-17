@@ -1,9 +1,9 @@
 version: 2
-restore_deps_cache: &restore_deps_cache
+restore_repo_cache: &restore_repo_cache
     keys:
-        - deps-{{ .Revision }}
+        - preinstalled-{{ .Revision }}
 jobs:
-    cache-deps:
+    cache-preinstalled:
         docker:
             - image: mattbdean/helium-test:latest
         steps:
@@ -12,10 +12,10 @@ jobs:
                 name: Install dependencies
                 command: yarn install
             - save_cache:
-                key: deps-{{ .Revision }}
+                key: preinstalled-{{ .Revision }}
                 paths:
-                    - "node_modules"
-    test-integration:
+                    - "."
+    test-client:
         docker:
             - image: mattbdean/helium-test:latest
             - image: circleci/mysql:5.7-ram
@@ -25,7 +25,6 @@ jobs:
                   - MYSQL_ROOT_HOST=%
                   - MYSQL_USER=root
         steps:
-            - checkout
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
@@ -33,7 +32,7 @@ jobs:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - restore_cache:
-                <<: *restore_deps_cache
+                <<: *restore_repo_cache
             - run:
                 name: Server tests
                 command: yarn test:server
@@ -64,11 +63,11 @@ jobs:
             - checkout
             - setup_remote_docker
             - restore_cache:
-                <<: *restore_deps_cache
+                <<: *restore_repo_cache
             - run: |
-                docker build -t mattbdean/helium:latest-dev:${CIRCLE_BRANCH} .
+                docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
                 mkdir -p docker-cache
-                docker save -o docker-cache/built-image.tar mattbdean/helium:latest-dev:${CIRCLE_BRANCH}
+                docker save -o docker-cache/built-image.tar mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
             - save_cache:
                 key: docker-cache-{{ .Revision }}
                 paths:
@@ -91,7 +90,7 @@ jobs:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - restore_cache:
-                <<: *restore_deps_cache
+                <<: *restore_repo_cache
             - restore_cache:
                 -keys: docker-cache-{{ .Revision }}
             - run: docker load -i docker-cache/built-image.tar
@@ -105,10 +104,10 @@ workflows:
             - cache-deps
             - test-integration:
                 requires:
-                    - cache-deps
+                    - cache-preinstalled
             - build-docker:
                 requires:
-                    - cache-deps
+                    - cache-preinstalled
             - test-e2e:
                 requires:
                     - build-docker
