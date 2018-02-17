@@ -94,20 +94,21 @@ jobs:
                   - MYSQL_USER=root
         steps:
             - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
+            - restore_cache:
+                keys:
+                    - docker-cache-{{ .Revision }}
+            - setup_remote_docker
+            - run: docker load -i docker-cache/built-image.tar
+            - run: docker run mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -d
+            - run: docker ps
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
-            - restore_cache:
-                <<: *restore_deps_cache
-            - restore_cache:
-                keys:
-                    - docker-cache-{{ .Revision }}
-            - run: docker load -i docker-cache/built-image.tar
-            - run: docker run mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -d
-            - run: docker ps
 
 workflows:
     version: 2
