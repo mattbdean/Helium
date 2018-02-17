@@ -101,7 +101,7 @@ jobs:
                     - docker-cache-{{ .Revision }}
             - setup_remote_docker
             - run: docker load -i docker-cache/built-image.tar
-            - run: docker run mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -d
+            - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
             - run: docker ps
             - run:
                 name: Wait for DB
