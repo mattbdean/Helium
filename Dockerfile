@@ -5,7 +5,6 @@ WORKDIR /usr/src/app
 
 # Get our dependencies ready
 COPY package.json yarn.lock .snyk ./
-COPY node_modules ./
 RUN yarn install
 
 # Add all the necessary build-related files
