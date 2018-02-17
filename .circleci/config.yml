@@ -101,7 +101,7 @@ workflows:
     version: 2
     build:
         jobs:
-            - cache-deps
+            - cache-preinstalled
             - test-integration:
                 requires:
                     - cache-preinstalled
