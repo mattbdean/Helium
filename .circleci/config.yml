@@ -1,8 +1,49 @@
 version: 2
+restore_deps_cache: &restore_deps_cache
+    keys:
+        - deps-node8-{{ checksum "yarn.lock" }}
 jobs:
-    build:
+    cache-preinstalled:
         docker:
-            - image: mattbdean/helium-test:latest
+            # Prefer CircleCI images because they're preinstalled
+            - image: circleci/node:8
+        steps:
+            - checkout
+            # Use cached dependencies if there are any
+            - restore_cache:
+                <<: *restore_deps_cache
+            # If there was no cache install everything
+            - run:
+                name: Install dependencies
+                command: yarn install
+            # Save the cache here
+            - save_cache:
+                key: deps-node8-{{ checksum "yarn.lock" }}
+                paths:
+                    - "node_modules"
+    test-client:
+        docker:
+            - image: circleci/node:8-browsers
+        steps:
+            - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
+            - run:
+                name: Build common files
+                command: yarn gulp common:build
+            - run:
+                name: Client tests
+                command: yarn test:client --progress false
+            - run:
+                name: Build client in production mode
+                command: yarn ng build --prod --progress false
+            - persist_to_workspace:
+                root: .
+                paths:
+                    - "coverage/client/lcov.info"
+    test-server:
+        docker:
+            - image: circleci/node:8
             - image: circleci/mysql:5.7-ram
               environment:
                   - MYSQL_ALLOW_EMPTY_PASSWORD=true
@@ -11,28 +52,131 @@ jobs:
                   - MYSQL_USER=root
         steps:
             - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
+            - run:
+                name: Build common files
+                command: yarn gulp common:build
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
-            - run: 
+            - run:
+                name: Install MySQL client
+                command: sudo apt-get install mysql-client
+            - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - run:
-                name: Install dependencies
-                command: yarn install
-            - run:
                 name: Server tests
                 command: yarn test:server
+            - persist_to_workspace:
+                root: .
+                paths:
+                    - "coverage/server/lcov.info"
+    test-e2e:
+        machine: true
+        steps:
+            - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
             - run:
-                name: Client tests
-                command: yarn test:client --progress false
+                name: Start MySQL via Docker
+                command: |
+                    docker run -d --name mysql -p 3306:3306 \
+                        -e "MYSQL_ALLOW_EMPTY_PASSWORD=true" \
+                        -e "MYSQL_HOST=127.0.0.1" \
+                        -e "MYSQL_ROOT_HOST=%" \
+                        mysql/mysql-server:5.7
+            - run:
+                name: Build Helium Docker image
+                command: docker build -t mattbdean/helium:$(.circleci/docker-tag.sh) .
+            - run:
+                name: Start Helium via Docker
+                command: docker run -d --name helium --net=host -p 3000:3000 mattbdean/helium:$(.circleci/docker-tag.sh)
+            - run:
+                name: Add required APT repositories
+                command: |
+                    # Yarn
+                    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+                    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+
+                    # Chrome
+                    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+                    echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+
+                    # MySQL
+                    wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
+                    DEBIAN_FRONTEND=noninteractive sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
+
+                    sudo apt-get update
+            - run:
+                name: Install MySQL client, Yarn, and Chrome
+                command: |
+                    sudo apt-get install mysql-client yarn google-chrome-stable
+            - run:
+                name: Initialize DB
+                command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - run:
+                name: Run e2e tests
+                command: yarn e2e:prepped
+            - run:
+                name: Save Helium docker image to workspace
+                command: docker save mattbdean/helium:$(.circleci/docker-tag.sh) -o image.tar
+            - persist_to_workspace:
+                root: .
+                paths:
+                    - "image.tar"
+    codecov:
+        docker:
+            - image: circleci/node:8
+        steps:
+            - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
+            - attach_workspace:
+                at: /tmp/workspace
+            - run:
+                name: Copy coverage data from client and server tests
+                command: cp -r /tmp/workspace/coverage ~/project
             - run:
                 name: Upload code coverage
                 command: yarn codecov --disable=gcov
-            - run:
-                name: e2e tests
-                command: yarn e2e --progress false
-            - run:
-                name: Build client in production mode
-                command: yarn ng build --prod --progress false
 
+    deploy:
+        machine: true
+        steps:
+            - checkout
+            - attach_workspace:
+                at: /tmp/workspace
+            - run:
+                name: Load Docker image from workspace
+                command: docker load -i /tmp/workspace/image.tar
+            - run:
+                name: Login to DockerHub
+                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            - run:
+                name: Push to DockerHub
+                command: docker push mattbdean/helium:$(.circleci/docker-tag.sh)
+
+workflows:
+    version: 2
+    build:
+        jobs:
+            - cache-preinstalled
+            - test-client:
+                requires:
+                    - cache-preinstalled
+            - test-server:
+                requires:
+                    - cache-preinstalled
+            - test-e2e:
+                requires:
+                    - cache-preinstalled
+            - codecov:
+                requires:
+                    - test-client
+                    - test-server
+            - deploy:
+                requires:
+                    - test-e2e
+                    - codecov # by extension also requires test-client and test-server
