@@ -5,7 +5,7 @@ restore_deps_cache: &restore_deps_cache
 jobs:
     cache-preinstalled:
         docker:
-            - image: mattbdean/helium-test:latest
+            - image: node:8
         steps:
             - checkout
             # Use cached dependencies if there are any
@@ -20,9 +20,26 @@ jobs:
                 key: deps-{{ checksum "yarn.lock" }}
                 paths:
                     - "node_modules"
-    test-integration:
+    test-client:
         docker:
-            - image: mattbdean/helium-test:latest
+            - image: circleci/node:8-browsers
+        steps:
+            - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
+            - run:
+                name: Client tests
+                command: yarn test:client --progress false
+            - run:
+                name: Build client in production mode
+                command: yarn ng build --prod --progress false
+            - save_cache:
+                key: client-tests-{{ .BuildNum }}
+                paths:
+                    - "coverage/client"
+    test-server:
+        docker:
+            - image: node:8
             - image: circleci/mysql:5.7-ram
               environment:
                   - MYSQL_ALLOW_EMPTY_PASSWORD=true
@@ -31,42 +48,27 @@ jobs:
                   - MYSQL_USER=root
         steps:
             - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
-            - restore_cache:
-                <<: *restore_deps_cache
             - run:
                 name: Server tests
                 command: yarn test:server
-            - run:
-                name: Client tests
-                command: yarn test:client --progress false
-#            - run:
-#                name: Upload code coverage
-#                command: yarn codecov --disable=gcov
-#            - run:
-#                name: Build client in production mode
-#                command: yarn ng build --prod --progress false
-#            - run:
-#                name: e2e tests
-#                command: yarn e2e --progress false
-#            - setup_remote_docker
-#            - run:
-#                name: Login to DockerHub
-#                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-#            - run: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
-#            - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
-#            - run: yarn e2e:prepped
-#            - run: docker kill $(docker ps -q)
+            - save_cache:
+                key: server-tests-{{ .BuildNum }}
+                paths:
+                    - "coverage/server"
     test-e2e:
         machine: true
         steps:
             - checkout
-#            - setup_remote_docker
+            - restore_cache:
+                <<: *restore_deps_cache
             - run:
                 name: Start MySQL via Docker
                 command: |
@@ -92,15 +94,49 @@ jobs:
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - run: yarn e2e:prepped
+#            - run:
+#                name: Login to DockerHub
+#                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+#            - run: docker kill $(docker ps -q)
+    codecov:
+        docker:
+            - image: node:8
+        steps:
+            - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
+            - restore_cache:
+                keys:
+                    - server-tests-{{ .BuildNum }}
+            - restore_cache:
+                keys:
+                    - client-tests-{{ .BuildNum }}
+
+            # Make sure things are being saved/restore properly
+            - run: du -h -d 1 coverage/client | sort -h
+            - run: du -h -d 1 coverage/server | sort -h
+#            - run:
+#                name: Upload code coverage
+#                command: yarn codecov --disable=gcov
+            - run: echo "TODO" && false
+
 
 workflows:
     version: 2
     build:
         jobs:
             - cache-preinstalled
-            - test-integration:
+            - test-client:
+                requires:
+                    - cache-preinstalled
+            - test-server:
                 requires:
                     - cache-preinstalled
             - test-e2e:
                 requires:
                     - cache-preinstalled
+            - codecov:
+                requires:
+                    - test-client
+                    - test-server
