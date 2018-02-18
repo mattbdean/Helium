@@ -36,7 +36,7 @@ jobs:
                 name: Build client in production mode
                 command: yarn ng build --prod --progress false
             - save_cache:
-                key: client-tests-{{ .BuildNum }}
+                key: client-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
                 paths:
                     - "coverage/client"
     test-server:
@@ -64,7 +64,7 @@ jobs:
                 name: Server tests
                 command: yarn test:server
             - save_cache:
-                key: server-tests-{{ .BuildNum }}
+                key: server-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
                 paths:
                     - "coverage/server"
     test-e2e:
@@ -76,7 +76,7 @@ jobs:
             - run:
                 name: Start MySQL via Docker
                 command: |
-                    docker run -d --name mysql \
+                    docker run -d --name mysql -p 3306:3306 \
                         -e "MYSQL_ALLOW_EMPTY_PASSWORD=true" \
                         -e "MYSQL_HOST=127.0.0.1" \
                         -e "MYSQL_ROOT_HOST=%" \
@@ -111,10 +111,10 @@ jobs:
                 <<: *restore_deps_cache
             - restore_cache:
                 keys:
-                    - server-tests-{{ .BuildNum }}
+                    - server-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
             - restore_cache:
                 keys:
-                    - client-tests-{{ .BuildNum }}
+                    - client-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
 
             # Make sure things are being saved/restore properly
             - run: du -h -d 1 coverage/client | sort -h
