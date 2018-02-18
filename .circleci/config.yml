@@ -112,7 +112,7 @@ jobs:
             - run: yarn e2e:prepped
             - run: docker save mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -o image.tar
             - persist_to_workspace:
-                root: /tmp/workspace
+                root: .
                 path: image.tar
     codecov:
         docker:
