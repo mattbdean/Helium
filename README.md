@@ -41,6 +41,20 @@ Now you can access the website at [localhost:3001](http://localhost:3001).
 
 > If you want to run Helium on the default HTTP port (80), you'll have to run it as root. 
 
+## Docker
+
+Helium provides several experimental Docker images. Full support will come with the release of [1.0.0](https://github.com/mattbdean/Helium/milestone/3).
+
+The newest Docker image that passed CI is located at `mattbdean/helium:latest-dev`. For branches other than master, use `mattbdean/helium:latest-dev-{branch}`.
+
+```sh
+$ docker run -d -p --name helium 3000:3000 mattbdean/helium:latest-dev
+$ curl localhost:3000  # do some work
+$ docker kill helium  # stop helium when you're done
+```
+
+See also [#59](https://github.com/mattbdean/Helium/issues/59).
+
 ## Contributing
 
 Helium runs on a TypeScript-based MEAN stack (but with MySQL instead of MongoDB) and is tested with Mocha, Chai, Karma, and Protractor.
@@ -68,19 +82,6 @@ Run unit tests with `yarn test`, or specifically with `yarn test:client`, `yarn 
 You can also run protractor and debug using `chrome://inspect` using `yarn e2e:debug`.
 
 To prevent rebuilding the website every time the e2e tests are run (what `yarn e2e` does), use two terminal windows. Run `yarn dev` on the first and `yarn e2e:prepped` (or `yarn e2e:prepped:debug`) in the second whenever necessary.
-
-#### CircleCI
-
-Helium uses CircleCI for continuous integration. The Dockerfile for the container that runs the test job can be found [here](https://github.com/mattbdean/Helium/blob/master/server/test/Dockerfile). Once modified, build and push the image to DockerHub:
-
-```sh
-$ docker build -t mattbdean/helium-test server/test
-$ docker push mattbdean/helium-test
-```
-
-The next build will automatically use this new image.
-
-Config can be found at `.circleci/config.yml`.
 
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmattbdean%2FHelium.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmattbdean%2FHelium?ref=badge_large)
