@@ -82,10 +82,11 @@ jobs:
                         -e "MYSQL_ROOT_HOST=%" \
                         mysql/mysql-server:5.7
             - run:
-                name: Build Docker image
-                command: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
-            - run: docker run -d --name helium --net=host -p 3000:3000 mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
-            - run: docker ps
+                name: Build Helium Docker image
+                command: docker build -t mattbdean/helium:$(.circleci/docker-tag.sh) .
+            - run:
+                name: Start Helium via Docker
+                command: docker run -d --name helium --net=host -p 3000:3000 mattbdean/helium:$(.circleci/docker-tag.sh)
             - run:
                 name: Add required APT repositories
                 command: |
@@ -109,8 +110,12 @@ jobs:
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
-            - run: yarn e2e:prepped
-            - run: docker save mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -o image.tar
+            - run:
+                name: Run e2e tests
+                command: yarn e2e:prepped
+            - run:
+                name: Save Helium docker image to workspace
+                command: docker save mattbdean/helium:$(.circleci/docker-tag.sh) -o image.tar
             - persist_to_workspace:
                 root: .
                 paths:
@@ -137,7 +142,7 @@ jobs:
             - run:
                 name: Login to DockerHub
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            - run: docker push mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
+            - run: docker push mattbdean/helium:$(.circleci/docker-tag.sh)
 
 
 workflows:
