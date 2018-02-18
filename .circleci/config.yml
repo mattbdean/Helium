@@ -54,7 +54,9 @@ jobs:
             - checkout
             - restore_cache:
                 <<: *restore_deps_cache
-            - run: yarn gulp common:build
+            - run:
+                name: Build common files
+                command: yarn gulp common:build
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
@@ -146,12 +148,14 @@ jobs:
             - checkout
             - attach_workspace:
                 at: /tmp/workspace
-            - run: docker load -i /tmp/workspace/image.tar
+            - run:
+                name: Load Docker image from workspace
+                command: docker load -i /tmp/workspace/image.tar
             - run:
                 name: Login to DockerHub
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
             - run:
-                name: Push to DockerHug
+                name: Push to DockerHub
                 command: docker push mattbdean/helium:$(.circleci/docker-tag.sh)
 
 workflows:
