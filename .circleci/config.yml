@@ -106,16 +106,14 @@ jobs:
                 name: Install MySQL client, Yarn, and Chrome
                 command: |
                     sudo apt-get install mysql-client yarn google-chrome-stable
-            - run: mysql --version
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - run: yarn e2e:prepped
-            - run:
-                name: Login to DockerHub
-                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-#            - run: docker push ...
-#            - run: docker kill $(docker ps -q)
+            - run: docker save mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -o image.tar
+            - persist_to_workspace:
+                root: /tmp/workspace
+                path: image.tar
     codecov:
         docker:
             - image: circleci/node:8
@@ -129,6 +127,17 @@ jobs:
             - run:
                 name: Upload code coverage
                 command: yarn codecov --disable=gcov
+    deploy:
+        machine: true
+        steps:
+            - attach_workspace:
+                at: /tmp/workspace
+            - run: [ -f /tmp/workspace/image.tar ]
+            - run:
+                name: Login to DockerHub
+                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            - run: docker load -i /tmp/workspace/image.tar
+            - run: docker push mattbdean:latest-dev-${CIRCLE_BRANCH}
 
 
 workflows:
@@ -149,3 +158,7 @@ workflows:
                 requires:
                     - test-client
                     - test-server
+            - deploy:
+                requires:
+                    - test-e2e
+                    - codecov # by extension also requires test-client and test-server
