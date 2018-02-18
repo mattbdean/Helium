@@ -113,7 +113,8 @@ jobs:
             - run: docker save mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -o image.tar
             - persist_to_workspace:
                 root: .
-                path: image.tar
+                paths:
+                    - "image.tar"
     codecov:
         docker:
             - image: circleci/node:8
