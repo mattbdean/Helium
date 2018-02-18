@@ -4,7 +4,8 @@ restore_deps_cache: &restore_deps_cache
         - deps-{{ checksum "yarn.lock" }}
 jobs:
     cache-preinstalled:
-        machine: true
+        docker:
+            - image: mattbdean/helium-test:latest
         steps:
             - checkout
             # Use cached dependencies if there are any
