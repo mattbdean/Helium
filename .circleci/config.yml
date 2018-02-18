@@ -35,10 +35,10 @@ jobs:
             - run:
                 name: Build client in production mode
                 command: yarn ng build --prod --progress false
-            - save_cache:
-                key: client-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
+            - persist_to_workspace:
+                root: .
                 paths:
-                    - "coverage/client"
+                    - "coverage"
     test-server:
         docker:
             - image: circleci/node:8
@@ -63,10 +63,10 @@ jobs:
             - run:
                 name: Server tests
                 command: yarn test:server
-            - save_cache:
-                key: server-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
+            - persist_to_workspace:
+                root: .
                 paths:
-                    - "coverage/server"
+                    - "coverage"
     test-e2e:
         machine: true
         steps:
@@ -118,16 +118,11 @@ jobs:
             - checkout
             - restore_cache:
                 <<: *restore_deps_cache
-            - restore_cache:
-                keys:
-                    - server-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
-            - restore_cache:
-                keys:
-                    - client-tests-{{ .Environment.CIRCLE_WORKFLOW_ID }}
-
+            - attach_workspace:
+                at: /tmp/workspace
+            - run: cp -r /tmp/workspace/coverage ${CIRCLE_WORKING_DIRECTORY}
             # Make sure things are being saved/restore properly
-            - run: du -h -d 1 coverage/client | sort -h
-            - run: du -h -d 1 coverage/server | sort -h
+            - run: du -h -d 2 coverage
 #            - run:
 #                name: Upload code coverage
 #                command: yarn codecov --disable=gcov
