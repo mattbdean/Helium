@@ -71,14 +71,11 @@ jobs:
                 name: Install MySQL 5.7
                 command: |
                     export DEBIAN_FRONTEND=noninteractive
-                    export MYSQL_ROOT_PASSWORD=toor
-                    echo debconf mysql-server/root_password password $MYSQL_ROOT_PASSWORD | sudo debconf-set-selections
-                    echo debconf mysql-server/root_password_again password $MYSQL_ROOT_PASSWORD | sudo debconf-set-selections
                     echo mysql-apt-config mysql-apt-config/enable-repo select mysql-5.7-dmr | sudo debconf-set-selections
                     wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
                     sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
                     sudo apt-get update -q
-                    sudo apt-get install mysql-server
+                    sudo -E apt-get install -q -y mysql-server
                     rm ./*.deb
             - run:
                 name: Build Docker image
@@ -86,9 +83,6 @@ jobs:
             - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
             - run: docker ps
             - run: mysql --version
-            - run:
-                name: Wait for DB
-                command: dockerize -wait tcp://localhost:3306 -timeout 1m
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
