@@ -75,7 +75,7 @@ jobs:
                         -e "MYSQL_HOST=127.0.0.1" \
                         -e "MYSQL_ROOT_HOST=%" \
                         -e "MYSQL_USER=root" \
-                        circleci/mysql:5.7-ram
+                        mysql/mysql-server:5.7
             - run:
                 name: Build Docker image
                 command: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
@@ -83,7 +83,10 @@ jobs:
             - run: docker ps
             - run:
                 name: Install the MySQL client
-                command: sudo apt-get install mysql-client
+                command: |
+                    DEBIAN_FRONTEND=noninteractive sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
+                    sudo apt-get update
+                    sudo apt-get install mysql-client
             - run: mysql --version
             - run:
                 name: Initialize DB
