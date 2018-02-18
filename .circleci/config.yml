@@ -5,7 +5,8 @@ restore_deps_cache: &restore_deps_cache
 jobs:
     cache-preinstalled:
         docker:
-            - image: node:8
+            # Prefer CircleCI images because they're preinstalled
+            - image: circleci/node:8
         steps:
             - checkout
             # Use cached dependencies if there are any
@@ -39,7 +40,7 @@ jobs:
                     - "coverage/client"
     test-server:
         docker:
-            - image: node:8
+            - image: circleci/node:8
             - image: circleci/mysql:5.7-ram
               environment:
                   - MYSQL_ALLOW_EMPTY_PASSWORD=true
@@ -72,16 +73,15 @@ jobs:
             - run:
                 name: Start MySQL via Docker
                 command: |
-                    docker run -d \
+                    docker run -d --name mysql \
                         -e "MYSQL_ALLOW_EMPTY_PASSWORD=true" \
                         -e "MYSQL_HOST=127.0.0.1" \
                         -e "MYSQL_ROOT_HOST=%" \
-                        -e "MYSQL_USER=root" \
                         mysql/mysql-server:5.7
             - run:
                 name: Build Docker image
                 command: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
-            - run: docker run -d mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
+            - run: docker run -d --name helium mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
             - run: docker ps
             - run:
                 name: Install the MySQL client
