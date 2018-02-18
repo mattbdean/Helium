@@ -1,6 +1,136 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.8.0
-ignore: {}
+version: v1.10.1
+# ignores vulnerabilities until expiry date; change duration by modifying expiry date
+ignore:
+  'npm:hoek:20180212':
+    - '@angular/cli > less > request > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.726Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > request > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.726Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > request > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.726Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > request > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.726Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > request > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.726Z'
+    - '@angular/cli > node-sass > request > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.726Z'
+    - '@angular/cli > less > request > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > request > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > request > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > request > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > request > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > node-sass > request > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > less > request > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > request > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > request > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > request > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.727Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > request > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > node-sass > request > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > hawk > cryptiles > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > hawk > boom > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > less > request > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > request > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > request > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > request > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > request > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > node-sass > request > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.728Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > hawk > sntp > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.729Z'
+    - '@angular/compiler-cli > chokidar > fsevents > node-pre-gyp > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.729Z'
+    - '@angular/cli > @angular-devkit/core > chokidar > fsevents > node-pre-gyp > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.729Z'
+    - '@angular/cli > webpack > watchpack > chokidar > fsevents > node-pre-gyp > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.729Z'
+    - '@angular/cli > webpack-dev-server > chokidar > fsevents > node-pre-gyp > hawk > hoek':
+        reason: None given
+        expires: '2018-03-20T22:14:23.729Z'
+  'npm:is-my-json-valid:20180214':
+    - '@angular/cli > node-sass > request > har-validator > is-my-json-valid':
+        reason: None given
+        expires: '2018-03-20T22:14:23.729Z'
+  'npm:tunnel-agent:20170305':
+    - '@angular/cli > node-sass > request > tunnel-agent':
+        reason: None given
+        expires: '2018-03-20T22:14:23.729Z'
 # patches apply the minimum changes required to fix a vulnerability
 patch:
   'npm:uglify-js:20151024':
