@@ -93,15 +93,19 @@ jobs:
                     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
                     echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
 
+                    # Chrome
+                    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+                    echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+
                     # MySQL
                     wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
                     DEBIAN_FRONTEND=noninteractive sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
 
                     sudo apt-get update
             - run:
-                name: Install MySQL client and Yarn
+                name: Install MySQL client, Yarn, and Chrome
                 command: |
-                    sudo apt-get install mysql-client yarn
+                    sudo apt-get install mysql-client yarn google-chrome-stable
             - run: mysql --version
             - run:
                 name: Initialize DB
@@ -113,14 +117,14 @@ jobs:
 #            - run: docker kill $(docker ps -q)
     codecov:
         docker:
-            - image: node:8
+            - image: circleci/node:8
         steps:
             - checkout
             - restore_cache:
                 <<: *restore_deps_cache
             - attach_workspace:
                 at: /tmp/workspace
-            - run: cp -r /tmp/workspace/coverage ${CIRCLE_WORKING_DIRECTORY}
+            - run: cp -r /tmp/workspace/coverage ~/project
             # Make sure things are being saved/restore properly
             - run: du -h -d 2 coverage
 #            - run:
