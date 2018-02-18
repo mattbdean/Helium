@@ -28,7 +28,9 @@ jobs:
             - checkout
             - restore_cache:
                 <<: *restore_deps_cache
-            - run: yarn gulp common:build
+            - run:
+                name: Build common files
+                command: yarn gulp common:build
             - run:
                 name: Client tests
                 command: yarn test:client --progress false
@@ -56,7 +58,9 @@ jobs:
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
-            - run: sudo apt-get install mysql-client
+            - run:
+                name: Install MySQL client
+                command: sudo apt-get install mysql-client
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
@@ -129,10 +133,13 @@ jobs:
                 <<: *restore_deps_cache
             - attach_workspace:
                 at: /tmp/workspace
-            - run: cp -r /tmp/workspace/coverage ~/project
+            - run:
+                name: Copy coverage data from client and server tests
+                command: cp -r /tmp/workspace/coverage ~/project
             - run:
                 name: Upload code coverage
                 command: yarn codecov --disable=gcov
+
     deploy:
         machine: true
         steps:
@@ -143,8 +150,9 @@ jobs:
             - run:
                 name: Login to DockerHub
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            - run: docker push mattbdean/helium:$(.circleci/docker-tag.sh)
-
+            - run:
+                name: Push to DockerHug
+                command: docker push mattbdean/helium:$(.circleci/docker-tag.sh)
 
 workflows:
     version: 2
