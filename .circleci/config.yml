@@ -1,7 +1,7 @@
 version: 2
 restore_deps_cache: &restore_deps_cache
     keys:
-        - deps-{{ checksum "yarn.lock" }}
+        - deps-node8-{{ checksum "yarn.lock" }}
 jobs:
     cache-preinstalled:
         docker:
@@ -18,7 +18,7 @@ jobs:
                 command: yarn install
             # Save the cache here
             - save_cache:
-                key: deps-{{ checksum "yarn.lock" }}
+                key: deps-node8-checksum "yarn.lock" }}
                 paths:
                     - "node_modules"
     test-client:
