@@ -110,9 +110,9 @@ jobs:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - run: yarn e2e:prepped
-            - run: docker save mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -o image.tar
+            - run: docker save mattbdean/helium:latest-dev-${CIRCLE_BRANCH} -o ~/image.tar
             - persist_to_workspace:
-                root: .
+                root: ~
                 path: image.tar
     codecov:
         docker:
