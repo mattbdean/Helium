@@ -28,6 +28,7 @@ jobs:
             - checkout
             - restore_cache:
                 <<: *restore_deps_cache
+            - run: yarn gulp common:build
             - run:
                 name: Client tests
                 command: yarn test:client --progress false
@@ -40,7 +41,7 @@ jobs:
                     - "coverage/client"
     test-server:
         docker:
-            - image: circleci/node:8
+            - image: mattbdean/helium-test:latest
             - image: circleci/mysql:5.7-ram
               environment:
                   - MYSQL_ALLOW_EMPTY_PASSWORD=true
@@ -51,6 +52,7 @@ jobs:
             - checkout
             - restore_cache:
                 <<: *restore_deps_cache
+            - run: yarn gulp common:build
             - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
@@ -95,9 +97,9 @@ jobs:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - run: yarn e2e:prepped
-#            - run:
-#                name: Login to DockerHub
-#                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+            - run:
+                name: Login to DockerHub
+                command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
 #            - run: docker kill $(docker ps -q)
     codecov:
         docker:
