@@ -137,7 +137,7 @@ jobs:
             - run:
                 name: Login to DockerHub
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            - run: docker push mattbdean:latest-dev-${CIRCLE_BRANCH}
+            - run: docker push mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
 
 
 workflows:
