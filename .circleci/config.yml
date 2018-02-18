@@ -38,7 +38,7 @@ jobs:
             - persist_to_workspace:
                 root: .
                 paths:
-                    - "coverage"
+                    - "coverage/client/lcov.info"
     test-server:
         docker:
             - image: circleci/node:8
@@ -66,7 +66,7 @@ jobs:
             - persist_to_workspace:
                 root: .
                 paths:
-                    - "coverage"
+                    - "coverage/server/lcov.info"
     test-e2e:
         machine: true
         steps:
@@ -84,7 +84,7 @@ jobs:
             - run:
                 name: Build Docker image
                 command: docker build -t mattbdean/helium:latest-dev-${CIRCLE_BRANCH} .
-            - run: docker run -d --name helium mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
+            - run: docker run -d --name helium -p 3000:3000 mattbdean/helium:latest-dev-${CIRCLE_BRANCH}
             - run: docker ps
             - run:
                 name: Add required APT repositories
@@ -114,6 +114,7 @@ jobs:
             - run:
                 name: Login to DockerHub
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
+#            - run: docker push ...
 #            - run: docker kill $(docker ps -q)
     codecov:
         docker:
@@ -125,12 +126,9 @@ jobs:
             - attach_workspace:
                 at: /tmp/workspace
             - run: cp -r /tmp/workspace/coverage ~/project
-            # Make sure things are being saved/restore properly
-            - run: du -h -d 2 coverage
-#            - run:
-#                name: Upload code coverage
-#                command: yarn codecov --disable=gcov
-            - run: echo "TODO" && false
+            - run:
+                name: Upload code coverage
+                command: yarn codecov --disable=gcov
 
 
 workflows:
