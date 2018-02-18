@@ -133,11 +133,10 @@ jobs:
         steps:
             - attach_workspace:
                 at: /tmp/workspace
-            - run: [ -f /tmp/workspace/image.tar ]
+            - run: docker load -i /tmp/workspace/image.tar
             - run:
                 name: Login to DockerHub
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
-            - run: docker load -i /tmp/workspace/image.tar
             - run: docker push mattbdean:latest-dev-${CIRCLE_BRANCH}
 
 
