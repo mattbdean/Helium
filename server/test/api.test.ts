@@ -387,5 +387,21 @@ describe('API v1', () => {
                 expect(stub).calledWithExactly('foo', data);
             });
         });
+
+        describe('GET /api/v1/schemas/:schema/:table/pluck', async () => {
+            it('should pass query parameters on as selectors to pluck()', async () => {
+                const stub = sinon.stub(schemaDao, 'pluck').resolves({});
+                const query = { k1: 'v1', k2: 'v2' };
+
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/foo/bar/pluck',
+                    expectedStatus: 200,
+                    query
+                });
+
+                expect(stub).to.have.been.calledWithExactly('foo', 'bar', query);
+            });
+        });
     });
 });
