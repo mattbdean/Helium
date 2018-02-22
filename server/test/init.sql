@@ -163,6 +163,12 @@ INSERT INTO datatypeshowcase VALUES
   (102, 5,    55.5, 0,    '2017-07-05', NOW(),                 'b',  x'1234', NULL,          'another string2'),
   (110, NULL, NULL, NULL, NULL,         NULL,                  NULL, NULL,    NULL,          'mostly null data in this row');
 
+# This data is mostly used for testing SchemaDao.pluck(). pk=1000 has no part table entries, pk=1001 has one entry in
+# master__part, and pk=1002 has two entries in master__part and one in master__part2
+INSERT INTO master (pk) VALUES (1000), (1001), (1002);
+INSERT INTO master__part (part_pk, master) VALUES (100, 1001), (101, 1002), (102, 1002);
+INSERT INTO master__part2 (part2_pk, master) VALUES (100, 1002);
+
 DROP PROCEDURE IF EXISTS DO_WHILE;
 DELIMITER //
 CREATE PROCEDURE DO_WHILE()

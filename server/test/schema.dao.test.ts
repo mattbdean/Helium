@@ -8,6 +8,7 @@ import { TableInsert } from '../src/common/table-insert.interface';
 import { ConnectionConf } from '../src/db/connection-conf.interface';
 import { DatabaseHelper } from '../src/db/database.helper';
 import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
+import { ValidationError } from '../src/routes/api/validation-error';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -494,6 +495,45 @@ describe('SchemaDao', () => {
             // Very basic for now
             const data = await dao.headers(db, table);
             joi.assert(data, joi.array().items(joi.object()).length(numColumns));
+        });
+    });
+
+    describe('pluck', () => {
+        it('should throw an Error if the given keys don\'t identify exactly one row', async () => {
+            await expect(dao.pluck('helium', 'master', { pk : '999 ' }))
+                .to.be.rejectedWith(ValidationError);
+        });
+
+        it('should throw an Error if the selector keys and values are anything but strings', async () => {
+            await expect(dao.pluck('heilum', 'master', { pk: true } as any))
+                .to.be.rejectedWith(Error);
+        });
+
+        it('should return only that row if it does not have any part table entries', async () => {
+            expect(await dao.pluck('helium', 'master', { pk: '1000' }))
+                .to.deep.equal({ master: [{ pk: 1000 }]});
+        });
+
+        it('should return all data in all part tables associated with the specified row', async () => {
+            expect(await dao.pluck('helium', 'master', { pk: '1001' }))
+                .to.deep.equal({
+                    master: [{ pk: 1001 }],
+                    master__part: [{ part_pk: 100, master: 1001 }]
+                });
+
+            expect(await dao.pluck('helium', 'master', { pk: '1002' }))
+                .to.deep.equal({
+                    master: [
+                        { pk: 1002 }
+                    ],
+                    master__part: [
+                        { part_pk: 101, master: 1002 },
+                        { part_pk: 102, master: 1002 }
+                    ],
+                    master__part2: [
+                        { part2_pk: 100, master: 1002 }
+                    ]
+            });
         });
     });
 });
