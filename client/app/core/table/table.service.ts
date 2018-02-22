@@ -54,6 +54,10 @@ export class TableService {
         }).map((data: PaginatedResponse<SqlRow[]>) => data.data);
     }
 
+    public pluck(schema: string, table: string, selectors: { [key: string]: string }) {
+        return this.get(`/schemas/${encode(schema)}/${encode(table)}/pluck`, selectors);
+    }
+
     public columnValues(schema: string, table: string, column: string): Observable<any[]> {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}/column/${encode(column)}`);
     }

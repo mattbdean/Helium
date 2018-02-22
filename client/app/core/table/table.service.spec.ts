@@ -122,6 +122,15 @@ describe('TableService', () => {
         });
     });
 
+    describe('pluck', () => {
+        it('should request GET /api/v1/schemas/:schema/:table/pluck', () => {
+            const selectors = { k1: 'v1', k2: 'v2' };
+            service.pluck(schemaName, tableName, selectors).subscribe(verifyExpirationUpdate);
+
+            expectGet(`/api/v1/schemas/${schemaName}/${tableName}/pluck`, selectors);
+        });
+    });
+
     describe('columnValues', () => {
         it('should request GET /api/v1/schemas/:schema/:table/column/:col', () => {
             service.columnValues(schemaName, tableName, 'col').subscribe(verifyExpirationUpdate);
