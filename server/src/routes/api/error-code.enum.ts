@@ -7,6 +7,7 @@ export type ErrorCode =
 
     // Filters
     'INVALID_FILTER' |
+    'CONSTRAINT_SPECIFICITY' |
 
     // Database
     'NO_SUCH_TABLE' |

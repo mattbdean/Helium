@@ -1,3 +1,4 @@
+import * as joi from 'joi';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Select } from 'squel';
@@ -15,6 +16,7 @@ import { unflattenTableNames } from '../../../common/util';
 import { QueryHelper } from '../../../db/query-helper';
 import { ValidationError } from '../validation-error';
 import { TableInputValidator } from './schema-input.validator';
+import { TableInsert } from '../../../common/table-insert.interface';
 
 /**
  * Simple interface for describing the way some data is to be organized.
@@ -41,6 +43,16 @@ export class SchemaDao {
         gt: '>',
         eq: '='
     };
+
+    /**
+     * A Joi schema that allows up to 100 properties with each key being no
+     * longer than 100 characters and each value being no longer than 1000
+     * characters
+     */
+    private static readonly JOI_PLUCK_SELECTORS = joi.object()
+        .pattern(/^.{1,100}$/, joi.string().max(1000))
+        .max(100);
+
     private validator: TableInputValidator;
 
     public constructor(private helper: QueryHelper) {
@@ -129,33 +141,7 @@ export class SchemaDao {
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
         const headers: TableHeader[] = await this.headers(schema, table);
-        const blobHeaders = _(headers)
-            .filter((h) => h.type === 'blob')
-            .map((h) => h.name)
-            .value();
-
-        for (const row of rows) {
-            for (const col of Object.keys(row)) {
-                if (row[col] instanceof Date) {
-                    const header = _.find(headers, (h) => h.name === col);
-                    if (header === undefined)
-                        throw Error(`Could not find header with name ${col}`);
-
-                    if (header.type === 'date')
-                        row[col] = moment(row[col]).format(DATE_FORMAT);
-                    else if (header.type === 'datetime')
-                        row[col] = moment(row[col]).format(DATETIME_FORMAT);
-                    else
-                        throw Error(`Header ${header.name} unexpectedly had a Date value in it`);
-                } else if (blobHeaders.indexOf(col) >= 0) {
-                    // Don't send the actual binary data, send a specific string
-                    // instead
-                    row[col] = BLOB_STRING_REPRESENTATION;
-                }
-            }
-        }
-
-        return rows;
+        return this.formatData(headers, rows);
     }
 
     /** Fetches a TableMeta instance for the given table. */
@@ -356,6 +342,132 @@ export class SchemaDao {
         }
 
         return resolved;
+    }
+
+    /**
+     * Grabs all rows from all part tables belonging to `table`. Assumes
+     * DataJoint creates part tables in the same schema as its master. The
+     * `selectors` parameter is used to uniquely identify exactly one row from
+     * the master table. The keys of this object should be column names, and the
+     * values should be specific values that one column has. The most efficient
+     * way of specifying `selectors` is by only paying attention to the primary
+     * keys of the master table.
+     */
+    public async pluck(schema: string, table: string, selectors: { [key: string]: string }): Promise<TableInsert> {
+        const partTables = await this.partTables(schema, table);
+        const headers = await this.headers(schema, table);
+
+        // Find exactly one row that matches the given selectors
+        const pluckedRows = await this._pluck(schema, table, selectors, true, headers);
+        const referencedRow = pluckedRows[0];
+
+        const pluckedPartTableRows = await Promise.all(partTables.map(async (partTable) => {
+            // Pick out the constraints that tell us that a row in this part
+            // table belongs to a row in the master table
+            const constraints = (await this.constraints(schema, partTable))
+                .filter((c) => c.type === 'foreign' && c.ref !== null && c.ref.table === table);
+
+            const partSelectors: { [key: string]: string } = {};
+
+            for (const constraint of constraints) {
+                partSelectors[constraint.localColumn] =
+                    String(referencedRow[constraint.ref!!.column]);
+            }
+
+            return this._pluck(schema, partTable, partSelectors, false,
+                await this.headers(schema, partTable));
+        }));
+
+        const keys = [table, ...partTables];
+        const values = [[referencedRow], ...pluckedPartTableRows];
+
+        // Create an object where property n has key keys[n] and value values[n]
+        const everything = _.zipObject(keys, values);
+
+        // Don't include the part tables where there are no rows belonging to
+        // the referenced row
+        return _.pickBy(everything, (rows) => rows.length > 0) as TableInsert;
+    }
+
+    /**
+     * Attempts to find rows that match the given criteria. See the main `pluck`
+     * method documentation for how `selectors` should work. If `singleRow` is
+     * true, then this method throws a ValidationError if the query returns
+     * anything other than exactly one row.
+     */
+    private async _pluck(
+        schema: string,
+        table: string,
+        selectors: { [key: string]: string },
+        singleRow: boolean,
+        headers: TableHeader[]
+    ): Promise<SqlRow[]> {
+        // Make sure `selectors` is actually an object mapping strings to strings
+        joi.assert(selectors, SchemaDao.JOI_PLUCK_SELECTORS);
+
+        const result = await this.helper.execute(((squel) => {
+            let query = squel.select()
+                .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table));
+
+            for (const fieldName of Object.keys(selectors)) {
+                query = query.where(this.helper.escapeId(fieldName) + ' = ?', selectors[fieldName]);
+            }
+
+            return query;
+        }));
+
+        if (singleRow && result.length !== 1) {
+            throw new ValidationError('Provided constraints did not produce ' +
+                'exactly 1 result, got ' + result.length,
+                'CONSTRAINT_SPECIFICITY', { selectors });
+        }
+
+        return this.formatData(headers, result);
+    }
+
+    private formatData(headers: TableHeader[], rows: SqlRow[]): SqlRow[] {
+        const blobHeaders = _(headers)
+            .filter((h) => h.type === 'blob')
+            .map((h) => h.name)
+            .value();
+
+        return rows.map((row): SqlRow => {
+            const newRow = _.clone(row);
+            for (const col of Object.keys(row)) {
+                if (newRow[col] instanceof Date) {
+                    const header = _.find(headers, (h) => h.name === col);
+                    if (header === undefined)
+                        throw Error(`Could not find header with name ${col}`);
+
+                    if (header.type === 'date')
+                        newRow[col] = moment(row[col]).format(DATE_FORMAT);
+                    else if (header.type === 'datetime')
+                        newRow[col] = moment(row[col]).format(DATETIME_FORMAT);
+                    else
+                        throw Error(`Header ${header.name} unexpectedly had a Date value in it`);
+                } else if (blobHeaders.indexOf(col) >= 0) {
+                    // Don't send the actual binary data, send a specific string
+                    // instead
+                    newRow[col] = BLOB_STRING_REPRESENTATION;
+                }
+            }
+
+            return newRow;
+        });
+    }
+
+    /**
+     * Resolves to a list of part tables that belong to the given master table.
+     * All table names are presented as they appear in SQL. They are not the
+     * "clean" DataJoint version. For example, "foo__bar" could be an element
+     * in the returned array, but "Foo.Bar" would not be.
+     */
+    private async partTables(schema: string, masterTable: string): Promise<string[]> {
+        const query = `SHOW TABLES FROM ${this.helper.escapeId(schema)} LIKE ` +
+            this.helper.escape(masterTable + '__%');
+
+        return (await this.helper.executeRaw(query))
+            .map((row: SqlRow): string => row[Object.keys(row)[0]]);
     }
 
     /**

@@ -1,4 +1,7 @@
-import { Component, DebugElement, Input } from '@angular/core';
+import {
+    Component, DebugElement, Input,
+    NO_ERRORS_SCHEMA
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
@@ -35,8 +38,7 @@ describe('FormHostComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
-                FormHostComponent,
-                PartialFormMock
+                FormHostComponent
             ],
             imports: [
                 ReactiveFormsModule,
@@ -46,11 +48,16 @@ describe('FormHostComponent', () => {
                 {
                     provide: ActivatedRoute,
                     // name will always be 'master'
-                    useValue: { params: Observable.of({ name: 'master' }) }
+                    useValue: {
+                        params: Observable.of({ name: 'master' }),
+                        queryParams: Observable.of({})
+                    }
                 },
                 { provide: TableService, useValue: tableServiceStub },
                 { provide: MatSnackBar, useValue: snackbarStub }
-            ]
+            ],
+            // Ignore missing children (aka PartialFormComponent)
+            schemas: [NO_ERRORS_SCHEMA]
         });
 
         fixture = TestBed.createComponent(FormHostComponent);
@@ -81,20 +88,3 @@ describe('FormHostComponent', () => {
         });
     });
 });
-
-// Include this component so we don't have to include PartialFormComponent and
-// all its dependencies
-@Component({
-    selector: 'partial-form',
-    template: `<p>Mock partial form for {{ name.rawName }}</p>`
-})
-class PartialFormMock {
-    @Input()
-    public rootGroup;
-
-    @Input()
-    public meta: TableMeta;
-
-    @Input()
-    public role;
-}

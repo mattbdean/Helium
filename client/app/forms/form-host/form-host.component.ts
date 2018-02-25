@@ -18,6 +18,7 @@ import {
     MasterTableName, TableHeader, TableMeta
 } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
+import { TableInsert } from '../../common/table-insert.interface';
 import { TableName } from '../../common/table-name.class';
 import { unflattenTableNames } from '../../common/util';
 import { TableService } from '../../core/table/table.service';
@@ -41,6 +42,13 @@ export class FormHostComponent implements OnDestroy, OnInit {
     private sub: Subscription;
     private submitSub: Subscription;
 
+    /**
+     * Any data requested to have been prefilled when the user presses the
+     * "insert like" button in the datatable. If there is no data available,
+     * this object will have no keys.
+     */
+    private prefilled: TableInsert = {};
+
     @ViewChildren('partialForms')
     private partialForms: QueryList<PartialFormComponent>;
 
@@ -56,14 +64,32 @@ export class FormHostComponent implements OnDestroy, OnInit {
         // Empty group to start off with
         this.formGroup = this.fb.group({});
 
+        const pluckedRowJson$ = this.route.queryParams
+            .map((p) => p.row ? JSON.parse(p.row) : null);
+
+        const pluckedRow$: Observable<TableInsert> = Observable.combineLatest(
+            this.route.params,
+            pluckedRowJson$
+        )
+            .flatMap((data: [Params, { [key: string]: string } | null]) => {
+                const { schema, table } = data[0];
+                const pluckSelectors = data[1];
+                if (pluckSelectors == null) {
+                    return Observable.of({});
+                } else {
+                    return this.backend.pluck(schema, table, pluckSelectors);
+                }
+            });
+
         this.sub = Observable.combineLatest(
             this.route.params.switchMap((params) => this.backend.tables(params.schema)),
-            this.route.params
+            this.route.params,
+            pluckedRow$
         )
-            .switchMap((data: [TableName[], Params]) => {
+            .switchMap((data: [TableName[], Params, TableInsert]) => {
                 // Try to identify a MasterTableName for the given raw SQL name
-                const availableTables = data[0];
-                const {schema, table} = data[1];
+                const [availableTables, {schema, table}, insertLikeRow] = data;
+                this.prefilled = insertLikeRow;
 
                 const currentName = availableTables.find((n) => n.schema === schema && n.name.raw === table);
                 if (currentName === undefined || currentName.masterName !== null) {

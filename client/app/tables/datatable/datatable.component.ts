@@ -222,6 +222,20 @@ export class DatatableComponent implements OnInit, OnDestroy {
             if (header === undefined)
                 throw new Error('Can\'t find header with name ' + headerName);
 
+            // We only need to provide the next component what information
+            // uniquely identifies this row
+            const primaryKey = _.find(this.meta.constraints, (c) =>
+                c.localColumn === header.name && c.type === 'primary');
+
+            // We don't care about anything besides primary keys
+            if (primaryKey === undefined) {
+                delete reformatted[headerName];
+                // If we don't continue here reformatted[headerName] will be
+                // added back into the object if the header is a date or
+                // datetime
+                continue;
+            }
+
             if (header.type === 'date')
                 reformatted[headerName] = moment(reformatted[headerName],
                     DatatableComponent.DISPLAY_FORMAT_DATE).format(DATE_FORMAT);
@@ -230,7 +244,7 @@ export class DatatableComponent implements OnInit, OnDestroy {
                     DatatableComponent.DISPLAY_FORMAT_DATETIME).format(DATETIME_FORMAT);
         }
 
-        return { prefilled: JSON.stringify(reformatted) };
+        return { row: JSON.stringify(reformatted) };
     }
 
     private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {

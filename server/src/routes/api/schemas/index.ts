@@ -81,12 +81,29 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
 
     const daoFor = (req: Request): SchemaDao => daoFactory(db, req.header('x-api-key')!!);
 
-    // Limit 25 records by default, allowing a maximum of 100
-    r.use(paginate.middleware(25, 100));
-
     r.get('/', wrap((req: Request) => daoFor(req).schemas()));
     r.get('/:schema', wrap((req: Request) =>
         daoFor(req).tables(req.params.schema)));
+
+    r.get('/:schema/:table', wrap((req: Request) =>
+        daoFor(req).meta(req.params.schema, req.params.table)));
+
+    r.get('/:schema/:table/pluck', wrap((req: Request) =>
+        daoFor(req).pluck(req.params.schema, req.params.table, req.query)));
+
+    r.put('/:schema/data', wrap((req: Request) =>
+        // Insert the data and return an empty JSON document
+        daoFor(req).insertRow(req.params.schema, req.body).then(() => ({}))));
+
+    r.get('/:schema/:table/column/:col', wrap((req) => daoFor(req).columnContent(
+            req.params.schema,
+            req.params.table,
+            req.params.col
+    )));
+
+    // Limit 25 records by default, allowing a maximum of 100. All routes after
+    // this one will have `limit` and `page` injected into the query
+    r.use(paginate.middleware(25, 100));
 
     r.get('/:schema/:table/data', wrap(async (req: Request) => {
         // Create a Sort object, if one is specified in the query
@@ -129,22 +146,9 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
             limit: req.query.limit,
             sort
         }, filters)
-            // Once we have the data, wrap it in a PaginatedResponse
+        // Once we have the data, wrap it in a PaginatedResponse
             .then((data: SqlRow[]): PaginatedResponse<any> => ({ size: data.length, data }));
     }));
-
-    r.get('/:schema/:table', wrap((req: Request) =>
-        daoFor(req).meta(req.params.schema, req.params.table)));
-
-    r.put('/:schema/data', wrap((req: Request) =>
-        // Insert the data and return an empty JSON document
-        daoFor(req).insertRow(req.params.schema, req.body).then(() => ({}))));
-
-    r.get('/:schema/:table/column/:col', wrap((req) => daoFor(req).columnContent(
-            req.params.schema,
-            req.params.table,
-            req.params.col
-    )));
 
     // This is where all error handling for the router happens
     r.use((err, req, res, next) => {
