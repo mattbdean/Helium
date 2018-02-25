@@ -73,7 +73,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     public role: 'master' | 'part';
 
     @Input()
-    public prefilled: SqlRow[];
+    public prefilled: SqlRow[] = [];
 
     public formSpec: FormControlSpec[];
 
