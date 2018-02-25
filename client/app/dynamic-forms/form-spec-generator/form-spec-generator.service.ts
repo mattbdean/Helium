@@ -34,7 +34,7 @@ export class FormSpecGeneratorService {
      * Generates one FormControlSpec for each header in the given TableMeta.
      * Does not include a submit control.
      */
-    public generate(meta: TableMeta, prefilledData: object = {}): FormControlSpec[] {
+    public generate(meta: TableMeta): FormControlSpec[] {
         return meta.headers.map((h): FormControlSpec => {
             const validators: ValidatorFn[] = [];
             let required = false;
@@ -105,7 +105,7 @@ export class FormSpecGeneratorService {
                 required,
                 disabled,
                 autocompleteValues,
-                defaultValue: FormSpecGeneratorService.defaultValue(h, prefilledData)
+                defaultValue: FormSpecGeneratorService.defaultValue(h)
             };
 
             // Don't specifically define undefined values as undefined. Messes
@@ -160,10 +160,8 @@ export class FormSpecGeneratorService {
      * header. If prefilledData is given, `prefilledData[header.name]` will be
      * used if that header is not a primary key.
      */
-    private static defaultValue(header: TableHeader, prefilledData: object): DefaultValue {
+    private static defaultValue(header: TableHeader): DefaultValue {
         let defaultValue: DefaultValue = header.defaultValue;
-        if (prefilledData[header.name] !== undefined)
-            defaultValue = prefilledData[header.name];
 
         switch (header.type) {
             case 'blob':

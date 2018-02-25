@@ -212,8 +212,8 @@ describe('FormSpecGeneratorService', () => {
             expect(formSpecNullable.defaultValue).to.be.null;
             formSpecNullable.disabled!!.should.be.true;
 
-            // The only difference specifying nullable: false is that the initial
-            // value is undefined instead of null.
+            // The only difference specifying nullable: false is that the
+            // initial value is undefined instead of null.
             const formSpecNonNull = generateSingle({
                 name: 'bar',
                 type: 'blob',
@@ -223,36 +223,6 @@ describe('FormSpecGeneratorService', () => {
             formSpecNonNull.type.should.equal('text');
             expect(formSpecNonNull.defaultValue).to.be.null;
             formSpecNonNull.disabled!!.should.be.true;
-        });
-
-        it('should ignore prefilled primary key data', () => {
-            const headers = [
-                textualHeader({
-                    name: 'pk',
-                    defaultValue: 'should be used'
-                }),
-                textualHeader({
-                    name: 'normal',
-                    defaultValue: 'should have ben overridden by prefilledData'
-                })
-            ];
-
-            const constraints: Constraint[] = [{
-                localColumn: 'pk',
-                type: 'primary',
-                ref: {
-                    schema: 'schema',
-                    table: 'other',
-                    column: 'other_pk'
-                }
-            }];
-
-            const prefilledData = { pk: 'foo', normal: 'bar' };
-
-            const meta = createMetaFor(headers, constraints);
-            const spec = generator.generate(meta, prefilledData);
-            expect(spec[0].defaultValue).to.equal(prefilledData.pk);
-            expect(spec[1].defaultValue).to.equal(prefilledData.normal);
         });
     });
 

@@ -13,6 +13,7 @@ import { PaginatedResponse } from '../../common/responses';
 import { TableNameParams } from '../../common/table-name-params.interface';
 import { TableName } from '../../common/table-name.class';
 import { AuthService } from '../auth/auth.service';
+import { TableInsert } from '../../common/table-insert.interface';
 
 const encode = encodeURIComponent;
 
@@ -54,7 +55,7 @@ export class TableService {
         }).map((data: PaginatedResponse<SqlRow[]>) => data.data);
     }
 
-    public pluck(schema: string, table: string, selectors: { [key: string]: string }) {
+    public pluck(schema: string, table: string, selectors: { [key: string]: string }): Observable<TableInsert> {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}/pluck`, selectors);
     }
 

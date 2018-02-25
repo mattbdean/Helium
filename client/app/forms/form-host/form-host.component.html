@@ -2,7 +2,12 @@
     <div class="form-container">
 
         <div class="partial-form-container" *ngFor="let meta of metaInUse">
-            <partial-form #partialForms [rootGroup]="formGroup" [meta]="meta" [role]="getRole(meta)"></partial-form>
+            <partial-form
+                #partialForms
+                [rootGroup]="formGroup"
+                [meta]="meta"
+                [role]="getRole(meta)"
+                [prefilled]="prefilled[meta.name] ? prefilled[meta.name] : []"></partial-form>
         </div>
 
         <button mat-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>

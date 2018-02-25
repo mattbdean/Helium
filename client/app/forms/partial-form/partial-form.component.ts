@@ -3,7 +3,6 @@ import {
     Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
-import { ActivatedRoute, Params } from '@angular/router';
 
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
@@ -11,7 +10,7 @@ import { Subscription } from 'rxjs/Subscription';
 
 import * as _ from 'lodash';
 
-import { TableMeta } from '../../common/api';
+import { SqlRow, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
 import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
 import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';
@@ -70,8 +69,11 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     public rootGroupPropertyBinding: FormGroup;
     private rootGroup$ = new BehaviorSubject<FormGroup | null>(null);
 
-    @Input('role')
+    @Input()
     public role: 'master' | 'part';
+
+    @Input()
+    public prefilled: SqlRow[];
 
     public formSpec: FormControlSpec[];
 
@@ -85,22 +87,11 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
     public constructor(
         private formSpecGenerator: FormSpecGeneratorService,
-        private fb: FormBuilder,
-        private route: ActivatedRoute
+        private fb: FormBuilder
     ) {}
 
     public ngOnInit() {
-        const spec$ = Observable.zip(
-            this.meta$,
-            this.route.queryParams
-                .map((p: Params) => {
-                    const name = new TableName('(unused)', this.meta$.getValue()!!.name);
-                    // For now, only work on master tables
-                    if (p.prefilled && !name.isPartTable())
-                        return JSON.parse(p.prefilled);
-                    return {};
-                })
-        ).map((data: [TableMeta, object]) => this.formSpecGenerator.generate(data[0], data[1]), this);
+        const spec$ = this.meta$.map((meta) => this.formSpecGenerator.generate(meta!!));
 
         this.name$ = this.meta$.map((m) => new TableName('(unused)', m!!.name));
 
@@ -121,10 +112,14 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
                 const name = new TableName('(unused)', tableMeta.name);
 
                 // Master tables start off with one entry
-                const initialData = this.role === 'master' ?
-                    [this.createItem(this.formSpec)] : [];
+                const prefilled: Array<SqlRow | null> =
+                    this.role === 'master' && this.prefilled.length === 0 ?
+                        [null] : this.prefilled;
 
-                this.formArray = this.fb.array(initialData);
+                const initialControls = prefilled.map((p) =>
+                    this.createItem(this.formSpec, p));
+
+                this.formArray = this.fb.array(initialControls);
                 rootFormGroup.addControl(name.name.raw, this.formArray);
 
                 const masterRawName = name.masterName ? name.masterName.raw : null;
@@ -182,7 +177,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     public addEntry() {
-        this.formArray.push(this.createItem(this.formSpec));
+        this.formArray.push(this.createItem(this.formSpec, null));
     }
 
     public removeEntry(index) {
@@ -210,17 +205,25 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
      * Creates a new FormGroup according to the given FormControlSpecs. This
      * function automatically takes care of binding the appropriate controls.
      */
-    private createItem(formSpec: FormControlSpec[]): FormGroup {
+    private createItem(formSpec: FormControlSpec[], initialData: SqlRow | null): FormGroup {
         const names = _.map(formSpec, (spec) => spec.formControlName);
         return this.fb.group(_.zipObject(
             names,
             _.map(formSpec, (spec, index) => {
+                const controlName = names[index];
+
                 // Look for a binding for the current form control name
-                const binding = _(this.bindings).find((b) => b.controlName === names[index]);
+                const binding = _(this.bindings).find((b) => b.controlName === controlName);
 
                 // Fall back to the spec's initial value if there is no binding
                 // for this particular control
-                const initialValue = binding ? binding.lastValue : spec.defaultValue;
+                // const initialValue = binding ? binding.lastValue : spec.defaultValue;
+
+                let initialValue = spec.defaultValue;
+                if (binding)
+                    initialValue = binding.lastValue;
+                if (initialData !== null && !_.isNil(initialData[controlName]))
+                    initialValue = initialData[controlName];
 
                 // Create the actual form control. Bound controls are always
                 // disabled.

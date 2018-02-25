@@ -2,6 +2,7 @@ import { fail } from 'assert';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as joi from 'joi';
+import * as moment from 'moment';
 import { orderBy, random, uniq, zipObject } from 'lodash';
 import { Filter } from '../src/common/api';
 import { TableInsert } from '../src/common/table-insert.interface';
@@ -9,6 +10,11 @@ import { ConnectionConf } from '../src/db/connection-conf.interface';
 import { DatabaseHelper } from '../src/db/database.helper';
 import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
 import { ValidationError } from '../src/routes/api/validation-error';
+import {
+    BLOB_STRING_REPRESENTATION,
+    DATE_FORMAT,
+    DATETIME_FORMAT
+} from '../../client/app/common/constants';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -128,6 +134,28 @@ describe('SchemaDao', () => {
             for (const limit of [0, 1, 10, 100]) {
                 const schema = joi.array().items(rowContents).length(limit);
                 joi.assert(await dao.content(db, table, { limit }), schema);
+            }
+        });
+
+        it('should format dates and datetimes', async () => {
+            const data = await dao.content('helium', 'datatypeshowcase');
+
+            for (const row of data) {
+                if (row.date !== null)
+                    expect(moment(row.date, DATE_FORMAT, true).isValid()).to.be.true;
+
+                if (row.time !== null)
+                    expect(moment(row.time, DATETIME_FORMAT, true).isValid()).to.be.true;
+            }
+        });
+
+        it('should format blobs', async () => {
+            const data = await dao.content('helium', 'datatypeshowcase');
+
+            for (const row of data) {
+                if (row.blob !== null) {
+                    expect(row.blob).to.equal(BLOB_STRING_REPRESENTATION);
+                }
             }
         });
 
@@ -336,6 +364,7 @@ describe('SchemaDao', () => {
                 .to.eventually.be.rejected;
             expect(error.code).to.equal('ER_DBACCESS_DENIED_ERROR');
         });
+
         it('should throw an Error when the table doesn\'t exist', async () => {
             const error = await expect(dao.meta('helium', 'unknown_table')).to.eventually.be.rejected;
             expect(error.code).to.equal('ER_NO_SUCH_TABLE');
@@ -534,6 +563,25 @@ describe('SchemaDao', () => {
                         { part2_pk: 100, master: 1002 }
                     ]
             });
+        });
+
+        it('should format dates, datetimes, and blobs', async () => {
+            const data = await dao.pluck('helium', 'datatypeshowcase', { pk: '100' });
+
+            const row = data.datatypeshowcase[0];
+            expect(moment(row.date, DATE_FORMAT, true).isValid()).to.be.true;
+            expect(moment(row.time, DATETIME_FORMAT, true).isValid()).to.be.true;
+            expect(row.blob).to.equal(BLOB_STRING_REPRESENTATION);
+        });
+
+        it('should format blobs', async () => {
+            const data = await dao.content('helium', 'datatypeshowcase');
+
+            for (const row of data) {
+                if (row.blob !== null) {
+                    expect(row.blob).to.equal(BLOB_STRING_REPRESENTATION);
+                }
+            }
         });
     });
 });

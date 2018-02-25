@@ -141,33 +141,7 @@ export class SchemaDao {
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
         const headers: TableHeader[] = await this.headers(schema, table);
-        const blobHeaders = _(headers)
-            .filter((h) => h.type === 'blob')
-            .map((h) => h.name)
-            .value();
-
-        for (const row of rows) {
-            for (const col of Object.keys(row)) {
-                if (row[col] instanceof Date) {
-                    const header = _.find(headers, (h) => h.name === col);
-                    if (header === undefined)
-                        throw Error(`Could not find header with name ${col}`);
-
-                    if (header.type === 'date')
-                        row[col] = moment(row[col]).format(DATE_FORMAT);
-                    else if (header.type === 'datetime')
-                        row[col] = moment(row[col]).format(DATETIME_FORMAT);
-                    else
-                        throw Error(`Header ${header.name} unexpectedly had a Date value in it`);
-                } else if (blobHeaders.indexOf(col) >= 0) {
-                    // Don't send the actual binary data, send a specific string
-                    // instead
-                    row[col] = BLOB_STRING_REPRESENTATION;
-                }
-            }
-        }
-
-        return rows;
+        return this.formatData(headers, rows);
     }
 
     /** Fetches a TableMeta instance for the given table. */
@@ -381,9 +355,10 @@ export class SchemaDao {
      */
     public async pluck(schema: string, table: string, selectors: { [key: string]: string }): Promise<TableInsert> {
         const partTables = await this.partTables(schema, table);
+        const headers = await this.headers(schema, table);
 
         // Find exactly one row that matches the given selectors
-        const pluckedRows = await this._pluck(schema, table, selectors, true);
+        const pluckedRows = await this._pluck(schema, table, selectors, true, headers);
         const referencedRow = pluckedRows[0];
 
         const pluckedPartTableRows = await Promise.all(partTables.map(async (partTable) => {
@@ -399,7 +374,8 @@ export class SchemaDao {
                     String(referencedRow[constraint.ref!!.column]);
             }
 
-            return this._pluck(schema, partTable, partSelectors, false);
+            return this._pluck(schema, partTable, partSelectors, false,
+                await this.headers(schema, partTable));
         }));
 
         const keys = [table, ...partTables];
@@ -423,7 +399,8 @@ export class SchemaDao {
         schema: string,
         table: string,
         selectors: { [key: string]: string },
-        singleRow: boolean
+        singleRow: boolean,
+        headers: TableHeader[]
     ): Promise<SqlRow[]> {
         // Make sure `selectors` is actually an object mapping strings to strings
         joi.assert(selectors, SchemaDao.JOI_PLUCK_SELECTORS);
@@ -445,7 +422,38 @@ export class SchemaDao {
                 'CONSTRAINT_SPECIFICITY', { selectors });
         }
 
-        return result;
+        return this.formatData(headers, result);
+    }
+
+    private formatData(headers: TableHeader[], rows: SqlRow[]): SqlRow[] {
+        const blobHeaders = _(headers)
+            .filter((h) => h.type === 'blob')
+            .map((h) => h.name)
+            .value();
+
+        return rows.map((row): SqlRow => {
+            const newRow = _.clone(row);
+            for (const col of Object.keys(row)) {
+                if (newRow[col] instanceof Date) {
+                    const header = _.find(headers, (h) => h.name === col);
+                    if (header === undefined)
+                        throw Error(`Could not find header with name ${col}`);
+
+                    if (header.type === 'date')
+                        newRow[col] = moment(row[col]).format(DATE_FORMAT);
+                    else if (header.type === 'datetime')
+                        newRow[col] = moment(row[col]).format(DATETIME_FORMAT);
+                    else
+                        throw Error(`Header ${header.name} unexpectedly had a Date value in it`);
+                } else if (blobHeaders.indexOf(col) >= 0) {
+                    // Don't send the actual binary data, send a specific string
+                    // instead
+                    newRow[col] = BLOB_STRING_REPRESENTATION;
+                }
+            }
+
+            return newRow;
+        });
     }
 
     /**
