@@ -49,10 +49,10 @@ export class TableService {
                    page: number = 1,
                    limit: number = 25,
                    sort?: string,
-                   filters: Filter[] = []): Observable<SqlRow[]> {
+                   filters: Filter[] = []): Observable<PaginatedResponse<SqlRow[]>> {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}/data`, {
             page, limit, sort, filters: JSON.stringify(filters)
-        }).map((data: PaginatedResponse<SqlRow[]>) => data.data);
+        });
     }
 
     public pluck(schema: string, table: string, selectors: { [key: string]: string }): Observable<TableInsert> {

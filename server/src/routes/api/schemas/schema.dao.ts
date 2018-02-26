@@ -1,7 +1,7 @@
 import * as joi from 'joi';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { Select } from 'squel';
+import { MysqlSquel, ParamString, Select } from 'squel';
 
 import {
     Constraint, ConstraintType, DefaultValue, Filter, SqlRow, TableDataType,
@@ -11,12 +11,12 @@ import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../../common/constants';
+import { TableInsert } from '../../../common/table-insert.interface';
 import { TableName } from '../../../common/table-name.class';
 import { unflattenTableNames } from '../../../common/util';
 import { QueryHelper } from '../../../db/query-helper';
 import { ValidationError } from '../validation-error';
 import { TableInputValidator } from './schema-input.validator';
-import { TableInsert } from '../../../common/table-insert.interface';
 
 /**
  * Simple interface for describing the way some data is to be organized.
@@ -97,7 +97,7 @@ export class SchemaDao {
     public async content(schema: string,
                          table: string,
                          opts: { page?: number, limit?: number, sort?: Sort} = {},
-                         filters: Filter[] = []): Promise<SqlRow[]> {
+                         filters: Filter[] = []): Promise<{ rows: SqlRow[], count: number }> {
 
         // Resolve each option to a non-undefined value
         const page: number = opts.page !== undefined ? opts.page : 1;
@@ -138,10 +138,13 @@ export class SchemaDao {
         if (rows.length === 0 && page !== 1)
             throw new ValidationError(`Page too high: ${page}`, 'INVALID_PAGE');
 
+        const count = await this.count(schema, table, filters);
+
         // We need access to the table's headers to resolve Dates and blobs to
         // the right string representation
         const headers: TableHeader[] = await this.headers(schema, table);
-        return this.formatData(headers, rows);
+
+        return { rows: this.formatData(headers, rows), count };
     }
 
     /** Fetches a TableMeta instance for the given table. */
@@ -537,12 +540,18 @@ export class SchemaDao {
     }
 
     /** Counts the amount of rows in a table */
-    private async count(schema: string, table: string): Promise<number> {
-        const result = await this.helper.execute((squel) =>
-            squel.select()
+    private async count(schema: string, table: string, filters: Filter[] = []): Promise<number> {
+        const result = await this.helper.execute((squel) => {
+            const query = squel.select()
                 .from(this.helper.escapeId(schema) + '.' + this.helper.escapeId(table))
-                .field('COUNT(*)')
-        );
+                .field('COUNT(*)');
+
+            for (const filter of filters) {
+                this.addFilter(query, filter);
+            }
+
+            return query;
+        });
         // This query returns only one row
         return result[0]['COUNT(*)'];
     }

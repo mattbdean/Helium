@@ -244,9 +244,10 @@ describe('API v1', () => {
         });
 
         describe('GET /api/v1/schemas/:schema/:table/data', () => {
+            const emptyResponse = () => ({ rows: [], count: 0 });
             it('should 200 when the schema and table both exist', async () => {
                 const stub = sinon.stub(schemaDao, 'content')
-                    .resolves([]);
+                    .resolves(emptyResponse());
 
                 await request.get('/schemas/foo/bar/data', 200);
 
@@ -266,7 +267,7 @@ describe('API v1', () => {
 
             it('should support the limit, sort, and page query params', async () => {
                 const stub = sinon.stub(schemaDao, 'content')
-                    .resolves([]);
+                    .resolves(emptyResponse());
                 await request.spec({
                     method: 'GET',
                     relPath: '/schemas/foo/bar/data',
@@ -290,7 +291,7 @@ describe('API v1', () => {
 
             it('should handle filters', async () => {
                 const stub = sinon.stub(schemaDao, 'content')
-                    .resolves([]);
+                    .resolves(emptyResponse());
 
                 const filters: Filter[] = [
                     { param: 'col1', op: 'lt', value: '5' },
@@ -338,7 +339,7 @@ describe('API v1', () => {
 
             it('should handle an empty array of filters', async () => {
                 const stub = sinon.stub(schemaDao, 'content')
-                    .resolves([]);
+                    .resolves(emptyResponse());
 
                 await request.spec({
                     method: 'GET',

@@ -147,7 +147,8 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
             sort
         }, filters)
         // Once we have the data, wrap it in a PaginatedResponse
-            .then((data: SqlRow[]): PaginatedResponse<any> => ({ size: data.length, data }));
+            .then((data: { rows: SqlRow[], count: number }): PaginatedResponse<any> =>
+                ({ size: data.rows.length, data: data.rows, totalRows: data.count }));
     }));
 
     // This is where all error handling for the router happens

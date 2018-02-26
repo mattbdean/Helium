@@ -7,4 +7,5 @@ export interface ErrorResponse {
 export interface PaginatedResponse<T> {
     size: number;
     data: T;
+    totalRows: number;
 }

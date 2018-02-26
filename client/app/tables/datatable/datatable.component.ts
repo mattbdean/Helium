@@ -19,6 +19,7 @@ import { TableService } from '../../core/table/table.service';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
+import { PaginatedResponse } from '../../common/responses';
 
 interface ConstraintGrouping {
     [headerName: string]: Constraint[];
@@ -77,6 +78,9 @@ export class DatatableComponent implements OnInit, OnDestroy {
     public loading = false;
 
     public showFilters = false;
+
+    /** The total number of rows with the applied filters */
+    public totalRows = 0;
 
     /** How many rows to fetch per page */
     public readonly limit: number = 25;
@@ -154,11 +158,14 @@ export class DatatableComponent implements OnInit, OnDestroy {
         this.pageInfoSub = pausable.switchMap((params: [TableMeta, TableName, number, string, Filter[]]) => {
             const [meta, tableName, pageNumber, sort, filters] = params;
             return this.backend.content(tableName.schema, tableName.name.raw, pageNumber, this.limit, sort, filters)
-                .map((rows) => ({rows: this.formatRows(meta.headers, rows)}))
+                .map((res: PaginatedResponse<SqlRow[]>) => {
+                    res.data = this.formatRows(meta.headers, res.data);
+                    return { err: null, data: res };
+                })
                 .catch((err) => {
-                    return Observable.of({err, rows: []});
+                    return Observable.of({err, data: null});
                 });
-        }).subscribe((result: { err?: Error, rows: SqlRow[] }) => {
+        }).subscribe((result: { err: Error | null, data: PaginatedResponse<SqlRow[]> | null }) => {
             if (result.err) {
                 console.error(result.err);
 
@@ -170,7 +177,8 @@ export class DatatableComponent implements OnInit, OnDestroy {
                 this.snackBar.open(message, 'OK', { duration: 5000 } );
             }
 
-            this.data = result.rows;
+            this.data = result.data === null ? [] : result.data.data;
+            this.totalRows = result.data === null ? 0 : result.data.totalRows;
         });
     }
 

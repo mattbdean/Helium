@@ -1,10 +1,10 @@
 import { Pool, PoolConnection } from 'promise-mysql';
 import * as squelBuilder from 'squel';
-import { MysqlSquel, QueryBuilder } from 'squel';
+import { MysqlSquel, ParamString, QueryBuilder } from 'squel';
 import { SqlRow } from '../common/api';
 
 export class QueryHelper {
-    private static squel: MysqlSquel = squelBuilder.useFlavour('mysql');
+    public static readonly squel: MysqlSquel = squelBuilder.useFlavour('mysql');
 
     public constructor(private pool: Pool, private onQuery: () => void = () => undefined) {}
 
@@ -13,9 +13,11 @@ export class QueryHelper {
      * result
      */
     public async execute(createQuery: (squel: MysqlSquel) => QueryBuilder, conn?: PoolConnection): Promise<SqlRow[]> {
-        const query = createQuery(QueryHelper.squel).toParam();
+        return this.executeParam(createQuery(QueryHelper.squel).toParam(), conn);
+    }
 
-        const result = await (conn || this.pool).query(query.text, query.values);
+    public async executeParam(params: ParamString, conn?: PoolConnection): Promise<SqlRow[]> {
+        const result = await (conn || this.pool).query(params.text, params.values);
 
         this.onQuery();
 

@@ -2,19 +2,19 @@ import { fail } from 'assert';
 import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import * as joi from 'joi';
-import * as moment from 'moment';
 import { orderBy, random, uniq, zipObject } from 'lodash';
+import * as moment from 'moment';
+import {
+    BLOB_STRING_REPRESENTATION,
+    DATE_FORMAT,
+    DATETIME_FORMAT
+} from '../../client/app/common/constants';
 import { Filter } from '../src/common/api';
 import { TableInsert } from '../src/common/table-insert.interface';
 import { ConnectionConf } from '../src/db/connection-conf.interface';
 import { DatabaseHelper } from '../src/db/database.helper';
 import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
 import { ValidationError } from '../src/routes/api/validation-error';
-import {
-    BLOB_STRING_REPRESENTATION,
-    DATE_FORMAT,
-    DATETIME_FORMAT
-} from '../../client/app/common/constants';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -90,14 +90,14 @@ describe('SchemaDao', () => {
         it('should bring back 25 records by default', async () => {
             const data = await dao.content(db, table);
             const schema = joi.array().items(rowContents).length(25);
-            joi.assert(data, schema);
+            joi.assert(data.rows, schema);
         });
 
         it('should sort by a given column when requested', async () => {
             // Request that we sort some row (defined above) in a particular
             // direction
             const sort: Sort = { by: sortingRow, direction: 'asc'};
-            const data = await dao.content(db, table, { sort });
+            const data = (await dao.content(db, table, { sort })).rows;
 
             // Make sure we're still returning 25 elements by default
             joi.assert(data, joi.array().items(rowContents).length(25));
@@ -133,14 +133,14 @@ describe('SchemaDao', () => {
             // records in the chosen table
             for (const limit of [0, 1, 10, 100]) {
                 const schema = joi.array().items(rowContents).length(limit);
-                joi.assert(await dao.content(db, table, { limit }), schema);
+                joi.assert((await dao.content(db, table, { limit })).rows, schema);
             }
         });
 
         it('should format dates and datetimes', async () => {
             const data = await dao.content('helium', 'datatypeshowcase');
 
-            for (const row of data) {
+            for (const row of data.rows) {
                 if (row.date !== null)
                     expect(moment(row.date, DATE_FORMAT, true).isValid()).to.be.true;
 
@@ -152,7 +152,7 @@ describe('SchemaDao', () => {
         it('should format blobs', async () => {
             const data = await dao.content('helium', 'datatypeshowcase');
 
-            for (const row of data) {
+            for (const row of data.rows) {
                 if (row.blob !== null) {
                     expect(row.blob).to.equal(BLOB_STRING_REPRESENTATION);
                 }
@@ -163,17 +163,29 @@ describe('SchemaDao', () => {
             const fetch = (tableName: string, filters: Filter[]) =>
                 dao.content('helium', tableName, {}, filters);
 
+            it('should return the number of rows that apply to the given filters', async () => {
+                const data = await fetch('big_table', [{ param: 'pk', op: 'lt', value: '101' }]);
+
+                // There are 100 rows total using the above filters, but we're
+                // returning 25 at a time
+                expect(data.count).to.equal(100);
+                expect(data.rows).to.have.lengthOf(25);
+            });
+
             describe('eq', () => {
                 it('should handle numbers', async () => {
                     // Numeric equals
-                    await expect(fetch(
+                    await expect(await fetch(
                         'product',
                         [{ param: 'product_id', op: 'eq', value: '23' }]
-                    )).to.eventually.deep.equal([{
-                        product_id: 23,
-                        product_name: 'Crackers',
-                        price: 3.49
-                    }]);
+                    )).to.deep.equal({
+                        rows: [{
+                            product_id: 23,
+                            product_name: 'Crackers',
+                            price: 3.49
+                        }],
+                        count: 1
+                    });
                 });
 
                 it('should handle strings (ignoring case)', async () => {
@@ -181,11 +193,14 @@ describe('SchemaDao', () => {
                     await expect(fetch(
                         'product',
                         [{ param: 'product_name', op: 'eq', value: 'soda' }])
-                    ).to.eventually.deep.equal([{
-                        product_id: 22,
-                        product_name: 'Soda',
-                        price: 1.99
-                    }]);
+                    ).to.eventually.deep.equal({
+                        rows: [{
+                            product_id: 22,
+                            product_name: 'Soda',
+                            price: 1.99
+                        }],
+                        count: 1
+                    });
                 });
 
                 it('should handle dates and datetimes', async () => {
@@ -193,32 +208,35 @@ describe('SchemaDao', () => {
                     await expect(fetch(
                         'shipment',
                         [{ param: 'shipped', op: 'eq', value: '2017-07-01' }])
-                    ).to.eventually.deep.equal([{
-                        shipment_id: 30,
-                        order_id: 40,
-                        organization_id: 10,
-                        customer_id: 0,
-                        product_id: 20,
-                        shipped: '2017-07-01'
-                    }]);
+                    ).to.eventually.deep.equal({
+                        rows: [{
+                            shipment_id: 30,
+                            order_id: 40,
+                            organization_id: 10,
+                            customer_id: 0,
+                            product_id: 20,
+                            shipped: '2017-07-01'
+                        }],
+                        count: 1
+                    });
 
                     // Datetimes/timestamps
                     const data = await fetch(
                         'datatypeshowcase',
                         [{ param: 'time', op: 'eq', value: '2000-01-01 12:00:00'}]
                     );
-                    expect(data).to.have.lengthOf(1);
-                    expect(data[0].time).to.equal('2000-01-01 12:00:00');
+                    expect(data.rows).to.have.lengthOf(1);
+                    expect(data.rows[0].time).to.equal('2000-01-01 12:00:00');
                 });
             });
 
             describe('lt', () => {
                 it('should handle numbers', async () => {
                     // Numeric less than
-                    const numericLt = await fetch(
+                    const numericLt = (await fetch(
                         'product',
                         [{ param: 'product_id', op: 'lt', value: '24' }]
-                    );
+                    )).rows;
 
                     for (const row of numericLt) {
                         expect(row.product_id).to.be.below(24);
@@ -227,54 +245,54 @@ describe('SchemaDao', () => {
 
                 it('should handle dates and datetimes', async () => {
                     // Date less than
-                    await expect(fetch(
+                    expect((await fetch(
                         'datatypeshowcase',
                         [{ param: 'date', op: 'lt', value: '2017-07-02' }]
-                    )).to.eventually.have.lengthOf(1);
+                    )).rows).to.have.lengthOf(1);
 
                     // Datetime less than
-                    await expect(fetch(
+                    expect((await fetch(
                         'datatypeshowcase',
                         [{ param: 'time', op: 'lt', value: '2001-01-01 12:00:00' }]
-                    )).to.eventually.have.lengthOf(1);
+                    )).rows).to.have.lengthOf(1);
                 });
             });
 
             describe('gt', () => {
                 it('should handle numbers', async () => {
                     // Numeric less than
-                    const numericLt = await fetch(
+                    const numericGt = (await fetch(
                         'product',
                         [{ param: 'product_id', op: 'gt', value: '21' }]
-                    );
+                    )).rows;
 
-                    for (const row of numericLt) {
+                    for (const row of numericGt) {
                         expect(row.product_id).to.be.above(21);
                     }
                 });
 
                 it('should handle dates and datetimes', async () => {
                     // Date less than
-                    await expect(fetch(
+                    expect((await fetch(
                         'datatypeshowcase',
                         [{ param: 'date', op: 'gt', value: '2017-07-02' }]
-                    )).to.eventually.have.lengthOf(2);
+                    )).rows).to.have.lengthOf(2);
 
                     // Datetime less than. For whatever reason MySQL says that
                     // NULL dates are greater than any given time
-                    await expect(fetch(
+                    expect((await fetch(
                         'datatypeshowcase',
                         [{ param: 'time', op: 'gt', value: '2015-01-01 12:00:00' }]
-                    )).to.eventually.have.lengthOf(3);
+                    )).rows).to.have.lengthOf(3);
                 });
             });
 
             describe('is', () => {
                 it('should handle nulls', async () => {
-                    await expect(fetch(
+                    expect((await fetch(
                         'datatypeshowcase',
                         [{ param: 'blob', op: 'is', value: 'null' }]
-                    )).to.eventually.have.lengthOf(2);
+                    )).rows).to.have.lengthOf(2);
                 });
 
                 it('should reject when given an unrecognized value', async () => {
@@ -287,10 +305,10 @@ describe('SchemaDao', () => {
 
             describe('isnot', () => {
                 it('should handle nulls', async () => {
-                    await expect(fetch(
+                    expect((await fetch(
                         'datatypeshowcase',
                         [{ param: 'blob', op: 'isnot', value: 'null' }]
-                    )).to.eventually.have.lengthOf(2);
+                    )).rows).to.have.lengthOf(2);
                 });
 
                 it('should reject when given an unrecognized value', async () => {
@@ -308,7 +326,7 @@ describe('SchemaDao', () => {
                 ];
 
                 const data = await fetch('product', filters);
-                for (const row of data) {
+                for (const row of data.rows) {
                     expect(row.product_id).to.be.above(21).and.below(24);
                 }
             });
@@ -577,7 +595,7 @@ describe('SchemaDao', () => {
         it('should format blobs', async () => {
             const data = await dao.content('helium', 'datatypeshowcase');
 
-            for (const row of data) {
+            for (const row of data.rows) {
                 if (row.blob !== null) {
                     expect(row.blob).to.equal(BLOB_STRING_REPRESENTATION);
                 }
