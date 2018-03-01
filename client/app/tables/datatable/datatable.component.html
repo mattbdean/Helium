@@ -1,69 +1,27 @@
-<mat-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></mat-progress-bar>
-<div [hidden]="!exists">
-    <h1 class="mat-display-1">
-        <table-name [name]="name"></table-name>
-        <button
-            mat-icon-button
-            class="filter-icon"
-            [inlineSVG]="'/assets/filter.svg'"
-            [title]="showFilters ? 'Hide filters' : 'Show filters'"
-            (click)="toggleFilters()"></button>
-    </h1>
+<h1 class="mat-display-1">
+    <table-name [name]="name"></table-name>
+    <button
+        mat-icon-button
+        class="filter-icon"
+        [inlineSVG]="'/assets/filter.svg'"
+        [title]="showFilters ? 'Hide filters' : 'Show filters'"
+        (click)="toggleFilters()"></button>
+</h1>
 
-    <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
+<h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
 
-    <filter-manager #filterManager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
+<filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
 
-    <ngx-datatable class="material"
-                   [hidden]="!exists"
+<div class="mat-elevation-z8">
+    <mat-table [dataSource]="dataSource" matSort>
+        <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
+            <mat-header-cell *matHeaderCellDef mat-sort-header>{{ colName }}</mat-header-cell>
+            <mat-cell *matCellDef="let row">{{ row[colName] }}</mat-cell>
+        </ng-container>
 
-                   [columnMode]="'force'"
-                   [columns]="tableHeaders"
-                   [count]="totalRows"
-                   [externalPaging]="true"
-                   [externalSorting]="true"
-                   [footerHeight]="50"
-                   [limit]="limit"
-                   [headerHeight]="50"
-                   [offset]="pageNumber - 1"
-                   [rowHeight]="'auto'"
-                   [rows]="data"
-
-                   (page)="onPaginate($event)"
-                   (sort)="onSort($event)">
-    </ngx-datatable>
-
-    <ng-template #headerTemplate let-column="column" let-sort="sortFn">
-        <span class="header-container" (click)="sort()">
-            <constraint-icons [constraints]="constraints[column.name]"></constraint-icons>
-            {{ column.name }}
-        </span>
-    </ng-template>
-
-    <ng-template #headerTemplateInsertLike>
-        <!-- Do nothing -->
-    </ng-template>
-
-    <ng-template #cellTemplate let-row="row" let-value="value">
-        <span class="special-cell" *ngIf="value === ''">null</span>
-        <span *ngIf="value !== ''">{{ value }}</span>
-    </ng-template>
-
-    <ng-template #cellTemplateBlob let-row="row" let-value="value">
-        <span class="special-cell" *ngIf="value === ''">null</span>
-        <span class="special-cell" *ngIf="value !== ''">blob</span>
-    </ng-template>
-
-    <ng-template #cellTemplateInsertLike let-row="row" let-value="value">
-        <mat-icon
-            (click)="onInsertLike(row)"
-            class="insert-like-icon"
-            title="Copy data to a new form">add_box</mat-icon>
-    </ng-template>
-</div>
-
-<div [hidden]="exists" class="not-found-container">
-    <h1 class="mat-headline">Table not found</h1>
-    <p>Pick one out from the sidebar</p>
+        <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
+        <mat-row *matRowDef="let row; columns: columnNames;"></mat-row>
+    </mat-table>
+    <mat-paginator [length]="totalRows" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
 </div>
 

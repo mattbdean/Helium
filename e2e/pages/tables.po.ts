@@ -6,11 +6,11 @@ export class TablesPage {
     }
 
     public headers() {
-        return element.all(by.css('datatable-header-cell'));
+        return element.all(by.css('mat-header-cell'));
     }
 
     public rows() {
-        return element.all(by.css('datatable-body-row'));
+        return element.all(by.css('mat-row'));
     }
 
     public getForeignKeyHeaderHref(headerName: string) {

@@ -8,12 +8,13 @@ import { Observable } from 'rxjs/Observable';
 
 import * as _ from 'lodash';
 
-import { Filter, SqlRow, TableMeta } from '../../common/api';
+import { SqlRow, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/responses';
+import { TableInsert } from '../../common/table-insert.interface';
 import { TableNameParams } from '../../common/table-name-params.interface';
 import { TableName } from '../../common/table-name.class';
 import { AuthService } from '../auth/auth.service';
-import { TableInsert } from '../../common/table-insert.interface';
+import { ContentRequest } from './content-request';
 
 const encode = encodeURIComponent;
 
@@ -44,15 +45,21 @@ export class TableService {
     }
 
     /** Fetches paginated data from a given table */
-    public content(schema: string,
-                   table: string,
-                   page: number = 1,
-                   limit: number = 25,
-                   sort?: string,
-                   filters: Filter[] = []): Observable<PaginatedResponse<SqlRow[]>> {
-        return this.get(`/schemas/${encode(schema)}/${encode(table)}/data`, {
-            page, limit, sort, filters: JSON.stringify(filters)
-        });
+    public content(req: ContentRequest): Observable<PaginatedResponse<SqlRow[]>> {
+        const shouldUseFilters = req.filters === undefined || req.filters.length === 0;
+
+        // If a property is null or undefined, it won't be included in the query
+        const query = _.pickBy({
+            page: req.page,
+            limit: req.limit,
+            sort: req.sort,
+            filters: shouldUseFilters ? undefined : JSON.stringify(req.filters)
+        }, (p) => !_.isNil(p));
+
+        return this.get(
+            `/schemas/${encode(req.schema)}/${encode(req.table)}/data`,
+            query
+        );
     }
 
     public pluck(schema: string, table: string, selectors: { [key: string]: string }): Observable<TableInsert> {
