@@ -6,7 +6,7 @@ import ExpectStatic = Chai.ExpectStatic;
 
 const expect: ExpectStatic = global['chai'].expect;
 
-describe.only('Tables', () => {
+describe('Tables', () => {
     const authHelper = AuthHelper.get();
     const sidenav = new SidenavHelper();
     const page = new TablesPage();

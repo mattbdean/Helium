@@ -1,18 +1,19 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
     AfterViewInit,
     Component, Input, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
 import { MatPaginator, MatSnackBar, MatSort } from '@angular/material';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
-
-import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { clone } from 'lodash';
+import * as moment from 'moment';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import {
     Constraint, Filter, TableMeta
 } from '../../common/api';
-import { TableService } from '../../core/table/table.service';
-
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
+import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
 
@@ -26,11 +27,8 @@ interface ConstraintGrouping {
     styleUrls: ['datatable.component.scss']
 })
 export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
-    /**
-     * The width in pixels of the very first column that contains a button to
-     * insert data similar to the row that its hosted in
-     */
-    private static readonly INSERT_LIKE_COLUMN_WIDTH = 40;
+    private static readonly DISPLAY_FORMAT_DATE = 'l';
+    private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
 
     @Input()
     public set name(value: TableName) { this.name$.next(value); }
@@ -91,7 +89,13 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                         return Observable.never();
                     }))
             .subscribe((meta: TableMeta) => {
-                this.columnNames = meta.headers.map((h) => h.name);
+                const names = meta.headers.map((h) => h.name);
+
+                // Add the "insert like" row
+                names.unshift('__insertLike');
+                this.columnNames = names;
+
+                // Update observables and data source
                 this.meta$.next(meta);
                 this.dataSource.switchTables(meta);
             });
@@ -110,11 +114,11 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         this.nameSub.unsubscribe();
     }
 
-    // public onInsertLike(row: object) {
-    //     return this.router.navigate(['/forms', this.name.schema, this.name.name.raw], {
-    //         queryParams: this.createQueryParams(row)
-    //     });
-    // }
+    public onInsertLike(row: object) {
+        return this.router.navigate(['/forms', this.name.schema, this.name.name.raw], {
+            queryParams: this.createQueryParams(row)
+        });
+    }
 
     public onFiltersChanged(filters: Filter[]) {
         // Only hide if going from 1 to 0 filters
@@ -129,63 +133,42 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         }
     }
 
-    // private createQueryParams(row: object) {
-    //     const reformatted = _.clone(row);
-    //
-    //     // Find all date and datetime headers and transform them from their
-    //     // display format to the API format
-    //     for (const headerName of Object.keys(reformatted)) {
-    //         const header = _.find(this.meta$.getValue()!!.headers, (h) => h.name === headerName);
-    //         if (header === undefined)
-    //             throw new Error('Can\'t find header with name ' + headerName);
-    //
-    //         // We only need to provide the next component what information
-    //         // uniquely identifies this row
-    //         const primaryKey = _.find(this.meta$.getValue()!!.constraints, (c) =>
-    //             c.localColumn === header.name && c.type === 'primary');
-    //
-    //         // We don't care about anything besides primary keys
-    //         if (primaryKey === undefined) {
-    //             delete reformatted[headerName];
-    //             // If we don't continue here reformatted[headerName] will be
-    //             // added back into the object if the header is a date or
-    //             // datetime
-    //             continue;
-    //         }
-    //
-    //         if (header.type === 'date')
-    //             reformatted[headerName] = moment(reformatted[headerName],
-    //                 DatatableComponent.DISPLAY_FORMAT_DATE).format(DATE_FORMAT);
-    //         if (header.type === 'datetime')
-    //             reformatted[headerName] = moment(reformatted[headerName],
-    //                 DatatableComponent.DISPLAY_FORMAT_DATETIME).format(DATETIME_FORMAT);
-    //     }
-    //
-    //     return { row: JSON.stringify(reformatted) };
-    // }
-    //
-    // private createTableHeaders(headers: TableHeader[]): DataTableHeader[] {
-    //     const regularHeaders: any[] = _(headers)
-    //         .map((h) => ({
-    //             name: h.name,
-    //             prop: h.name,
-    //             cellTemplate: h.type === 'blob' ? this.cellTemplateBlob : this.cellTemplate,
-    //             headerTemplate: this.headerTemplate
-    //         }))
-    //         .sortBy('ordinalPosition')
-    //         .value();
-    //
-    //     // Only add the 'insert like' column for master tables
-    //     if (this.name.masterName === null)
-    //         regularHeaders.unshift({
-    //             name: '__insertLike',
-    //             prop: '__insertLike',
-    //             cellTemplate: this.cellTemplateInsertLike,
-    //             headerTemplate: this.headerTemplateInsertLike,
-    //             maxWidth: DatatableComponent.INSERT_LIKE_COLUMN_WIDTH,
-    //             minWidth: DatatableComponent.INSERT_LIKE_COLUMN_WIDTH,
-    //             resizeable: false
-    //         });
-    //     return regularHeaders;
-    // }
+    private createQueryParams(row: object) {
+        const reformatted = clone(row);
+
+        // Ignore the "insert like" header
+        delete reformatted['__insertLike'];
+
+        // Find all date and datetime headers and transform them from their
+        // display format to the API format
+        for (const headerName of Object.keys(reformatted)) {
+
+            const header = this.meta$.getValue()!!.headers.find((h) => h.name === headerName);
+            if (header === undefined)
+                throw new Error('Can\'t find header with name ' + headerName);
+
+            // We only need to provide the next component what information
+            // uniquely identifies this row
+            const primaryKey = this.meta$.getValue()!!.constraints.find((c) =>
+                c.localColumn === header.name && c.type === 'primary');
+
+            // We don't care about anything besides primary keys
+            if (primaryKey === undefined) {
+                delete reformatted[headerName];
+                // If we don't continue here reformatted[headerName] will be
+                // added back into the object if the header is a date or
+                // datetime
+                continue;
+            }
+
+            if (header.type === 'date')
+                reformatted[headerName] = moment(reformatted[headerName],
+                    DatatableComponent.DISPLAY_FORMAT_DATE).format(DATE_FORMAT);
+            if (header.type === 'datetime')
+                reformatted[headerName] = moment(reformatted[headerName],
+                    DatatableComponent.DISPLAY_FORMAT_DATETIME).format(DATETIME_FORMAT);
+        }
+
+        return { row: JSON.stringify(reformatted) };
+    }
 }

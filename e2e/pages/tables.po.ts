@@ -23,9 +23,9 @@ export class TablesPage {
 
     /** Presses the 'insert like' button on a particular row. */
     public insertLike(rowNum: number) {
-        return element.all(by.css(`datatable-body-cell[ng-reflect-row-index='${rowNum}']`))
-            .first()
-            .element(by.css('mat-icon.insert-like-icon'))
+        return element.all(by.css(`mat-row`))
+            .get(rowNum)
+            .element(by.css('.insert-like-icon'))
             .click();
     }
 }

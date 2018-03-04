@@ -15,8 +15,27 @@
 <div class="mat-elevation-z8">
     <mat-table [dataSource]="dataSource" matSort>
         <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
-            <mat-header-cell *matHeaderCellDef mat-sort-header>{{ colName }}</mat-header-cell>
-            <mat-cell *matCellDef="let row">{{ row[colName] }}</mat-cell>
+            <mat-header-cell
+                *matHeaderCellDef
+                [class.insert-like-col]="colName === '__insertLike'"
+                mat-sort-header>
+
+                {{ colName === '__insertLike' ? '' : colName }}
+            </mat-header-cell>
+
+            <mat-cell
+                *matCellDef="let row"
+                [class.insert-like-col]="colName === '__insertLike'">
+
+                <span *ngIf="colName === '__insertLike' else normalCell">
+                     <mat-icon
+                         (click)="onInsertLike(row)"
+                         class="insert-like-icon"
+                         title="Copy data to a new form">add_box</mat-icon>
+                </span>
+
+                <ng-template #normalCell>{{ row[colName] }}</ng-template>
+            </mat-cell>
         </ng-container>
 
         <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>

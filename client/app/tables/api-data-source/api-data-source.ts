@@ -105,24 +105,27 @@ export class ApiDataSource extends DataSource<SqlRow> {
 
         this.resetSubscriptions();
 
-        this.pageSub = this.paginator.page.subscribe((event: PageEvent) => {
-            this.page$.next(event.pageIndex + 1);
-            this.pageSize$.next(event.pageSize);
-        });
+        if (this.paginator)
+            this.pageSub = this.paginator.page.subscribe((event: PageEvent) => {
+                this.page$.next(event.pageIndex + 1);
+                this.pageSize$.next(event.pageSize);
+            });
 
-        this.sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
-            if (sort.direction === '') {
-                // There's no active sorting
-                this.sort$.next(null);
-            } else {
-                // The user has requested to sort ascending or descending,
-                // format the sorting in the way the API expects
-                const dir = sort.direction === 'asc' ? '' : '-';
-                this.sort$.next(dir + sort.active);
-            }
-        });
+        if (this.sort)
+            this.sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
+                if (sort.direction === '') {
+                    // There's no active sorting
+                    this.sort$.next(null);
+                } else {
+                    // The user has requested to sort ascending or descending,
+                    // format the sorting in the way the API expects
+                    const dir = sort.direction === 'asc' ? '' : '-';
+                    this.sort$.next(dir + sort.active);
+                }
+            });
 
-        this.filtersSub = this.filters.changed.subscribe((data: Filter[]) => {
+        if (this.filters)
+            this.filtersSub = this.filters.changed.subscribe((data: Filter[]) => {
                 this.filters$.next(data);
             });
     }
@@ -172,9 +175,12 @@ export class ApiDataSource extends DataSource<SqlRow> {
                     row[headerName] = ApiDataSource.reformat(row[headerName],
                         DATETIME_FORMAT, ApiDataSource.DISPLAY_FORMAT_DATETIME);
                 if (header.type === 'boolean')
-                // Resolve either the 1 or 0 to its boolean value
+                    // Resolve either the 1 or 0 to its boolean value
                     row[headerName] = !!row[headerName];
             }
+
+            // Create a marker so that the "insert like" column gets rendered
+            row.__insertLike = true;
         }
 
         return copied;
