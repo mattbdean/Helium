@@ -55,6 +55,9 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     /** FilterManagerComponent will be visible when this is true */
     public showFilters = false;
 
+    /** If the table could be found */
+    public tableExists = true;
+
     private nameSub: Subscription;
 
     @ViewChild(FilterManagerComponent) private filterManager: FilterManagerComponent;
@@ -86,6 +89,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                             throw err;
                         }
 
+                        this.tableExists = false;
                         return Observable.never();
                     }))
             .subscribe((meta: TableMeta) => {

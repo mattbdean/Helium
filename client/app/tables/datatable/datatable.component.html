@@ -8,24 +8,25 @@
         (click)="toggleFilters()"></button>
 </h1>
 
-<h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
+<div *ngIf="tableExists else tableNotFound">
+    <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
 
-<filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
+    <filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
 
-<div class="mat-elevation-z8">
-    <mat-table [dataSource]="dataSource" matSort>
-        <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
-            <mat-header-cell
-                *matHeaderCellDef
-                [class.insert-like-col]="colName === '__insertLike'"
-                mat-sort-header>
+    <div class="mat-elevation-z8">
+        <mat-table [dataSource]="dataSource" matSort>
+            <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
+                <mat-header-cell
+                    *matHeaderCellDef
+                    [class.insert-like-col]="colName === '__insertLike'"
+                    mat-sort-header>
 
-                {{ colName === '__insertLike' ? '' : colName }}
-            </mat-header-cell>
+                    {{ colName === '__insertLike' ? '' : colName }}
+                </mat-header-cell>
 
-            <mat-cell
-                *matCellDef="let row"
-                [class.insert-like-col]="colName === '__insertLike'">
+                <mat-cell
+                    *matCellDef="let row"
+                    [class.insert-like-col]="colName === '__insertLike'">
 
                 <span *ngIf="colName === '__insertLike' else normalCell">
                      <mat-icon
@@ -34,13 +35,20 @@
                          title="Copy data to a new form">add_box</mat-icon>
                 </span>
 
-                <ng-template #normalCell>{{ row[colName] }}</ng-template>
-            </mat-cell>
-        </ng-container>
+                    <ng-template #normalCell>{{ row[colName] }}</ng-template>
+                </mat-cell>
+            </ng-container>
 
-        <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
-        <mat-row *matRowDef="let row; columns: columnNames;"></mat-row>
-    </mat-table>
-    <mat-paginator [length]="totalRows" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+            <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: columnNames;"></mat-row>
+        </mat-table>
+        <mat-paginator [length]="totalRows" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+    </div>
+
 </div>
 
+<ng-template #tableNotFound>
+    <div class="table-not-found">
+        <p>This table doesn't exist or you don't have access to it</p>
+    </div>
+</ng-template>

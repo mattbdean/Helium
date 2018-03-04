@@ -139,6 +139,7 @@ describe('ApiDataSource', () => {
             source.connect(collectionViewer).subscribe((data) => {
                 expect(data).to.have.lengthOf(1);
                 expect(data[0]).to.deep.equal({
+                    __insertLike: true,
                     date: now.format('l'),
                     datetime: now.format('LLL'),
                     boolean: true

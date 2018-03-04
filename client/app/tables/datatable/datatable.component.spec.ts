@@ -14,6 +14,7 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 
+import { HttpErrorResponse } from '@angular/common/http';
 import { Constraint, SqlRow, TableDataType, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/responses';
 import { TableName } from '../../common/table-name.class';
@@ -25,7 +26,7 @@ import { DatatableComponent } from './datatable.component';
 chai.use(sinonChai);
 const expect = chai.expect;
 
-describe.only('DatatableComponent', () => {
+describe('DatatableComponent', () => {
     const SCHEMA = '(schema)';
     const DEFAULT_TABLE_NAME = 'foo';
 
@@ -105,13 +106,25 @@ describe.only('DatatableComponent', () => {
             .returns(paginatedResponse([]));
     });
 
-    it('should show a message when the table can\'t be found');
+    it('should show a message when the table can\'t be found', () => {
+        metaStub.returns(Observable.throw(new HttpErrorResponse({
+            status: 404,
+            statusText: 'Not Found'
+        })));
+
+        fixture.detectChanges();
+
+        expect(de.query(By.css('.table-not-found'))).to.exist;
+        expect(de.query(By.css('mat-table'))).to.not.exist;
+    });
+
     it('should render blob and null values specially');
     it('should include a header for every element of data');
     it('should include constraint icons in the column header');
     it('should update the title to the name of the current table');
     it('should show a message when there is no data in the table');
     it('should show a progress bar when switching to a new table');
+    it('should try to sort when a header is clicked');
 
     it('should render an extra column for the "insert like" row at the beginning', () => {
         // Give the table some data
