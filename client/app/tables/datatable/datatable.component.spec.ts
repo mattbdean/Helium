@@ -118,7 +118,36 @@ describe('DatatableComponent', () => {
         expect(de.query(By.css('mat-table'))).to.not.exist;
     });
 
-    it('should render blob and null values specially');
+    it('should render blob and null values specially', () => {
+        // Set up the table and its data
+        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer', 'blob'])));
+        contentStub.returns(paginatedResponse([
+            // The real API would return '<blob>' for all blob values
+            { integer: null, blob: 'foo' },
+            { integer: 4,    blob: 'bar' }
+        ]));
+        fixture.detectChanges();
+
+        const [firstRow, secondRow] = de.queryAll(By.css('mat-row'))
+            .map((row) => row.queryAll(By.css('mat-cell')));
+
+        // All null values and all blob columns should be rendered specially.
+        // Start at index 1 since index 0 for all rows will be the "insert like"
+        // cell
+        const specialCells = [firstRow[1], firstRow[2], secondRow[2]];
+        for (const specialCell of specialCells) {
+            expect(specialCell.query(By.css('span.special-cell'))).to.exist;
+        }
+
+        // Otherwise the cells should be rendered normally
+        const normalCells = [secondRow[1]];
+        for (const normalCell of normalCells) {
+            expect(normalCell.query(By.css('span.special-cell'))).to.not.exist;
+        }
+
+        // Make sure we're rendering a string representation of the null value
+        expect(firstRow[1].nativeElement.textContent.trim()).to.equal('null');
+    });
     it('should include a header for every element of data');
     it('should include constraint icons in the column header');
     it('should update the title to the name of the current table');

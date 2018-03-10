@@ -137,6 +137,11 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         }
     }
 
+    public isBlob(headerName: string) {
+        const header = this.meta.headers.find((h) => h.name === headerName);
+        return header === undefined ? false : header.type === 'blob';
+    }
+
     private createQueryParams(row: object) {
         const reformatted = clone(row);
 

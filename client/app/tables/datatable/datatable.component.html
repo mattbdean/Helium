@@ -28,14 +28,16 @@
                     *matCellDef="let row"
                     [class.insert-like-col]="colName === '__insertLike'">
 
-                <span *ngIf="colName === '__insertLike' else normalCell">
-                     <mat-icon
-                         (click)="onInsertLike(row)"
-                         class="insert-like-icon"
-                         title="Copy data to a new form">add_box</mat-icon>
-                </span>
+                    <span *ngIf="colName === '__insertLike' else normalCell">
+                         <mat-icon
+                             (click)="onInsertLike(row)"
+                             class="insert-like-icon"
+                             title="Copy data to a new form">add_box</mat-icon>
+                    </span>
 
-                    <ng-template #normalCell>{{ row[colName] }}</ng-template>
+                    <ng-template #normalCell>
+                        <span [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
+                    </ng-template>
                 </mat-cell>
             </ng-container>
 
