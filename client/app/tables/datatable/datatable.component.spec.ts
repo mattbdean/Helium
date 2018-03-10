@@ -1,5 +1,8 @@
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+    ComponentFixture, fakeAsync, TestBed,
+    tick
+} from '@angular/core/testing';
 import {
     MatPaginatorModule, MatSnackBarModule, MatSortModule,
     MatTableModule
@@ -148,8 +151,31 @@ describe('DatatableComponent', () => {
         // Make sure we're rendering a string representation of the null value
         expect(firstRow[1].nativeElement.textContent.trim()).to.equal('null');
     });
-    it('should include a header for every element of data');
-    it('should include constraint icons in the column header');
+
+    it('should include a header for every element of data', () => {
+        const colNames: TableDataType[] = ['integer', 'float', 'boolean'];
+        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, colNames)));
+        fixture.detectChanges();
+
+        const renderedNames = de.queryAll(By.css('mat-header-cell'))
+            .map((header) => header.nativeElement.textContent.trim())
+            // Remove header 0, which is the "insert like" header
+            .slice(1);
+
+        expect(renderedNames).to.deep.equal(colNames);
+    });
+
+    it('should include constraint icons in the column header', () => {
+        const colNames: TableDataType[] = ['integer', 'float', 'boolean'];
+        const primaryKeys = colNames.slice(0, 1);
+        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, colNames, primaryKeys)));
+        fixture.detectChanges();
+
+        // Even though there are no icons necessary for some of these columns,
+        // there should still be a <constraint-icons> in the header
+        expect(de.queryAll(By.css('constraint-icons'))).to.have.lengthOf(colNames.length);
+    });
+
     it('should update the title to the name of the current table');
     it('should show a message when there is no data in the table');
     it('should show a progress bar when switching to a new table');

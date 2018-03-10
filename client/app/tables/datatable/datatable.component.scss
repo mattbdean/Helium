@@ -53,3 +53,10 @@ h1 {
 mat-cell {
   overflow: visible;
 }
+
+constraint-icons {
+  // For whatever reason the icons are lower than they should be
+  padding-bottom: 5px;
+  // Space between name and icon
+  padding-right: 5px;
+}

@@ -14,7 +14,7 @@ export class TablesPage {
     }
 
     public getForeignKeyHeaderHref(headerName: string) {
-        return element.all(by.css('span.header-container'))
+        return element.all(by.css('mat-header-cell'))
             .filter((el) => el.getText().then((text) => text.trim() === headerName))
             .first()
             .element(by.css('a.header-icon[data-constraint-type=foreign]'))

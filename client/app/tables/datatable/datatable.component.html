@@ -21,6 +21,7 @@
                     [class.insert-like-col]="colName === '__insertLike'"
                     mat-sort-header>
 
+                    <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
                     {{ colName === '__insertLike' ? '' : colName }}
                 </mat-header-cell>
 

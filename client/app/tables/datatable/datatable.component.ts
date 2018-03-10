@@ -5,7 +5,7 @@ import {
 } from '@angular/core';
 import { MatPaginator, MatSnackBar, MatSort } from '@angular/material';
 import { Router } from '@angular/router';
-import { clone } from 'lodash';
+import { clone, groupBy } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import {
@@ -16,10 +16,6 @@ import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
-
-interface ConstraintGrouping {
-    [headerName: string]: Constraint[];
-}
 
 @Component({
     selector: 'datatable',
@@ -38,7 +34,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     public columnNames: string[] = [];
 
-    private constraints: ConstraintGrouping = {};
+    public constraints: { [colName: string]: Constraint[] };
 
     /**
      * The different amount of rows to display at a time the user may choose
@@ -98,6 +94,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                 // Add the "insert like" row
                 names.unshift('__insertLike');
                 this.columnNames = names;
+
+                this.constraints = groupBy(meta.constraints, (c) => c.localColumn);
 
                 // Update observables and data source
                 this.meta$.next(meta);
