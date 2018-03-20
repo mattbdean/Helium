@@ -1,8 +1,5 @@
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
-import {
-    ComponentFixture, fakeAsync, TestBed,
-    tick
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
     MatPaginatorModule, MatSnackBarModule, MatSortModule,
     MatTableModule
@@ -176,10 +173,34 @@ describe('DatatableComponent', () => {
         expect(de.queryAll(By.css('constraint-icons'))).to.have.lengthOf(colNames.length);
     });
 
-    it('should update the title to the name of the current table');
-    it('should show a message when there is no data in the table');
-    it('should show a progress bar when switching to a new table');
-    it('should try to sort when a header is clicked');
+    it('should update the title to the name of the current table', () => {
+        fixture.detectChanges();
+        const expectedTableName = new TableName('(unused)', DEFAULT_TABLE_NAME).name.clean;
+        expect(de.queryAll(By.css('h1'))[0].nativeElement.textContent.trim()).to.equal(expectedTableName);
+    });
+
+    it('should show a message when there is no data in the table', () => {
+        // There's no data so we should expect to see the message here
+        fixture.detectChanges();
+        expect(de.query(By.css('.no-data-message'))).to.exist;
+
+        // Switch to a new table that has data, should not see the message
+        // anymore.
+        comp.name = new TableName('(unused)', 'tableName');
+        metaStub.returns(Observable.of(mockTableMeta(comp.name.name.raw, ['integer'])));
+        contentStub.returns(Observable.of(paginatedResponse([{ integer: 1 }])));
+        fixture.detectChanges();
+
+        expect(de.query(By.css('.no-data-message'))).to.not.exist;
+    });
+
+    it('should show a progress bar when switching to a new table', () => {
+        contentStub.returns(Observable.never());
+        fixture.detectChanges();
+
+        expect(de.query(By.css('mat-progress-bar')).nativeElement.attributes.hidden)
+            .to.not.be.undefined;
+    });
 
     it('should render an extra column for the "insert like" row at the beginning', () => {
         // Give the table some data
@@ -202,5 +223,6 @@ describe('DatatableComponent', () => {
         const query = { queryParams: { row: JSON.stringify({ integer: 4 }) }};
         expect(routerSpy).to.have.been.calledWithExactly(route, query);
     });
+
     it.skip('should allow selections when [selectionMode] is "one"');
 });

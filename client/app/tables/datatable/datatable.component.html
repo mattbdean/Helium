@@ -14,6 +14,7 @@
     <filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
 
     <div class="mat-elevation-z8">
+        <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
         <mat-table [dataSource]="dataSource" matSort>
             <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
                 <mat-header-cell
@@ -45,6 +46,7 @@
             <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
             <mat-row *matRowDef="let row; columns: columnNames;"></mat-row>
         </mat-table>
+        <p class="no-data-message" *ngIf="totalRows === 0">There's nothing here ¯\_(ツ)_/¯</p>
         <mat-paginator [length]="totalRows" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
     </div>
 

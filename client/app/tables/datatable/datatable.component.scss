@@ -42,7 +42,7 @@ h1 {
   fill: rgba(0, 0, 0, 0.64);
 
   &:hover {
-    fill: rgba(0, 0, 0, 0.78)
+    fill: rgba(0, 0, 0, 0.78);
   }
 
   &:active {
@@ -59,4 +59,10 @@ constraint-icons {
   padding-bottom: 5px;
   // Space between name and icon
   padding-right: 5px;
+}
+
+.no-data-message {
+  margin: 2rem 0;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54);
 }

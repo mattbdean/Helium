@@ -46,13 +46,15 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public pageSize = 25;
 
     /** The amount of rows available with the given filters */
-    public totalRows = 0;
+    public get totalRows(): number { return this.matPaginator ? this.matPaginator.length : 0; }
 
     /** FilterManagerComponent will be visible when this is true */
     public showFilters = false;
 
     /** If the table could be found */
     public tableExists = true;
+
+    public loading = true;
 
     private nameSub: Subscription;
 
@@ -76,6 +78,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             .distinctUntilChanged()
             .filter((n) => n !== null)
             .map((m) => m!!)
+            .do(() => { this.loading = true; })
             .switchMap((name) =>
                 this.backend.meta(name.schema, name.name.raw)
                     .catch((err: HttpErrorResponse) => {
@@ -100,6 +103,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                 // Update observables and data source
                 this.meta$.next(meta);
                 this.dataSource.switchTables(meta);
+                this.loading = false;
             });
     }
 
