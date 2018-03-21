@@ -13,6 +13,7 @@ import { StorageService } from '../storage/storage.service';
 import { TableService } from './table.service';
 
 import { expect } from 'chai';
+import { ContentRequest } from './content-request';
 
 // NB: The purpose of these tests aren't to verify that the API returns the
 // right data, rather that the service makes the calls to the correct URL and
@@ -104,16 +105,19 @@ describe('TableService', () => {
 
     describe('content', () => {
         it('should request GET /api/v1/schemas/:schema/:table/data', () => {
-            service.content(schemaName, tableName).subscribe(verifyExpirationUpdate);
-            expectGet(`/api/v1/schemas/${schemaName}/${tableName}/data`, {
-                page: 1,
-                limit: 25
-            });
+            service.content({ schema: schemaName, table: tableName }).subscribe(verifyExpirationUpdate);
+            expectGet(`/api/v1/schemas/${schemaName}/${tableName}/data`);
         });
 
         it('should include filters when requested', () => {
-            // Include pageNumber, limit, and sort, respectively
-            service.content(schemaName, tableName, 2, 50, '-foo').subscribe(verifyExpirationUpdate);
+            const req: ContentRequest = {
+                 schema: schemaName,
+                table: tableName,
+                page: 2,
+                limit: 50,
+                sort: '-foo'
+            };
+            service.content(req).subscribe(verifyExpirationUpdate);
             expectGet(`/api/v1/schemas/${schemaName}/${tableName}/data`, {
                 page: 2,
                 limit: 50,

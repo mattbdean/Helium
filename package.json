@@ -37,7 +37,6 @@
     "@angular/platform-browser": "^5.0.2",
     "@angular/platform-browser-dynamic": "^5.0.2",
     "@angular/router": "^5.0.2",
-    "@swimlane/ngx-datatable": "11.0.4",
     "body-parser": "^1.17.1",
     "chalk": "^2.1.0",
     "core-js": "^2.5.0",

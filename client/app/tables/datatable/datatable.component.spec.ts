@@ -1,66 +1,94 @@
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
-    MatIconModule, MatProgressBarModule,
-    MatSnackBarModule
+    MatPaginatorModule, MatSnackBarModule, MatSortModule,
+    MatTableModule
 } from '@angular/material';
 import { By } from '@angular/platform-browser';
-import { RouterTestingModule } from '@angular/router/testing';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Router } from '@angular/router';
 
+import * as chai from 'chai';
+import { clone } from 'lodash';
 import { Observable } from 'rxjs/Observable';
-
 import * as sinon from 'sinon';
+import * as sinonChai from 'sinon-chai';
 
-import { SqlRow, TableMeta } from '../../common/api';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Constraint, SqlRow, TableDataType, TableMeta } from '../../common/api';
+import { PaginatedResponse } from '../../common/responses';
 import { TableName } from '../../common/table-name.class';
 import { CoreModule } from '../../core/core.module';
 import { TableService } from '../../core/table/table.service';
+import { ApiDataSource } from '../api-data-source/api-data-source';
 import { DatatableComponent } from './datatable.component';
 
-const expect = global['chai'].expect;
+chai.use(sinonChai);
+const expect = chai.expect;
 
 describe('DatatableComponent', () => {
+    const SCHEMA = '(schema)';
+    const DEFAULT_TABLE_NAME = 'foo';
+
     let fixture: ComponentFixture<DatatableComponent>;
     let comp: DatatableComponent;
     let de: DebugElement;
     let service: TableService;
+    let router: Router;
+
+    let metaStub: sinon.SinonStub;
+    let contentStub: sinon.SinonStub;
 
     const tableServiceStub = {
-        meta: (name: string): Observable<TableMeta> =>
+        meta: (_: string): Observable<TableMeta> =>
             Observable.throw(new Error('not stubbed')),
-        content: (name: string): Observable<SqlRow> =>
-            Observable.throw(new Error('not stubbed')),
+        content: (_): Observable<PaginatedResponse<SqlRow[]>> =>
+            Observable.throw(new Error('not stubbed'))
     };
 
-    const mockTableMeta = (): TableMeta => ({
+    const routerStub = {
+        // Do nothing by default
+        navigate: () => undefined
+    };
+
+    const mockTableMeta = (name: string,
+                           headerTypes: TableDataType[],
+                           primaryKeys: TableDataType[] = []): TableMeta => ({
+
         schema: 'schema',
-        name: 'foo',
-        headers: [],
+        name,
+        headers: headerTypes.map((t) => ({ name: t, type: t } as any)),
         totalRows: 0,
-        constraints: [],
+        constraints: [
+            ...primaryKeys.map((t): Constraint => ({ localColumn: t, type: 'primary', ref: null }))
+        ],
         comment: 'description',
         parts: []
     });
+
+    const paginatedResponse = (data: SqlRow[]): Observable<PaginatedResponse<SqlRow[]>> =>
+        Observable.of({ size: data.length, data: clone(data), totalRows: 1000 });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
                 CoreModule,
-                MatIconModule,
-                MatProgressBarModule,
+                MatPaginatorModule,
                 MatSnackBarModule,
-                NgxDatatableModule,
-                RouterTestingModule
+                MatSortModule,
+                MatTableModule,
+                NoopAnimationsModule
             ],
             declarations: [
                 DatatableComponent
             ],
             providers: [
-                { provide: TableService, useValue: tableServiceStub }
+                ApiDataSource,
+                { provide: TableService, useValue: tableServiceStub },
+                { provide: Router, useValue: routerStub }
             ],
             schemas: [
-                // Ignore unknown children (aka filter-manager)
+                // Ignore irrelevant children
                 NO_ERRORS_SCHEMA
             ]
         });
@@ -69,22 +97,132 @@ describe('DatatableComponent', () => {
         comp = fixture.componentInstance;
         de = fixture.debugElement;
         service = de.injector.get(TableService);
+        router = de.injector.get(Router);
+
+        comp.name = new TableName(SCHEMA, DEFAULT_TABLE_NAME);
+        metaStub = sinon.stub(service, 'meta')
+            .returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer'], ['integer'])));
+        contentStub = sinon.stub(service, 'content')
+            .returns(paginatedResponse([]));
     });
 
-    it('should pull in the metadata when given a name', () => {
-        expect(comp.meta).to.be.null;
-        comp.name = new TableName('schema', 'foo');
-
-        const stub = sinon.stub(service, 'meta')
-            .returns(Observable.of<TableMeta>(mockTableMeta()));
+    it('should show a message when the table can\'t be found', () => {
+        metaStub.returns(Observable.throw(new HttpErrorResponse({
+            status: 404,
+            statusText: 'Not Found'
+        })));
 
         fixture.detectChanges();
-        expect(stub).to.have.been.calledOnce;
 
-        // Header
-        expect(de.query(By.css('h1')).nativeElement.textContent.trim()).to.equal('Foo');
-
-        // Description right under the header
-        expect(de.query(By.css('.table-description')).nativeElement.textContent).to.match(/description/);
+        expect(de.query(By.css('.table-not-found'))).to.exist;
+        expect(de.query(By.css('mat-table'))).to.not.exist;
     });
+
+    it('should render blob and null values specially', () => {
+        // Set up the table and its data
+        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer', 'blob'])));
+        contentStub.returns(paginatedResponse([
+            // The real API would return '<blob>' for all blob values
+            { integer: null, blob: 'foo' },
+            { integer: 4,    blob: 'bar' }
+        ]));
+        fixture.detectChanges();
+
+        const [firstRow, secondRow] = de.queryAll(By.css('mat-row'))
+            .map((row) => row.queryAll(By.css('mat-cell')));
+
+        // All null values and all blob columns should be rendered specially.
+        // Start at index 1 since index 0 for all rows will be the "insert like"
+        // cell
+        const specialCells = [firstRow[1], firstRow[2], secondRow[2]];
+        for (const specialCell of specialCells) {
+            expect(specialCell.query(By.css('span.special-cell'))).to.exist;
+        }
+
+        // Otherwise the cells should be rendered normally
+        const normalCells = [secondRow[1]];
+        for (const normalCell of normalCells) {
+            expect(normalCell.query(By.css('span.special-cell'))).to.not.exist;
+        }
+
+        // Make sure we're rendering a string representation of the null value
+        expect(firstRow[1].nativeElement.textContent.trim()).to.equal('null');
+    });
+
+    it('should include a header for every element of data', () => {
+        const colNames: TableDataType[] = ['integer', 'float', 'boolean'];
+        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, colNames)));
+        fixture.detectChanges();
+
+        const renderedNames = de.queryAll(By.css('mat-header-cell'))
+            .map((header) => header.nativeElement.textContent.trim())
+            // Remove header 0, which is the "insert like" header
+            .slice(1);
+
+        expect(renderedNames).to.deep.equal(colNames);
+    });
+
+    it('should include constraint icons in the column header', () => {
+        const colNames: TableDataType[] = ['integer', 'float', 'boolean'];
+        const primaryKeys = colNames.slice(0, 1);
+        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, colNames, primaryKeys)));
+        fixture.detectChanges();
+
+        // Even though there are no icons necessary for some of these columns,
+        // there should still be a <constraint-icons> in the header
+        expect(de.queryAll(By.css('constraint-icons'))).to.have.lengthOf(colNames.length);
+    });
+
+    it('should update the title to the name of the current table', () => {
+        fixture.detectChanges();
+        const expectedTableName = new TableName('(unused)', DEFAULT_TABLE_NAME).name.clean;
+        expect(de.queryAll(By.css('h1'))[0].nativeElement.textContent.trim()).to.equal(expectedTableName);
+    });
+
+    it('should show a message when there is no data in the table', () => {
+        // There's no data so we should expect to see the message here
+        fixture.detectChanges();
+        expect(de.query(By.css('.no-data-message'))).to.exist;
+
+        // Switch to a new table that has data, should not see the message
+        // anymore.
+        comp.name = new TableName('(unused)', 'tableName');
+        metaStub.returns(Observable.of(mockTableMeta(comp.name.name.raw, ['integer'])));
+        contentStub.returns(Observable.of(paginatedResponse([{ integer: 1 }])));
+        fixture.detectChanges();
+
+        expect(de.query(By.css('.no-data-message'))).to.not.exist;
+    });
+
+    it('should show a progress bar when switching to a new table', () => {
+        contentStub.returns(Observable.never());
+        fixture.detectChanges();
+
+        expect(de.query(By.css('mat-progress-bar')).nativeElement.attributes.hidden)
+            .to.not.be.undefined;
+    });
+
+    it('should render an extra column for the "insert like" row at the beginning', () => {
+        // Give the table some data
+        contentStub.returns(paginatedResponse([{ integer: 4 }]));
+
+        const routerSpy = sinon.spy(router, 'navigate');
+
+        fixture.detectChanges();
+
+        const headers = de.queryAll(By.css('mat-header-cell'));
+        // By default only one column is created, so that one column plus the
+        // "insert like" column should make two.
+        expect(headers.length).to.equal(2);
+
+        de.queryAll(By.css('.insert-like-icon'))[0].nativeElement.click();
+
+        expect(routerSpy).to.have.been.calledOnce;
+        const route = ['/forms', SCHEMA, DEFAULT_TABLE_NAME];
+        // The only row we gave the table is this one:
+        const query = { queryParams: { row: JSON.stringify({ integer: 4 }) }};
+        expect(routerSpy).to.have.been.calledWithExactly(route, query);
+    });
+
+    it.skip('should allow selections when [selectionMode] is "one"');
 });

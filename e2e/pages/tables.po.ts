@@ -6,15 +6,15 @@ export class TablesPage {
     }
 
     public headers() {
-        return element.all(by.css('datatable-header-cell'));
+        return element.all(by.css('mat-header-cell'));
     }
 
     public rows() {
-        return element.all(by.css('datatable-body-row'));
+        return element.all(by.css('mat-row'));
     }
 
     public getForeignKeyHeaderHref(headerName: string) {
-        return element.all(by.css('span.header-container'))
+        return element.all(by.css('mat-header-cell'))
             .filter((el) => el.getText().then((text) => text.trim() === headerName))
             .first()
             .element(by.css('a.header-icon[data-constraint-type=foreign]'))
@@ -23,9 +23,9 @@ export class TablesPage {
 
     /** Presses the 'insert like' button on a particular row. */
     public insertLike(rowNum: number) {
-        return element.all(by.css(`datatable-body-cell[ng-reflect-row-index='${rowNum}']`))
-            .first()
-            .element(by.css('mat-icon.insert-like-icon'))
+        return element.all(by.css(`mat-row`))
+            .get(rowNum)
+            .element(by.css('.insert-like-icon'))
             .click();
     }
 }

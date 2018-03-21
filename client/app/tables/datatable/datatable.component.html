@@ -1,69 +1,59 @@
-<mat-progress-bar [style.visibility]="loading ? 'visible' : 'hidden'" mode="indeterminate"></mat-progress-bar>
-<div [hidden]="!exists">
-    <h1 class="mat-display-1">
-        <table-name [name]="name"></table-name>
-        <button
-            mat-icon-button
-            class="filter-icon"
-            [inlineSVG]="'/assets/filter.svg'"
-            [title]="showFilters ? 'Hide filters' : 'Show filters'"
-            (click)="toggleFilters()"></button>
-    </h1>
+<h1 class="mat-display-1">
+    <table-name [name]="name"></table-name>
+    <button
+        mat-icon-button
+        class="filter-icon"
+        [inlineSVG]="'/assets/filter.svg'"
+        [title]="showFilters ? 'Hide filters' : 'Show filters'"
+        (click)="toggleFilters()"></button>
+</h1>
 
+<div *ngIf="tableExists else tableNotFound">
     <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">"{{ meta.comment }}"</h4>
 
-    <filter-manager #filterManager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
+    <filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
 
-    <ngx-datatable class="material"
-                   [hidden]="!exists"
+    <div class="mat-elevation-z8">
+        <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
+        <mat-table [dataSource]="dataSource" matSort>
+            <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
+                <mat-header-cell
+                    *matHeaderCellDef
+                    [class.insert-like-col]="colName === '__insertLike'"
+                    mat-sort-header>
 
-                   [columnMode]="'force'"
-                   [columns]="tableHeaders"
-                   [count]="totalRows"
-                   [externalPaging]="true"
-                   [externalSorting]="true"
-                   [footerHeight]="50"
-                   [limit]="limit"
-                   [headerHeight]="50"
-                   [offset]="pageNumber - 1"
-                   [rowHeight]="'auto'"
-                   [rows]="data"
+                    <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
+                    {{ colName === '__insertLike' ? '' : colName }}
+                </mat-header-cell>
 
-                   (page)="onPaginate($event)"
-                   (sort)="onSort($event)">
-    </ngx-datatable>
+                <mat-cell
+                    *matCellDef="let row"
+                    [class.insert-like-col]="colName === '__insertLike'">
 
-    <ng-template #headerTemplate let-column="column" let-sort="sortFn">
-        <span class="header-container" (click)="sort()">
-            <constraint-icons [constraints]="constraints[column.name]"></constraint-icons>
-            {{ column.name }}
-        </span>
-    </ng-template>
+                    <span *ngIf="colName === '__insertLike' else normalCell">
+                         <mat-icon
+                             (click)="onInsertLike(row)"
+                             class="insert-like-icon"
+                             title="Copy data to a new form">add_box</mat-icon>
+                    </span>
 
-    <ng-template #headerTemplateInsertLike>
-        <!-- Do nothing -->
-    </ng-template>
+                    <ng-template #normalCell>
+                        <span [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
+                    </ng-template>
+                </mat-cell>
+            </ng-container>
 
-    <ng-template #cellTemplate let-row="row" let-value="value">
-        <span class="special-cell" *ngIf="value === ''">null</span>
-        <span *ngIf="value !== ''">{{ value }}</span>
-    </ng-template>
+            <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
+            <mat-row *matRowDef="let row; columns: columnNames;"></mat-row>
+        </mat-table>
+        <p class="no-data-message" *ngIf="totalRows === 0">There's nothing here ¯\_(ツ)_/¯</p>
+        <mat-paginator [length]="totalRows" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+    </div>
 
-    <ng-template #cellTemplateBlob let-row="row" let-value="value">
-        <span class="special-cell" *ngIf="value === ''">null</span>
-        <span class="special-cell" *ngIf="value !== ''">blob</span>
-    </ng-template>
-
-    <ng-template #cellTemplateInsertLike let-row="row" let-value="value">
-        <mat-icon
-            (click)="onInsertLike(row)"
-            class="insert-like-icon"
-            title="Copy data to a new form">add_box</mat-icon>
-    </ng-template>
 </div>
 
-<div [hidden]="exists" class="not-found-container">
-    <h1 class="mat-headline">Table not found</h1>
-    <p>Pick one out from the sidebar</p>
-</div>
-
+<ng-template #tableNotFound>
+    <div class="table-not-found">
+        <p>This table doesn't exist or you don't have access to it</p>
+    </div>
+</ng-template>

@@ -71,7 +71,6 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
                         .map((control) => control.value);
                 })
                 .distinctUntilChanged(isEqual)
-                .do((it) => { console.log('formArray.valueChanges', it, this.formArray.errors); })
                 // Notify listeners that the filters have changed
                 .subscribe((filters) => this.changed.emit(filters));
         }
