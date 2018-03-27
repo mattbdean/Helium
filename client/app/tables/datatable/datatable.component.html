@@ -13,22 +13,23 @@
 
     <filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
 
+    <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
     <div class="mat-elevation-z8">
-        <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
-        <mat-table [dataSource]="dataSource" matSort>
-            <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
-                <mat-header-cell
-                    *matHeaderCellDef
-                    [class.insert-like-col]="colName === '__insertLike'"
-                    mat-sort-header>
+        <div #tableContainer class="table-container">
+            <mat-table [dataSource]="dataSource" matSort>
+                <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
+                    <mat-header-cell
+                        *matHeaderCellDef
+                        [class.insert-like-col]="colName === '__insertLike'"
+                        mat-sort-header>
 
-                    <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
-                    {{ colName === '__insertLike' ? '' : colName }}
-                </mat-header-cell>
+                        <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
+                        {{ colName === '__insertLike' ? '' : colName }}
+                    </mat-header-cell>
 
-                <mat-cell
-                    *matCellDef="let row"
-                    [class.insert-like-col]="colName === '__insertLike'">
+                    <mat-cell
+                        *matCellDef="let row"
+                        [class.insert-like-col]="colName === '__insertLike'">
 
                     <span *ngIf="colName === '__insertLike' else normalCell">
                          <mat-icon
@@ -37,15 +38,16 @@
                              title="Copy data to a new form">add_box</mat-icon>
                     </span>
 
-                    <ng-template #normalCell>
-                        <span [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
-                    </ng-template>
-                </mat-cell>
-            </ng-container>
+                        <ng-template #normalCell>
+                            <span [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
+                        </ng-template>
+                    </mat-cell>
+                </ng-container>
 
-            <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
-            <mat-row *matRowDef="let row; columns: columnNames;"></mat-row>
-        </mat-table>
+                <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
+                <mat-row *matRowDef="let row; columns: columnNames;"></mat-row>
+            </mat-table>
+        </div>
         <p class="no-data-message" *ngIf="totalRows === 0">There's nothing here ¯\_(ツ)_/¯</p>
         <mat-paginator [length]="totalRows" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
     </div>

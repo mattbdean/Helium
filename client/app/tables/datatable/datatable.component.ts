@@ -1,21 +1,28 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
     AfterViewInit,
-    Component, Input, OnDestroy, OnInit, ViewChild
+    Component, ElementRef, Input, OnDestroy, OnInit, QueryList, Renderer2,
+    ViewChild,
+    ViewChildren
 } from '@angular/core';
-import { MatPaginator, MatSnackBar, MatSort } from '@angular/material';
+import {
+    MatCell,
+    MatHeaderCell, MatPaginator, MatSnackBar,
+    MatSort
+} from '@angular/material';
 import { Router } from '@angular/router';
-import { clone, groupBy } from 'lodash';
+import { clone, groupBy, max, sum } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import {
-    Constraint, Filter, TableMeta
+    Constraint, Filter, SqlRow, TableMeta
 } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
+import { CollectionViewer } from '@angular/cdk/collections';
 
 @Component({
     selector: 'datatable',
@@ -25,6 +32,8 @@ import { FilterManagerComponent } from '../filter-manager/filter-manager.compone
 export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private static readonly DISPLAY_FORMAT_DATE = 'l';
     private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
+    private static readonly MIN_COL_WIDTH = 100; // px
+    private static readonly INSERT_LIKE_WIDTH = 40; // px
 
     @Input()
     public set name(value: TableName) { this.name$.next(value); }
@@ -57,10 +66,15 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public loading = true;
 
     private nameSub: Subscription;
+    private layoutSub: Subscription;
 
     @ViewChild(FilterManagerComponent) private filterManager: FilterManagerComponent;
     @ViewChild(MatPaginator) private matPaginator: MatPaginator;
     @ViewChild(MatSort) private matSort: MatSort;
+
+    @ViewChild('tableContainer') private tableContainer: ElementRef;
+    @ViewChildren(MatHeaderCell, { read: ElementRef }) private headerCells: QueryList<ElementRef>;
+    @ViewChildren(MatCell, { read: ElementRef }) private contentCells: QueryList<ElementRef>;
 
     /** An observable that keeps track of the table name */
     private name$ = new BehaviorSubject<TableName | null>(null);
@@ -70,7 +84,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         private router: Router,
         private snackBar: MatSnackBar,
         private backend: TableService,
-        private dataSource: ApiDataSource
+        private dataSource: ApiDataSource,
+        private renderer: Renderer2
     ) {}
 
     public ngOnInit(): void {
@@ -113,11 +128,24 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             sort: this.matSort,
             filters: this.filterManager
         });
+
+        const fakeCollectionViewer: CollectionViewer = {
+            // This is actually pretty similar to what Angular Material gives us
+            // as of v5.2.4
+             viewChange: Observable.of({ start: 0, end: Number.MAX_VALUE })
+        };
+
+        // For some unknown reason this callback is always fired after all cells
+        // have properly rendered.
+        this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe(() => {
+            this.recalculateTableLayout(this.headerCells, this.contentCells);
+        });
     }
 
     public ngOnDestroy(): void {
         // Clean up our subscriptions
         this.nameSub.unsubscribe();
+        this.layoutSub.unsubscribe();
     }
 
     public onInsertLike(row: object) {
@@ -181,5 +209,73 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         }
 
         return { row: JSON.stringify(reformatted) };
+    }
+
+    private recalculateTableLayout(headerList: QueryList<any>, bodyList: QueryList<any>) {
+        const allCells = headerList.toArray().concat(bodyList.toArray())
+            .map((ref) => ref.nativeElement)
+            .filter((el) => !el.classList.contains('insert-like-col'));
+
+        // -1 for the "insert like" header
+        const numHeaders = headerList.length - 1;
+        const numRows = (allCells.length / numHeaders) - 1;
+
+        // Create a 2d array in which the first dimension is a column
+        // and the second dimension is a cell in a column
+        const table: any[][] = [];
+
+        // Headers are listed first
+        const headers = allCells.slice(0, numHeaders);
+
+        // Initialize the 2d array such that no elements are undefined
+        for (let i = 0; i < headers.length; i++) {
+            table[i] = [headers[i]];
+        }
+
+        // Header cells are listed left to right, but data cells are listed top
+        // to bottom first, and then left to right. Basically the first column
+        // on the left is listed top down first, followed by the rest of the
+        // columns in that same order
+        const columnCells = allCells.slice(numHeaders);
+        for (let j = 0; j < columnCells.length; j++) {
+            table[Math.floor(j / numRows)].push(columnCells[j]);
+        }
+
+        // Compute the maximum width of each column
+        const requiredWidths = table
+            .map((col: any[]) => col.map((el) => Math.max(el.clientWidth, DatatableComponent.MIN_COL_WIDTH)))
+            .map(max);
+
+        // Determine the padding on the left and right sides of each row
+        const padding = Number(window.getComputedStyle(document.querySelector('mat-header-row')!!)
+            .getPropertyValue('padding-left')
+            // Very brittle solution, will fall apart if Angular Material
+            // decides to use any other unit besides pixels
+            .replace('px', ''));
+
+        // Determine the amount of space given to us to render the table
+        const allottedWidth = this.tableContainer.nativeElement.clientWidth
+            - DatatableComponent.INSERT_LIKE_WIDTH
+            - (padding * 2);
+
+        const totalRequiredWidth = sum(requiredWidths);
+
+        if (totalRequiredWidth < allottedWidth) {
+            // We have an abundance of space, distribute everything evenly
+            const width = allottedWidth / numHeaders;
+            for (const col of table) {
+                for (const el of col) {
+                    this.renderer.setStyle(el, 'width', width + 'px');
+                }
+            }
+        } else {
+            // We have a shortage of space, make each column take up only what
+            // is required
+            for (let i = 0; i < table.length; i++) {
+                for (const el of table[i]) {
+                    this.renderer.setStyle(el, 'width', requiredWidths[i] + 'px');
+                }
+            }
+        }
     }
 }

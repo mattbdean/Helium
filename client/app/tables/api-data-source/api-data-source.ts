@@ -44,11 +44,12 @@ export class ApiDataSource extends DataSource<SqlRow> {
     private sortSub: Subscription | null = null;
     private filtersSub: Subscription | null = null;
 
-    public constructor(private backend: TableService) { super(); }
+    private source: Observable<SqlRow[]>;
 
-    // overriden from DataSource
-    public connect(collectionViewer: CollectionViewer): Observable<SqlRow[]> {
-        return Observable.combineLatest(
+    public constructor(private backend: TableService) {
+        super();
+
+        this.source = Observable.combineLatest(
             this.table$, this.page$, this.pageSize$, this.sort$, this.filters$
         )
             .filter((data: [TableMeta, number, number, string, Filter[]]) => {
@@ -80,6 +81,11 @@ export class ApiDataSource extends DataSource<SqlRow> {
             }).map((data: [PaginatedResponse<SqlRow[]>, TableMeta]) =>
                 // Format the rows before presenting them to the UI
                 this.formatRows(data[1].headers, data[0].data));
+    }
+
+    // overriden from DataSource
+    public connect(collectionViewer: CollectionViewer): Observable<SqlRow[]> {
+        return this.source;
     }
 
     public disconnect(collectionViewer: CollectionViewer): void {
