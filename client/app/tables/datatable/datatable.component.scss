@@ -38,6 +38,14 @@ mat-cell, mat-header-cell {
   flex: none;
 }
 
+.col-resizer {
+  width: 5px;
+  height: 22px;
+  //background-color: rgba(0, 0, 0, 0.12);
+  background-color: red;
+  cursor: col-resize;
+}
+
 .insert-like-col {
   width: 40px;
 }

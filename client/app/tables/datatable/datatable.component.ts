@@ -1,3 +1,4 @@
+import { CollectionViewer } from '@angular/cdk/collections';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
     AfterViewInit,
@@ -22,7 +23,6 @@ import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
-import { CollectionViewer } from '@angular/cdk/collections';
 
 @Component({
     selector: 'datatable',
@@ -32,7 +32,8 @@ import { CollectionViewer } from '@angular/cdk/collections';
 export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private static readonly DISPLAY_FORMAT_DATE = 'l';
     private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
-    private static readonly MIN_COL_WIDTH = 100; // px
+    private static readonly MIN_ABS_COL_WIDTH = 10; // px
+    private static readonly MIN_DEFAULT_COL_WIDTH = 100; // px
     private static readonly INSERT_LIKE_WIDTH = 40; // px
 
     @Input()
@@ -64,6 +65,29 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public tableExists = true;
 
     public loading = true;
+
+    public resizeData: {
+        startX: number,
+        startWidth: number,
+        endX: number,
+
+        /** If the mouse is currently down */
+        pressed: boolean,
+
+        /** Target column index. Includes the "insert like" column. */
+        colIndex: number
+    } = {
+        startX: 0,
+        startWidth: 0,
+        pressed: false,
+        endX: 0,
+        colIndex: -1
+    };
+
+    private get displayedRows() {
+        // -1 because otherwise it would include the header row
+        return ((this.contentCells.length + this.headerCells.length) / this.headerCells.length) - 1;
+    }
 
     private nameSub: Subscription;
     private layoutSub: Subscription;
@@ -140,6 +164,62 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe(() => {
             this.recalculateTableLayout(this.headerCells, this.contentCells);
         });
+
+        this.renderer.listen('body', 'mousemove', (event) => {
+            if (this.resizeData.pressed) {
+                this.resizeData.endX = event.x;
+                console.log(this.resizeData);
+            }
+        });
+
+        this.renderer.listen('body', 'mouseup', (event) => {
+            if (this.resizeData.pressed) {
+                this.resizeData.pressed = false;
+
+                if (this.resizeData.startX !== this.resizeData.endX) {
+                    // Don't allow the width to be below a certain value
+                    const newWidth = Math.max(
+                        this.resizeData.startWidth + (this.resizeData.endX - this.resizeData.startX),
+                        DatatableComponent.MIN_ABS_COL_WIDTH
+                    );
+
+                    // Resize the column
+                    this.resizeColumn(this.resizeData.colIndex, newWidth);
+                }
+            }
+        });
+    }
+
+    public onResizerMouseDown(event: MouseEvent) {
+        let headerElement: any = event.target;
+
+        // Recursively navigate up the DOM to find the header cell
+        while (headerElement.nodeName.toLowerCase() !== 'mat-header-cell') {
+            headerElement = headerElement.parentElement;
+        }
+
+        headerElement = headerElement.previousSibling;
+
+        let colIndex = 0;
+
+        // Find the column index by counting how many siblings came before this
+        // header
+        let tmp = headerElement.previousSibling;
+        while (tmp !== null) {
+            tmp = tmp.previousSibling;
+            colIndex++;
+        }
+
+        // -1 for the resizer actually belonging to the header to the right and
+        colIndex -= 1;
+
+        this.resizeData = {
+            pressed: true,
+            startX: event.x,
+            startWidth: headerElement.clientWidth,
+            endX: event.x,
+            colIndex
+        };
     }
 
     public ngOnDestroy(): void {
@@ -170,6 +250,12 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public isBlob(headerName: string) {
         const header = this.meta.headers.find((h) => h.name === headerName);
         return header === undefined ? false : header.type === 'blob';
+    }
+
+    public onResizerClick(event: MouseEvent) {
+        // Prevent sorting when clicking directly on a resizer
+        event.preventDefault();
+        event.stopPropagation();
     }
 
     private createQueryParams(row: object) {
@@ -211,6 +297,20 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         return { row: JSON.stringify(reformatted) };
     }
 
+    private resizeColumn(colIndex: number, newWidth: number) {
+        const cells = this.contentCells.toArray().map((elRef) => elRef.nativeElement);
+        const rows = this.displayedRows;
+
+        for (let i = 0; i < rows; i++) {
+            // Content cells are listed column by column from left to right, so
+            // the cells we're looking for start at index (rows * colIndex).
+            this.renderer.setStyle(cells[(rows * colIndex) + i], 'width', newWidth + 'px');
+        }
+
+        // Don't forget about the header
+        this.renderer.setStyle(this.headerCells.toArray()[colIndex].nativeElement, 'width', newWidth + 'px');
+    }
+
     private recalculateTableLayout(headerList: QueryList<any>, bodyList: QueryList<any>) {
         const allCells = headerList.toArray().concat(bodyList.toArray())
             .map((ref) => ref.nativeElement)
@@ -243,7 +343,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
         // Compute the maximum width of each column
         const requiredWidths = table
-            .map((col: any[]) => col.map((el) => Math.max(el.clientWidth, DatatableComponent.MIN_COL_WIDTH)))
+            .map((col: any[]) => col.map((el) => Math.max(el.clientWidth, DatatableComponent.MIN_DEFAULT_COL_WIDTH)))
             .map(max);
 
         // Determine the padding on the left and right sides of each row

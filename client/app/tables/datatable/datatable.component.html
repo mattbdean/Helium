@@ -17,11 +17,13 @@
     <div class="mat-elevation-z8">
         <div #tableContainer class="table-container">
             <mat-table [dataSource]="dataSource" matSort>
-                <ng-container *ngFor="let colName of columnNames" [matColumnDef]="colName">
+                <ng-container *ngFor="let colName of columnNames; let i = index" [matColumnDef]="colName">
                     <mat-header-cell
                         *matHeaderCellDef
                         [class.insert-like-col]="colName === '__insertLike'"
                         mat-sort-header>
+
+                        <span *ngIf="i >= 2" class="col-resizer" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)"></span>
 
                         <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
                         {{ colName === '__insertLike' ? '' : colName }}
