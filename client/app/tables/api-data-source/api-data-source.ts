@@ -1,6 +1,6 @@
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { Injectable } from '@angular/core';
-import { MatPaginator, MatSort, PageEvent, Sort } from '@angular/material';
+import { MatPaginator, PageEvent, Sort } from '@angular/material';
 import { clone, find } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
@@ -29,7 +29,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
 
     // External components
     private paginator: MatPaginator | null = null;
-    private sort: MatSort | null = null;
+    private sort: Observable<Sort> = Observable.never();
     private filters: FilterManagerComponent | null;
 
     // Observables
@@ -101,8 +101,8 @@ export class ApiDataSource extends DataSource<SqlRow> {
      * source.
      */
     public init(components: {
-        paginator: MatPaginator
-        sort: MatSort
+        paginator: MatPaginator,
+        sort: Observable<Sort>,
         filters: FilterManagerComponent
     }) {
         this.paginator = components.paginator;
@@ -118,7 +118,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
             });
 
         if (this.sort)
-            this.sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
+            this.sortSub = this.sort.subscribe((sort: Sort) => {
                 if (sort.direction === '') {
                     // There's no active sorting
                     this.sort$.next(null);

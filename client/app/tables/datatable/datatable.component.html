@@ -16,15 +16,24 @@
     <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
     <div class="mat-elevation-z8">
         <div #tableContainer class="table-container">
-            <mat-table [dataSource]="dataSource" matSort>
+            <mat-table [dataSource]="dataSource">
                 <ng-container *ngFor="let colName of columnNames; let i = index" [matColumnDef]="colName">
                     <mat-header-cell
                         *matHeaderCellDef
                         [class.insert-like-col]="colName === '__insertLike'"
-                        mat-sort-header>
+                        (click)="onSortRequested(i)">
 
                         <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
                         <span class="header-cell-name">{{ colName === '__insertLike' ? '' : colName }}</span>
+
+                        <!--
+                        Use our custom indicator instead of AngularMaterial's because it renders the sort indicator
+                        after the column resizer, where we want it the other way around
+                        -->
+
+                        <span *ngIf="i >= 1" class="sort-indicator-wrapper">
+                            <sort-indicator></sort-indicator>
+                        </span>
                         <span *ngIf="i >= 1" class="col-resizer" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)"></span>
                     </mat-header-cell>
 

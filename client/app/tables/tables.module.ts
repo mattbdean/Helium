@@ -19,6 +19,7 @@ import { ApiDataSource } from './api-data-source/api-data-source';
 import { FilterManagerComponent } from './filter-manager/filter-manager.component';
 import { FilterProviderService } from './filter-provider/filter-provider.service';
 import { FilterComponent } from './filter/filter.component';
+import { SortIndicatorComponent } from './sort-indicator/sort-indicator.component';
 
 @NgModule({
     imports: [
@@ -43,6 +44,7 @@ import { FilterComponent } from './filter/filter.component';
         DatatableComponent,
         FilterComponent,
         FilterManagerComponent,
+        SortIndicatorComponent,
         TableHostComponent
     ],
     providers: [

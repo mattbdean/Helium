@@ -36,16 +36,20 @@ mat-cell {
 
 mat-cell, mat-header-cell {
   flex: none;
+
+  display: flex;
+  align-items: center;
 }
 
-::ng-deep .mat-sort-header-button {
-  // Set this width to 100% so that we can push the column resizer all the way to the right
-  width: 100%;
-  text-align: left;
+mat-header-cell {
+  cursor: pointer;
+  user-select: none;
 }
 
-.header-cell-name {
+.sort-indicator-wrapper {
   flex-grow: 1;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .col-resizer {

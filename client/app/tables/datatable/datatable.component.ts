@@ -9,7 +9,7 @@ import {
 import {
     MatCell,
     MatHeaderCell, MatPaginator, MatSnackBar,
-    MatSort
+    MatSort, Sort
 } from '@angular/material';
 import { Router } from '@angular/router';
 import { clone, groupBy, max, sum } from 'lodash';
@@ -23,6 +23,7 @@ import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
+import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
 
 @Component({
     selector: 'datatable',
@@ -94,15 +95,16 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     @ViewChild(FilterManagerComponent) private filterManager: FilterManagerComponent;
     @ViewChild(MatPaginator) private matPaginator: MatPaginator;
-    @ViewChild(MatSort) private matSort: MatSort;
 
     @ViewChild('tableContainer') private tableContainer: ElementRef;
     @ViewChildren(MatHeaderCell, { read: ElementRef }) private headerCells: QueryList<ElementRef>;
     @ViewChildren(MatCell, { read: ElementRef }) private contentCells: QueryList<ElementRef>;
+    @ViewChildren(SortIndicatorComponent) private sortIndicators: QueryList<SortIndicatorComponent>;
 
     /** An observable that keeps track of the table name */
     private name$ = new BehaviorSubject<TableName | null>(null);
     private meta$ = new BehaviorSubject<TableMeta | null>(null);
+    private sort$ = new BehaviorSubject<Sort>({ direction: '', active: '' });
 
     constructor(
         private router: Router,
@@ -150,7 +152,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public ngAfterViewInit(): void {
         this.dataSource.init({
             paginator: this.matPaginator,
-            sort: this.matSort,
+            sort: this.sort$,
             filters: this.filterManager
         });
 
@@ -219,6 +221,14 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             endX: event.x,
             colIndex
         };
+    }
+
+    public onSortRequested(colIndex: number) {
+        // If there are N columns (including the insert like column), then there
+        // are N - 1 sortable columns.
+        const sortDir = this.sortIndicators.toArray()[colIndex - 1].nextSort();
+        const colName = this.columnNames[colIndex];
+        this.sort$.next({ direction: sortDir, active: colName });
     }
 
     public ngOnDestroy(): void {
