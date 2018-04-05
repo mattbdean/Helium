@@ -212,9 +212,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             colIndex++;
         }
 
-        // -1 for the resizer actually belonging to the header to the right and
-        colIndex -= 1;
-
         this.resizeData = {
             pressed: true,
             startX: event.x,

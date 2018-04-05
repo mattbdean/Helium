@@ -23,22 +23,21 @@
                         [class.insert-like-col]="colName === '__insertLike'"
                         mat-sort-header>
 
-                        <span *ngIf="i >= 2" class="col-resizer" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)"></span>
-
                         <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
-                        {{ colName === '__insertLike' ? '' : colName }}
+                        <span class="header-cell-name">{{ colName === '__insertLike' ? '' : colName }}</span>
+                        <span *ngIf="i >= 1" class="col-resizer" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)"></span>
                     </mat-header-cell>
 
                     <mat-cell
                         *matCellDef="let row"
                         [class.insert-like-col]="colName === '__insertLike'">
 
-                    <span *ngIf="colName === '__insertLike' else normalCell">
-                         <mat-icon
-                             (click)="onInsertLike(row)"
-                             class="insert-like-icon"
-                             title="Copy data to a new form">add_box</mat-icon>
-                    </span>
+                        <span *ngIf="colName === '__insertLike' else normalCell">
+                             <mat-icon
+                                 (click)="onInsertLike(row)"
+                                 class="insert-like-icon"
+                                 title="Copy data to a new form">add_box</mat-icon>
+                        </span>
 
                         <ng-template #normalCell>
                             <span [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
