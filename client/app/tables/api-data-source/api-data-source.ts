@@ -142,9 +142,6 @@ export class ApiDataSource extends DataSource<SqlRow> {
      */
     public switchTables(meta: TableMeta) {
         this.table$.next(meta);
-
-        if (this.paginator)
-            this.paginator.pageIndex = 0;
     }
 
     private resetSubscriptions() {
@@ -169,6 +166,9 @@ export class ApiDataSource extends DataSource<SqlRow> {
         for (const row of copied) {
             // Iterate through each cell in that row
             for (const headerName of Object.keys(row)) {
+                if (headerName === '__insertLike')
+                    continue;
+
                 const header = find(headers, (h) => h.name === headerName);
                 if (header === undefined)
                     throw new Error('Can\'t find header with name ' + headerName);

@@ -114,7 +114,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     public ngOnInit(): void {
         this.nameSub = this.name$
-            .distinctUntilChanged()
             .filter((n) => n !== null)
             .map((m) => m!!)
             .do(() => { this.loading = true; })
@@ -142,6 +141,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                 // Update observables and data source
                 this.meta$.next(meta);
                 this.dataSource.switchTables(meta);
+                if (this.matPaginator)
+                    this.matPaginator.pageIndex = 0;
                 this.loading = false;
             });
     }
@@ -161,7 +162,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
         // For some unknown reason this callback is always fired after all cells
         // have properly rendered.
-        this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe(() => {
+        this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe((data: SqlRow[]) => {
+            this.matPaginator.length = data.length;
             this.recalculateTableLayout(this.headerCells, this.contentCells);
         });
 
