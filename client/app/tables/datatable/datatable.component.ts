@@ -193,6 +193,18 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                 }, 0);
             }
         });
+
+        this.renderer.listen('body', 'mouseleave', () => {
+            if (this.resizeData.pressed) {
+                this.resizeData = {
+                    startX: 0,
+                    startWidth: 0,
+                    pressed: false,
+                    endX: 0,
+                    colIndex: -1
+                };
+            }
+        });
     }
 
     public onResizerMouseDown(event: MouseEvent) {
