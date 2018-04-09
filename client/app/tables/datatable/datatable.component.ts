@@ -227,6 +227,10 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     public onResizerMouseDown(event: MouseEvent) {
+        // We only care if the user used the primary button to start the drag
+        if (event.button !== 0)
+            return;
+
         let headerElement: any = event.target;
 
         // Recursively navigate up the DOM to find the header cell
