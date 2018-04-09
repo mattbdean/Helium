@@ -48,7 +48,7 @@
                         </span>
 
                         <ng-template #normalCell>
-                            <span [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
+                            <span class="cell-content" [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
                         </ng-template>
                     </mat-cell>
                 </ng-container>

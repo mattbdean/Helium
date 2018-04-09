@@ -35,6 +35,11 @@ mat-cell {
   transition: width 0.3s;
 }
 
+.cell-content {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 mat-cell, mat-header-cell {
   flex: none;
 
