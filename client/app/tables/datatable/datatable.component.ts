@@ -6,11 +6,7 @@ import {
     ViewChild,
     ViewChildren
 } from '@angular/core';
-import {
-    MatCell,
-    MatHeaderCell, MatPaginator, MatSnackBar,
-    MatSort, Sort
-} from '@angular/material';
+import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angular/material';
 import { Router } from '@angular/router';
 import { clone, groupBy, max } from 'lodash';
 import * as moment from 'moment';
@@ -35,6 +31,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
     private static readonly MIN_DEFAULT_COL_WIDTH = 50; // px
     private static readonly INSERT_LIKE_COL_WIDTH = 35; // px
+    private static readonly CELL_PADDING_RIGHT = 10; // px
 
     @Input()
     public set name(value: TableName) { this.name$.next(value); }
@@ -349,7 +346,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
         for (let i = 0; i < rows; i++) {
             // Content cells are listed column by column from left to right, so
-            // the cells we're looking for start at index (rows * (colIndex - 1)).
+            // the cells we're looking for start at index (rows * colIndex).
             this.renderer.setStyle(cells[(rows * colIndex) + i], 'width', newWidth + 'px');
         }
 
@@ -394,8 +391,13 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         if (this.needsFullLayoutRecalculation) {
             this.widths = table
                 .map((col: any[]) =>
-                    col.map((el) =>
-                        Math.max(el.clientWidth, DatatableComponent.MIN_DEFAULT_COL_WIDTH)))
+                    col.map((el) => {
+                        // Add some padding so if a cell takes up 100% of the
+                        // allotted width it'll be easier to read
+                        const baseWidth =
+                            Math.max(el.clientWidth, DatatableComponent.MIN_DEFAULT_COL_WIDTH);
+                        return baseWidth + DatatableComponent.CELL_PADDING_RIGHT;
+                    }))
                 .map(max) as number[];
 
             // Compute the maximum width of each column
