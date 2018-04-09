@@ -185,23 +185,26 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             this.recalculateTableLayout(this.headerCells, this.contentCells);
         });
 
+        const calculateWidth = () => Math.max(
+            // Don't allow the width to be below a certain value
+            this.resizeData.startWidth + (this.resizeData.endX - this.resizeData.startX),
+            this.minWidths!![this.resizeData.colIndex]
+        );
+
         this.renderer.listen('body', 'mousemove', (event) => {
             if (this.resizeData.pressed) {
                 this.resizeData.endX = event.x;
+
+                this.resizeHeader(this.resizeData.colIndex, calculateWidth());
             }
         });
 
         this.renderer.listen('body', 'mouseup', (event) => {
             if (this.resizeData.pressed) {
                 if (this.resizeData.startX !== this.resizeData.endX) {
-                    // Don't allow the width to be below a certain value
-                    const newWidth = Math.max(
-                        this.resizeData.startWidth + (this.resizeData.endX - this.resizeData.startX),
-                        this.minWidths!![this.resizeData.colIndex]
-                    );
 
                     // Resize the column
-                    this.resizeColumn(this.resizeData.colIndex, newWidth);
+                    this.resizeColumn(this.resizeData.colIndex, calculateWidth());
                 }
 
                 setTimeout(() => {
@@ -347,9 +350,13 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         }
 
         // Don't forget about the header
-        this.renderer.setStyle(this.headerCells.toArray()[colIndex].nativeElement, 'width', newWidth + 'px');
+        this.resizeHeader(colIndex, newWidth);
 
         this.widths[colIndex] = newWidth;
+    }
+
+    private resizeHeader(colIndex: number, newWidth: number) {
+        this.renderer.setStyle(this.headerCells.toArray()[colIndex].nativeElement, 'width', newWidth + 'px');
     }
 
     private recalculateTableLayout(headerList: QueryList<any>, bodyList: QueryList<any>) {
