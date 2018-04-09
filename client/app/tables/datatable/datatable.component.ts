@@ -33,7 +33,7 @@ import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.compone
 export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private static readonly DISPLAY_FORMAT_DATE = 'l';
     private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
-    private static readonly MIN_ABS_COL_WIDTH = 10; // px
+    private static readonly MIN_ABS_COL_WIDTH = 40; // px
     private static readonly MIN_DEFAULT_COL_WIDTH = 100; // px
     private static readonly INSERT_LIKE_WIDTH = 40; // px
 
@@ -172,14 +172,11 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         this.renderer.listen('body', 'mousemove', (event) => {
             if (this.resizeData.pressed) {
                 this.resizeData.endX = event.x;
-                console.log(this.resizeData);
             }
         });
 
         this.renderer.listen('body', 'mouseup', (event) => {
             if (this.resizeData.pressed) {
-                this.resizeData.pressed = false;
-
                 if (this.resizeData.startX !== this.resizeData.endX) {
                     // Don't allow the width to be below a certain value
                     const newWidth = Math.max(
@@ -190,6 +187,10 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                     // Resize the column
                     this.resizeColumn(this.resizeData.colIndex, newWidth);
                 }
+
+                setTimeout(() => {
+                    this.resizeData.pressed = false;
+                }, 0);
             }
         });
     }
@@ -201,8 +202,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         while (headerElement.nodeName.toLowerCase() !== 'mat-header-cell') {
             headerElement = headerElement.parentElement;
         }
-
-        headerElement = headerElement.previousSibling;
 
         let colIndex = 0;
 
@@ -224,6 +223,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     public onSortRequested(colIndex: number) {
+        if (this.resizeData.pressed)
+            return;
         // If there are N columns (including the insert like column), then there
         // are N - 1 sortable columns.
         const sortDir = this.sortIndicators.toArray()[colIndex - 1].nextSort();
@@ -312,12 +313,12 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
         for (let i = 0; i < rows; i++) {
             // Content cells are listed column by column from left to right, so
-            // the cells we're looking for start at index (rows * colIndex).
-            this.renderer.setStyle(cells[(rows * colIndex) + i], 'width', newWidth + 'px');
+            // the cells we're looking for start at index (rows * (colIndex - 1)).
+            this.renderer.setStyle(cells[(rows * (colIndex - 1)) + i], 'width', newWidth + 'px');
         }
 
         // Don't forget about the header
-        this.renderer.setStyle(this.headerCells.toArray()[colIndex].nativeElement, 'width', newWidth + 'px');
+        this.renderer.setStyle(this.headerCells.toArray()[colIndex - 1].nativeElement, 'width', newWidth + 'px');
     }
 
     private recalculateTableLayout(headerList: QueryList<any>, bodyList: QueryList<any>) {
