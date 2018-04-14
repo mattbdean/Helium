@@ -58,12 +58,21 @@ mat-header-cell {
   justify-content: flex-start;
 }
 
-.col-resizer {
+.col-resizer-handle {
   width: 5px;
-  height: 22px;
-  //background-color: rgba(0, 0, 0, 0.12);
-  background-color: red;
+  height: 25px;
   cursor: col-resize;
+
+  display: flex;
+  justify-content: flex-start;
+
+}
+
+.col-resizer {
+  height: 100%;
+  width: 1.25px;
+  background-color: rgba(0, 0, 0, 0.12);
+  //background-color: green;
 }
 
 .insert-like-icon {

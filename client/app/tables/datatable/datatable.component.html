@@ -33,7 +33,9 @@
                         <span *ngIf="i >= 1" class="sort-indicator-wrapper">
                             <sort-indicator></sort-indicator>
                         </span>
-                        <span *ngIf="i >= 1" class="col-resizer" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)"></span>
+                        <div *ngIf="i >= 1" class="col-resizer-handle" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)">
+                            <div class="col-resizer"></div>
+                        </div>
                     </mat-header-cell>
 
                     <mat-cell
