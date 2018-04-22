@@ -99,6 +99,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private nameSub: Subscription;
     private layoutSub: Subscription;
     private recalcSub: Subscription;
+    private headerCellsSub: Subscription;
 
     @ViewChild(FilterManagerComponent) private filterManager: FilterManagerComponent;
     @ViewChild(MatPaginator) private matPaginator: MatPaginator;
@@ -175,8 +176,11 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
              viewChange: Observable.of({ start: 0, end: Number.MAX_VALUE })
         };
 
-        // For some unknown reason this callback is always fired after all cells
-        // have properly rendered.
+        // For whatever reason, subscribing to the header cells causes the
+        // dataSource subscription to always be fired after the cells have
+        // updated in the DOM, which is what we want
+        this.headerCellsSub = this.headerCells.changes.subscribe(() => void 0);
+
         this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe((data: SqlRow[]) => {
             this.matPaginator.length = data.length;
             this.recalculateTableLayout(this.headerCells, this.contentCells);
