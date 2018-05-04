@@ -1,21 +1,26 @@
+import { CollectionViewer } from '@angular/cdk/collections';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
     AfterViewInit,
-    Component, Input, OnDestroy, OnInit, ViewChild
+    Component, ElementRef, Input, OnDestroy, OnInit, QueryList, Renderer2,
+    ViewChild,
+    ViewChildren
 } from '@angular/core';
-import { MatPaginator, MatSnackBar, MatSort } from '@angular/material';
+import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angular/material';
 import { Router } from '@angular/router';
 import { clone, groupBy } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import {
-    Constraint, Filter, TableMeta
+    Constraint, Filter, SqlRow, TableMeta
 } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
+import { LayoutHelper } from '../layout-helper/layout-helper';
+import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
 
 @Component({
     selector: 'datatable',
@@ -57,25 +62,34 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public loading = true;
 
     private nameSub: Subscription;
+    private layoutSub: Subscription;
+    private recalcSub: Subscription;
+    private headerCellsSub: Subscription;
 
     @ViewChild(FilterManagerComponent) private filterManager: FilterManagerComponent;
     @ViewChild(MatPaginator) private matPaginator: MatPaginator;
-    @ViewChild(MatSort) private matSort: MatSort;
+
+    @ViewChild('tableContainer') private tableContainer: ElementRef;
+    @ViewChildren(MatHeaderCell, { read: ElementRef }) private headerCells: QueryList<ElementRef>;
+    @ViewChildren(MatCell, { read: ElementRef }) private contentCells: QueryList<ElementRef>;
+    @ViewChildren(SortIndicatorComponent) private sortIndicators: QueryList<SortIndicatorComponent>;
 
     /** An observable that keeps track of the table name */
     private name$ = new BehaviorSubject<TableName | null>(null);
     private meta$ = new BehaviorSubject<TableMeta | null>(null);
+    private sort$ = new BehaviorSubject<Sort>({ direction: '', active: '' });
 
     constructor(
         private router: Router,
         private snackBar: MatSnackBar,
         private backend: TableService,
-        private dataSource: ApiDataSource
+        private dataSource: ApiDataSource,
+        private renderer: Renderer2,
+        private layoutHelper: LayoutHelper
     ) {}
 
     public ngOnInit(): void {
         this.nameSub = this.name$
-            .distinctUntilChanged()
             .filter((n) => n !== null)
             .map((m) => m!!)
             .do(() => { this.loading = true; })
@@ -103,21 +117,112 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                 // Update observables and data source
                 this.meta$.next(meta);
                 this.dataSource.switchTables(meta);
+                if (this.matPaginator)
+                    this.matPaginator.pageIndex = 0;
                 this.loading = false;
+            });
+
+        this.recalcSub = this.name$
+            .distinctUntilChanged()
+            .subscribe(() => {
+                this.layoutHelper.needsFullLayoutRecalculation = true;
             });
     }
 
     public ngAfterViewInit(): void {
         this.dataSource.init({
             paginator: this.matPaginator,
-            sort: this.matSort,
+            sort: this.sort$,
             filters: this.filterManager
         });
+
+        const fakeCollectionViewer: CollectionViewer = {
+            // This is actually pretty similar to what Angular Material gives us
+            // as of v5.2.4
+             viewChange: Observable.of({ start: 0, end: Number.MAX_VALUE })
+        };
+
+        // For whatever reason, subscribing to the header cells causes the
+        // dataSource subscription to always be fired after the cells have
+        // updated in the DOM, which is what we want
+        this.headerCellsSub = this.headerCells.changes.subscribe(() => void 0);
+
+        this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe((data: SqlRow[]) => {
+            this.matPaginator.length = data.length;
+            this.recalculateTableLayout();
+        });
+
+        this.layoutHelper.init(this.headerCells, this.contentCells);
+
+        this.renderer.listen('body', 'mousemove', (event) => {
+            if (this.layoutHelper.onMouseMove(event)) {
+                this.resizeHeader(this.layoutHelper.state.colIndex, this.layoutHelper.newWidth());
+            }
+        });
+
+        this.renderer.listen('body', 'mouseup', () => {
+            if (this.layoutHelper.pressed) {
+                const newWidth = this.layoutHelper.newWidth();
+                if (newWidth > 0) {
+                    // Resize the column
+                    this.resizeColumn(this.layoutHelper.state.colIndex, newWidth);
+                }
+
+                this.layoutHelper.onDragEnd();
+            }
+        });
+
+        this.renderer.listen('body', 'mouseleave', () => {
+            const state = this.layoutHelper.state;
+            this.layoutHelper.onMouseLeave();
+
+            if (state.startX !== state.endX && state.colIndex >= 0) {
+                this.resizeHeader(state.colIndex, this.layoutHelper.getWidth(state.colIndex));
+            }
+        });
+    }
+
+    public onResizerMouseDown(event: MouseEvent) {
+        // We only care if the user used the primary button to start the drag
+        if (event.button !== 0)
+            return;
+
+        let headerElement: any = event.target;
+
+        // Recursively navigate up the DOM to find the header cell
+        while (headerElement.nodeName.toLowerCase() !== 'mat-header-cell') {
+            headerElement = headerElement.parentElement;
+        }
+
+        let colIndex = 0;
+
+        // Find the column index by counting how many siblings came before this
+        // header
+        let tmp = headerElement.previousSibling;
+        while (tmp !== null) {
+            tmp = tmp.previousSibling;
+            colIndex++;
+        }
+
+        colIndex--;
+
+        this.layoutHelper.onDragStart(event, colIndex, headerElement.clientWidth);
+    }
+
+    public onSortRequested(colIndex: number) {
+        if (this.layoutHelper.pressed)
+            return;
+        // If there are N columns (including the insert like column), then there
+        // are N - 1 sortable columns.
+        const sortDir = this.sortIndicators.toArray()[colIndex - 1].nextSort();
+        const colName = this.columnNames[colIndex];
+        this.sort$.next({ direction: sortDir, active: colName });
     }
 
     public ngOnDestroy(): void {
         // Clean up our subscriptions
         this.nameSub.unsubscribe();
+        this.layoutSub.unsubscribe();
     }
 
     public onInsertLike(row: object) {
@@ -144,6 +249,12 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         return header === undefined ? false : header.type === 'blob';
     }
 
+    public onResizerClick(event: MouseEvent) {
+        // Prevent sorting when clicking directly on a resizer
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     private createQueryParams(row: object) {
         const reformatted = clone(row);
 
@@ -153,7 +264,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         // Find all date and datetime headers and transform them from their
         // display format to the API format
         for (const headerName of Object.keys(reformatted)) {
-
             const header = this.meta$.getValue()!!.headers.find((h) => h.name === headerName);
             if (header === undefined)
                 throw new Error('Can\'t find header with name ' + headerName);
@@ -181,5 +291,33 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         }
 
         return { row: JSON.stringify(reformatted) };
+    }
+
+    private resizeColumn(colIndex: number, newWidth: number) {
+        const cells = this.contentCells.toArray().map((elRef) => elRef.nativeElement);
+        const rows = this.layoutHelper.contentRows;
+
+        for (let i = 0; i < rows; i++) {
+            // Content cells are listed column by column from left to right, so
+            // the cells we're looking for start at index (rows * colIndex).
+            this.renderer.setStyle(cells[(rows * colIndex) + i], 'width', newWidth + 'px');
+        }
+
+        // Don't forget about the header
+        this.resizeHeader(colIndex, newWidth);
+
+        this.layoutHelper.onResizeComplete(newWidth);
+    }
+
+    private resizeHeader(colIndex: number, newWidth: number) {
+        this.renderer.setStyle(this.headerCells.toArray()[colIndex].nativeElement, 'width', newWidth + 'px');
+    }
+
+    private recalculateTableLayout() {
+        const result = this.layoutHelper.recalculate();
+
+        for (const { el, width } of result) {
+            this.renderer.setStyle(el, 'width', width + 'px');
+        }
     }
 }

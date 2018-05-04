@@ -46,9 +46,7 @@ describe('ApiDataSource', () => {
             length: 0,
             page: Observable.of({ pageIndex: 3, pageSize: 100, length: 1000 })
         } as any,
-        sort: {
-            sortChange: Observable.of({ active: 'pk', direction: 'desc' })
-        } as any,
+        sort: Observable.of({ active: 'pk', direction: 'desc' }) as any,
         filters: {
             changed: Observable.of([{ op: 'eq', param: 'pk', value: '55'}])
         } as any

@@ -25,8 +25,54 @@ h1 {
   font-weight: normal;
 }
 
-.insert-like-col {
-  max-width: 40px;
+.table-container {
+  display: flex;
+  overflow: auto;
+}
+
+mat-cell {
+  overflow: visible;
+  transition: width 0.3s;
+}
+
+.cell-content {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+mat-cell, mat-header-cell {
+  flex: none;
+
+  display: flex;
+  align-items: center;
+}
+
+mat-header-cell {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sort-indicator-wrapper {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.col-resizer-handle {
+  width: 5px;
+  height: 25px;
+  cursor: col-resize;
+
+  display: flex;
+  justify-content: flex-start;
+
+}
+
+.col-resizer {
+  height: 100%;
+  width: 1.25px;
+  background-color: rgba(0, 0, 0, 0.12);
+  //background-color: green;
 }
 
 .insert-like-icon {
@@ -50,15 +96,9 @@ h1 {
   }
 }
 
-mat-cell {
-  overflow: visible;
-}
-
 constraint-icons {
   // For whatever reason the icons are lower than they should be
   padding-bottom: 5px;
-  // Space between name and icon
-  padding-right: 5px;
 }
 
 .no-data-message {

@@ -1,6 +1,6 @@
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { Injectable } from '@angular/core';
-import { MatPaginator, MatSort, PageEvent, Sort } from '@angular/material';
+import { MatPaginator, PageEvent, Sort } from '@angular/material';
 import { clone, find } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
@@ -29,7 +29,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
 
     // External components
     private paginator: MatPaginator | null = null;
-    private sort: MatSort | null = null;
+    private sort: Observable<Sort> = Observable.never();
     private filters: FilterManagerComponent | null;
 
     // Observables
@@ -44,11 +44,12 @@ export class ApiDataSource extends DataSource<SqlRow> {
     private sortSub: Subscription | null = null;
     private filtersSub: Subscription | null = null;
 
-    public constructor(private backend: TableService) { super(); }
+    private source: Observable<SqlRow[]>;
 
-    // overriden from DataSource
-    public connect(collectionViewer: CollectionViewer): Observable<SqlRow[]> {
-        return Observable.combineLatest(
+    public constructor(private backend: TableService) {
+        super();
+
+        this.source = Observable.combineLatest(
             this.table$, this.page$, this.pageSize$, this.sort$, this.filters$
         )
             .filter((data: [TableMeta, number, number, string, Filter[]]) => {
@@ -82,6 +83,11 @@ export class ApiDataSource extends DataSource<SqlRow> {
                 this.formatRows(data[1].headers, data[0].data));
     }
 
+    // overriden from DataSource
+    public connect(collectionViewer: CollectionViewer): Observable<SqlRow[]> {
+        return this.source;
+    }
+
     public disconnect(collectionViewer: CollectionViewer): void {
         for (const subscription of [this.pageSub, this.sortSub, this.filtersSub]) {
             if (subscription) {
@@ -95,8 +101,8 @@ export class ApiDataSource extends DataSource<SqlRow> {
      * source.
      */
     public init(components: {
-        paginator: MatPaginator
-        sort: MatSort
+        paginator: MatPaginator,
+        sort: Observable<Sort>,
         filters: FilterManagerComponent
     }) {
         this.paginator = components.paginator;
@@ -112,7 +118,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
             });
 
         if (this.sort)
-            this.sortSub = this.sort.sortChange.subscribe((sort: Sort) => {
+            this.sortSub = this.sort.subscribe((sort: Sort) => {
                 if (sort.direction === '') {
                     // There's no active sorting
                     this.sort$.next(null);
@@ -136,9 +142,6 @@ export class ApiDataSource extends DataSource<SqlRow> {
      */
     public switchTables(meta: TableMeta) {
         this.table$.next(meta);
-
-        if (this.paginator)
-            this.paginator.pageIndex = 0;
     }
 
     private resetSubscriptions() {
@@ -163,6 +166,9 @@ export class ApiDataSource extends DataSource<SqlRow> {
         for (const row of copied) {
             // Iterate through each cell in that row
             for (const headerName of Object.keys(row)) {
+                if (headerName === '__insertLike')
+                    continue;
+
                 const header = find(headers, (h) => h.name === headerName);
                 if (header === undefined)
                     throw new Error('Can\'t find header with name ' + headerName);
