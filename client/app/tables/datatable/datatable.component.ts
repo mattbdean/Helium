@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angular/material';
 import { Router } from '@angular/router';
-import { clone, groupBy, max } from 'lodash';
+import { clone, groupBy } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import {
@@ -19,6 +19,7 @@ import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
+import { LayoutHelper } from '../layout-helper/layout-helper';
 import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
 
 @Component({
@@ -29,9 +30,6 @@ import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.compone
 export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private static readonly DISPLAY_FORMAT_DATE = 'l';
     private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
-    private static readonly MIN_DEFAULT_COL_WIDTH = 50; // px
-    private static readonly INSERT_LIKE_COL_WIDTH = 35; // px
-    private static readonly CELL_PADDING_RIGHT = 10; // px
 
     @Input()
     public set name(value: TableName) { this.name$.next(value); }
@@ -63,39 +61,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     public loading = true;
 
-    public resizeData: {
-        startX: number,
-        startWidth: number,
-        endX: number,
-
-        /** If the mouse is currently down */
-        pressed: boolean,
-
-        /** Target column index. Includes the "insert like" column. */
-        colIndex: number
-    } = {
-        startX: 0,
-        startWidth: 0,
-        pressed: false,
-        endX: 0,
-        colIndex: -1
-    };
-
-    private get displayedRows() {
-        // -1 because otherwise it would include the header row
-        return ((this.contentCells.length + this.headerCells.length) / this.headerCells.length) - 1;
-    }
-
-    private widths: number[] = [];
-    private minWidths: number[] = [];
-
-    /**
-     * True if the user has switched to a new table and it hasn't had an initial
-     * layout calculation. Layout recalculation is only done once per table
-     * switch.
-     */
-    private needsFullLayoutRecalculation = false;
-
     private nameSub: Subscription;
     private layoutSub: Subscription;
     private recalcSub: Subscription;
@@ -119,7 +84,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         private snackBar: MatSnackBar,
         private backend: TableService,
         private dataSource: ApiDataSource,
-        private renderer: Renderer2
+        private renderer: Renderer2,
+        private layoutHelper: LayoutHelper
     ) {}
 
     public ngOnInit(): void {
@@ -159,7 +125,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         this.recalcSub = this.name$
             .distinctUntilChanged()
             .subscribe(() => {
-                this.needsFullLayoutRecalculation = true;
+                this.layoutHelper.needsFullLayoutRecalculation = true;
             });
     }
 
@@ -183,46 +149,35 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
         this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe((data: SqlRow[]) => {
             this.matPaginator.length = data.length;
-            this.recalculateTableLayout(this.headerCells, this.contentCells);
+            this.recalculateTableLayout();
         });
 
-        const calculateWidth = () => Math.max(
-            // Don't allow the width to be below a certain value
-            this.resizeData.startWidth + (this.resizeData.endX - this.resizeData.startX),
-            this.minWidths!![this.resizeData.colIndex]
-        );
+        this.layoutHelper.init(this.headerCells, this.contentCells);
 
         this.renderer.listen('body', 'mousemove', (event) => {
-            if (this.resizeData.pressed) {
-                this.resizeData.endX = event.x;
-
-                this.resizeHeader(this.resizeData.colIndex, calculateWidth());
+            if (this.layoutHelper.onMouseMove(event)) {
+                this.resizeHeader(this.layoutHelper.state.colIndex, this.layoutHelper.newWidth());
             }
         });
 
-        this.renderer.listen('body', 'mouseup', (event) => {
-            if (this.resizeData.pressed) {
-                if (this.resizeData.startX !== this.resizeData.endX) {
-
+        this.renderer.listen('body', 'mouseup', () => {
+            if (this.layoutHelper.pressed) {
+                const newWidth = this.layoutHelper.newWidth();
+                if (newWidth > 0) {
                     // Resize the column
-                    this.resizeColumn(this.resizeData.colIndex, calculateWidth());
+                    this.resizeColumn(this.layoutHelper.state.colIndex, newWidth);
                 }
 
-                setTimeout(() => {
-                    this.resizeData.pressed = false;
-                }, 0);
+                this.layoutHelper.onDragEnd();
             }
         });
 
         this.renderer.listen('body', 'mouseleave', () => {
-            if (this.resizeData.pressed) {
-                this.resizeData = {
-                    startX: 0,
-                    startWidth: 0,
-                    pressed: false,
-                    endX: 0,
-                    colIndex: -1
-                };
+            const state = this.layoutHelper.state;
+            this.layoutHelper.onMouseLeave();
+
+            if (state.startX !== state.endX && state.colIndex >= 0) {
+                this.resizeHeader(state.colIndex, this.layoutHelper.getWidth(state.colIndex));
             }
         });
     }
@@ -251,17 +206,11 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
         colIndex--;
 
-        this.resizeData = {
-            pressed: true,
-            startX: event.x,
-            startWidth: headerElement.clientWidth,
-            endX: event.x,
-            colIndex
-        };
+        this.layoutHelper.onDragStart(event, colIndex, headerElement.clientWidth);
     }
 
     public onSortRequested(colIndex: number) {
-        if (this.resizeData.pressed)
+        if (this.layoutHelper.pressed)
             return;
         // If there are N columns (including the insert like column), then there
         // are N - 1 sortable columns.
@@ -346,7 +295,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     private resizeColumn(colIndex: number, newWidth: number) {
         const cells = this.contentCells.toArray().map((elRef) => elRef.nativeElement);
-        const rows = this.displayedRows;
+        const rows = this.layoutHelper.contentRows;
 
         for (let i = 0; i < rows; i++) {
             // Content cells are listed column by column from left to right, so
@@ -357,67 +306,18 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         // Don't forget about the header
         this.resizeHeader(colIndex, newWidth);
 
-        this.widths[colIndex] = newWidth;
+        this.layoutHelper.onResizeComplete(newWidth);
     }
 
     private resizeHeader(colIndex: number, newWidth: number) {
         this.renderer.setStyle(this.headerCells.toArray()[colIndex].nativeElement, 'width', newWidth + 'px');
     }
 
-    private recalculateTableLayout(headerList: QueryList<any>, bodyList: QueryList<any>) {
-        const allCells = headerList.toArray().concat(bodyList.toArray())
-            .map((ref) => ref.nativeElement);
+    private recalculateTableLayout() {
+        const result = this.layoutHelper.recalculate();
 
-        const numHeaders = headerList.length;
-        const numRows = (allCells.length / numHeaders);
-
-        // Create a 2d array in which the first dimension is a column
-        // and the second dimension is a cell in a column
-        const table: any[][] = [];
-
-        // Headers are listed first
-        const headers = allCells.slice(0, numHeaders);
-
-        // Initialize the 2d array such that no elements are undefined
-        for (let i = 0; i < headers.length; i++) {
-            table[i] = [headers[i]];
-        }
-
-        // Header cells are listed left to right, but data cells are listed top
-        // to bottom first, and then left to right. Basically the first column
-        // on the left is listed top down first, followed by the rest of the
-        // columns in that same order
-        const columnCells = allCells.slice(numHeaders);
-        for (let j = 0; j < columnCells.length; j++) {
-            table[Math.floor(j / (numRows - 1))].push(columnCells[j]);
-        }
-
-        if (this.needsFullLayoutRecalculation) {
-            this.widths = table
-                .map((col: any[]) =>
-                    col.map((el) => {
-                        // Add some padding so if a cell takes up 100% of the
-                        // allotted width it'll be easier to read
-                        const baseWidth =
-                            Math.max(el.clientWidth, DatatableComponent.MIN_DEFAULT_COL_WIDTH);
-                        return baseWidth + DatatableComponent.CELL_PADDING_RIGHT;
-                    }))
-                .map(max) as number[];
-
-            // Compute the maximum width of each column
-            this.minWidths = headers.map((h) => h.clientWidth);
-
-            this.widths[0] = DatatableComponent.INSERT_LIKE_COL_WIDTH;
-            this.minWidths[0] = DatatableComponent.INSERT_LIKE_COL_WIDTH;
-
-            this.needsFullLayoutRecalculation = false;
-        }
-
-        // Make each column take up only what is required
-        for (let i = 0; i < table.length; i++) {
-            for (const el of table[i]) {
-                this.renderer.setStyle(el, 'width', this.widths[i] + 'px');
-            }
+        for (const { el, width } of result) {
+            this.renderer.setStyle(el, 'width', width + 'px');
         }
     }
 }

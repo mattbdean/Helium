@@ -7,18 +7,19 @@ import {
     MatPaginatorModule,
     MatProgressBarModule, MatSelectModule, MatSortModule, MatTableModule
 } from '@angular/material';
+import { InlineSVGModule } from 'ng-inline-svg';
 
 import { CoreModule } from '../core/core.module';
 import { DatatableComponent } from './datatable/datatable.component';
 import { TableHostComponent } from './table-host/table-host.component';
 import { TableRoutingModule } from './table-routing.module';
 
-import { InlineSVGModule } from 'ng-inline-svg';
 import { DynamicFormsModule } from '../dynamic-forms/dynamic-forms.module';
 import { ApiDataSource } from './api-data-source/api-data-source';
 import { FilterManagerComponent } from './filter-manager/filter-manager.component';
 import { FilterProviderService } from './filter-provider/filter-provider.service';
 import { FilterComponent } from './filter/filter.component';
+import { LayoutHelper } from './layout-helper/layout-helper';
 import { SortIndicatorComponent } from './sort-indicator/sort-indicator.component';
 
 @NgModule({
@@ -50,6 +51,7 @@ import { SortIndicatorComponent } from './sort-indicator/sort-indicator.componen
     providers: [
         ApiDataSource,
         FilterProviderService,
+        LayoutHelper
     ]
 })
 export class TablesModule {}

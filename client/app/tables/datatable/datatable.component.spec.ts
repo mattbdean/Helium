@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
@@ -14,13 +15,13 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 
-import { HttpErrorResponse } from '@angular/common/http';
 import { Constraint, SqlRow, TableDataType, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/responses';
 import { TableName } from '../../common/table-name.class';
 import { CoreModule } from '../../core/core.module';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
+import { LayoutHelper } from '../layout-helper/layout-helper';
 import { DatatableComponent } from './datatable.component';
 
 chai.use(sinonChai);
@@ -49,6 +50,11 @@ describe('DatatableComponent', () => {
     const routerStub = {
         // Do nothing by default
         navigate: () => undefined
+    };
+
+    const layoutHelperStub = {
+        recalculate: () => [],
+        init: () => undefined
     };
 
     const mockTableMeta = (name: string,
@@ -85,7 +91,8 @@ describe('DatatableComponent', () => {
             providers: [
                 ApiDataSource,
                 { provide: TableService, useValue: tableServiceStub },
-                { provide: Router, useValue: routerStub }
+                { provide: Router, useValue: routerStub },
+                { provide: LayoutHelper, useValue: layoutHelperStub }
             ],
             schemas: [
                 // Ignore irrelevant children
