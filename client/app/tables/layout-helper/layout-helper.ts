@@ -1,4 +1,4 @@
-import { ElementRef, Injectable, QueryList, Renderer2 } from '@angular/core';
+import { ElementRef, Injectable, QueryList } from '@angular/core';
 import { cloneDeep, max } from 'lodash';
 
 /**

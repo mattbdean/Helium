@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-
-import { Observable } from 'rxjs/Observable';
-
+import { Observable } from 'rxjs';
+import { combineLatest } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 import { AbstractFormControl } from './abstract-form-control';
 
 /**
@@ -40,17 +40,16 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
 
         // Start with an empty string so suggestions pop up before the user has
         // to type anything
-        const userInput = formControl.valueChanges
-            .startWith("");
+        const userInput = formControl.valueChanges.pipe(startWith(''));
 
         const autocompleteValues = this.spec.autocompleteValues!!
             // Convert all potential values to their string representations
-            .map((values: any[]): string[] => values.map((it) => it.toString()));
+            .pipe(map((values: any[]): string[] => values.map((it) => it.toString())));
 
-        this.currentSuggestions = Observable.combineLatest(userInput, autocompleteValues)
+        this.currentSuggestions = combineLatest(userInput, autocompleteValues)
             // Call filterValues with the userInput and the autocompleteValues
-            .map((params: [string, string[]]) =>
-                AutocompleteControlComponent.filterValues.apply(null, params));
+            .pipe(map((params: [string, string[]]) =>
+                AutocompleteControlComponent.filterValues.apply(null, params)));
     }
 
     private static filterValues(userInput: string, availableOptions: string[]): string[] {

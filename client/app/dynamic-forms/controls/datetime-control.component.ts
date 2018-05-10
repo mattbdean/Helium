@@ -1,6 +1,5 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { AbstractFormControl } from './abstract-form-control';
-import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
 
 /**
  * As its name suggests, this component wraps the DatetimeInputControl from the

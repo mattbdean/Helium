@@ -3,13 +3,9 @@ import {
     Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
 } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
-
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
-
 import * as _ from 'lodash';
-
+import { BehaviorSubject, Observable, Subscription, zip } from 'rxjs';
+import { debounceTime, map } from 'rxjs/operators';
 import { SqlRow, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
 import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
@@ -91,69 +87,69 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     ) {}
 
     public ngOnInit() {
-        const spec$ = this.meta$.map((meta) => this.formSpecGenerator.generate(meta!!));
+        const spec$ = this.meta$.pipe(map((meta) => this.formSpecGenerator.generate(meta!!)));
 
-        this.name$ = this.meta$.map((m) => new TableName('(unused)', m!!.name));
+        this.name$ = this.meta$.pipe(map((m) => new TableName('(unused)', m!!.name)));
 
         // Combine the latest output from the FormControlSpec array generated
         // from the table name/meta and the rootGroup
-        this.sub = Observable.zip(
+        this.sub = zip(
             this.meta$,
             this.rootGroup$,
             spec$,
-        )
+        ).pipe(
             // This is required since altering the FormGroup in the subscribe()
             // causes its "valid" property to change while Angular is still
             // running change detection, resulting in an error in dev mode.
-            .debounceTime(0)
-            .subscribe((data: [TableMeta, FormGroup, FormControlSpec[]]) => {
-                const [tableMeta, rootFormGroup, formSpec] = data;
-                this.formSpec = formSpec;
-                const name = new TableName('(unused)', tableMeta.name);
+            debounceTime(0),
+        ).subscribe((data: [TableMeta, FormGroup, FormControlSpec[]]) => {
+            const [tableMeta, rootFormGroup, formSpec] = data;
+            this.formSpec = formSpec;
+            const name = new TableName('(unused)', tableMeta.name);
 
-                // Master tables start off with one entry
-                const prefilled: Array<SqlRow | null> =
-                    this.role === 'master' && this.prefilled.length === 0 ?
-                        [null] : this.prefilled;
+            // Master tables start off with one entry
+            const prefilled: Array<SqlRow | null> =
+                this.role === 'master' && this.prefilled.length === 0 ?
+                    [null] : this.prefilled;
 
-                const initialControls = prefilled.map((p) =>
-                    this.createItem(this.formSpec, p));
+            const initialControls = prefilled.map((p) =>
+                this.createItem(this.formSpec, p));
 
-                this.formArray = this.fb.array(initialControls);
-                rootFormGroup.addControl(name.name.raw, this.formArray);
+            this.formArray = this.fb.array(initialControls);
+            rootFormGroup.addControl(name.name.raw, this.formArray);
 
-                const masterRawName = name.masterName ? name.masterName.raw : null;
-                const bindings = this.formSpecGenerator.bindingConstraints(masterRawName, tableMeta);
-                // If we have binding constraints, this is guaranteed to be a
-                // part table
-                if (bindings.length > 0) {
-                    // The FormGroup for the master table is created first
-                    const masterFormArray =
-                        rootFormGroup.controls[name.masterName!!.raw] as FormArray;
+            const masterRawName = name.masterName ? name.masterName.raw : null;
+            const bindings = this.formSpecGenerator.bindingConstraints(masterRawName, tableMeta);
+            // If we have binding constraints, this is guaranteed to be a
+            // part table
+            if (bindings.length > 0) {
+                // The FormGroup for the master table is created first
+                const masterFormArray =
+                    rootFormGroup.controls[name.masterName!!.raw] as FormArray;
 
-                    // The master table form array only contains one entry
-                    const masterGroup = masterFormArray.at(0) as FormGroup;
+                // The master table form array only contains one entry
+                const masterGroup = masterFormArray.at(0) as FormGroup;
 
-                    for (const binding of bindings) {
-                        // Make a note of what local control should be bound to
-                        // what Observable
-                        const b = {
-                            controlName: binding.localColumn,
-                            valueChanges: masterGroup.controls[binding.ref!!.column].valueChanges,
-                            subscriptions: [],
-                            lastValue: ''
-                        };
-                        this.bindings.push(b);
+                for (const binding of bindings) {
+                    // Make a note of what local control should be bound to
+                    // what Observable
+                    const b = {
+                        controlName: binding.localColumn,
+                        valueChanges: masterGroup.controls[binding.ref!!.column].valueChanges,
+                        subscriptions: [],
+                        lastValue: ''
+                    };
+                    this.bindings.push(b);
 
-                        // Subscribe to the observable so we know what value to
-                        // give a newly created bound form control
-                        this.lastValueWatchers[binding.localColumn] =
-                            b.valueChanges.subscribe((value) => {
-                                b.lastValue = value;
-                            });
-                    }
+                    // Subscribe to the observable so we know what value to
+                    // give a newly created bound form control
+                    this.lastValueWatchers[binding.localColumn] =
+                        b.valueChanges.subscribe((value) => {
+                            b.lastValue = value;
+                        });
                 }
-            });
+            }
+        });
     }
 
     public ngOnChanges(changes: SimpleChanges): void {

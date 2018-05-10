@@ -8,13 +8,11 @@ import {
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-
 import * as chai from 'chai';
 import { clone } from 'lodash';
-import { Observable } from 'rxjs/Observable';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-
 import { Constraint, SqlRow, TableDataType, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/responses';
 import { TableName } from '../../common/table-name.class';
@@ -42,9 +40,9 @@ describe('DatatableComponent', () => {
 
     const tableServiceStub = {
         meta: (_: string): Observable<TableMeta> =>
-            Observable.throw(new Error('not stubbed')),
+            throwError(new Error('not stubbed')),
         content: (_): Observable<PaginatedResponse<SqlRow[]>> =>
-            Observable.throw(new Error('not stubbed'))
+            throwError(new Error('not stubbed'))
     };
 
     const routerStub = {
@@ -73,7 +71,7 @@ describe('DatatableComponent', () => {
     });
 
     const paginatedResponse = (data: SqlRow[]): Observable<PaginatedResponse<SqlRow[]>> =>
-        Observable.of({ size: data.length, data: clone(data), totalRows: 1000 });
+        of({ size: data.length, data: clone(data), totalRows: 1000 });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -108,13 +106,13 @@ describe('DatatableComponent', () => {
 
         comp.name = new TableName(SCHEMA, DEFAULT_TABLE_NAME);
         metaStub = sinon.stub(service, 'meta')
-            .returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer'], ['integer'])));
+            .returns(of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer'], ['integer'])));
         contentStub = sinon.stub(service, 'content')
             .returns(paginatedResponse([]));
     });
 
     it('should show a message when the table can\'t be found', () => {
-        metaStub.returns(Observable.throw(new HttpErrorResponse({
+        metaStub.returns(throwError(new HttpErrorResponse({
             status: 404,
             statusText: 'Not Found'
         })));
@@ -128,7 +126,7 @@ describe('DatatableComponent', () => {
     // TODO no idea why this is failing
     it.skip('should render blob and null values specially', () => {
         // Set up the table and its data
-        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer', 'blob'])));
+        metaStub.returns(of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer', 'blob'])));
         contentStub.returns(paginatedResponse([
             // The real API would return '<blob>' for all blob values
             { integer: null, blob: 'foo' },
@@ -159,7 +157,7 @@ describe('DatatableComponent', () => {
 
     it('should include a header for every element of data', () => {
         const colNames: TableDataType[] = ['integer', 'float', 'boolean'];
-        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, colNames)));
+        metaStub.returns(of(mockTableMeta(DEFAULT_TABLE_NAME, colNames)));
         fixture.detectChanges();
 
         const renderedNames = de.queryAll(By.css('mat-header-cell'))
@@ -173,7 +171,7 @@ describe('DatatableComponent', () => {
     it('should include constraint icons in the column header', () => {
         const colNames: TableDataType[] = ['integer', 'float', 'boolean'];
         const primaryKeys = colNames.slice(0, 1);
-        metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, colNames, primaryKeys)));
+        metaStub.returns(of(mockTableMeta(DEFAULT_TABLE_NAME, colNames, primaryKeys)));
         fixture.detectChanges();
 
         // Even though there are no icons necessary for some of these columns,
@@ -195,7 +193,7 @@ describe('DatatableComponent', () => {
         // Switch to a new table that has data, should not see the message
         // anymore.
         const newName = new TableName('(unused)', 'tableName');
-        metaStub.returns(Observable.of(mockTableMeta(newName.name.raw, ['float'])));
+        metaStub.returns(of(mockTableMeta(newName.name.raw, ['float'])));
         contentStub.returns(paginatedResponse([{ float: 1 }]));
         comp.name = newName;
         fixture.detectChanges();
@@ -204,7 +202,7 @@ describe('DatatableComponent', () => {
     });
 
     it('should show a progress bar when switching to a new table', () => {
-        contentStub.returns(Observable.never());
+        contentStub.returns(NEVER);
         fixture.detectChanges();
 
         expect(de.query(By.css('mat-progress-bar')).nativeElement.attributes.hidden)

@@ -5,8 +5,8 @@ import {
 import * as chai from 'chai';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { AuthGuard } from './auth-guard.service';
 import { AuthService } from '../auth/auth.service';
+import { AuthGuard } from './auth-guard.service';
 
 chai.use(sinonChai);
 

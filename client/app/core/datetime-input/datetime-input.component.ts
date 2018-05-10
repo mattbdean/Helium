@@ -1,10 +1,11 @@
 import {
-    Component, ElementRef, forwardRef, Input, OnInit, Output, ViewChild
+    Component, ElementRef, forwardRef, Input, OnInit, ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
-import { Observable } from 'rxjs/Observable';
-import { Subscription } from 'rxjs/Subscription';
+import { combineLatest, fromEvent } from 'rxjs';
+import { Observable ,  Subscription } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import { DATETIME_FORMAT } from '../../common/constants';
 
 @Component({
@@ -57,13 +58,12 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
 
     public ngOnInit() {
         // Get the latest values emitted from both the date and time inputs
-        this.sub = Observable.combineLatest(
+        this.sub = combineLatest(
             DatetimeInputComponent.valueChanges(this.date),
             DatetimeInputComponent.valueChanges(this.time),
-            // Map the values into an object with keys 'date' and 'time'
-            (date, time) => ({ date, time })
-        )
-            .map((data: { date: string, time: string }): string => {
+        ).pipe(
+            map((data: string[]) => ({ date: data[0], time: data[1] })),
+            map((data: { date: string, time: string }): string => {
                 const { date, time } = data;
                 if (!DatetimeInputComponent.isPresent(date) ||
                     !DatetimeInputComponent.isPresent(time)) {
@@ -81,9 +81,9 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
                 // If we happen to have created an invalid date, don't use it.
                 // Format valid dates how the API expects.
                 return d.isValid() ? d.format(DATETIME_FORMAT) : '';
-            })
-            .distinctUntilChanged()
-            .subscribe((val) => this._onChange(val));
+            }),
+            distinctUntilChanged()
+        ).subscribe((val) => this._onChange(val));
     }
 
     // overridden from ControlValueAccessor
@@ -129,8 +129,8 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
      * `el.nativeElement`.
      */
     private static valueChanges(el: ElementRef): Observable<string> {
-        return Observable.fromEvent(el.nativeElement, 'input')
-            .map((e: any) => e.target.value);
+        return fromEvent(el.nativeElement, 'input')
+            .pipe(map((e: any) => e.target.value));
     }
 
     /**

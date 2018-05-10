@@ -1,15 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
-
 import {
     MatButtonModule, MatCardModule,
     MatIconModule
 } from '@angular/material';
 import { CoreModule } from '../core/core.module';
 import { DynamicFormsModule } from '../dynamic-forms/dynamic-forms.module';
-import { FormHostComponent } from './form-host/form-host.component';
 import { FormSpecGeneratorService } from '../dynamic-forms/form-spec-generator/form-spec-generator.service';
+import { FormHostComponent } from './form-host/form-host.component';
 import { FormRoutingModule } from './forms-routing.module';
 import { PartialFormComponent } from './partial-form/partial-form.component';
 

@@ -31,16 +31,13 @@ export class LoginComponent {
                 // Login was successful
                 this.router.navigate(['/tables']);
             },
-            (err: any) => {
-                let msg: string = 'An unknown error has occurred';
+            (err: Error) => {
+                let msg: string = err.message || 'An unknown error has occurred';
 
                 if (err instanceof HttpErrorResponse && err.status < 500) {
                     msg = 'Invalid login information';
                 }
 
-                if (err instanceof Error)
-                    msg = err.message;
-                
                 this.snackbar.open(msg, undefined, { duration: 3000 });
             }
         );

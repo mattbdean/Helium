@@ -1,5 +1,5 @@
 import { ValidatorFn } from '@angular/forms';
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { DefaultValue } from '../common/api';
 
 export type FormControlType = 'text' | 'enum' | 'boolean' | 'date' | 'datetime' | 'autocomplete';

@@ -1,18 +1,12 @@
-import {
-    Component, DebugElement, Input,
-    NO_ERRORS_SCHEMA
-} from '@angular/core';
+import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-
-import { Observable } from 'rxjs/Observable';
+import { Observable, of, throwError } from 'rxjs';
 import * as sinon from 'sinon';
-
-import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
 import { FormHostComponent } from './form-host.component';
@@ -26,13 +20,13 @@ describe('FormHostComponent', () => {
     let de: DebugElement;
 
     const tableServiceStub = {
-        tables: (name: string): Observable<any> => Observable.throw('Not stubbed')
+        tables: (): Observable<any> => throwError('Not stubbed')
     };
 
     const snackbarStub = {};
 
     const tableNamesObservable = (...rawNames: string[]) => {
-        return Observable.of(rawNames.map((n) => new TableName('schema', n)));
+        return of(rawNames.map((n) => new TableName('schema', n)));
     };
 
     beforeEach(() => {
@@ -49,8 +43,8 @@ describe('FormHostComponent', () => {
                     provide: ActivatedRoute,
                     // name will always be 'master'
                     useValue: {
-                        params: Observable.of({ name: 'master' }),
-                        queryParams: Observable.of({})
+                        params: of({ name: 'master' }),
+                        queryParams: of({})
                     }
                 },
                 { provide: TableService, useValue: tableServiceStub },

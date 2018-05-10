@@ -3,9 +3,8 @@ import { Injectable } from '@angular/core';
 import { MatPaginator, PageEvent, Sort } from '@angular/material';
 import { clone, find } from 'lodash';
 import * as moment from 'moment';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Observable } from 'rxjs/Rx';
-import { Subscription } from 'rxjs/Subscription';
+import { BehaviorSubject, combineLatest, NEVER, Observable, of, Subscription, zip } from 'rxjs';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { Filter, SqlRow, TableHeader, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { PaginatedResponse } from '../../common/responses';
@@ -29,7 +28,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
 
     // External components
     private paginator: MatPaginator | null = null;
-    private sort: Observable<Sort> = Observable.never();
+    private sort: Observable<Sort> = NEVER;
     private filters: FilterManagerComponent | null;
 
     // Observables
@@ -49,14 +48,15 @@ export class ApiDataSource extends DataSource<SqlRow> {
     public constructor(private backend: TableService) {
         super();
 
-        this.source = Observable.combineLatest(
+        this.source = combineLatest(
             this.table$, this.page$, this.pageSize$, this.sort$, this.filters$
-        )
-            .filter((data: [TableMeta, number, number, string, Filter[]]) => {
+        ).pipe(
+            filter((data: [TableMeta, number, number, string, Filter[]]) => {
                 // Only continue if we have a table. Everything else (page,
                 // page size, sorting, and filters, respectively), is optional
                 return data[0] !== null;
-            }).map((data: [TableMeta, number, number, string, Filter[]]): [TableMeta, ContentRequest] => {
+            }),
+            map((data: [TableMeta, number, number, string, Filter[]]): [TableMeta, ContentRequest] => {
                 const req: ContentRequest = {
                     schema: data[0].schema,
                     table: data[0].name,
@@ -66,21 +66,25 @@ export class ApiDataSource extends DataSource<SqlRow> {
                     filters: data[4]
                 };
                 return [data[0], req];
-            }).switchMap((data: [TableMeta, ContentRequest]) => {
-                return Observable.zip(
+            }),
+            switchMap((data: [TableMeta, ContentRequest]) => {
+                return zip(
                     this.backend.content(data[1]),
-                    Observable.of(data[0])
+                    of(data[0])
                 );
-            }).do((data: [PaginatedResponse<SqlRow[]>, TableMeta]) => {
+            }),
+            tap((data: [PaginatedResponse<SqlRow[]>, TableMeta]) => {
                 // Update the Paginator in case the filters have changed the
                 // amount of total rows
                 const [res] = data;
                 if (this.paginator !== null) {
                     this.paginator.length = res.totalRows;
                 }
-            }).map((data: [PaginatedResponse<SqlRow[]>, TableMeta]) =>
+            }),
+            map((data: [PaginatedResponse<SqlRow[]>, TableMeta]) =>
                 // Format the rows before presenting them to the UI
-                this.formatRows(data[1].headers, data[0].data));
+                this.formatRows(data[1].headers, data[0].data))
+        );
     }
 
     // overriden from DataSource
