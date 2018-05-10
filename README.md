@@ -83,5 +83,30 @@ You can also run protractor and debug using `chrome://inspect` using `yarn e2e:d
 
 To prevent rebuilding the website every time the e2e tests are run (what `yarn e2e` does), use two terminal windows. Run `yarn dev` on the first and `yarn e2e:prepped` (or `yarn e2e:prepped:debug`) in the second whenever necessary.
 
+#### Docker Database Container for Testing
+
+First create a MySQL 5.7 container and expose its 3306 port
+
+```
+$ docker run --name mysql-helium --rm -d -p 3306:3306 \
+    -e MYSQL_ALLOW_EMPTY_PASSWORD=true \
+    -e MYSQL_HOST=127.0.0.1 \
+    -e MYSQL_ROOT_HOST=% \
+    -e MYSQL_USER=root \
+    mysql:5.7
+```
+
+After MySQL has been initialized, add the testing data and user. The MySQL client must be installed.
+
+```
+$ mysql -u root -h 127.0.0.1 < server/test/init.sql
+```
+
+When finished, kill the container
+
+```
+$ docker kill mysql-helium
+```
+
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmattbdean%2FHelium.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmattbdean%2FHelium?ref=badge_large)
