@@ -141,6 +141,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
      * page to the first page.
      */
     public switchTables(meta: TableMeta) {
+        this.sort$.next(null);
         this.table$.next(meta);
     }
 
