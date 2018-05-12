@@ -11,8 +11,10 @@ import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { of } from 'rxjs';
+
+import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
+
 import { Constraint } from '../../common/api';
 import { ComponentMapperService } from '../../dynamic-forms/component-mapper/component-mapper.service';
 import { AbstractFormControl } from '../../dynamic-forms/controls/abstract-form-control';
@@ -61,7 +63,7 @@ describe('PartialFormComponent', () => {
                 formControlName: 'part_fk',
                 placeholder: 'part_fk',
                 required: true,
-                autocompleteValues: of(["abc", "def", "ghi"])
+                autocompleteValues: Observable.of(["abc", "def", "ghi"])
             }
         ]
     };

@@ -5,8 +5,8 @@ import {
 import { FormGroup } from '@angular/forms';
 import { MatCheckbox, MatCheckboxChange } from '@angular/material';
 import { cloneDeep } from 'lodash';
-import { combineLatest, Subscription } from 'rxjs';
-import { startWith } from 'rxjs/operators';
+import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
 import { FilterOperation, TableMeta } from '../../common/api';
 import {
     FormControlSpec, FormControlType
@@ -71,11 +71,11 @@ export class FilterComponent implements OnDestroy, OnInit {
         this.checkbox.checked = true;
         this.allFormControlSpecs = this.formSpecGenerator.generate(this.meta);
 
-        this.sub = combineLatest(
+        this.sub = Observable.combineLatest(
             // startWith(null) so that we can don't have to wait until the user
             // enters data into both the param and op inputs to react to changes
-            this.group.get('param')!!.valueChanges.pipe(startWith(this.group.get('param')!!.value)),
-            this.group.get('op')!!.valueChanges.pipe(startWith(this.group.get('op')!!.value))
+            this.group.get('param')!!.valueChanges.startWith(this.group.get('param')!!.value),
+            this.group.get('op')!!.valueChanges.startWith(this.group.get('op')!!.value)
         ).subscribe((data: [string, FilterOperation]) => {
             const [param, op] = data;
 

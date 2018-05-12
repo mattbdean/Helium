@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
+
 import { pickBy } from 'lodash';
 import * as moment from 'moment';
-import { Observable } from 'rxjs';
+
+import { Observable } from 'rxjs/Observable';
 import {
     Constraint, DefaultValue, TableHeader, TableMeta
 } from '../../common/api';

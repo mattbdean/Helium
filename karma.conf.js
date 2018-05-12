@@ -6,7 +6,7 @@ const path = require('path');
 module.exports = function (config) {
     config.set({
         basePath: '',
-        frameworks: ['mocha', 'sinon-chai', '@angular-devkit/build-angular'],
+        frameworks: ['mocha', 'sinon-chai', '@angular/cli'],
         plugins: [
             require('karma-mocha'),
             require('karma-sinon-chai'),
@@ -15,7 +15,7 @@ module.exports = function (config) {
             require('karma-chrome-launcher'),
             require('karma-coverage-istanbul-reporter'),
 
-            require('@angular-devkit/build-angular/plugins/karma')
+            require('@angular/cli/plugins/karma')
         ],
         browserDisconnectTimeout: 30000,
         browserNoActivityTimeout: 30000,
@@ -23,12 +23,15 @@ module.exports = function (config) {
             clearContext: false
         },
         files: [
-            { pattern: '../node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css', instrument: false },
+            { pattern: 'node_modules/@angular/material/prebuilt-themes/deeppurple-amber.css', instrument: false },
         ],
         coverageIstanbulReporter: {
             reports: ['html', 'lcovonly'],
             dir: path.join(__dirname, 'coverage/client'),
             fixWebpackSourcePaths: true
+        },
+        angularCli: {
+            environment: 'dev'
         },
         reporters: ['mocha-clean'],
         port: 9876,

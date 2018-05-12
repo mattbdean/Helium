@@ -3,9 +3,11 @@ import {
     HttpResponse
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
+import { Observable } from 'rxjs/Observable';
+
 import * as _ from 'lodash';
-import { Observable } from 'rxjs';
-import { map, mapTo, tap } from 'rxjs/operators';
+
 import { SqlRow, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/responses';
 import { TableInsert } from '../../common/table-insert.interface';
@@ -34,7 +36,7 @@ export class TableService {
     /** Fetches a list of all tables in the given schema */
     public tables(schema: string): Observable<TableName[]> {
         return this.get<TableNameParams[]>(`/schemas/${schema}`)
-            .pipe(map((params) => params.map((p) => new TableName(schema, p))));
+            .map((params) => params.map((p) => new TableName(schema, p)));
     }
 
     /** Fetches meta for a given table */
@@ -84,10 +86,9 @@ export class TableService {
                 }),
                 observe: 'response'
             }
-        ).pipe(
-            tap((res) => this.updateSession(res)),
-            mapTo(null)
-        );
+        )
+            .do((res) => this.updateSession(res))
+            .mapTo(null);
     }
 
     /**
@@ -103,10 +104,9 @@ export class TableService {
             params = params.set(key, used[key]);
         }
         const headers = { 'X-API-Key': this.auth.requireApiKey() };
-        return this.http.get(`/api/v1${relPath}`, { params, headers, observe: 'response' }).pipe(
-            tap((res) => this.updateSession(res)),
-            map((res) => res.body as T)
-        );
+        return this.http.get(`/api/v1${relPath}`, { params, headers, observe: 'response' })
+            .do((res) => this.updateSession(res))
+            .map((res) => res.body as T);
     }
 
     private updateSession<T>(res: HttpResponse<T>): T {

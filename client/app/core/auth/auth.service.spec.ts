@@ -6,8 +6,8 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { expect } from 'chai';
 import { AuthData } from '../auth-data/auth-data.interface';
-import { StorageService } from '../storage/storage.service';
 import { AuthService } from './auth.service';
+import { StorageService } from '../storage/storage.service';
 
 describe('AuthService', () => {
     let service: AuthService;

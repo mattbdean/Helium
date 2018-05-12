@@ -3,7 +3,7 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import * as chai from 'chai';
 import { clone } from 'lodash';
 import * as moment from 'moment';
-import { NEVER, Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { SqlRow, TableHeader, TableMeta } from '../../common/api';
@@ -35,7 +35,7 @@ describe('ApiDataSource', () => {
         parts: []
     };
 
-    const emptyResponse = () => of({
+    const emptyResponse = () => Observable.of({
         data: [],
         totalRows: 0,
         size: 0
@@ -44,11 +44,11 @@ describe('ApiDataSource', () => {
     const createOtherComponents = () => ({
         paginator: {
             length: 0,
-            page: of({ pageIndex: 3, pageSize: 100, length: 1000 })
+            page: Observable.of({ pageIndex: 3, pageSize: 100, length: 1000 })
         } as any,
-        sort: of({ active: 'pk', direction: 'desc' }) as any,
+        sort: Observable.of({ active: 'pk', direction: 'desc' }) as any,
         filters: {
-            changed: of([{ op: 'eq', param: 'pk', value: '55'}])
+            changed: Observable.of([{ op: 'eq', param: 'pk', value: '55'}])
         } as any
     });
 
@@ -59,7 +59,8 @@ describe('ApiDataSource', () => {
 
     beforeEach(() => {
         api = {
-            content: (_): Observable<PaginatedResponse<SqlRow[]>> => NEVER
+            content: (_): Observable<PaginatedResponse<SqlRow[]>> =>
+                Observable.never()
         } as TableService;
         contentStub = sinon.stub(api, 'content');
         // By default, calls to api.content() will return no data
@@ -70,7 +71,7 @@ describe('ApiDataSource', () => {
         collectionViewer = {
             // Believe it or not, this is actually what the Angular datatable
             // provides right now. Either way ApiDataSource doesn't use it
-            viewChange: of({ start: 0, end: Number.MAX_VALUE })
+            viewChange: Observable.of({ start: 0, end: Number.MAX_VALUE })
         };
 
         source.switchTables(emptyTableMeta);
@@ -127,7 +128,7 @@ describe('ApiDataSource', () => {
                     boolean: 1
                 }]
             };
-            contentStub.returns(of(res));
+            contentStub.returns(Observable.of(res));
 
             let asserted = false;
 
@@ -152,7 +153,7 @@ describe('ApiDataSource', () => {
         it('should update the paginator length after every content response', fakeAsync(() => {
             const { paginator, sort, filters } = createOtherComponents();
             source.init({ paginator, sort, filters });
-            contentStub.returns(of({
+            contentStub.returns(Observable.of({
                 data: [{ pk: '0' }],
                 totalRows: 100,
                 size: 0

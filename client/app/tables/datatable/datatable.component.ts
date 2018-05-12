@@ -10,15 +10,7 @@ import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angula
 import { Router } from '@angular/router';
 import { clone, groupBy } from 'lodash';
 import * as moment from 'moment';
-import { BehaviorSubject, NEVER, of, Subscription } from 'rxjs';
-import {
-    catchError,
-    distinctUntilChanged,
-    filter,
-    map,
-    switchMap,
-    tap
-} from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import {
     Constraint, Filter, SqlRow, TableMeta
 } from '../../common/api';
@@ -97,13 +89,13 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     ) {}
 
     public ngOnInit(): void {
-        this.nameSub = this.name$.pipe(
-            filter((n) => n !== null),
-            map((m) => m!!),
-            tap(() => { this.loading = true; }),
-            switchMap((name) =>
+        this.nameSub = this.name$
+            .filter((n) => n !== null)
+            .map((m) => m!!)
+            .do(() => { this.loading = true; })
+            .switchMap((name) =>
                 this.backend.meta(name.schema, name.name.raw)
-                    .pipe(catchError((err: HttpErrorResponse) => {
+                    .catch((err: HttpErrorResponse) => {
                         if (err.status !== 404) {
                             // TODO: Unexpected errors could be handled more
                             // gracefully
@@ -111,9 +103,9 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                         }
 
                         this.tableExists = false;
-                        return NEVER;
-                    })))
-        ).subscribe((meta: TableMeta) => {
+                        return Observable.never();
+                    }))
+            .subscribe((meta: TableMeta) => {
                 const names = meta.headers.map((h) => h.name);
 
                 // Add the "insert like" row
@@ -131,7 +123,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             });
 
         this.recalcSub = this.name$
-            .pipe(distinctUntilChanged())
+            .distinctUntilChanged()
             .subscribe(() => {
                 this.layoutHelper.needsFullLayoutRecalculation = true;
             });
@@ -147,7 +139,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         const fakeCollectionViewer: CollectionViewer = {
             // This is actually pretty similar to what Angular Material gives us
             // as of v5.2.4
-             viewChange: of({ start: 0, end: Number.MAX_VALUE })
+             viewChange: Observable.of({ start: 0, end: Number.MAX_VALUE })
         };
 
         // For whatever reason, subscribing to the header cells causes the

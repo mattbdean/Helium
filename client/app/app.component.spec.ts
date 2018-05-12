@@ -10,11 +10,13 @@ import {
 } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+
 import * as _ from 'lodash';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
+
+import { Router } from '@angular/router';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
@@ -67,15 +69,15 @@ describe('AppComponent', () => {
     const counts = _.countBy(types);
 
     const serviceStub = {
-        schemas: () => of(schemas),
-        tables: (schema: string): Observable<TableName[]> => of(
+        schemas: () => Observable.of(schemas),
+        tables: (schema: string): Observable<TableName[]> => Observable.of(
             createTableNames(schema, ...types)
         )
     };
 
     const authStub = {
         // Always logged in
-        watchAuthState: () => of(true)
+        watchAuthState: () => Observable.of(true)
     };
 
     beforeEach(() => {

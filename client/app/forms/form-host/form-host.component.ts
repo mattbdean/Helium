@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
     Component, OnDestroy, OnInit, QueryList,
     ViewChildren
@@ -5,19 +6,14 @@ import {
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material';
 import { ActivatedRoute, Params, Router } from '@angular/router';
+
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { Subscription } from 'rxjs/Subscription';
+
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { BehaviorSubject ,  Observable ,  Subscription } from 'rxjs';
-import { combineLatest, from, NEVER, of, zip } from 'rxjs';
-import {
-    catchError,
-    filter,
-    flatMap,
-    map,
-    mapTo,
-    switchMap,
-    switchMapTo
-} from 'rxjs/operators';
+
 import {
     MasterTableName, TableHeader, TableMeta
 } from '../../common/api';
@@ -69,28 +65,28 @@ export class FormHostComponent implements OnDestroy, OnInit {
         this.formGroup = this.fb.group({});
 
         const pluckedRowJson$ = this.route.queryParams
-            .pipe(map((p) => p.row ? JSON.parse(p.row) : null));
+            .map((p) => p.row ? JSON.parse(p.row) : null);
 
-        const pluckedRow$: Observable<TableInsert> = combineLatest(
+        const pluckedRow$: Observable<TableInsert> = Observable.combineLatest(
             this.route.params,
             pluckedRowJson$
         )
-            .pipe(flatMap((data: [Params, { [key: string]: string } | null]) => {
+            .flatMap((data: [Params, { [key: string]: string } | null]) => {
                 const { schema, table } = data[0];
                 const pluckSelectors = data[1];
                 if (pluckSelectors == null) {
-                    return of({});
+                    return Observable.of({});
                 } else {
                     return this.backend.pluck(schema, table, pluckSelectors);
                 }
-            }));
+            });
 
-        this.sub = combineLatest(
-            this.route.params.pipe(switchMap((params) => this.backend.tables(params.schema))),
+        this.sub = Observable.combineLatest(
+            this.route.params.switchMap((params) => this.backend.tables(params.schema)),
             this.route.params,
             pluckedRow$
         )
-            .pipe(switchMap((data: [TableName[], Params, TableInsert]) => {
+            .switchMap((data: [TableName[], Params, TableInsert]) => {
                 // Try to identify a MasterTableName for the given raw SQL name
                 const [availableTables, {schema, table}, insertLikeRow] = data;
                 this.prefilled = insertLikeRow;
@@ -106,8 +102,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     else
                         newPath = ['/forms', currentName.masterName!!.raw];
 
-                    return from(this.router.navigate(newPath))
-                        .pipe(switchMapTo(NEVER));
+                    return Observable.fromPromise(this.router.navigate(newPath))
+                        .switchMapTo(Observable.never());
                 }
 
                 const masterTableNames = unflattenTableNames(availableTables);
@@ -125,11 +121,11 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     ...currentMaster.parts
                 ];
 
-                return zip(
-                    of(currentMaster),
-                    zip(...tablesInUse.map((t) => this.backend.meta(t.schema, t.name.raw)))
+                return Observable.zip(
+                    Observable.of(currentMaster),
+                    Observable.zip(...tablesInUse.map((t) => this.backend.meta(t.schema, t.name.raw)))
                 );
-            })).subscribe((data: [MasterTableName, TableMeta[]]) => {
+            }).subscribe((data: [MasterTableName, TableMeta[]]) => {
                 const [currentMaster, allMeta] = data;
 
                 // Reinitialize the FormGroup so that we don't keep data from
@@ -142,21 +138,26 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 this.metaInUse = allMeta;
             });
 
-        this.submitSub = this.completedForm$.pipe(
+        this.submitSub = this.completedForm$
             // Only allow non-null and non-undefined values
-            filter((form) => form !== undefined && form !== null),
-            switchMap((form: any) => {
-                return this.backend.submitRow(this.mainName.schema, this.mainName.name.raw, form).pipe(
+            .filter((form) => form !== undefined && form !== null)
+            .switchMap((form: any) => {
+                return this.backend.submitRow(this.mainName.schema, this.mainName.name.raw, form)
                     // Assume no error
-                    mapTo(null),
+                    .mapTo(null)
                     // Handle any errors
-                    catchError((err) => {
+                    .catch((err) => {
                         // If the error is an HttpResponse (@angular/common/http),
                         // send its JSON value as an error
-                        return of(err);
-                    }));
-            }),
-            flatMap((err: any | null) => {
+                        let returnedError = err;
+                        if (err instanceof HttpErrorResponse) {
+                            returnedError = typeof err.error === 'string' ?
+                                JSON.parse(err.error) : err.error;
+                        }
+                        return Observable.of(returnedError);
+                    });
+            })
+            .flatMap((err: any | null) => {
                 let snackbarRef: MatSnackBarRef<any>;
 
                 if (err) {
@@ -168,17 +169,18 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     snackbarRef = this.snackBar.open(message, 'OK', { duration: 20000 });
                     // Make sure we end up mapping back to the snackbar ref so
                     // we can dismiss it later
-                    return snackbarRef.onAction().pipe(mapTo(snackbarRef));
+                    return snackbarRef.onAction()
+                        .mapTo(snackbarRef);
                 } else {
                     this.formGroup.reset();
                     snackbarRef = this.snackBar.open('Created new row', 'VIEW', { duration: 3000 });
-                    return snackbarRef.onAction().pipe(
+                    return snackbarRef.onAction()
                         // Navigate to /tables/:name when 'VIEW' is clicked
-                        flatMap(() => from(
-                            this.router.navigate(['/tables', this.mainName.schema, this.mainName.name.raw]))),
-                        mapTo(snackbarRef));
+                        .flatMap(() => Observable.fromPromise(
+                            this.router.navigate(['/tables', this.mainName.schema, this.mainName.name.raw])))
+                        .mapTo(snackbarRef);
                 }
-            }))
+            })
             // When we finally reach the end, dismiss the snackbar
             .subscribe((ref: MatSnackBarRef<any>) => ref.dismiss());
     }

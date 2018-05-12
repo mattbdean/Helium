@@ -7,8 +7,7 @@ import {
     Validators
 } from '@angular/forms';
 import { isEqual } from 'lodash';
-import { Subscription } from 'rxjs';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 import { Filter, TableMeta } from '../../common/api';
 
 @Component({
@@ -52,25 +51,28 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
                 this.changed.emit([]);
             }
 
-            this.sub = this.formArray.valueChanges.pipe(
-                distinctUntilChanged(isEqual),
-                map(() => this.formArray.controls
-                    // Only use data that is both valid and enabled
-                    .filter((group: FormGroup) => {
-                        // Filter out invalid and disabled filters
-                        if (!group.valid) return false;
+            this.sub = this.formArray.valueChanges
+                .distinctUntilChanged(isEqual)
+                .map(() => {
+                    return this.formArray.controls
+                        // Only use data that is both valid and enabled
+                        .filter((group: FormGroup) => {
+                            // Filter out invalid and disabled filters
+                            if (!group.valid) return false;
 
-                        // Because of the way disabling works
-                        for (const controlName of Object.keys(group.controls)) {
-                            if (group.controls[controlName].disabled)
-                                return false;
-                        }
+                            // Because of the way disabling works
+                            for (const controlName of Object.keys(group.controls)) {
+                                if (group.controls[controlName].disabled)
+                                    return false;
+                            }
 
-                        return true;
-                    })
-                    .map((control) => control.value)
-                ))
-            .subscribe((filters) => this.changed.emit(filters));
+                            return true;
+                        })
+                        .map((control) => control.value);
+                })
+                .distinctUntilChanged(isEqual)
+                // Notify listeners that the filters have changed
+                .subscribe((filters) => this.changed.emit(filters));
         }
     }
 
