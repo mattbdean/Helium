@@ -147,8 +147,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         // updated in the DOM, which is what we want
         this.headerCellsSub = this.headerCells.changes.subscribe(() => void 0);
 
-        this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe((data: SqlRow[]) => {
-            this.matPaginator.length = data.length;
+        this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe(() => {
             this.recalculateTableLayout();
         });
 
