@@ -1,5 +1,5 @@
 import {
-    Component, ElementRef, forwardRef, Input, OnInit, Output, ViewChild
+    Component, ElementRef, forwardRef, Input, OnInit, ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
@@ -99,11 +99,7 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
             return;
         }
 
-        const m = moment(obj, DatetimeInputComponent.DATETIME_INPUT_FORMAT, true);
-        if (!m.isValid()) {
-            throw new Error(`Not a valid date: '${obj}', expecting format ` +
-                DatetimeInputComponent.DATETIME_INPUT_FORMAT);
-        }
+        const m = DatetimeInputComponent.parseMoment(obj);
 
         // Format only the date portion
         this.date.nativeElement.value =
@@ -138,5 +134,23 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
      */
     private static isPresent(val: string) {
         return val !== null && val !== undefined && val.trim() !== '';
+    }
+
+    /**
+     * Attempts to parse the given input string as a moment instance. Throws an
+     * error if none of the formats apply to the input string.
+     */
+    private static parseMoment(input: string): moment.Moment {
+        const formats = [DatetimeInputComponent.DATETIME_INPUT_FORMAT, DATETIME_FORMAT];
+        const validMoments = formats
+            .map((format) => moment(input, format, true))
+            .filter((m) => m.isValid());
+
+        if (validMoments.length === 0) {
+            throw new Error(`Input '${input}' cannot be applied to any of the ` +
+                `following formats: ${formats.map((str) => '"' + str + '"').join(', ')}`);
+        }
+
+        return validMoments[0];
     }
 }
