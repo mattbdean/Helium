@@ -1,19 +1,15 @@
 import { CollectionViewer } from '@angular/cdk/collections';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-    AfterViewInit,
-    Component, ElementRef, Input, OnDestroy, OnInit, QueryList, Renderer2,
-    ViewChild,
-    ViewChildren
+    AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, QueryList,
+    Renderer2, ViewChild, ViewChildren
 } from '@angular/core';
 import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angular/material';
 import { Router } from '@angular/router';
 import { clone, groupBy } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
-import {
-    Constraint, Filter, SqlRow, TableMeta
-} from '../../common/api';
+import { Constraint, Filter, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
@@ -147,7 +143,27 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         // updated in the DOM, which is what we want
         this.headerCellsSub = this.headerCells.changes.subscribe(() => void 0);
 
-        this.layoutSub = this.dataSource.connect(fakeCollectionViewer).subscribe(() => {
+        this.layoutSub = Observable.combineLatest(
+            this.headerCells.changes,
+            this.contentCells.changes,
+            this.dataSource.connect(fakeCollectionViewer)
+        ).filter((data): boolean => {
+            const [headers, content, tableData] = data;
+
+            // Add 1 for the header row
+            const expectedRows = tableData.length + 1;
+            // Add 1 for the "insert like" column
+            const expectedColumns = this.meta.headers.length + 1;
+
+            // Angular Material updates the header cells first and then the
+            // content cells, triggering two different updates. We want to
+            // ignore the first update since the content cells aren't fully
+            // loaded and recalculating the table layout at that stage would
+            // cause rendering issues. Avoid this situation by making sure the
+            // expected amount of cells to be rendered matches the actual amount
+            // of rendered cells.
+            return (expectedRows * expectedColumns) === headers.length + content.length;
+        }).subscribe(() => {
             this.recalculateTableLayout();
         });
 

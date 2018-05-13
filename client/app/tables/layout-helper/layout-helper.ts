@@ -1,4 +1,4 @@
-import { ElementRef, Injectable, QueryList, Renderer2 } from '@angular/core';
+import { ElementRef, Injectable, QueryList } from '@angular/core';
 import { cloneDeep, max } from 'lodash';
 
 /**
@@ -67,52 +67,10 @@ export class LayoutHelper {
      * pixels)
      */
     public recalculate(): Array<{ el: any, width: number }> {
-        const allCells = this.headerCells.toArray().concat(this.contentCells.toArray())
-            .map((ref) => ref.nativeElement);
-
-        const numHeaders = this.headerCells.length;
-        const numRows = (allCells.length / numHeaders);
-
-        // Create a 2d array in which the first dimension is a column
-        // and the second dimension is a cell in a column
-        const table: any[][] = [];
-
-        // Headers are listed first
-        const headers = allCells.slice(0, numHeaders);
-
-        // Initialize the 2d array such that no elements are undefined
-        for (let i = 0; i < headers.length; i++) {
-            table[i] = [headers[i]];
-        }
-
-        // Header cells are listed left to right, but data cells are listed top
-        // to bottom first, and then left to right. Basically the first column
-        // on the left is listed top down first, followed by the rest of the
-        // columns in that same order
-        const columnCells = allCells.slice(numHeaders);
-        for (let j = 0; j < columnCells.length; j++) {
-            table[Math.floor(j / (numRows - 1))].push(columnCells[j]);
-        }
+        const table = this.table();
 
         if (this.needsFullLayoutRecalculation) {
-            this.widths = table
-                .map((col: any[]) =>
-                    col.map((el) => {
-                        // Add some padding so if a cell takes up 100% of the
-                        // allotted width it'll be easier to read
-                        const baseWidth =
-                            Math.max(el.clientWidth, LayoutHelper.MIN_DEFAULT_COL_WIDTH);
-                        return baseWidth + LayoutHelper.CELL_PADDING_RIGHT;
-                    }))
-                .map(max) as number[];
-
-            // Compute the maximum width of each column
-            this.minWidths = headers.map((h) => h.clientWidth);
-
-            this.widths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
-            this.minWidths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
-
-            this.needsFullLayoutRecalculation = false;
+            this.recalculateAll(table);
         }
 
         const result: Array<{ el: any, width: number }> = [];
@@ -120,7 +78,7 @@ export class LayoutHelper {
         // Make each column take up only what is required
         for (let i = 0; i < table.length; i++) {
             for (const el of table[i]) {
-                result.push({ el, width: this.widths[i] });
+                result.push({ el, width: this.widths[i], text: el.textContent.trim() } as any);
             }
         }
 
@@ -192,6 +150,69 @@ export class LayoutHelper {
             throw new Error('No drag in progress');
 
         this.widths[this._state.colIndex] = newWidth;
+    }
+
+    /**
+     * Creates a 2d array that represents the datatable. The array is indexed
+     * [col][row], so table()[2][0] would get the header element for the third
+     * column.
+     */
+    private table(): any[][] {
+        const allCells = this.headerCells.toArray().concat(this.contentCells.toArray())
+            .map((ref) => ref.nativeElement);
+
+        const numHeaders = this.headerCells.length;
+        const numRows = (allCells.length / numHeaders);
+
+        // Create a 2d array in which the first dimension is a column
+        // and the second dimension is a cell in a column
+        const table: any[][] = [];
+
+        // Headers are listed first
+        const headers = allCells.slice(0, numHeaders);
+
+        // Initialize the 2d array such that no elements are undefined
+        for (let i = 0; i < headers.length; i++) {
+            table[i] = [headers[i]];
+        }
+
+        // Header cells are listed left to right, but data cells are listed top
+        // to bottom first, and then left to right. Basically the first column
+        // on the left is listed top down first, followed by the rest of the
+        // columns in that same order
+        const columnCells = allCells.slice(numHeaders);
+        for (let j = 0; j < columnCells.length; j++) {
+            table[Math.floor(j / (numRows - 1))].push(columnCells[j]);
+        }
+
+        return table;
+    }
+
+    /**
+     * Does a full layout recalculation. Updates `minWidths`, `widths`, and sets
+     * `needsFullLayoutRecalculation` to false when finished.
+     */
+    private recalculateAll(table: any[][]) {
+        this.widths = table
+            .map((col: any[]) =>
+                col.map((el) => {
+                    // Add some padding so if a cell takes up 100% of the
+                    // allotted width it'll be easier to read
+                    const baseWidth =
+                        Math.max(el.clientWidth, LayoutHelper.MIN_DEFAULT_COL_WIDTH);
+                    return baseWidth + LayoutHelper.CELL_PADDING_RIGHT;
+                }))
+            .map(max) as number[];
+
+        const headers = table.map((col) => col[0]);
+
+        // Compute the maximum width of each column
+        this.minWidths = headers.map((h) => h.clientWidth);
+
+        this.widths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
+        this.minWidths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
+
+        this.needsFullLayoutRecalculation = false;
     }
 }
 
