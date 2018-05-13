@@ -92,14 +92,15 @@ $ docker run --name mysql-helium --rm -d -p 3306:3306 \
     -e MYSQL_ALLOW_EMPTY_PASSWORD=true \
     -e MYSQL_HOST=127.0.0.1 \
     -e MYSQL_ROOT_HOST=% \
-    -e MYSQL_USER=root \
+    -e MYSQL_ROOT_PASSWORD=toor \
     mysql:5.7
 ```
 
 After MySQL has been initialized, add the testing data and user. The MySQL client must be installed.
 
 ```
-$ mysql -u root -h 127.0.0.1 < server/test/init.sql
+$ mysql -u root -p -h 127.0.0.1 < server/test/init.sql
+Enter password: (enter value of MYSQL_ROOT_PASSWORD from before)
 ```
 
 When finished, kill the container
