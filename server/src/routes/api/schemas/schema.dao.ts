@@ -2,10 +2,10 @@ import * as joi from 'joi';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import { MysqlSquel, ParamString, Select } from 'squel';
-
+import { CompoundConstraint } from '../../../../../common/api';
 import {
-    Constraint, ConstraintType, DefaultValue, Filter, SqlRow, TableDataType,
-    TableHeader, TableMeta
+    Constraint, ConstraintType, DefaultValue, Filter, RawConstraint, SqlRow,
+    TableDataType, TableHeader, TableMeta
 } from '../../../common/api';
 import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
@@ -153,9 +153,9 @@ export class SchemaDao {
             this.tables(schema),
             this.headers(schema, table),
             this.count(schema, table),
-            // For some reason `this` becomes undefined in the resolveConstraints
-            // function if we do this.constraints(name).then(this.resolveConstraints)
-            this.constraints(schema, table).then((result) => this.resolveConstraints(result)),
+            this.constraints(schema, table)
+                .then((result) => this.resolveConstraints(result))
+                .then(SchemaDao.resolveCompoundConstraints),
             this.comment(schema, table)
         ]);
 
@@ -284,32 +284,74 @@ export class SchemaDao {
     }
 
     /**
-     * Attempts to simplify foreign key reference chains. For
-     * example, if tableA.foo (FK) references tableB.bar (PK and FK), and
-     * tableB.bar references tableC.baz (PK), the returned array will replace
-     * the original Constraint with one that declares tableA.foo as a FK
-     * that references the PK tableC.baz.
+     * Gets a list of constraints on a given table. Currently, only primary keys,
+     * foreign keys, and unique constraints are recognized.
+     */
+    public async constraints(schema: string, table: string): Promise<RawConstraint[]> {
+        const result = await this.helper.execute((squel) => {
+            return squel.select()
+                .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
+                    .field('CONSTRAINT_NAME')
+                    .field('ORDINAL_POSITION')
+                    .field('COLUMN_NAME')
+                    .field('CONSTRAINT_NAME')
+                    .field('REFERENCED_TABLE_SCHEMA')
+                    .field('REFERENCED_TABLE_NAME')
+                    .field('REFERENCED_COLUMN_NAME')
+                .where('CONSTRAINT_SCHEMA = ?', schema)
+                .where('TABLE_NAME = ?', table)
+                .order('ORDINAL_POSITION');
+        });
+
+        return _.map(result, (row: any): RawConstraint => {
+            let type: ConstraintType = 'foreign';
+
+            if (row.CONSTRAINT_NAME === 'PRIMARY')
+                type = 'primary';
+            else if (row.CONSTRAINT_NAME === row.COLUMN_NAME)
+                type = 'unique';
+
+            return {
+                name: row.CONSTRAINT_NAME,
+                index: row.ORDINAL_POSITION - 1,
+                type,
+                localColumn: row.COLUMN_NAME as string,
+                ref: type !== 'foreign' ? null : {
+                    schema: row.REFERENCED_TABLE_SCHEMA as string,
+                    table: row.REFERENCED_TABLE_NAME as string,
+                    column: row.REFERENCED_COLUMN_NAME as string
+                }
+            };
+        });
+    }
+
+    /**
+     * Attempts to simplify foreign key reference chains. For example, if
+     * tableA.foo (FK) references tableB.bar (PK and FK), and tableB.bar
+     * references tableC.baz (PK), the returned array will replace the original
+     * Constraint with one that declares tableA.foo as a FK that references the
+     * PK tableC.baz.
      *
      * Note that if there are no foreign key constraints this method does
      * nothing.
      *
      * This method is public only for testing.
      */
-    public async resolveConstraints(originals: Constraint[]): Promise<Constraint[]> {
+    public async resolveConstraints(originals: RawConstraint[]): Promise<RawConstraint[]> {
         // Keep tables in cache once we look them up to prevent any unnecessary
         // lookups
-        const cache: { [tableId: string]: Constraint[] } = {};
+        const cache: { [tableId: string]: RawConstraint[] } = {};
 
         const tableId = (schemaName: string, tableName: string) =>
             `${schemaName}.${tableName}`;
 
         // Return constraints from cache, otherwise look them up
-        const getConstraints = (otherSchema, otherTable: string): Promise<Constraint[]> => {
+        const getConstraints = (otherSchema, otherTable: string): Promise<RawConstraint[]> => {
             const id = tableId(otherSchema, otherTable);
             return cache[id] ? Promise.resolve(cache[id]) : this.constraints(otherSchema, otherTable);
         };
 
-        const resolved: Constraint[] = [];
+        const resolved: RawConstraint[] = [];
 
         for (const c of originals) {
             // We're only operating on foreign keys here
@@ -338,9 +380,9 @@ export class SchemaDao {
 
             if (previous !== undefined) {
                 // We've found the last FK in the reference chain. All we have
-                // to do now is update the localColumn to the original's
-                previous.localColumn = original.localColumn;
-                resolved.push(previous);
+                // to do now is update the original's FK reference.
+                original.ref = previous.ref;
+                resolved.push(original);
             }
         }
 
@@ -488,44 +530,6 @@ export class SchemaDao {
         return result;
     }
 
-    /**
-     * Gets a list of constraints on a given table. Currently, only primary keys,
-     * foreign keys, and unique constraints are recognized.
-     */
-    private async constraints(schema: string, table: string): Promise<Constraint[]> {
-        const result = await this.helper.execute((squel) => {
-            return squel.select()
-                .from('INFORMATION_SCHEMA.KEY_COLUMN_USAGE')
-                    .field('COLUMN_NAME')
-                    .field('CONSTRAINT_NAME')
-                    .field('REFERENCED_TABLE_SCHEMA')
-                    .field('REFERENCED_TABLE_NAME')
-                    .field('REFERENCED_COLUMN_NAME')
-                .where('CONSTRAINT_SCHEMA = ?', schema)
-                .where('TABLE_NAME = ?', table)
-                .order('ORDINAL_POSITION');
-        });
-
-        return _.map(result, (row: any): Constraint => {
-            let type: ConstraintType = 'foreign';
-
-            if (row.CONSTRAINT_NAME === 'PRIMARY')
-                type = 'primary';
-            else if (row.CONSTRAINT_NAME === row.COLUMN_NAME)
-                type = 'unique';
-
-            return {
-                type,
-                localColumn: row.COLUMN_NAME as string,
-                ref: type !== 'foreign' ? null : {
-                    schema: row.REFERENCED_TABLE_SCHEMA as string,
-                    table: row.REFERENCED_TABLE_NAME as string,
-                    column: row.REFERENCED_COLUMN_NAME as string
-                }
-            };
-        });
-    }
-
     /** Fetches a table's comment, or an empty string if none exists */
     private async comment(schema: string, table: string): Promise<string> {
         const result = await this.helper.execute((squel) =>
@@ -573,6 +577,56 @@ export class SchemaDao {
         }
 
         return query.where(`${this.helper.escapeId(filter.param)} ${simpleOp} ?`, filter.value);
+    }
+
+    public static resolveCompoundConstraints(originals: RawConstraint[]): CompoundConstraint[] {
+        const grouped = _.groupBy(originals, 'name');
+
+        const resolved: CompoundConstraint[] = [];
+
+        for (const constraintName of Object.keys(grouped)) {
+            const constraints = grouped[constraintName];
+
+            const orderedConstraints: Constraint[] = [];
+
+            let type: ConstraintType | undefined;
+            let name: string | undefined;
+
+            for (const constraint of constraints) {
+                if (type === undefined)
+                    type = constraint.type;
+                if (name === undefined)
+                    name = constraint.name;
+
+                // Make sure the constraint index is in bounds
+                if (constraint.index >= constraints.length) {
+                    throw new Error(`Invalid index for constraint ${constraintName}: ` +
+                        `${constraint.index}. Expecting a value in the range 0..${constraints.length - 1}`);
+                } else if (constraint.index < 0) {
+                    throw new Error(`Invalid index for constraint ${constraintName}: ` +
+                        `${constraint.index}. Expecting a non-negative value.`);
+                }
+
+                // Make sure we're not overwriting existing data
+                if (orderedConstraints[constraint.index])
+                    throw new Error(`Duplicate index for constraint ${constraintName}:` + 
+                        constraint.index);
+
+                orderedConstraints[constraint.index] = {
+                    localColumn: constraint.localColumn,
+                    ref: constraint.ref,
+                    type: constraint.type
+                };
+            }
+
+            resolved.push({
+                type: type!!,
+                name: name!!,
+                constraints: orderedConstraints,
+            });
+        }
+
+        return resolved;
     }
 
     /**

@@ -9,12 +9,13 @@ import {
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../client/app/common/constants';
-import { Filter } from '../src/common/api';
+import { Filter, RawConstraint } from '../src/common/api';
 import { TableInsert } from '../src/common/table-insert.interface';
 import { ConnectionConf } from '../src/db/connection-conf.interface';
 import { DatabaseHelper } from '../src/db/database.helper';
 import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
 import { ValidationError } from '../src/routes/api/validation-error';
+import { SIGSTOP } from 'constants';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -96,11 +97,11 @@ describe('SchemaDao', () => {
         it('should sort by a given column when requested', async () => {
             // Request that we sort some row (defined above) in a particular
             // direction
-            const sort: Sort = { by: sortingRow, direction: 'asc'};
-            const data = (await dao.content(db, table, { sort })).rows;
+            const sort: Sort = { by: 'pk', direction: 'asc'};
+            const data = (await dao.content('helium', 'big_table', { sort })).rows;
 
             // Make sure we're still returning 25 elements by default
-            joi.assert(data, joi.array().items(rowContents).length(25));
+            joi.assert(data, joi.array().length(25));
 
             // Sort the returned data with lodash and ensure it matches what was
             // returned from the database
@@ -346,13 +347,11 @@ describe('SchemaDao', () => {
     });
 
     describe('meta', () => {
-        it('should return a TableMeta object with fully resolved constraints', async () => {
+        it.only('should return a TableMeta object with fully resolved constraints', async () => {
             const schemaName = 'helium';
             const tableName = 'shipment';
             const cols = 6;
-            // Technically there's only 2 constraints but Helium doesn't
-            // recognize compound keys yet
-            const numConstraints = 5;
+            const numConstraints = 2;
             const data = await dao.meta(schemaName, tableName);
 
             // Very basic schema to make sure we have the basics down
@@ -367,7 +366,6 @@ describe('SchemaDao', () => {
             }).requiredKeys('schema', 'name', 'headers', 'totalRows', 'constraints', 'comment', 'parts');
 
             joi.assert(data, schema);
-
         });
 
         it('should include TableNames for part tables when applicable', async () => {
@@ -378,20 +376,73 @@ describe('SchemaDao', () => {
         });
 
         it('should throw an Error when the schema doesn\'t exist', async () => {
-            const error = await expect(dao.meta('unknown_schema', 'irrelevant'))
+            await expect(dao.meta('unknown_schema', 'irrelevant'))
                 .to.eventually.be.rejected;
-            expect(error.code).to.equal('ER_DBACCESS_DENIED_ERROR');
         });
 
         it('should throw an Error when the table doesn\'t exist', async () => {
-            const error = await expect(dao.meta('helium', 'unknown_table')).to.eventually.be.rejected;
-            expect(error.code).to.equal('ER_NO_SUCH_TABLE');
+            await expect(dao.meta('helium', 'unknown_table')).to.eventually.be.rejected;
+        });
+    });
+
+    describe('constraints', () => {
+        it('should identify basic features about a constraint', async () => {
+            const constraints = await dao.constraints('helium', 'master');
+            expect(constraints).to.have.lengthOf(1);
+            const constraint = constraints[0];
+
+            const expected: RawConstraint = {
+                index: 0,
+                name: 'PRIMARY',
+                localColumn: 'pk',
+                type: 'primary',
+                ref: null
+            };
+
+            expect(constraint).to.deep.equal(expected);
+        });
+
+        it('should identify foreign constraints', async () => {
+            const constraints = await dao.constraints('helium', 'master__part');
+            const foreignKeys = constraints.filter((c) => c.type === 'foreign');
+
+            expect(foreignKeys).to.have.lengthOf(1);
+            const expected: RawConstraint = {
+                index: 0,
+                name: 'master__part_ibfk_1',
+                localColumn: 'master',
+                type: 'foreign',
+                ref: {
+                    schema: 'helium',
+                    table: 'master',
+                    column: 'pk'
+                }
+            };
+
+            expect(foreignKeys[0]).to.deep.equal(expected);
+        });
+
+        it('should identify unique constraints', async () => {
+            const constraints = await dao.constraints('helium', 'datatypeshowcase');
+            const uniqueConstraints = constraints.filter((c) => c.type === 'unique');
+
+            expect(uniqueConstraints).to.have.lengthOf(1);
+
+            const expected: RawConstraint = {
+                index: 0,
+                name: 'integer',
+                localColumn: 'integer',
+                type: 'unique',
+                ref: null
+            };
+
+            expect(uniqueConstraints[0]).to.deep.equal(expected);
         });
     });
 
     describe('resolveConstraints', () => {
         it('should resolve reference chains within the same schema', async () => {
-            const constraints = (await dao.meta('helium', 'shipment')).constraints;
+            const constraints = await dao.constraints('helium', 'shipment');
             const resolved = await dao.resolveConstraints(constraints);
 
             // In the actual schema:
@@ -402,6 +453,8 @@ describe('SchemaDao', () => {
             // 1. shipment.product_id ==> product.product_id
 
             expect(resolved).to.deep.include({
+                name: 'shipment_ibfk_1',
+                index: 3,
                 type: 'foreign',
                 localColumn: 'product_id',
                 ref: {
@@ -413,7 +466,7 @@ describe('SchemaDao', () => {
         });
 
         it('should resolve reference chains that involve more than one schema', async () => {
-            const constraints = (await dao.meta('helium2', 'cross_schema_ref_test')).constraints;
+            const constraints = await dao.constraints('helium2', 'cross_schema_ref_test');
             const resolved = await dao.resolveConstraints(constraints);
 
             // In the actual schema:
@@ -424,6 +477,8 @@ describe('SchemaDao', () => {
             // 1. helium2.cross_schema_ref_test.fk ==> helium.customer.customer_id
 
             expect(resolved).to.deep.include({
+                name: 'cross_schema_ref_test_ibfk_1',
+                index: 0,
                 type: 'foreign',
                 localColumn: 'fk',
                 ref: {
@@ -432,6 +487,60 @@ describe('SchemaDao', () => {
                     column: 'customer_id'
                 }
             });
+        });
+    });
+
+    describe('resolveCompoundConstraints', () => {
+        it('should create one compound constraint for each unique constraint name', async () => {
+            const compoundConstraints = SchemaDao.resolveCompoundConstraints(
+                await dao.constraints('compound_fk_test', 'fk_table'));
+            
+            // 1 PK and 2 FK's
+            expect(compoundConstraints).to.have.lengthOf(3);
+            expect(compoundConstraints.map((c) => c.name).sort()).to.deep.equal([
+                'PRIMARY',
+                'fk_table_ibfk_1',
+                'fk_table_ibfk_2'
+            ]);
+
+            for (const compoundConstraint of compoundConstraints) {
+                // The primary key is not compound, but there are two compound
+                // foreign keys that contain 3 columns.
+                const length = compoundConstraint.type === 'primary' ? 1 : 3;
+                expect(compoundConstraint.constraints).to.have.lengthOf(length);
+
+                // Make sure we're given Constraints, not RawConstraints
+                for (const constraint of compoundConstraint.constraints) {
+                    expect((constraint as any).name).to.be.undefined;
+                    expect((constraint as any).index).to.be.undefined;
+                }
+            }
+        });
+
+        it('should not allow two constraints with the same index and name', () => {
+            const constraint: RawConstraint = {
+                name: 'test',
+                index: 0,
+                localColumn: 'foo',
+                ref: null,
+                type: 'primary'
+            };
+
+            expect(() => SchemaDao.resolveCompoundConstraints([constraint, constraint]))
+                .to.throw(Error);
+        });
+
+        it('should not allow a constraint index greater than the max value', () => {
+            const constraints: RawConstraint[] = [{
+                name: 'test',
+                index: 1, // <-- here's the problem
+                localColumn: 'foo',
+                ref: null,
+                type: 'primary'
+            }];
+
+            expect(() => SchemaDao.resolveCompoundConstraints(constraints))
+                .to.throw(Error);
         });
     });
 
