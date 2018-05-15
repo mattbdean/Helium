@@ -347,7 +347,7 @@ describe('SchemaDao', () => {
     });
 
     describe('meta', () => {
-        it.only('should return a TableMeta object with fully resolved constraints', async () => {
+        it('should return a TableMeta object with fully resolved constraints', async () => {
             const schemaName = 'helium';
             const tableName = 'shipment';
             const cols = 6;
