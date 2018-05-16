@@ -6,9 +6,10 @@ import {
 } from '@angular/core';
 import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angular/material';
 import { Router } from '@angular/router';
-import { clone, groupBy } from 'lodash';
+import { clone, flatten, groupBy } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
+import { flattenCompoundConstraints } from '../../../../common/util';
 import { Constraint, Filter, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
@@ -47,7 +48,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public pageSize = 25;
 
     /** The amount of rows available with the given filters */
-    public get totalRows(): number { return this.matPaginator ? this.matPaginator.length : 0; }
+    public readonly totalRows = 0;
 
     /** FilterManagerComponent will be visible when this is true */
     public showFilters = false;
@@ -108,7 +109,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                 names.unshift('__insertLike');
                 this.columnNames = names;
 
-                this.constraints = groupBy(meta.constraints, (c) => c.localColumn);
+                const flattened = flatten(meta.constraints.map((c) => c.constraints));
+                this.constraints = groupBy(flattened, (c) => c.localColumn);
 
                 // Update observables and data source
                 this.meta$.next(meta);
@@ -285,7 +287,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
             // We only need to provide the next component what information
             // uniquely identifies this row
-            const primaryKey = this.meta$.getValue()!!.constraints.find((c) =>
+            const flattened = flattenCompoundConstraints(this.meta$.getValue()!!.constraints);
+            const primaryKey = flattened.find((c) =>
                 c.localColumn === header.name && c.type === 'primary');
 
             // We don't care about anything besides primary keys

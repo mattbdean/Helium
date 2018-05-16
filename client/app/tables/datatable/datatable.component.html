@@ -60,7 +60,7 @@
             </mat-table>
         </div>
         <p class="no-data-message" *ngIf="totalRows === 0">There's nothing here ¯\_(ツ)_/¯</p>
-        <mat-paginator [length]="totalRows" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+        <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
     </div>
 
 </div>

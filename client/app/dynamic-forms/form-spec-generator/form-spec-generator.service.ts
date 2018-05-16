@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
 
-import { pickBy } from 'lodash';
+import { flatten, pickBy } from 'lodash';
 import * as moment from 'moment';
 
 import { Observable } from 'rxjs/Observable';
+import { flattenCompoundConstraints } from '../../../../common/util';
 import {
-    Constraint, DefaultValue, TableHeader, TableMeta
+    CompoundConstraint, Constraint, DefaultValue, TableHeader, TableMeta
 } from '../../common/api';
 import {
     CURRENT_TIMESTAMP,
@@ -55,7 +56,9 @@ export class FormSpecGeneratorService {
             let disabled = false;
             let autocompleteValues: Observable<string[]> | undefined;
 
-            const foreignKey = meta.constraints.find(
+            const flattenedConstraints = flattenCompoundConstraints(meta.constraints);
+
+            const foreignKey = flattenedConstraints.find(
                 (constraint) => constraint.type === 'foreign' && constraint.localColumn === h.name);
 
             switch (h.type) {
@@ -152,7 +155,9 @@ export class FormSpecGeneratorService {
             throw new Error(`Given TableMeta was not a part table of ` +
                 `${masterRawName}, but actually for ${tableName.masterName!!.raw}`);
 
-        return tableMeta.constraints.filter((c) => c.ref !== null && c.ref.table === masterRawName);
+        const flattenedConstraints = flattenCompoundConstraints(tableMeta.constraints);
+
+        return flattenedConstraints.filter((c) => c.ref !== null && c.ref.table === masterRawName);
     }
 
     /**

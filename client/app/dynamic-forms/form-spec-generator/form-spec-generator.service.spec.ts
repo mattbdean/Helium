@@ -2,7 +2,8 @@ import { Validators } from '@angular/forms';
 
 import { expect } from 'chai';
 
-import { Constraint, TableHeader, TableMeta } from '../../common/api';
+import { CompoundConstraint, Constraint, TableHeader, TableMeta } from '../../common/api';
+import { flattenCompoundConstraints } from '../../common/util';
 import { TableService } from '../../core/table/table.service';
 import { FormControlSpec } from '../form-control-spec';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
@@ -24,7 +25,7 @@ interface NumericHeaderStub {
 
 const tableName = 'foo';
 
-const createMetaFor = (headers: TableHeader[], constraints: Constraint[] = []): TableMeta => ({
+const createMetaFor = (headers: TableHeader[], constraints: CompoundConstraint[] = []): TableMeta => ({
     schema: 'foo',
     name: tableName,
     headers,
@@ -240,47 +241,65 @@ describe('FormSpecGeneratorService', () => {
                 constraints: [
                     // throw in two FK constraints that reference master
                     {
-                        ref: {
-                            schema,
-                            column: 'part_fk1',
-                            table: 'master'
-                        },
-                        localColumn: 'part_fk1',
-                        type: 'foreign'
+                        name: 'master__part_ibfk_1',
+                        type: 'foreign',
+                        constraints: [{
+                            ref: {
+                                schema,
+                                column: 'part_fk1',
+                                table: 'master'
+                            },
+                            localColumn: 'part_fk1',
+                            type: 'foreign'
+                        }]
                     },
                     {
-                        localColumn: 'part_fk2',
-                        ref: {
-                            schema,
-                            table: 'master',
-                            column: 'master_pk2'
-                        },
-                        type: 'foreign'
+                        name: 'master__part_ibfk_2',
+                        type: 'foreign',
+                        constraints: [{
+                            localColumn: 'part_fk2',
+                            ref: {
+                                schema,
+                                table: 'master',
+                                column: 'master_pk2'
+                            },
+                            type: 'foreign'
+                        }]
                     },
                     // should not be included since it's a unique constraint and
                     // not a FK constraint
                     {
-                        localColumn: 'part_unique',
+                        name: 'part_unique',
                         type: 'unique',
-                        ref: null
+                        constraints: [{
+                            localColumn: 'part_unique',
+                            type: 'unique',
+                            ref: null
+                        }]
                     },
                     // should not be included since it's a FK that references a
                     // table that isn't the master table
                     {
-                        localColumn: 'part_fk3',
-                        ref: {
-                            schema,
-                            table: 'not_master',
-                            column: 'foo'
-                        },
-                        type: 'foreign'
+                        name: 'master__part_ibfk3',
+                        type: 'foreign',
+                        constraints: [{
+                            localColumn: 'part_fk3',
+                            ref: {
+                                schema,
+                                table: 'not_master',
+                                column: 'foo'
+                            },
+                            type: 'foreign'
+                        }]
                     }
                 ]
             } as TableMeta;
 
-            // Only the first two constraints are binding
+            const expected = flattenCompoundConstraints(mockMeta.constraints)
+                .filter((c) => c.type === 'foreign' && c.ref !== null && c.ref.table === 'master');
+
             expect(generator.bindingConstraints('master', mockMeta)).to.deep
-                .equal(mockMeta.constraints.slice(0, 2));
+                .equal(expected);
         });
     });
 });
