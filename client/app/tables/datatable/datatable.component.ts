@@ -48,7 +48,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public pageSize = 25;
 
     /** The amount of rows available with the given filters */
-    public readonly totalRows = 0;
+    public get totalRows(): number { return this.matPaginator ? this.matPaginator.length : 0; }
 
     /** FilterManagerComponent will be visible when this is true */
     public showFilters = false;
