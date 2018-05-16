@@ -27,10 +27,12 @@ describe('Forms', () => {
     });
 
     it('should allow us to open a form via the sidenav', async () => {
+        await browser.get('/tables/helium/customer');
         await sidenav.openForm('Customer');
         await expect(browser.getCurrentUrl()).to.eventually.match(/\/forms\/helium\/customer$/);
     });
 
+    // This test is incredibly shaky
     it.skip('should open a snackbar after successful submit', async () => {
         await page.navigateTo('helium', 'customer');
 

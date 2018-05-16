@@ -6,7 +6,9 @@ export class SnackbarHelper {
     /** Waits until a SnackBar appears and returns a Snackbar instance */
     public async waitFor(): Promise<Snackbar> {
         const parent = browser.element(by.css('simple-snack-bar'));
-        await browser.wait(ExpectedConditions.presenceOf(parent), 5000);
+        if (!await parent.isDisplayed()) {
+            await browser.wait(ExpectedConditions.visibilityOf(parent), 5000);
+        }
 
         const allText = await parent.getText();
         let message = allText;
