@@ -111,3 +111,12 @@ constraint-icons {
   // For the sorting arrow
   align-items: center;
 }
+
+.selectable {
+  transition: background-color 200ms;
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.12);
+  }
+}

@@ -35,7 +35,7 @@ export class FormSpecGeneratorService {
      * Generates one FormControlSpec for each header in the given TableMeta.
      * Does not include a submit control.
      */
-    public generate(meta: TableMeta): FormControlSpec[] {
+    public generate(meta: TableMeta, onRequestRowPicker?: (columnName: string) => void): FormControlSpec[] {
         return meta.headers.map((h): FormControlSpec => {
             const validators: ValidatorFn[] = [];
             let required = false;
@@ -108,7 +108,8 @@ export class FormSpecGeneratorService {
                 required,
                 disabled,
                 autocompleteValues,
-                defaultValue: FormSpecGeneratorService.defaultValue(h)
+                defaultValue: FormSpecGeneratorService.defaultValue(h),
+                onRequestRowPicker
             };
 
             // Don't specifically define undefined values as undefined. Messes

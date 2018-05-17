@@ -19,6 +19,10 @@ import { AbstractFormControl } from './abstract-form-control';
                        [placeholder]="spec.placeholder"
                        [formControlName]="spec.formControlName"
                        [required]="spec.required">
+                <mat-icon class="row-picker-button"
+                    matSuffix
+                    *ngIf="spec.onRequestRowPicker"
+                    (click)="onRequestRowPicker($event)">search</mat-icon>
             </mat-form-field>
             
             <mat-autocomplete #auto="matAutocomplete">
@@ -27,7 +31,12 @@ import { AbstractFormControl } from './abstract-form-control';
                 </mat-option>
             </mat-autocomplete>
         </div>
-    `
+    `,
+    styles: [`
+        .row-picker-button {
+            cursor: pointer;
+        }
+    `]
 })
 export class AutocompleteControlComponent extends AbstractFormControl implements OnInit {
     public currentSuggestions: Observable<string[]>;
@@ -53,10 +62,18 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
                 AutocompleteControlComponent.filterValues.apply(null, params));
     }
 
+    public onRequestRowPicker(event: Event) {
+        // Stop the mat-input from also receiving the event and highlighting
+        // the control
+        event.preventDefault();
+        event.stopPropagation();
+        this.spec.onRequestRowPicker!!(this.spec.formControlName);
+    }
+
     private static filterValues(userInput: string, availableOptions: string[]): string[] {
         // Case-insensitive search
         const lowercaseOptions = availableOptions.map((val) => val.toLowerCase());
-        const userInputLower = (userInput || '').toLowerCase();
+        const userInputLower = (String(userInput) || '').toLowerCase();
 
         // Only return values that start with the user input
         return lowercaseOptions.filter((s) => s.indexOf(userInputLower) === 0);

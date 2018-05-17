@@ -230,3 +230,13 @@ CREATE TABLE fk_table(
   FOREIGN KEY (ref_a_first, ref_a_second, ref_a_third) REFERENCES table_a(a_first, a_second, a_third),
   FOREIGN KEY (ref_b_first, ref_b_second, ref_b_third) REFERENCES table_b(b_first, b_second, b_third)
 );
+
+INSERT INTO table_a VALUES
+  (1, 2, 3),
+  (4, 5, 6),
+  (7, 8, 9);
+
+INSERT INTO table_b VALUES
+  (101, 102, 103),
+  (104, 105, 106),
+  (107, 108, 109);

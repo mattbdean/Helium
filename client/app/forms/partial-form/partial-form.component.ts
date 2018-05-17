@@ -2,18 +2,18 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import {
     Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
-
+import { FormArray, FormBuilder, FormGroup, FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material';
+import * as _ from 'lodash';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
-
-import * as _ from 'lodash';
-
-import { SqlRow, TableMeta } from '../../common/api';
+import { Constraint, SqlRow, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
+import { flattenCompoundConstraints } from '../../common/util';
 import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
 import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';
+import { RowPickerDialogComponent, RowPickerParams } from '../row-picker-dialog/row-picker-dialog.component';
 
 interface Binding {
     controlName: string;
@@ -87,11 +87,13 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
     public constructor(
         private formSpecGenerator: FormSpecGeneratorService,
-        private fb: FormBuilder
+        private fb: FormBuilder,
+        private dialog: MatDialog
     ) {}
 
     public ngOnInit() {
-        const spec$ = this.meta$.map((meta) => this.formSpecGenerator.generate(meta!!));
+        const spec$ = this.meta$.map((meta) =>
+            this.formSpecGenerator.generate(meta!!, (colName) => this.onRequestRowPicker(colName)));
 
         this.name$ = this.meta$.map((m) => new TableName('(unused)', m!!.name));
 
@@ -199,6 +201,52 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     public shouldBeHidden(formControlName: string) {
         const binding = _.find(this.bindings, (b) => b.controlName === formControlName);
         return binding !== undefined;
+    }
+
+    public onRequestRowPicker(colName: string) {
+        const foreignKeys = flattenCompoundConstraints(this.meta.constraints)
+            .filter((c) => c.type === 'foreign');
+        // Try to find the foreign key associated with the given column 
+        const foreignKey = foreignKeys.find((c: Constraint) => c.localColumn === colName);
+        
+        if (foreignKey === undefined)
+            throw new Error(`Cannot show row picker for column ${colName}: not a foreign key`);
+
+        const ref = foreignKey.ref!!;
+
+        // Open the dialog to let the user pick a row
+        const params: RowPickerParams = {
+            tableName: ref.table,
+            schemaName: ref.schema
+        };
+        const dialogRef = this.dialog.open(RowPickerDialogComponent, {
+            data: params
+        });
+
+        const unused = foreignKeys.slice(0);
+
+        dialogRef.afterClosed().subscribe((data: SqlRow) => {
+            console.log('Got data back to partial form:', data);
+            // TODO handle multiple entries in formArray
+
+            const patch: { [col: string]: any } = {};
+
+            for (const referencedColumn of Object.keys(data)) {
+                const index = unused.findIndex((c) => c.ref!!.column === referencedColumn);
+
+                // Not a foreign key, ignore
+                if (index < 0)
+                    continue;
+                
+                const key = unused.splice(index, 1)[0];
+
+                this.formArray.at(0);
+                patch[key.localColumn] = data[referencedColumn];
+            }
+            const group: FormGroup = this.formArray.at(0) as FormGroup;
+
+            group.patchValue(patch);
+        });
     }
 
     /**

@@ -48,6 +48,9 @@ import { SortIndicatorComponent } from './sort-indicator/sort-indicator.componen
         SortIndicatorComponent,
         TableHostComponent
     ],
+    exports: [
+        DatatableComponent
+    ],
     providers: [
         ApiDataSource,
         FilterProviderService,

@@ -41,4 +41,10 @@ export interface FormControlSpec {
      * available when `type` is `'autocomplete'`.
      */
     autocompleteValues?: Observable<string[]>;
+
+    /**
+     * An optional function called when the user wants to fill all foreign key
+     * entries of a particular constraint by choosing a specific row.
+     */
+    onRequestRowPicker?: (columnName: string) => void;
 }

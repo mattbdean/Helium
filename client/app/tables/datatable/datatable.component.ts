@@ -1,8 +1,8 @@
 import { CollectionViewer } from '@angular/cdk/collections';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-    AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, QueryList,
-    Renderer2, ViewChild, ViewChildren
+    AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy,
+    OnInit, Output, QueryList, Renderer2, ViewChild, ViewChildren
 } from '@angular/core';
 import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angular/material';
 import { Router } from '@angular/router';
@@ -10,7 +10,7 @@ import { clone, flatten, groupBy } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import { flattenCompoundConstraints } from '../../../../common/util';
-import { Constraint, Filter, TableMeta } from '../../common/api';
+import { Constraint, Filter, SqlRow, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name.class';
 import { TableService } from '../../core/table/table.service';
@@ -32,6 +32,18 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public set name(value: TableName) { this.name$.next(value); }
     public get name() { return this.name$.getValue()!!; }
 
+    /**
+     * Determines if this component will allow the user to pick a row. Rows the
+     * user clicks on while this property is true will be output through the
+     * `rowSelected` emitter.
+     */
+    @Input()
+    public allowSelection = false;
+
+    /** Outputs the value of the selected row if `selectionMode` is true. */
+    @Output()
+    public rowSelected: EventEmitter<SqlRow> = new EventEmitter();
+
     public get meta() { return this.meta$.getValue()!!; }
 
     public columnNames: string[] = [];
@@ -49,6 +61,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     /** The amount of rows available with the given filters */
     public get totalRows(): number { return this.matPaginator ? this.matPaginator.length : 0; }
+
+    public get allowInsertLike() { return !this.allowSelection; }
 
     /** FilterManagerComponent will be visible when this is true */
     public showFilters = false;
@@ -80,7 +94,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         private router: Router,
         private snackBar: MatSnackBar,
         private backend: TableService,
-        private dataSource: ApiDataSource,
+        public dataSource: ApiDataSource,
         private renderer: Renderer2,
         private layoutHelper: LayoutHelper
     ) {}
@@ -105,8 +119,10 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             .subscribe((meta: TableMeta) => {
                 const names = meta.headers.map((h) => h.name);
 
-                // Add the "insert like" row
-                names.unshift('__insertLike');
+                if (this.allowInsertLike)
+                    // Add the "insert like" row
+                    names.unshift('__insertLike');
+
                 this.columnNames = names;
 
                 const flattened = flatten(meta.constraints.map((c) => c.constraints));
@@ -155,7 +171,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             // Add 1 for the header row
             const expectedRows = tableData.length + 1;
             // Add 1 for the "insert like" column
-            const expectedColumns = this.meta.headers.length + 1;
+            const expectedColumns = this.meta.headers.length + (this.allowInsertLike ? 1 : 0);
 
             // Angular Material updates the header cells first and then the
             // content cells, triggering two different updates. We want to
@@ -169,7 +185,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             this.recalculateTableLayout();
         });
 
-        this.layoutHelper.init(this.headerCells, this.contentCells);
+        this.layoutHelper.init(this.headerCells, this.contentCells, this.allowInsertLike);
 
         this.renderer.listen('body', 'mousemove', (event) => {
             if (this.layoutHelper.onMouseMove(event)) {
@@ -227,11 +243,15 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     }
 
     public onSortRequested(colIndex: number) {
+        // Prevent sorting when the user is currently resizing a column since
+        // that probably isn't what they're trying to do
         if (this.layoutHelper.pressed)
             return;
+        
+        const index = this.allowInsertLike ? colIndex - 1 : colIndex;
         // If there are N columns (including the insert like column), then there
         // are N - 1 sortable columns.
-        const sortDir = this.sortIndicators.toArray()[colIndex - 1].nextSort();
+        const sortDir = this.sortIndicators.toArray()[index].nextSort();
         const colName = this.columnNames[colIndex];
         this.sort$.next({ direction: sortDir, active: colName });
     }
@@ -246,6 +266,12 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         return this.router.navigate(['/forms', this.name.schema, this.name.name.raw], {
             queryParams: this.createQueryParams(row)
         });
+    }
+
+    public onRowClicked(row: SqlRow) {
+        if (this.allowSelection) {
+            this.rowSelected.next(row);
+        }
     }
 
     public onFiltersChanged(filters: Filter[]) {
@@ -264,6 +290,10 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     public isBlob(headerName: string) {
         const header = this.meta.headers.find((h) => h.name === headerName);
         return header === undefined ? false : header.type === 'blob';
+    }
+
+    public allowResizingAndSorting(colIndex: number) {
+        return this.allowInsertLike ? colIndex >= 1 : true;
     }
 
     public onResizerClick(event: MouseEvent) {
