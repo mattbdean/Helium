@@ -15,7 +15,7 @@ Make sure to have [yarn](https://yarnpkg.com/lang/en/docs/install/) and [Node.js
 ```sh
 $ git clone https://github.com/mattbdean/Helium
 $ cd Helium
-$ git checkout tags/v1.0.0-alpha
+$ git checkout tags/v1.0.0-beta
 $ yarn install
 ```
 
