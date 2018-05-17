@@ -53,7 +53,8 @@ describe('ApiDataSource', () => {
         sort: Observable.of({ active: 'pk', direction: 'desc' }) as any,
         filters: {
             changed: Observable.of([{ op: 'eq', param: 'pk', value: '55'}])
-        } as any
+        } as any,
+        allowInsertLike: true
     });
 
     let source: ApiDataSource;
@@ -141,7 +142,6 @@ describe('ApiDataSource', () => {
             source.connect(collectionViewer).subscribe((data) => {
                 expect(data).to.have.lengthOf(1);
                 expect(data[0]).to.deep.equal({
-                    __insertLike: true,
                     date: now.format('l'),
                     datetime: now.format('LLL'),
                     boolean: true
@@ -155,8 +155,8 @@ describe('ApiDataSource', () => {
         }));
 
         it('should update the paginator length after every content response', fakeAsync(() => {
-            const { paginator, sort, filters } = createOtherComponents();
-            source.init({ paginator, sort, filters });
+            const { paginator, sort, filters, allowInsertLike } = createOtherComponents();
+            source.init({ paginator, sort, filters, allowInsertLike });
             contentStub.returns(Observable.of({
                 data: [{ pk: '0' }],
                 totalRows: 100,

@@ -5,7 +5,8 @@ import {
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import {
     MatButtonModule, MatCardModule,
-    MatIconModule
+    MatIconModule,
+    MatDialogModule
 } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
@@ -106,6 +107,7 @@ describe('PartialFormComponent', () => {
             ],
             imports: [
                 MatButtonModule,
+                MatDialogModule,
                 MatIconModule,
                 MatCardModule,
                 NoopAnimationsModule,

@@ -147,7 +147,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         this.dataSource.init({
             paginator: this.matPaginator,
             sort: this.sort$,
-            filters: this.filterManager
+            filters: this.filterManager,
+            allowInsertLike: this.allowInsertLike
         });
 
         const fakeCollectionViewer: CollectionViewer = {
