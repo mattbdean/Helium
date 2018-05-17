@@ -1,6 +1,6 @@
 {
   "name": "helium",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-beta",
   "description": "Svoboda Lab experiment metadata collection and standardization",
   "scripts": {
     "build": "gulp build && ng build",
