@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import {
     MatPaginatorModule, MatSnackBarModule, MatSortModule,
     MatTableModule
@@ -8,13 +8,12 @@ import {
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-
 import * as chai from 'chai';
 import { clone } from 'lodash';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-
+import { CompoundConstraint } from '../../../../common/api';
 import { Constraint, SqlRow, TableDataType, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/responses';
 import { TableName } from '../../common/table-name.class';
@@ -59,21 +58,41 @@ describe('DatatableComponent', () => {
 
     const mockTableMeta = (name: string,
                            headerTypes: TableDataType[],
-                           primaryKeys: TableDataType[] = []): TableMeta => ({
+                           primaryKeys: TableDataType[] = []): TableMeta => {
+        const constraints: Constraint[] = primaryKeys.map((t): Constraint =>
+            ({ localColumn: t, type: 'primary', ref: null }));
 
-        schema: 'schema',
-        name,
-        headers: headerTypes.map((t) => ({ name: t, type: t } as any)),
-        totalRows: 0,
-        constraints: [
-            ...primaryKeys.map((t): Constraint => ({ localColumn: t, type: 'primary', ref: null }))
-        ],
-        comment: 'description',
-        parts: []
-    });
+        const compoundConstraint: CompoundConstraint = {
+            name: 'PRIMARY',
+            type: 'primary',
+            constraints
+        };
+
+        return {
+            schema: 'schema',
+            name,
+            headers: headerTypes.map((t) => ({ name: t, type: t } as any)),
+            totalRows: 0,
+            constraints: [compoundConstraint],
+            comment: 'description',
+            parts: []
+        };
+    };
 
     const paginatedResponse = (data: SqlRow[]): Observable<PaginatedResponse<SqlRow[]>> =>
-        Observable.of({ size: data.length, data: clone(data), totalRows: 1000 });
+        // delay(0) is required here to delay change detection until the next
+        // cycle
+        Observable.of({ size: data.length, data: clone(data), totalRows: 1000 }).delay(0);
+
+    const updateAllData = () => {
+        // Detect the changes and pull in mockTableMeta (synchronous) and start
+        // paginatedResponse (async)
+        fixture.detectChanges();
+        // Wait for paginatedResponse to finish (aka wait until next event loop)
+        tick();
+        // Detect changes again to display the data
+        fixture.detectChanges();
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -92,7 +111,7 @@ describe('DatatableComponent', () => {
                 ApiDataSource,
                 { provide: TableService, useValue: tableServiceStub },
                 { provide: Router, useValue: routerStub },
-                { provide: LayoutHelper, useValue: layoutHelperStub }
+                { provide: LayoutHelper, useValue: layoutHelperStub },
             ],
             schemas: [
                 // Ignore irrelevant children
@@ -125,8 +144,7 @@ describe('DatatableComponent', () => {
         expect(de.query(By.css('mat-table'))).to.not.exist;
     });
 
-    // TODO no idea why this is failing
-    it.skip('should render blob and null values specially', () => {
+    it('should render blob and null values specially', fakeAsync(() => {
         // Set up the table and its data
         metaStub.returns(Observable.of(mockTableMeta(DEFAULT_TABLE_NAME, ['integer', 'blob'])));
         contentStub.returns(paginatedResponse([
@@ -134,7 +152,8 @@ describe('DatatableComponent', () => {
             { integer: null, blob: 'foo' },
             { integer: 4,    blob: 'bar' }
         ]));
-        fixture.detectChanges();
+
+        updateAllData();
 
         const [firstRow, secondRow] = de.queryAll(By.css('mat-row'))
             .map((row) => row.queryAll(By.css('mat-cell')));
@@ -145,7 +164,7 @@ describe('DatatableComponent', () => {
         const specialCells = [firstRow[1], firstRow[2], secondRow[2]];
         for (const specialCell of specialCells) {
             expect(specialCell.query(By.css('span.special-cell'))).to.exist;
-        }
+        } 
 
         // Otherwise the cells should be rendered normally
         const normalCells = [secondRow[1]];
@@ -155,7 +174,7 @@ describe('DatatableComponent', () => {
 
         // Make sure we're rendering a string representation of the null value
         expect(firstRow[1].nativeElement.textContent.trim()).to.equal('null');
-    });
+    }));
 
     it('should include a header for every element of data', () => {
         const colNames: TableDataType[] = ['integer', 'float', 'boolean'];
@@ -187,7 +206,8 @@ describe('DatatableComponent', () => {
         expect(de.queryAll(By.css('h1'))[0].nativeElement.textContent.trim()).to.equal(expectedTableName);
     });
 
-    it('should show a message when there is no data in the table', () => {
+    // TODO currently fails because ng-inline-svg attempts to make an XHR request
+    it.skip('should show a message when there is no data in the table', fakeAsync(() => {
         // There's no data so we should expect to see the message here
         fixture.detectChanges();
         expect(de.query(By.css('.no-data-message'))).to.exist;
@@ -198,10 +218,10 @@ describe('DatatableComponent', () => {
         metaStub.returns(Observable.of(mockTableMeta(newName.name.raw, ['float'])));
         contentStub.returns(paginatedResponse([{ float: 1 }]));
         comp.name = newName;
-        fixture.detectChanges();
 
+        updateAllData();
         expect(de.query(By.css('.no-data-message'))).to.not.exist;
-    });
+    }));
 
     it('should show a progress bar when switching to a new table', () => {
         contentStub.returns(Observable.never());
@@ -211,14 +231,14 @@ describe('DatatableComponent', () => {
             .to.not.be.undefined;
     });
 
-    // TODO no idea why this is failing
-    it.skip('should render an extra column for the "insert like" row at the beginning', () => {
+    // TODO currently fails because ng-inline-svg attempts to make an XHR request
+    it.skip('should render an extra column for the "insert like" row at the beginning', fakeAsync(() => {
         // Give the table some data
         contentStub.returns(paginatedResponse([{ integer: 4 }]));
 
         const routerSpy = sinon.spy(router, 'navigate');
 
-        fixture.detectChanges();
+        updateAllData();
 
         const headers = de.queryAll(By.css('mat-header-cell'));
         // By default only one column is created, so that one column plus the
@@ -232,7 +252,7 @@ describe('DatatableComponent', () => {
         // The only row we gave the table is this one:
         const query = { queryParams: { row: JSON.stringify({ integer: 4 }) }};
         expect(routerSpy).to.have.been.calledWithExactly(route, query);
-    });
+    }));
 
     it.skip('should allow selections when [selectionMode] is "one"');
 });

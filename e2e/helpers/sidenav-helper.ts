@@ -25,7 +25,10 @@ export class SidenavHelper {
 
     /** The value of the currently selected schema */
     public selectedSchema() {
-        return browser.element(by.css('div.mat-select-value')).getText();
+        // There may be more than one mat-select (for example, the
+        // MatPaginator's page size selector), but the first one is most likely
+        // going to be the selected schema since it's at the top of the DOM.
+        return element.all(by.css('div.mat-select-value')).first().getText();
     }
 
     /** Waits until the sidenav is no longer visible */

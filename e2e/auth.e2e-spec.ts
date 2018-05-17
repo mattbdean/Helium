@@ -104,7 +104,7 @@ describe('Authentication', () => {
         it('should automatically load the available schemas and choose one', async () => {
             // Should pick the first one alphabetically (unless that happens to be
             // information_schema)
-            await expect(sidenav.selectedSchema()).to.eventually.equal('helium');
+            await expect(sidenav.selectedSchema()).to.eventually.equal('compound_fk_test');
 
             // There should be at least a few tables
             await expect(sidenav.tables()).to.eventually.have.length.above(0);
@@ -127,11 +127,12 @@ describe('Authentication', () => {
         });
 
         it('should select the schema of the schema being viewed, if there is one', async () => {
+            const defaultSchema = 'compound_fk_test';
             const expectations: Array<[string, string]> = [
-                [ '/', 'helium' ], // Default schema is chosen alphabetically
+                [ '/', defaultSchema ], // Default schema is chosen alphabetically
                 [ '/tables/helium2', 'helium2' ],
                 [ '/tables/helium2/cross_schema_ref_test', 'helium2' ],
-                [ '/tables/unknown_schema', 'helium' ], // Should fall back to default
+                [ '/tables/unknown_schema', defaultSchema ], // Should fall back to default
                 [ '/forms/helium2', 'helium2' ]
             ];
 

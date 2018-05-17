@@ -6,7 +6,7 @@ export interface TableMeta {
     name: string;
     headers: TableHeader[];
     totalRows: number;
-    constraints: Constraint[];
+    constraints: CompoundConstraint[];
     comment: string;
     parts: TableName[];
 }
@@ -125,6 +125,42 @@ export interface Constraint {
         table: string,
         column: string
     } | null;
+}
+
+export interface RawConstraint extends Constraint {
+    /**
+     * The name of the constraint, as reported by MySQL. Primary keys usually
+     * have the name 'PRIMARY' while foreign key constraints have unique names
+     * within their schema.
+     */
+    name: string;
+
+    /**
+     * The index of this particular constraint within the compound constraint.
+     * If not a compound constraint, this will always be 0.
+     */
+    index: number;
+}
+
+/**
+ * A compound constraint is made up of several individual constraints. Each
+ * constraint in the `constraints` array is located at its index. For example,
+ * if a constraint has an index of 2, it will appear in index 2 of the
+ * constraints array.
+ */
+export interface CompoundConstraint {
+    /**
+     * The name of the constraint. For primary keys, this will be `PRIMARY`. For
+     * unique constraints, this will be the name of the column, and for foreign
+     * keys that aren't assigned an explicit name, this will usually be
+     * something like `{table_name}_ibfk_{index}`.
+     */
+    name: string;
+
+    type: ConstraintType;
+
+    /** The individual constraints that make up this compound constraint */
+    constraints: Constraint[];
 }
 
 export type ConstraintType = 'primary' | 'foreign' | 'unique';

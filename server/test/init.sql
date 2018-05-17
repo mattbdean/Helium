@@ -13,6 +13,7 @@ DROP USER 'user'@'%';
 # Create the user again to ensure that the user exists
 GRANT ALL ON helium.* TO 'user'@'%' IDENTIFIED BY 'password';
 GRANT ALL ON helium2.* TO 'user'@'%';
+GRANT ALL ON compound_fk_test.* TO 'user'@'%';
 
 # Other DB for cross-schema testing
 DROP DATABASE IF EXISTS helium2;
@@ -21,6 +22,10 @@ CREATE DATABASE helium2 CHARACTER SET utf8;
 # Ensure an empty database
 DROP DATABASE IF EXISTS helium;
 CREATE DATABASE helium CHARACTER SET utf8;
+
+# Compound foreign key testing
+DROP DATABASE IF EXISTS compound_fk_test;
+CREATE DATABASE compound_fk_test CHARACTER SET utf8;
 
 # Select the new database
 USE helium;
@@ -196,3 +201,42 @@ CREATE TABLE cross_schema_ref_test(
 INSERT INTO cross_schema_ref_test(pk, fk) VALUES
     (100, 0),
     (101, 1);
+
+USE compound_fk_test;
+
+CREATE TABLE table_a(
+  a_first INTEGER,
+  a_second INTEGER,
+  a_third INTEGER,
+  PRIMARY KEY(a_first, a_second, a_third)
+);
+
+CREATE TABLE table_b(
+  b_first INTEGER,
+  b_second INTEGER,
+  b_third INTEGER,
+  PRIMARY KEY(b_first, b_second, b_third)
+);
+
+CREATE TABLE fk_table(
+  pk INTEGER PRIMARY KEY,
+  ref_a_first INTEGER,
+  ref_a_second INTEGER,
+  ref_a_third INTEGER,
+  ref_b_first INTEGER,
+  ref_b_second INTEGER,
+  ref_b_third INTEGER,
+
+  FOREIGN KEY (ref_a_first, ref_a_second, ref_a_third) REFERENCES table_a(a_first, a_second, a_third),
+  FOREIGN KEY (ref_b_first, ref_b_second, ref_b_third) REFERENCES table_b(b_first, b_second, b_third)
+);
+
+INSERT INTO table_a VALUES
+  (1, 2, 3),
+  (4, 5, 6),
+  (7, 8, 9);
+
+INSERT INTO table_b VALUES
+  (101, 102, 103),
+  (104, 105, 106),
+  (107, 108, 109);

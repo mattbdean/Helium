@@ -27,9 +27,13 @@ describe('ApiDataSource', () => {
         } as TableHeader],
         totalRows: 0,
         constraints: [{
-            localColumn: 'pk',
-            ref: null,
-            type: 'primary'
+            name: 'PRIMARY',
+            type: 'primary',
+            constraints: [{
+                localColumn: 'pk',
+                ref: null,
+                type: 'primary'
+            }]
         }],
         comment: '',
         parts: []

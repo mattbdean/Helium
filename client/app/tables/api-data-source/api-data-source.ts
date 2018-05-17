@@ -27,6 +27,8 @@ export class ApiDataSource extends DataSource<SqlRow> {
     public set table(name: TableMeta | null) { this.table$.next(name); }
     public get table() { return this.table$.getValue(); }
 
+    public allowInsertLike = false;
+
     // External components
     private paginator: MatPaginator | null = null;
     private sort: Observable<Sort> = Observable.never();
@@ -103,11 +105,13 @@ export class ApiDataSource extends DataSource<SqlRow> {
     public init(components: {
         paginator: MatPaginator,
         sort: Observable<Sort>,
-        filters: FilterManagerComponent
+        filters: FilterManagerComponent,
+        allowInsertLike: boolean
     }) {
         this.paginator = components.paginator;
         this.sort = components.sort;
         this.filters = components.filters;
+        this.allowInsertLike = components.allowInsertLike;
 
         this.resetSubscriptions();
 
@@ -187,7 +191,8 @@ export class ApiDataSource extends DataSource<SqlRow> {
             }
 
             // Create a marker so that the "insert like" column gets rendered
-            row.__insertLike = true;
+            if (this.allowInsertLike)
+                row.__insertLike = true;
         }
 
         return copied;

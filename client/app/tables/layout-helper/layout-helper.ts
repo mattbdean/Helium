@@ -34,6 +34,8 @@ export class LayoutHelper {
      */
     public needsFullLayoutRecalculation = false;
 
+    public allowInsertLike = true;
+
     private _state: ResizeState;
 
     private widths: number[] = [];
@@ -52,10 +54,12 @@ export class LayoutHelper {
      */
     public init(
         headerCells: QueryList<ElementRef>,
-        contentCells: QueryList<ElementRef>
+        contentCells: QueryList<ElementRef>,
+        allowInsertLike: boolean
     ) {
         this.headerCells = headerCells;
         this.contentCells = contentCells;
+        this.allowInsertLike = allowInsertLike;
         this.resetState();
     }
 
@@ -209,8 +213,10 @@ export class LayoutHelper {
         // Compute the maximum width of each column
         this.minWidths = headers.map((h) => h.clientWidth);
 
-        this.widths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
-        this.minWidths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
+        if (this.allowInsertLike) {
+            this.widths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
+            this.minWidths[0] = LayoutHelper.INSERT_LIKE_COL_WIDTH;
+        }
 
         this.needsFullLayoutRecalculation = false;
     }
@@ -230,8 +236,8 @@ export interface ResizeState {
     pressed: boolean;
 
     /**
-     * Target column index. Includes the "insert like" column. Negative when
-     * there is no resizing happening
+     * Target column index. Includes the "insert like" column, if allowed.
+     * Negative when there is no resizing happening
      */
     colIndex: number;
 }

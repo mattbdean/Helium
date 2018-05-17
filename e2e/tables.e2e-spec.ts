@@ -17,8 +17,8 @@ describe('Tables', () => {
     });
 
     it('should be accessible from the sidenav', async () => {
-        await sidenav.browseData('Order');
-        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium\/order$/);
+        await sidenav.browseData('TableA');
+        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/compound_fk_test\/table_a$/);
     });
 
     it('should populate with data when nagivated to', async () => {

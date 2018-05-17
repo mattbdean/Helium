@@ -10,7 +10,8 @@ import {
     MatIconModule,
     MatInputModule,
     MatSelectModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatFormFieldModule
 } from '@angular/material';
 import { CoreModule } from '../core/core.module';
 import { ComponentMapperService } from './component-mapper/component-mapper.service';
@@ -83,6 +84,7 @@ const formControlComponents = [
         MatCardModule,
         MatCheckboxModule,
         MatDatepickerModule,
+        MatFormFieldModule,
         MatIconModule,
         MatInputModule,
         MatSelectModule,
