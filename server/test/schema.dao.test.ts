@@ -15,7 +15,6 @@ import { ConnectionConf } from '../src/db/connection-conf.interface';
 import { DatabaseHelper } from '../src/db/database.helper';
 import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
 import { ValidationError } from '../src/routes/api/validation-error';
-import { SIGSTOP } from 'constants';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;
@@ -57,7 +56,7 @@ describe('SchemaDao', () => {
 
     describe('tables', () => {
         it('should return an array of table names when a schema exists', async () => {
-            const schemaName = 'helium';
+            const schemaName = 'helium_sample';
             const data = await dao.tables(schemaName);
 
             // The TableName constructor has its own tests, don't go into too
@@ -98,7 +97,7 @@ describe('SchemaDao', () => {
             // Request that we sort some row (defined above) in a particular
             // direction
             const sort: Sort = { by: 'pk', direction: 'asc'};
-            const data = (await dao.content('helium', 'big_table', { sort })).rows;
+            const data = (await dao.content('helium_sample', 'big_table', { sort })).rows;
 
             // Make sure we're still returning 25 elements by default
             joi.assert(data, joi.array().length(25));
@@ -139,7 +138,7 @@ describe('SchemaDao', () => {
         });
 
         it('should format dates and datetimes', async () => {
-            const data = await dao.content('helium', 'datatypeshowcase');
+            const data = await dao.content('helium_sample', 'datatypeshowcase');
 
             for (const row of data.rows) {
                 if (row.date !== null)
@@ -151,7 +150,7 @@ describe('SchemaDao', () => {
         });
 
         it('should format blobs', async () => {
-            const data = await dao.content('helium', 'datatypeshowcase');
+            const data = await dao.content('helium_sample', 'datatypeshowcase');
 
             for (const row of data.rows) {
                 if (row.blob !== null) {
@@ -162,7 +161,7 @@ describe('SchemaDao', () => {
 
         describe('filters', () => {
             const fetch = (tableName: string, filters: Filter[]) =>
-                dao.content('helium', tableName, {}, filters);
+                dao.content('helium_sample', tableName, {}, filters);
 
             it('should return the number of rows that apply to the given filters', async () => {
                 const data = await fetch('big_table', [{ param: 'pk', op: 'lt', value: '101' }]);
@@ -348,7 +347,7 @@ describe('SchemaDao', () => {
 
     describe('meta', () => {
         it('should return a TableMeta object with fully resolved constraints', async () => {
-            const schemaName = 'helium';
+            const schemaName = 'helium_sample';
             const tableName = 'shipment';
             const cols = 6;
             const numConstraints = 2;
@@ -370,9 +369,9 @@ describe('SchemaDao', () => {
 
         it('should include TableNames for part tables when applicable', async () => {
             // helium.master has 2 part tables
-            expect((await dao.meta('helium', 'master')).parts).to.have.lengthOf(2);
+            expect((await dao.meta('helium_sample', 'master')).parts).to.have.lengthOf(2);
             // helium.master__part is a part table
-            expect((await dao.meta('helium', 'master__part')).parts).to.have.lengthOf(0);
+            expect((await dao.meta('helium_sample', 'master__part')).parts).to.have.lengthOf(0);
         });
 
         it('should throw an Error when the schema doesn\'t exist', async () => {
@@ -381,13 +380,13 @@ describe('SchemaDao', () => {
         });
 
         it('should throw an Error when the table doesn\'t exist', async () => {
-            await expect(dao.meta('helium', 'unknown_table')).to.eventually.be.rejected;
+            await expect(dao.meta('helium_sample', 'unknown_table')).to.eventually.be.rejected;
         });
     });
 
     describe('constraints', () => {
         it('should identify basic features about a constraint', async () => {
-            const constraints = await dao.constraints('helium', 'master');
+            const constraints = await dao.constraints('helium_sample', 'master');
             expect(constraints).to.have.lengthOf(1);
             const constraint = constraints[0];
 
@@ -403,7 +402,7 @@ describe('SchemaDao', () => {
         });
 
         it('should identify foreign constraints', async () => {
-            const constraints = await dao.constraints('helium', 'master__part');
+            const constraints = await dao.constraints('helium_sample', 'master__part');
             const foreignKeys = constraints.filter((c) => c.type === 'foreign');
 
             expect(foreignKeys).to.have.lengthOf(1);
@@ -413,7 +412,7 @@ describe('SchemaDao', () => {
                 localColumn: 'master',
                 type: 'foreign',
                 ref: {
-                    schema: 'helium',
+                    schema: 'helium_sample',
                     table: 'master',
                     column: 'pk'
                 }
@@ -423,7 +422,7 @@ describe('SchemaDao', () => {
         });
 
         it('should identify unique constraints', async () => {
-            const constraints = await dao.constraints('helium', 'datatypeshowcase');
+            const constraints = await dao.constraints('helium_sample', 'datatypeshowcase');
             const uniqueConstraints = constraints.filter((c) => c.type === 'unique');
 
             expect(uniqueConstraints).to.have.lengthOf(1);
@@ -442,7 +441,7 @@ describe('SchemaDao', () => {
 
     describe('resolveConstraints', () => {
         it('should resolve reference chains within the same schema', async () => {
-            const constraints = await dao.constraints('helium', 'shipment');
+            const constraints = await dao.constraints('helium_sample', 'shipment');
             const resolved = await dao.resolveConstraints(constraints);
 
             // In the actual schema:
@@ -458,7 +457,7 @@ describe('SchemaDao', () => {
                 type: 'foreign',
                 localColumn: 'product_id',
                 ref: {
-                    schema: 'helium',
+                    schema: 'helium_sample',
                     table: 'product',
                     column: 'product_id'
                 }
@@ -466,15 +465,15 @@ describe('SchemaDao', () => {
         });
 
         it('should resolve reference chains that involve more than one schema', async () => {
-            const constraints = await dao.constraints('helium2', 'cross_schema_ref_test');
+            const constraints = await dao.constraints('helium_cross_schema_ref_test', 'cross_schema_ref_test');
             const resolved = await dao.resolveConstraints(constraints);
 
             // In the actual schema:
-            // 1. helium2.cross_schema_ref_test.fk ==> helium.order.customer_id
-            // 2.         helium.order.customer_id ==> helium.customer.customer_id
+            // 1. helium_cross_schema_ref_test.cross_schema_ref_test.fk ==> helium.order.customer_id
+            // 2.                       helium_sample.order.customer_id ==> helium.customer.customer_id
             //
             // We expect to see:
-            // 1. helium2.cross_schema_ref_test.fk ==> helium.customer.customer_id
+            // 1. helium_cross_schema_ref_test.cross_schema_ref_test.fk ==> helium.customer.customer_id
 
             expect(resolved).to.deep.include({
                 name: 'cross_schema_ref_test_ibfk_1',
@@ -482,7 +481,7 @@ describe('SchemaDao', () => {
                 type: 'foreign',
                 localColumn: 'fk',
                 ref: {
-                    schema: 'helium',
+                    schema: 'helium_sample',
                     table: 'customer',
                     column: 'customer_id'
                 }
@@ -493,7 +492,7 @@ describe('SchemaDao', () => {
     describe('resolveCompoundConstraints', () => {
         it('should create one compound constraint for each unique constraint name', async () => {
             const compoundConstraints = SchemaDao.resolveCompoundConstraints(
-                await dao.constraints('compound_fk_test', 'fk_table'));
+                await dao.constraints('helium_compound_fk_test', 'fk_table'));
             
             // 1 PK and 2 FK's
             expect(compoundConstraints).to.have.lengthOf(3);
@@ -615,7 +614,7 @@ describe('SchemaDao', () => {
         };
 
         it('should insert data into the given table', async () => {
-            await insertAndAssert('helium', {
+            await insertAndAssert('helium_sample', {
                 customer: [{
                     customer_id: random(100000),
                     name: 'test name'
@@ -627,7 +626,7 @@ describe('SchemaDao', () => {
             // Create some random data here
             const masterPk = randInt();
 
-            await insertAndAssert('helium', {
+            await insertAndAssert('helium_sample', {
                 master: [{
                     pk: masterPk
                 }],
@@ -639,7 +638,7 @@ describe('SchemaDao', () => {
         });
 
         it('should allow inserting zero rows into a part table', async () => {
-            await insertAndAssert('helium', {
+            await insertAndAssert('helium_sample', {
                 master: [{ pk: random(10000000) }],
                 master__part: []
             });
@@ -656,7 +655,7 @@ describe('SchemaDao', () => {
 
     describe('pluck', () => {
         it('should throw an Error if the given keys don\'t identify exactly one row', async () => {
-            await expect(dao.pluck('helium', 'master', { pk : '999 ' }))
+            await expect(dao.pluck('helium_sample', 'master', { pk : '999 ' }))
                 .to.be.rejectedWith(ValidationError);
         });
 
@@ -666,18 +665,18 @@ describe('SchemaDao', () => {
         });
 
         it('should return only that row if it does not have any part table entries', async () => {
-            expect(await dao.pluck('helium', 'master', { pk: '1000' }))
+            expect(await dao.pluck('helium_sample', 'master', { pk: '1000' }))
                 .to.deep.equal({ master: [{ pk: 1000 }]});
         });
 
         it('should return all data in all part tables associated with the specified row', async () => {
-            expect(await dao.pluck('helium', 'master', { pk: '1001' }))
+            expect(await dao.pluck('helium_sample', 'master', { pk: '1001' }))
                 .to.deep.equal({
                     master: [{ pk: 1001 }],
                     master__part: [{ part_pk: 100, master: 1001 }]
                 });
 
-            expect(await dao.pluck('helium', 'master', { pk: '1002' }))
+            expect(await dao.pluck('helium_sample', 'master', { pk: '1002' }))
                 .to.deep.equal({
                     master: [
                         { pk: 1002 }
@@ -693,7 +692,7 @@ describe('SchemaDao', () => {
         });
 
         it('should format dates, datetimes, and blobs', async () => {
-            const data = await dao.pluck('helium', 'datatypeshowcase', { pk: '100' });
+            const data = await dao.pluck('helium_sample', 'datatypeshowcase', { pk: '100' });
 
             const row = data.datatypeshowcase[0];
             expect(moment(row.date, DATE_FORMAT, true).isValid()).to.be.true;
@@ -702,7 +701,7 @@ describe('SchemaDao', () => {
         });
 
         it('should format blobs', async () => {
-            const data = await dao.content('helium', 'datatypeshowcase');
+            const data = await dao.content('helium_sample', 'datatypeshowcase');
 
             for (const row of data.rows) {
                 if (row.blob !== null) {

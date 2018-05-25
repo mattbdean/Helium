@@ -18,11 +18,11 @@ describe('Tables', () => {
 
     it('should be accessible from the sidenav', async () => {
         await sidenav.browseData('TableA');
-        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/compound_fk_test\/table_a$/);
+        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium_compound_fk_test\/table_a$/);
     });
 
     it('should populate with data when nagivated to', async () => {
-        await page.navigateTo('helium', 'order');
+        await page.navigateTo('helium_sample', 'order');
 
         // 6 normal headers, 1 for the 'insert like' column
         await expect(page.headers().count()).to.eventually.equal(7);
@@ -33,27 +33,27 @@ describe('Tables', () => {
 
     it('should allow the user to click a FK icon to navigate to the head of the reference chain', async () => {
         // Make sure it works across different schemas
-        await page.navigateTo('helium2', 'cross_schema_ref_test');
+        await page.navigateTo('helium_cross_schema_ref_test', 'cross_schema_ref_test');
 
         const link = await page.getForeignKeyHeaderHref('fk');
 
         // In the actual schema:
-        // 1. helium2.cross_schema_ref_test.fk ==> helium.order.customer_id
-        // 2.         helium.order.customer_id ==> helium.customer.customer_id
+        // 1. helium_cross_schema_ref_test.cross_schema_ref_test.fk ==> helium.order.customer_id
+        // 2.                       helium_sample.order.customer_id ==> helium.customer.customer_id
         //
         // We expect to see:
-        // 1. helium2.cross_schema_ref_test.fk ==> helium.customer.customer_id
+        // 1. helium_cross_schema_ref_test.cross_schema_ref_test.fk ==> helium.customer.customer_id
 
-        await expect(link).to.match(/\/tables\/helium\/customer$/);
+        await expect(link).to.match(/\/tables\/helium_sample\/customer$/);
     });
 
     it('should allow the user to choose a table after navigating to one that doesn\'t exist', async () => {
         // This is mostly to ensure the Observable chain doesn't break when it
         // encounters an error
 
-        await page.navigateTo('helium', 'unknown_table');
+        await page.navigateTo('helium_sample', 'unknown_table');
 
         await sidenav.browseData('Order');
-        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium\/order$/);
+        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium_sample\/order$/);
     });
 });

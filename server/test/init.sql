@@ -1,8 +1,8 @@
 ## Have mysql execute these commands to get the testing environment up and
 ## running:
-## mysql -u root -p < init.sql
+## mysql -h 127.0.0.1 -u root -p < init.sql
 
-# Recommended datajoint
+# Recommended by datajoint
 SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
 
 # Ensure the user exists by creating it
@@ -11,24 +11,24 @@ GRANT ALL ON *.* TO 'user'@'%' IDENTIFIED BY 'password';
 # IF EXISTS) with MySQL 5.7
 DROP USER 'user'@'%';
 # Create the user again to ensure that the user exists
-GRANT ALL ON helium.* TO 'user'@'%' IDENTIFIED BY 'password';
-GRANT ALL ON helium2.* TO 'user'@'%';
-GRANT ALL ON compound_fk_test.* TO 'user'@'%';
+GRANT ALL ON helium_sample.* TO 'user'@'%' IDENTIFIED BY 'password';
+GRANT ALL ON helium_cross_schema_ref_test.* TO 'user'@'%';
+GRANT ALL ON helium_compound_fk_test.* TO 'user'@'%';
 
 # Other DB for cross-schema testing
-DROP DATABASE IF EXISTS helium2;
-CREATE DATABASE helium2 CHARACTER SET utf8;
+DROP DATABASE IF EXISTS helium_cross_schema_ref_test;
+CREATE DATABASE helium_cross_schema_ref_test CHARACTER SET utf8;
 
 # Ensure an empty database
-DROP DATABASE IF EXISTS helium;
-CREATE DATABASE helium CHARACTER SET utf8;
+DROP DATABASE IF EXISTS helium_sample;
+CREATE DATABASE helium_sample CHARACTER SET utf8;
 
 # Compound foreign key testing
-DROP DATABASE IF EXISTS compound_fk_test;
-CREATE DATABASE compound_fk_test CHARACTER SET utf8;
+DROP DATABASE IF EXISTS helium_compound_fk_test;
+CREATE DATABASE helium_compound_fk_test CHARACTER SET utf8;
 
 # Select the new database
-USE helium;
+USE helium_sample;
 
 CREATE TABLE customer(
   customer_id INTEGER NOT NULL PRIMARY KEY,
@@ -189,20 +189,20 @@ CREATE PROCEDURE DO_WHILE()
 CALL DO_WHILE();
 
 # Create tables for the 2nd schema
-USE helium2;
+USE helium_cross_schema_ref_test;
 
 # The only purpose of this data is that it
 CREATE TABLE cross_schema_ref_test(
     pk INTEGER PRIMARY KEY,
     fk INTEGER,
-    FOREIGN KEY (fk) REFERENCES helium.order(customer_id)
+    FOREIGN KEY (fk) REFERENCES helium_sample.order(customer_id)
 );
 
 INSERT INTO cross_schema_ref_test(pk, fk) VALUES
     (100, 0),
     (101, 1);
 
-USE compound_fk_test;
+USE helium_compound_fk_test;
 
 CREATE TABLE table_a(
   a_first INTEGER,

@@ -27,14 +27,14 @@ describe('Forms', () => {
     });
 
     it('should allow us to open a form via the sidenav', async () => {
-        await browser.get('/tables/helium/customer');
+        await browser.get('/tables/helium_sample/customer');
         await sidenav.openForm('Customer');
-        await expect(browser.getCurrentUrl()).to.eventually.match(/\/forms\/helium\/customer$/);
+        await expect(browser.getCurrentUrl()).to.eventually.match(/\/forms\/helium_sample\/customer$/);
     });
 
     // This test is incredibly shaky
     it.skip('should open a snackbar after successful submit', async () => {
-        await page.navigateTo('helium', 'customer');
+        await page.navigateTo('helium_sample', 'customer');
 
         // Submit button should be disabled when we first load the data
         await expect(form.submitButton.isEnabled()).to.eventually.be.false;
@@ -61,14 +61,14 @@ describe('Forms', () => {
         await snackbar.action!!.button.click();
 
         // We should be redirected to the data
-        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium\/customer$/);
+        await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium_sample\/customer$/);
     });
 
     it('should open a prefilled form when the "insert like" button in the datatable is pressed', async () => {
-        await tablePage.navigateTo('helium', 'customer');
+        await tablePage.navigateTo('helium_sample', 'customer');
         await tablePage.insertLike(0);
 
-        await expect(browser.getCurrentUrl()).to.eventually.contain('/forms/helium/customer');
+        await expect(browser.getCurrentUrl()).to.eventually.contain('/forms/helium_sample/customer');
 
         const formData = await form.pluck('customer_id', 'name');
 
@@ -77,7 +77,7 @@ describe('Forms', () => {
     });
 
     it.skip('should allow inserting multiple part table entries with the master table', async () => {
-        await page.navigateTo('helium', 'master');
+        await page.navigateTo('helium_sample', 'master');
 
         // This table has 2 part tables
         await expect(page.partialForms().count()).to.eventually.equal(3);
@@ -101,7 +101,7 @@ describe('Forms', () => {
     });
 
     it('should prepopulate the form with default values', async () => {
-        await page.navigateTo('helium', 'defaults_test');
+        await page.navigateTo('helium_sample', 'defaults_test');
         const data = await form.pluck(
             'pk', 'int', 'float', 'date', 'datetime', 'datetime_now', 'boolean',
             'enum', 'no_default'
