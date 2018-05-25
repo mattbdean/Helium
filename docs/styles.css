@@ -9,9 +9,15 @@ header {
   background-color: #512DA8;
   display: flex;
   flex-direction: column;
+  color: white;
+}
+
+.header-main {
+  display: flex;
+  flex-grow: 1;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  color: white;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -60,6 +66,22 @@ nav a:hover {
   text-shadow: none;
   color: inherit;
   background-color: rgba(0, 0, 0, 0.12);
+}
+
+.gallery {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.gallery img {
+  max-height: 200px;
+}
+
+.gallery a[data-featherlight] {
+  margin: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.54);
 }
 
 section {

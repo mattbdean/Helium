@@ -4,24 +4,42 @@
         <title>Helium</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <link rel="stylesheet" href="styles.css">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.css" />
         <link href="https://fonts.googleapis.com/css?family=Roboto|Slabo+27px" rel="stylesheet"> 
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/noelboss/featherlight@1.7.13/release/featherlight.min.css">
+        <link rel="stylesheet" href="styles.css">
         <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     </head>
     <body>
         <header>
-            <div class="ptable-el">
-                <h1>He</h1>
-                <h2>Helium</h2>
+            <div class="header-main">
+                <div class="ptable-el">
+                    <h1>He</h1>
+                    <h2>Helium</h2>
+                </div>
+                <p>The open source DataJoint companion</p>
             </div>
-            <p>The open source DataJoint companion</p>
+
+            <nav>
+                <a href="https://github.com/mattbdean/Helium">GitHub</a>
+                <a href="https://github.com/mattbdean/Helium/blob/master/LICENSE">License</a>
+            </nav>
         </header>
 
-        <nav>
-            <a href="https://github.com/mattbdean/Helium">GitHub</a>
-            <a href="https://github.com/mattbdean/Helium/blob/master/LICENSE">License</a>
-        </nav>
+        <div class="gallery">
+            <a href="#" data-featherlight="screenshots/login.png">
+                <img src="screenshots/login.png" alt="Logging in">
+            </a>
+            <a href="#" data-featherlight="screenshots/filter.png">
+                <img src="screenshots/filter.png">
+            </a>
+            <a href="#" data-featherlight="screenshots/form.png">
+                <img src="screenshots/form.png">
+            </a>
+            <a href="#" data-featherlight="screenshots/form_part.png">
+                <img src="screenshots/form_part.png">
+            </a>
+        </div>
 
         <section>
             <h1>Works with any MySQL database</h1>
@@ -29,7 +47,7 @@
                 Helium was built to work with any MySQL database, but to be
                 aware of DataJoint conventions. As a result, Helium is smarter
                 than your average database companion and can understands
-                concepts like the difference between a manual and a computed
+                concepts such as the difference between a manual and a computed
                 table.
             </p>
         </section>
@@ -70,5 +88,17 @@
             by <a href="https://github.com/mattbdean">Matt Dean</a>
             for the <a href="https://www.janelia.org/lab/svoboda-lab">Svoboda Lab</a>
         </footer>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/noelboss/featherlight@1.7.13/release/featherlight.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/gh/noelboss/featherlight@1.7.13/release/featherlight.gallery.min.js"></script>
+        <script>
+            $('.gallery a').featherlightGallery({
+                previousIcon: '&#9664;',
+                nextIcon: '&#9654;',
+                galleryFadeIn: 100,
+                galleryFadeOut: 300
+            });
+        </script>
     </body>
 </html>
