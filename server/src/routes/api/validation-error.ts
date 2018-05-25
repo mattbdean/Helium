@@ -1,5 +1,5 @@
 
-import { ErrorCode } from './error-code.enum';
+import { ErrorCode } from './error-code';
 
 export class ValidationError extends Error {
     constructor(msg: string, public readonly code: ErrorCode, public readonly relevantInput?: any) {

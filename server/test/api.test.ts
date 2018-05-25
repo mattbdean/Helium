@@ -7,8 +7,8 @@ import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { Filter } from '../src/common/api';
 import { QueryHelper } from '../src/db/query-helper';
+import { SchemaDao } from '../src/db/schema.dao';
 import { Helium } from '../src/helium';
-import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
 import { RequestContext } from './api.test.helper';
 
 chai.use(sinonChai);

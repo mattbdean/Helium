@@ -10,11 +10,11 @@ import {
     ErrorResponse,
     PaginatedResponse
 } from '../../../common/responses';
+import { DaoFactory } from '../../../db/dao.factory';
 import { DatabaseHelper } from '../../../db/database.helper';
+import { SchemaDao, Sort } from '../../../db/schema.dao';
 import { debug, NODE_ENV, NodeEnv } from '../../../env';
-import { DaoFactory } from '../dao.factory';
 import { ValidationError } from '../validation-error';
-import { SchemaDao, Sort } from './schema.dao';
 
 export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();

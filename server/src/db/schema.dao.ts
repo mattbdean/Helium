@@ -2,20 +2,19 @@ import * as joi from 'joi';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import { MysqlSquel, ParamString, Select } from 'squel';
-import { CompoundConstraint } from '../../../../../common/api';
 import {
-    Constraint, ConstraintType, DefaultValue, Filter, RawConstraint, SqlRow,
-    TableDataType, TableHeader, TableMeta
-} from '../../../common/api';
+    CompoundConstraint, Constraint, ConstraintType, DefaultValue, Filter,
+    RawConstraint, SqlRow, TableDataType, TableHeader, TableMeta
+} from '../common/api';
 import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
-} from '../../../common/constants';
-import { TableInsert } from '../../../common/table-insert.interface';
-import { TableName } from '../../../common/table-name.class';
-import { unflattenTableNames } from '../../../common/util';
-import { QueryHelper } from '../../../db/query-helper';
-import { ValidationError } from '../validation-error';
+} from '../common/constants';
+import { TableInsert } from '../common/table-insert.interface';
+import { TableName } from '../common/table-name.class';
+import { unflattenTableNames } from '../common/util';
+import { QueryHelper } from '../db/query-helper';
+import { ValidationError } from '../routes/api/validation-error';
 import { TableInputValidator } from './schema-input.validator';
 
 /**

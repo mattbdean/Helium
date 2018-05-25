@@ -1,7 +1,7 @@
 import * as LRU from 'lru-cache';
 import * as hash from 'object-hash';
 import { createPool, Pool } from 'promise-mysql';
-import { ConnectionConf } from './connection-conf.interface';
+import { ConnectionConf } from './connection-conf';
 import { QueryHelper } from './query-helper';
 
 /**

@@ -1,8 +1,7 @@
 import { Request, Response, Router } from 'express';
-
 import { ErrorResponse } from '../../common/responses';
+import { DaoFactory } from '../../db/dao.factory';
 import { DatabaseHelper } from '../../db/database.helper';
-import { DaoFactory } from './dao.factory';
 import { loginRouter } from './login';
 import { schemasRouter } from './schemas';
 

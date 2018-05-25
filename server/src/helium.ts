@@ -1,14 +1,13 @@
 import * as bodyParser from 'body-parser';
-import { Application } from 'express';
 import * as express from 'express';
+import { Application } from 'express';
 import * as helmet from 'helmet';
 import * as logger from 'morgan';
 import * as path from 'path';
-
+import { DaoFactory } from './db/dao.factory';
 import { DatabaseHelper } from './db/database.helper';
+import { SchemaDao } from './db/schema.dao';
 import { api } from './routes/api';
-import { DaoFactory } from './routes/api/dao.factory';
-import { SchemaDao } from './routes/api/schemas/schema.dao';
 import { front } from './routes/front';
 
 export class Helium {

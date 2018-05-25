@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-
 import { TableTier } from '../../common/api';
 import { TableName } from '../../common/table-name.class';
 

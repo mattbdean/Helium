@@ -5,12 +5,11 @@ import * as joi from 'joi';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import { inspect } from 'util';
-
-import { TableHeader } from '../src/common/api';
-import { DATE_FORMAT, DATETIME_FORMAT } from '../src/common/constants';
-import { TableName } from '../src/common/table-name.class';
-import { TableInputValidator } from '../src/routes/api/schemas/schema-input.validator';
-import { SchemaDao } from '../src/routes/api/schemas/schema.dao';
+import { TableHeader } from '../../src/common/api';
+import { DATE_FORMAT, DATETIME_FORMAT } from '../../src/common/constants';
+import { TableName } from '../../src/common/table-name.class';
+import { TableInputValidator } from '../../src/db/schema-input.validator';
+import { SchemaDao } from '../../src/db/schema.dao';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

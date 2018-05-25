@@ -4,17 +4,17 @@ import * as chaiAsPromised from 'chai-as-promised';
 import * as joi from 'joi';
 import { orderBy, random, uniq, zipObject } from 'lodash';
 import * as moment from 'moment';
+import { Filter, RawConstraint } from '../../src/common/api';
 import {
     BLOB_STRING_REPRESENTATION,
     DATE_FORMAT,
     DATETIME_FORMAT
-} from '../../client/app/common/constants';
-import { Filter, RawConstraint } from '../src/common/api';
-import { TableInsert } from '../src/common/table-insert.interface';
-import { ConnectionConf } from '../src/db/connection-conf.interface';
-import { DatabaseHelper } from '../src/db/database.helper';
-import { SchemaDao, Sort } from '../src/routes/api/schemas/schema.dao';
-import { ValidationError } from '../src/routes/api/validation-error';
+} from '../../src/common/constants';
+import { TableInsert } from '../../src/common/table-insert.interface';
+import { ConnectionConf } from '../../src/db/connection-conf';
+import { DatabaseHelper } from '../../src/db/database.helper';
+import { SchemaDao, Sort } from '../../src/db/schema.dao';
+import { ValidationError } from '../../src/routes/api/validation-error';
 
 chai.use(chaiAsPromised);
 const expect = chai.expect;

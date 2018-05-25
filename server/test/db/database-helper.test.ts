@@ -4,8 +4,8 @@ import { range } from 'lodash';
 import { Pool } from 'promise-mysql';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { ConnectionConf } from '../src/db/connection-conf.interface';
-import { DatabaseHelper } from '../src/db/database.helper';
+import { ConnectionConf } from '../../src/db/connection-conf';
+import { DatabaseHelper } from '../../src/db/database.helper';
 
 chai.use(sinonChai);
 chai.use(chaiAsPromised);

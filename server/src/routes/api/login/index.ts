@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { ErrorResponse } from '../../../../../client/app/common/responses';
-import { ConnectionConf } from '../../../db/connection-conf.interface';
+import { ConnectionConf } from '../../../db/connection-conf';
 import { DatabaseHelper } from '../../../db/database.helper';
 
 export function loginRouter(db: DatabaseHelper): Router {
