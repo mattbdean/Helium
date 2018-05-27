@@ -1,0 +1,33 @@
+header {
+  height: 100vh;
+  min-height: 500px;
+}
+
+.ptable-el {
+  min-width: 300px;
+  min-height: 300px;
+}
+
+.ptable-el > h1 {
+  font-size: 8rem;
+}
+
+.ptable-el > h2 {
+  font-size: 2rem;
+}
+
+.gallery {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.gallery img {
+  max-height: 200px;
+}
+
+.gallery a[data-featherlight] {
+  margin: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.54);
+}

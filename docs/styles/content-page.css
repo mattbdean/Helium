@@ -1,0 +1,34 @@
+html {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-content {
+  flex-grow: 1;
+}
+
+header {
+  padding: 20px 0;
+}
+
+.header-main {
+  flex-direction: row;
+  padding-bottom: 10px;
+}
+
+.header-main > * {
+  margin: 0px 10px;
+}
+
+.ptable-el {
+  margin: 5px;
+}
+
+.ptable-el h1 {
+  font-size: 2rem;
+  padding: 8px;
+}
