@@ -1,9 +1,8 @@
-import { BaseTableName, TableTier } from './api';
+import { BaseTableName, TableTier, TransformedName } from './api';
 import { TABLE_TIER_PREFIX_MAPPING } from './constants';
 import {
     TableNameParams,
-    TransformedName
-} from './table-name-params.interface';
+} from './table-name-params';
 
 const masterPartSeparator = '__';
 

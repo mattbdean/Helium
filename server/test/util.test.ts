@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as _ from 'lodash';
 import { MasterTableName } from '../../common/api';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 import { unflattenTableNames } from '../../common/util';
 
 describe('common/util', () => {

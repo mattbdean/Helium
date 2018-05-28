@@ -6,9 +6,8 @@ import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { SqlRow, TableHeader, TableMeta } from '../../common/api';
+import { PaginatedResponse, SqlRow, TableHeader, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { PaginatedResponse } from '../../common/responses';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from './api-data-source';
 
@@ -64,7 +63,7 @@ describe('ApiDataSource', () => {
 
     beforeEach(() => {
         api = {
-            content: (_): Observable<PaginatedResponse<SqlRow[]>> =>
+            content: (_): Observable<PaginatedResponse<SqlRow>> =>
                 Observable.never()
         } as TableService;
         contentStub = sinon.stub(api, 'content');
@@ -124,7 +123,7 @@ describe('ApiDataSource', () => {
 
             const now = moment();
 
-            const res: PaginatedResponse<SqlRow[]> = {
+            const res: PaginatedResponse<SqlRow> = {
                 totalRows: 1,
                 size: 1,
                 data: [{

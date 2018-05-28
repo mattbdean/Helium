@@ -1,9 +1,4 @@
-import { TableTier } from './api';
-
-export interface TransformedName {
-    raw: string;
-    clean: string;
-}
+import { TableTier, TransformedName } from './api';
 
 export interface TableNameParams {
     name: TransformedName;

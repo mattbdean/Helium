@@ -20,7 +20,7 @@ import { Router } from '@angular/router';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
-import { TableName } from './common/table-name.class';
+import { TableName } from './common/table-name';
 import { AuthService } from './core/auth/auth.service';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table/table.service';

@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { inspect } from 'util';
 import { TableHeader } from '../../src/common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../src/common/constants';
-import { TableName } from '../../src/common/table-name.class';
+import { TableName } from '../../src/common/table-name';
 import { TableInputValidator } from '../../src/db/schema-input.validator';
 import { SchemaDao } from '../../src/db/schema.dao';
 

@@ -5,12 +5,12 @@ import * as joi from 'joi';
 import { orderBy, random, uniq, zipObject } from 'lodash';
 import * as moment from 'moment';
 import { Filter, RawConstraint } from '../../src/common/api';
+import { TableInsert } from '../../src/common/api/table-insert';
 import {
     BLOB_STRING_REPRESENTATION,
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../src/common/constants';
-import { TableInsert } from '../../src/common/table-insert.interface';
 import { ConnectionConf } from '../../src/db/connection-conf';
 import { DatabaseHelper } from '../../src/db/database.helper';
 import { SchemaDao, Sort } from '../../src/db/schema.dao';

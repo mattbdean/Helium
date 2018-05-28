@@ -10,8 +10,8 @@ import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
 } from '../common/constants';
-import { TableInsert } from '../common/table-insert.interface';
-import { TableName } from '../common/table-name.class';
+import { TableInsert } from '../common/api/table-insert';
+import { TableName } from '../common/table-name';
 import { unflattenTableNames } from '../common/util';
 import { QueryHelper } from '../db/query-helper';
 import { ValidationError } from '../routes/api/validation-error';

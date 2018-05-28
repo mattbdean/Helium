@@ -1,7 +1,7 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material';
 import { SqlRow } from '../../common/api';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 
 /**
  * Uses a DatatableComponent to allow the user to pick out a particular row.

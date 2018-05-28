@@ -2,7 +2,7 @@ import {
     browser, by, element, ElementFinder,
     ExpectedConditions
 } from 'protractor';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 
 /**
  * Helper class to access data shown in the sidenav
