@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Helium</title>
+        <title>Helium - API Documentation</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.css" />
@@ -37,7 +37,7 @@
                 <p>
                     Helium does not have a direct authentication system, but rather creates database connections on
                     behalf of the user. As a result, Helium is capable of authenticating with any database using the
-                    MySQL protocol. A connection is uniquely identified by the username, password, and host URL.
+                    MySQL protocol. A connection is uniquely identified by the username, password, and host domain.
                     Currently, multiple users using the same connection works, but is unsupported behavior.
                 <p>Once a connection has been established, an API key will be provided to the consumer. Every endpoint
                     besides <code>POST /api/v1/login</code> requires a <code>X-API-Key</code> header whose value is the
@@ -57,8 +57,10 @@
 ["foo", "bar", "baz"]
                 </pre>
 
-                <p>Sessions automatically expire after a certain period of time (30 minutes by default). Attempting to
-                    use the API key after that will result in a 401 Unauthorized.
+                <p>Sessions automatically expire after being out of use for a certain period of time (30 minutes by
+                    default). Attempting to use the API key after that will result in a 401 Unauthorized. Every API
+                    response using an API key will have a <code>X-Session-Expiration</code> header whose value is the
+                    unix time (milliseconds) at which the API key expires.
 
                 <h1>API Endpoints</h1>
 
@@ -98,6 +100,8 @@
 
                 <h3>Sample response</h3>
 
+                <p>Model documentation: <span data-api-model="BaseTableName">BaseTableName[]</span>
+
                 <pre><code class="json">[  
     {  
         "schema": "helium_compound_fk_test",
@@ -135,6 +139,7 @@
                     supports primary, foreign, and unique constraints as well as compound primary and foreign constraints.
 
                 <h3>Sample response</h3>
+                <p>Model documentation: <span data-api-model>TableMeta</span>
                 <pre><code class="json">{
     "schema": "helium_sample",
     "name": "big_table",
@@ -179,15 +184,105 @@
                 <h2>GET /api/v1/schemas/:schema/:table/column/:col</h2>
                 <span class="chip chip-returns">Returns: <span class="monospace">application/json</span></span>
 
+                <p>Fetches all data from a particular column. Useful for autocomplete on smaller tables.
+                
+                <h3>Sample response</h3>
+                <pre><code class="json">["value 1", "value 2", "value 3"]</code></pre>
+
                 <h2>GET /api/v1/schemas/:schema/:table/data</h2>
                 <span class="chip chip-returns">Returns: <span class="monospace">application/json</span></span>
 
+                <p>Fetches data from a specific table. Supports filtering and sorting, and is paginated data.
+                
+                <h3>Query parameters</h3>
+                <ul>
+                    <li><code>sort</code> (optional). The name of a column to sort by ascendingly, or a "-" and the name
+                        of a column to sort descending. For example, If a table has a column named "foo", specifying
+                        <code>sort=foo</code> would sort the data by foo from low to high, while <code>sort=-foo</code>
+                        would accomplish the opposite.
+                    <li><code>limit</code> (optional, default: 25). The maximum amount of items to return in a single
+                        page. Accepts values between 1 and 100 (inclusive).
+                    <li><code>page</code> (optional, default: 1). Page number to retrieve for pagination. Accepts values
+                        greater than or equal to 1. If this value is too high, a 400 will be returned.
+                    <li><code>filters</code> (optional). A JSON array of <span data-api-model="FooBar">Filter</span> objects.
+                </ul>
+
+                <h3>Sample response</h3>
+                <p>Model documentation: <span data-api-model="PaginatedResponse">PaginatedResponse&lt;SqlRow&gt;</span>
+                
+                <pre><code class="json">{
+    "size": 7,
+    "data": [
+        {
+            "product_id": 20,
+            "product_name": "Chicken breast (1 lb)",
+            "price": 1.99
+        },
+        {
+            "product_id": 21,
+            "product_name": "Apples (1 lb)",
+            "price": 1.99
+        },
+        {
+            "product_id": 22,
+            "product_name": "Soda",
+            "price": 1.99
+        },
+        {
+            "product_id": 23,
+            "product_name": "Crackers",
+            "price": 3.49
+        },
+        {
+            "product_id": 24,
+            "product_name": "Ice cream",
+            "price": 3.99
+        },
+        {
+            "product_id": 25,
+            "product_name": "Oranges (1 lb)",
+            "price": 2.99
+        },
+        {
+            "product_id": 26,
+            "product_name": "Bananas (1 lb)",
+            "price": 0.79
+        }
+    ],
+    "totalRows": 7
+}
+                </code></pre>
+
                 <h2>GET /api/v1/schemas/:schema/:table/pluck</h2>
                 <span class="chip chip-returns">Returns: <span class="monospace">application/json</span></span>
+                <p>Grabs all rows from all part tables belonging to the specified table. Assumes DataJoint creates part
+                    tables in the same schema as its master. The keys and values specified in the query are used to
+                    uniquely identify exactly one row from the master table. The keys of the query parameters should be
+                    column names, and the values should be specific values that exactly one column has. The most
+                    efficient way of specifying the selectors is by using only the primary keys of the master table.
+                
+                <h3>Sample response</h3>
+                <p>Model documentation: <span data-api-model>TableInsert</span>
+
+                <pre><code class="json">{
+    "master": [
+        {
+            "pk": 1000
+        }
+    ]
+}
+                </code></pre>
 
                 <h2>PUT /api/v1/schemas/:schema/data</h2>
                 <span class="chip chip-accepts">Accepts: <span class="monospace">application/json</span></span>
                 <span class="chip chip-returns">Returns: <span class="monospace">application/json</span></span>
+
+                <p>Inserts data into a table. Multiple tables are allowed if one of the tables is a master table and the
+                    rest of the tables are part tables belonging to that table. Accepts a <span data-api-model>TableInsert</span>
+                    in the HTTP request payload.
+                
+                <p>See <span data-gh-link="server/src/db/schema-input.validator.ts">SchemaInputValidator</span> for a
+                    detailed overview of how data passed to this endpoint is validated.
             </div>
 
             <div class="toc sticky"></div>
@@ -206,35 +301,6 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/tocbot/4.1.1/tocbot.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@9.12.0/build/highlight.min.js"></script>
-        <script>
-            function textToId(text) {
-                return text.toLowerCase()
-                    .replace(' ', '-')
-                    .replace('/', '_');
-            }
-            $('.api-docs h1, .api-docs h2').each(function() {
-                var headerText = $(this).text();
-                var nodeName = $(this).prop('nodeName');
-                var id = textToId(headerText);
-                var header = $('<' + nodeName + '>' + headerText + '</' + nodeName + '>')
-                    .attr('id', id);
-                var link = $('<a class="header-link">#</a>')
-                    .attr('href', '#' + id);
-
-                var container = $('<div class="local-header-wrapper"></div>')
-                    .append(header)
-                    .append(link);
-                
-                $(this).replaceWith(container);
-            });
-
-            tocbot.init({
-                tocSelector: '.toc',
-                contentSelector: '.api-docs',
-                headingSelector: 'h1, h2'
-            });
-
-            hljs.initHighlightingOnLoad();
-        </script>
+        <script src="js/api.js"></script>
     </body>
 </html>

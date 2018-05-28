@@ -106,8 +106,8 @@ export class SchemaDao {
         if (page < 1)
             throw new ValidationError('Expecting page >= 1', 'INVALID_LIMIT', { page });
 
-        if (limit < 0)
-            throw new ValidationError('Expecting limit < 0', 'INVALID_PAGE', { limit });
+        if (limit < 1)
+            throw new ValidationError('Expecting limit < 1', 'INVALID_PAGE', { limit });
 
         const rows = await this.helper.execute((squel) => {
             // Create our basic query

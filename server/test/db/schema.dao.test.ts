@@ -123,15 +123,15 @@ describe('SchemaDao', () => {
             }
         });
 
-        it('should only allow limits >= 0', async () => {
-            for (const limit of [-2, -1]) {
+        it('should only allow limits >= 1', async () => {
+            for (const limit of [-1, 0]) {
                 await expect(dao.content(db, table, { limit })).to.eventually
                     .be.rejectedWith(Error);
             }
 
             // Choose limits that are explicitly under the usual amount of
             // records in the chosen table
-            for (const limit of [0, 1, 10, 100]) {
+            for (const limit of [1, 10, 100]) {
                 const schema = joi.array().items(rowContents).length(limit);
                 joi.assert((await dao.content(db, table, { limit })).rows, schema);
             }
