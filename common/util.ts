@@ -1,6 +1,6 @@
 import { findIndex, flatten, map, partition } from 'lodash';
 import { CompoundConstraint, Constraint, MasterTableName } from './api';
-import { TableName } from './table-name.class';
+import { TableName } from './table-name';
 
 ////////////////////////////////////////////////////////////////////////////////
 // Tests are located with server-side tests

@@ -13,10 +13,8 @@ import { clone } from 'lodash';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
-import { CompoundConstraint } from '../../../../common/api';
-import { Constraint, SqlRow, TableDataType, TableMeta } from '../../common/api';
-import { PaginatedResponse } from '../../common/responses';
-import { TableName } from '../../common/table-name.class';
+import { CompoundConstraint, Constraint, PaginatedResponse, SqlRow, TableDataType, TableMeta } from '../../common/api';
+import { TableName } from '../../common/table-name';
 import { CoreModule } from '../../core/core.module';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
@@ -79,7 +77,7 @@ describe('DatatableComponent', () => {
         };
     };
 
-    const paginatedResponse = (data: SqlRow[]): Observable<PaginatedResponse<SqlRow[]>> =>
+    const paginatedResponse = (data: SqlRow[]): Observable<PaginatedResponse<SqlRow>> =>
         // delay(0) is required here to delay change detection until the next
         // cycle
         Observable.of({ size: data.length, data: clone(data), totalRows: 1000 }).delay(0);

@@ -14,7 +14,7 @@ import {
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
 import { TableService } from '../../core/table/table.service';
 import {

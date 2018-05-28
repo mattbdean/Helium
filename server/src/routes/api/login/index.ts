@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { ErrorResponse } from '../../../../../client/app/common/responses';
+import { ErrorResponse } from '../../../common/api';
 import { ConnectionConf } from '../../../db/connection-conf';
 import { DatabaseHelper } from '../../../db/database.helper';
 

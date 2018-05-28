@@ -5,11 +5,7 @@ import * as paginate from 'express-paginate';
 import * as joi from 'joi';
 import { ValidationError as JoiValidationError } from 'joi';
 import { SqlRow } from '../../../../../client/app/common/api';
-import { Filter } from '../../../common/api';
-import {
-    ErrorResponse,
-    PaginatedResponse
-} from '../../../common/responses';
+import { ErrorResponse, Filter, PaginatedResponse } from '../../../common/api';
 import { DaoFactory } from '../../../db/dao.factory';
 import { DatabaseHelper } from '../../../db/database.helper';
 import { SchemaDao, Sort } from '../../../db/schema.dao';

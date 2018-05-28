@@ -13,7 +13,7 @@ import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
 
 import { TableMeta } from '../../common/api';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 import { TableService } from '../../core/table/table.service';
 import { FormHostComponent } from './form-host.component';
 

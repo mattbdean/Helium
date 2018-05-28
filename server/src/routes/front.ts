@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import * as path from 'path';
-import { ErrorResponse } from '../common/responses';
+import { ErrorResponse } from '../common/api';
 
 export function front(): Router {
     const r = Router();

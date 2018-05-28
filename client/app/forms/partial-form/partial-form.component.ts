@@ -9,7 +9,7 @@ import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
 import { Subscription } from 'rxjs/Subscription';
 import { Constraint, SqlRow, TableMeta } from '../../common/api';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 import { flattenCompoundConstraints } from '../../common/util';
 import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
 import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';

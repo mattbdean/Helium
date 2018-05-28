@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { TableTier } from '../../common/api';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 
 describe('TableName', () => {
     const tables = ['foo_bar', '#foo_bar', '_foo_bar', '__foo_bar', '~foo_bar'];

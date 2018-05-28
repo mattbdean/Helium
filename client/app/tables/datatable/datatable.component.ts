@@ -12,7 +12,7 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
 import { flattenCompoundConstraints } from '../../../../common/util';
 import { Constraint, Filter, SqlRow, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { TableName } from '../../common/table-name.class';
+import { TableName } from '../../common/table-name';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';

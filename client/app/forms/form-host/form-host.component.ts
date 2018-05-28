@@ -18,8 +18,8 @@ import {
     MasterTableName, TableHeader, TableMeta
 } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { TableInsert } from '../../common/table-insert.interface';
-import { TableName } from '../../common/table-name.class';
+import { TableInsert } from '../../common/api/table-insert';
+import { TableName } from '../../common/table-name';
 import { unflattenTableNames } from '../../common/util';
 import { TableService } from '../../core/table/table.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';

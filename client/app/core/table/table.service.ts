@@ -3,16 +3,11 @@ import {
     HttpResponse
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-
-import { Observable } from 'rxjs/Observable';
-
 import * as _ from 'lodash';
-
-import { SqlRow, TableMeta } from '../../common/api';
-import { PaginatedResponse } from '../../common/responses';
-import { TableInsert } from '../../common/table-insert.interface';
-import { TableNameParams } from '../../common/table-name-params.interface';
-import { TableName } from '../../common/table-name.class';
+import { Observable } from 'rxjs/Observable';
+import { PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
+import { TableName } from '../../common/table-name';
+import { TableNameParams } from '../../common/table-name-params';
 import { AuthService } from '../auth/auth.service';
 import { ContentRequest } from './content-request';
 

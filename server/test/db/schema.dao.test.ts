@@ -5,12 +5,12 @@ import * as joi from 'joi';
 import { orderBy, random, uniq, zipObject } from 'lodash';
 import * as moment from 'moment';
 import { Filter, RawConstraint } from '../../src/common/api';
+import { TableInsert } from '../../src/common/api/table-insert';
 import {
     BLOB_STRING_REPRESENTATION,
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../src/common/constants';
-import { TableInsert } from '../../src/common/table-insert.interface';
 import { ConnectionConf } from '../../src/db/connection-conf';
 import { DatabaseHelper } from '../../src/db/database.helper';
 import { SchemaDao, Sort } from '../../src/db/schema.dao';
@@ -123,15 +123,15 @@ describe('SchemaDao', () => {
             }
         });
 
-        it('should only allow limits >= 0', async () => {
-            for (const limit of [-2, -1]) {
+        it('should only allow limits >= 1', async () => {
+            for (const limit of [-1, 0]) {
                 await expect(dao.content(db, table, { limit })).to.eventually
                     .be.rejectedWith(Error);
             }
 
             // Choose limits that are explicitly under the usual amount of
             // records in the chosen table
-            for (const limit of [0, 1, 10, 100]) {
+            for (const limit of [1, 10, 100]) {
                 const schema = joi.array().items(rowContents).length(limit);
                 joi.assert((await dao.content(db, table, { limit })).rows, schema);
             }

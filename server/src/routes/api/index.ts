@@ -1,5 +1,5 @@
 import { Request, Response, Router } from 'express';
-import { ErrorResponse } from '../../common/responses';
+import { ErrorResponse } from '../../common/api';
 import { DaoFactory } from '../../db/dao.factory';
 import { DatabaseHelper } from '../../db/database.helper';
 import { loginRouter } from './login';
