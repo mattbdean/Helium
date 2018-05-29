@@ -15,6 +15,7 @@
         <div>
             <mat-form-field>
                 <input placeholder="Host" matInput formControlName="host">
+                <mat-error *ngIf="hasError('host', 'host')">That doesn't look like a valid host</mat-error>
             </mat-form-field>
         </div>
 

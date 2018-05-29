@@ -5,9 +5,10 @@ import {
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { expect } from 'chai';
+import { cloneDeep, isEqual } from 'lodash';
 import { AuthData } from '../auth-data/auth-data.interface';
-import { AuthService } from './auth.service';
 import { StorageService } from '../storage/storage.service';
+import { AuthService } from './auth.service';
 
 describe('AuthService', () => {
     let service: AuthService;
@@ -87,7 +88,32 @@ describe('AuthService', () => {
             const res = http.expectOne((req: HttpRequest<any>): boolean => {
                 return req.method === 'POST' &&
                     req.url === '/api/v1/login' &&
-                    req.body === reqBody;
+                    isEqual(req.body, reqBody);
+            });
+
+            res.flush({ apiKey: fakeAuthData.apiKey }, {
+                headers: new HttpHeaders({
+                    'X-Session-Expiration': String(fakeAuthData.expiration.getTime())
+                })
+            });
+        });
+        
+        it('should separate the port from the host if one is provided', () => {
+            const reqBody = { username: 'foo', password: 'bar', host: 'baz:qux' };
+
+            service.login(reqBody)
+                .subscribe((result: AuthData) => {
+                    expect(result).to.deep.equal(fakeAuthData);
+                });
+            
+            const expectedReqBody = cloneDeep(reqBody) as any;
+            expectedReqBody.host = 'baz';
+            expectedReqBody.port = 'qux';
+            
+            const res = http.expectOne((req: HttpRequest<any>): boolean => {
+                return req.method === 'POST' &&
+                    req.url === '/api/v1/login' &&
+                    isEqual(req.body, expectedReqBody);
             });
 
             res.flush({ apiKey: fakeAuthData.apiKey }, {

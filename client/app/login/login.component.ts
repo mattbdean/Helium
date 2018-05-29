@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
 import { Router } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
@@ -21,7 +21,7 @@ export class LoginComponent {
         this.form = fb.group({
             username: ['', Validators.required],
             password: ['', Validators.required],
-            host: ['']
+            host: ['', hostValidator]
         });
     }
 
@@ -45,4 +45,25 @@ export class LoginComponent {
             }
         );
     }
+
+    public hasError(control: string, error: string): boolean {
+        const ctrl = this.form.controls[control];
+        return ctrl.errors !== null && ctrl.errors[error] !== undefined;
+    }
+}
+
+function hostValidator(c: AbstractControl): ValidationErrors | null {
+    const value = String(c.value);
+    // No value is okay, defaults to localhost
+    if (value.trim().length === 0)
+        return null;
+
+    // A colon separates the host from the port, make sure there is at most one
+    // colon.
+    const parts = value.split(':');
+    for (const part of parts) {
+        if (part.trim().length === 0)
+            return { host: 'empty part' };
+    }
+    return parts.length > 2 ? { host: 'parts > 2' } : null;
 }

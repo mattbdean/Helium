@@ -1,5 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { cloneDeep } from 'lodash';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
 import { Observable } from 'rxjs/Observable';
 import { AuthData } from '../auth-data/auth-data.interface';
@@ -75,9 +76,20 @@ export class AuthService {
 
     /** Attempts to log in using the given connection configuration */
     public login(data: { username: string, password: string, host: string }) {
+        // Make a copy of the given data
+        const postData: any = cloneDeep(data);
+
+        // Try to detect a port provided in the host. Data should already be
+        // validated from the LoginComponent
+        if (postData.host.indexOf(':') > 0) {
+            const parts = postData.host.split(':');
+            postData.host = parts[0];
+            postData.port = parts[1];
+        }
+
         // Specify observe: 'response' to get the full response, not just the
         // body
-        return this.http.post('/api/v1/login', data, { observe: 'response' })
+        return this.http.post('/api/v1/login', postData, { observe: 'response' })
             .map((res: HttpResponse<{ apiKey: string }>): AuthData => {
                 // This is the unix epoch time at which the session expires
                 const expiration = res.headers.get('X-Session-Expiration');

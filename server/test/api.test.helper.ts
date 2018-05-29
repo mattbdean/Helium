@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import * as request from 'supertest';
 import { Response } from 'supertest';
-import { ErrorResponse } from '../src/common/responses';
+import { ErrorResponse } from '../src/common/api';
 import { Helium } from '../src/helium';
 
 export interface ApiRequest {

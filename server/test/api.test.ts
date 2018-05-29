@@ -6,6 +6,7 @@ import * as sinonChai from 'sinon-chai';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { Filter } from '../src/common/api';
+import { ConnectionConf } from '../src/db/connection-conf';
 import { QueryHelper } from '../src/db/query-helper';
 import { SchemaDao } from '../src/db/schema.dao';
 import { Helium } from '../src/helium';
@@ -28,8 +29,9 @@ describe('API v1', () => {
 
     // A Joi schema that mirrors the ErrorResponse interface
     const errorResponseSchema = joi.object({
-        message: joi.string().required()
-    });
+        message: joi.string().required(),
+        relevantInput: joi.object()
+    }).required();
 
     const MOCK_API_KEY = 'mockKey';
 
@@ -64,12 +66,22 @@ describe('API v1', () => {
                     .post('/api/v1/login')
                     .expect('Content-Type', /application\/json/)
                     // Only send data that we actually provide
-                    .send(pickBy({ username: conf.user, password: conf.password, host: conf.host },
+                    .send(pickBy({
+                            username: conf.user,
+                            password: conf.password,
+                            host: conf.host,
+                            port: conf.port
+                        },
                         (val) => val !== undefined));
             };
 
             it('should show session expiration', async () => {
-                const conf = { user: 'user', password: 'password', host: 'localhost' };
+                const conf = {
+                    user: 'user',
+                    password: 'password',
+                    host: 'localhost',
+                    port: undefined
+                };
 
                 const key = 'testing-key';
                 const authStub = sinon.stub(app.database, 'authenticate')
@@ -85,6 +97,32 @@ describe('API v1', () => {
                 await baseRequest(conf)
                     .expect(200)
                     .expect('x-session-expiration', String(expiration))
+                    .then((res: Response) => {
+                        // The body should look be an object with a single
+                        // property (apiKey)
+                        joi.assert(res.body, joi.object({ apiKey: key }));
+                    });
+
+                // Make sure we're the server is trying to authenticate with the
+                // proper credentials
+                expect(authStub).to.have.been.calledWith(conf);
+            });
+
+            it('should allow a port to be specified', async () => {
+                const conf: ConnectionConf = {
+                    user: 'user',
+                    password: 'password',
+                    host: 'localhost',
+                    port: 3333
+                };
+
+                const key = 'testing-key';
+                const authStub = sinon.stub(app.database, 'authenticate')
+                    .withArgs(conf)
+                    .resolves(key);
+
+                await baseRequest(conf)
+                    .expect(200)
                     .then((res: Response) => {
                         // The body should look be an object with a single
                         // property (apiKey)
@@ -112,7 +150,12 @@ describe('API v1', () => {
 
                 // Specifying other properties (like the host) will make the server
                 // attempt a DB connection
-                const conf = { user: 'user', password: 'password', host: 'invalid_host' };
+                const conf = {
+                    user: 'user',
+                    password: 'password',
+                    host: 'invalid_host',
+                    port: undefined
+                };
                 const authStub = sinon.stub(app.database, 'authenticate')
                     .withArgs(conf)
                     .rejects('Error');
@@ -121,6 +164,15 @@ describe('API v1', () => {
                     .expect(400);
 
                 expect(authStub).to.have.been.calledWith(conf);
+            });
+
+            it('shouldn\'t allow non-numbers for the port', async () => {
+                await baseRequest({ user: 'foo', password: 'bar', port: 'hello' })
+                    .expect(400)
+                    .then((res: Response) => {
+                        joi.assert(res.body, errorResponseSchema);
+                        expect(res.body.relevantInput.port).to.exist;
+                    });
             });
         });
     });

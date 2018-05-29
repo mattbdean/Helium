@@ -37,7 +37,7 @@
                 <p>
                     Helium does not have a direct authentication system, but rather creates database connections on
                     behalf of the user. As a result, Helium is capable of authenticating with any database using the
-                    MySQL protocol. A connection is uniquely identified by the username, password, and host domain.
+                    MySQL protocol. A connection is uniquely identified by the username, password, host domain, and port.
                     Currently, multiple users using the same connection works, but is unsupported behavior.
                 <p>Once a connection has been established, an API key will be provided to the consumer. Every endpoint
                     besides <code>POST /api/v1/login</code> requires a <code>X-API-Key</code> header whose value is the
@@ -74,9 +74,10 @@
                 <h3>Form Parameters</h3>
 
                 <ul>
-                    <li><code>username</code></li>
-                    <li><code>password</code></li>
-                    <li><code>host</code></li>
+                    <li><code>username</code>
+                    <li><code>password</code>
+                    <li><code>host</code> (optional). A domain name like google.com where the DB is accessible from
+                    <li><code>port</code> (optional). Defaults to 3306, the default MySQL port
                 </ul>
 
                 <h3>Sample response</h3>
