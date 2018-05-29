@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-
-import { Observable } from 'rxjs/Observable';
-
+import * as Fuse from 'fuse.js';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { AbstractFormControl } from './abstract-form-control';
+
+interface AutocompleteOption { value: string; }
 
 /**
  * This component provides autocomplete functionality for a dynamic form. The
@@ -39,6 +40,12 @@ import { AbstractFormControl } from './abstract-form-control';
     `]
 })
 export class AutocompleteControlComponent extends AbstractFormControl implements OnInit {
+    /** The options passed to the Fuse constructor */
+    private static fuseOptions: Fuse.FuseOptions = {
+        location: 0,
+        keys: ['value']
+    };
+
     public currentSuggestions: Observable<string[]>;
 
     public ngOnInit(): void {
@@ -49,17 +56,31 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
 
         // Start with an empty string so suggestions pop up before the user has
         // to type anything
-        const userInput = formControl.valueChanges
+        const userInput$ = formControl.valueChanges
             .startWith("");
 
-        const autocompleteValues = this.spec.autocompleteValues!!
-            // Convert all potential values to their string representations
-            .map((values: any[]): string[] => values.map((it) => it.toString()));
+        // Listen to changes in the autocomplete values and construct Fuse
+        // objects for that data when it changes
+        const fuse$ = this.spec.autocompleteValues!!
+            .map((values: string[]): AutocompleteOption[] =>
+                // Wrap each value in an AutocompleteOption so Fuse can work
+                // with it
+                values.map((it) => ({ value: String(it) })))
+            .map((options: AutocompleteOption[]) =>
+                new Fuse(options, AutocompleteControlComponent.fuseOptions));
+        
+        this.currentSuggestions = Observable.combineLatest(userInput$, fuse$)
+            .map((params: [string, Fuse]) => {
+                const [input, fuse] = params;
 
-        this.currentSuggestions = Observable.combineLatest(userInput, autocompleteValues)
-            // Call filterValues with the userInput and the autocompleteValues
-            .map((params: [string, string[]]) =>
-                AutocompleteControlComponent.filterValues.apply(null, params));
+                // Everything is applicable for no input. Otherwise use fuse to
+                // search
+                const results: AutocompleteOption[] = input.length === 0 ?
+                    (fuse as any).list : fuse.search(input);
+
+                // Unwrap the AutocompleteOption to its string value
+                return results.map((r: AutocompleteOption) => r.value);
+            });
     }
 
     public onRequestRowPicker(event: Event) {
@@ -68,14 +89,5 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
         event.preventDefault();
         event.stopPropagation();
         this.spec.onRequestRowPicker!!(this.spec.formControlName);
-    }
-
-    private static filterValues(userInput: string, availableOptions: string[]): string[] {
-        // Case-insensitive search
-        const lowercaseOptions = availableOptions.map((val) => val.toLowerCase());
-        const userInputLower = (String(userInput) || '').toLowerCase();
-
-        // Only return values that start with the user input
-        return lowercaseOptions.filter((s) => s.indexOf(userInputLower) === 0);
     }
 }
