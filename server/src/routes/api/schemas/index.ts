@@ -87,7 +87,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
     r.get('/:schema/:table/pluck', wrap((req: Request) =>
         daoFor(req).pluck(req.params.schema, req.params.table, req.query)));
 
-    r.put('/:schema/data', wrap((req: Request) =>
+    r.post('/:schema/data', wrap((req: Request) =>
         // Insert the data and return an empty JSON document
         daoFor(req).insertRow(req.params.schema, req.body).then(() => ({}))));
 

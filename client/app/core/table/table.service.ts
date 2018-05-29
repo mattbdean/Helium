@@ -70,7 +70,7 @@ export class TableService {
      * exist and the body must have the shape of a SqlRow.
      */
     public submitRow(schema: string, tableName: string, body: SqlRow): Observable<null> {
-        return this.http.put(
+        return this.http.post(
             `/api/v1/schemas/${encode(schema)}/data`,
             body,
             {

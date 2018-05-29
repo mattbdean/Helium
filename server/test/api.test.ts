@@ -356,13 +356,13 @@ describe('API v1', () => {
             });
         });
 
-        describe('PUT /api/v1/schemas/:schema/:table/data', () => {
+        describe('POST /api/v1/schemas/:schema/:table/data', () => {
             const data = { not: 'relevant when stubbing' };
 
             it('should 200 when the data was inserted successfully', async () => {
                 const stub = sinon.stub(schemaDao, 'insertRow').resolves();
                 await request.spec({
-                    method: 'PUT',
+                    method: 'POST',
                     relPath: '/schemas/foo/data',
                     expectedStatus: 200,
                     data
@@ -379,7 +379,7 @@ describe('API v1', () => {
 
                 const stub = sinon.stub(schemaDao, 'insertRow').rejects(error);
                 await request.spec({
-                    method: 'PUT',
+                    method: 'POST',
                     relPath: '/schemas/foo/data',
                     expectedStatus: 400,
                     data

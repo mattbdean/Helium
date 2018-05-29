@@ -147,7 +147,7 @@ describe('TableService', () => {
             const body = { foo: 'bar', baz: 4, qux: false };
             service.submitRow(schemaName, tableName, body).subscribe(verifyExpirationUpdate);
             http.expectOne((r: HttpRequest<any>): boolean => {
-                if (r.method !== 'PUT') return false;
+                if (r.method !== 'POST') return false;
                 return _.isEqual(r.body, body);
 
             });
