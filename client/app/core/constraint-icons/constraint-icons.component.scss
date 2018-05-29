@@ -9,4 +9,8 @@
 
   position: relative;
   top: 5px;
+
+  &:link, &:visited {
+    color: inherit;
+  }
 }

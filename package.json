@@ -50,7 +50,6 @@
     "lru-cache": "^4.1.1",
     "moment": "^2.20.1",
     "morgan": "^1.8.2",
-    "ng-inline-svg": "^5.0.0",
     "normalize.css": "^7.0.0",
     "object-hash": "^1.2.0",
     "promise-mysql": "^3.1.3",

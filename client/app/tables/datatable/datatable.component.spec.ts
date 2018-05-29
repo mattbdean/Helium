@@ -204,7 +204,7 @@ describe('DatatableComponent', () => {
         expect(de.queryAll(By.css('h1'))[0].nativeElement.textContent.trim()).to.equal(expectedTableName);
     });
 
-    // TODO currently fails because ng-inline-svg attempts to make an XHR request
+    // TODO currently fails because MatIcon attempts to make an XHR request
     it.skip('should show a message when there is no data in the table', fakeAsync(() => {
         // There's no data so we should expect to see the message here
         fixture.detectChanges();
@@ -229,7 +229,7 @@ describe('DatatableComponent', () => {
             .to.not.be.undefined;
     });
 
-    // TODO currently fails because ng-inline-svg attempts to make an XHR request
+    // TODO currently fails because MatIcon attempts to make an XHR request
     it.skip('should render an extra column for the "insert like" row at the beginning', fakeAsync(() => {
         // Give the table some data
         contentStub.returns(paginatedResponse([{ integer: 4 }]));

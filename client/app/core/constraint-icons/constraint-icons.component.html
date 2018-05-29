@@ -3,16 +3,18 @@
         <span>
             <a class="header-icon"
                [attr.data-constraint-type]="type"
-               [inlineSVG]="iconFor(type)"
                [title]="infoTextFor(type)"
-               [routerLink]="fkRouterLink()">FK</a>
+               [routerLink]="fkRouterLink()">
+               <mat-icon [svgIcon]="'app:' + iconFor(type)"></mat-icon>
+            </a>
         </span>
     </span>
     <ng-template #notFK>
         <span class="header-icon"
               [attr.data-constraint-type]="type"
-              [inlineSVG]="iconFor(type)"
               [title]="infoTextFor(type)">
+            
+            <mat-icon [svgIcon]="'app:' + iconFor(type)"></mat-icon>
         </span>
     </ng-template>
 </span>

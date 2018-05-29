@@ -1,13 +1,12 @@
 import {
     Component, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
-import { Router } from '@angular/router';
-
-import * as _ from 'lodash';
-import { Observable } from 'rxjs/Rx';
-
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
-import { MatSidenav } from '@angular/material';
+import { MatIconRegistry, MatSidenav } from '@angular/material';
+import { DomSanitizer } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import * as _ from 'lodash';
+import { Observable } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
@@ -49,7 +48,9 @@ export class AppComponent implements OnDestroy, OnInit {
     public constructor(
         public auth: AuthService,
         private backend: TableService,
-        private router: Router
+        private router: Router,
+        private iconReg: MatIconRegistry,
+        private domSanitizer: DomSanitizer
     ) {}
 
     public ngOnInit() {
@@ -62,6 +63,18 @@ export class AppComponent implements OnDestroy, OnInit {
                     return Observable.of(null);
                 }
             });
+        
+        const iconNames: string[] = [
+            'filter',
+            'key-change',
+            'key',
+            'snowflake'
+        ];
+
+        for (const svgIcon of iconNames) {
+            const safeUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(`/assets/${svgIcon}.svg`);
+            this.iconReg.addSvgIconInNamespace('app', svgIcon, safeUrl);
+        }
 
         // Use a form group and <form> element so we can more easily update and
         // read the selected schema

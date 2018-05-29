@@ -10,10 +10,6 @@ import { Constraint, ConstraintType } from '../../common/api';
     styleUrls: ['constraint-icons.component.scss']
 })
 export class ConstraintIconsComponent implements OnInit {
-    private snowflakeIcon = '/assets/snowflake.svg';
-    private keyIcon = '/assets/key.svg';
-    private keyChangeIcon = '/assets/key-change.svg';
-
     public static readonly CONSTRAINT_ORDER: ConstraintType[] = ['primary', 'foreign', 'unique'];
 
     @Input()
@@ -40,11 +36,11 @@ export class ConstraintIconsComponent implements OnInit {
     private iconFor(type: ConstraintType): string {
         switch (type) {
             case 'primary':
-                return this.keyIcon;
+                return 'key';
             case 'foreign':
-                return this.keyChangeIcon;
+                return 'key-change';
             case 'unique':
-                return this.snowflakeIcon;
+                return 'snowflake';
             default:
                 throw new Error(`Unknown constraint type: '${type}'`);
         }

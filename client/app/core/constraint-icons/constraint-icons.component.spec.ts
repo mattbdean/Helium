@@ -4,12 +4,12 @@ import { By } from '@angular/platform-browser';
 
 import { expect } from 'chai';
 import * as _ from 'lodash';
-import { InlineSVGModule } from 'ng-inline-svg';
 
 import { HttpClientModule } from '@angular/common/http';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Constraint, ConstraintType } from '../../common/api';
 import { ConstraintIconsComponent } from './constraint-icons.component';
+import { MatIconModule } from '@angular/material';
 
 describe('ConstraintIconsComponent', () => {
     let fixture: ComponentFixture<ConstraintIconsComponent>;
@@ -36,7 +36,7 @@ describe('ConstraintIconsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [
-                InlineSVGModule,
+                MatIconModule,
                 RouterTestingModule,
                 HttpClientModule
             ],

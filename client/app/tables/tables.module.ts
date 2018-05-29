@@ -7,8 +7,6 @@ import {
     MatPaginatorModule,
     MatProgressBarModule, MatSelectModule, MatSortModule, MatTableModule
 } from '@angular/material';
-import { InlineSVGModule } from 'ng-inline-svg';
-
 import { CoreModule } from '../core/core.module';
 import { DatatableComponent } from './datatable/datatable.component';
 import { TableHostComponent } from './table-host/table-host.component';
@@ -27,7 +25,6 @@ import { SortIndicatorComponent } from './sort-indicator/sort-indicator.componen
         CommonModule,
         CoreModule,
         DynamicFormsModule,
-        InlineSVGModule,
         MatButtonModule,
         MatCardModule,
         MatCheckboxModule,
