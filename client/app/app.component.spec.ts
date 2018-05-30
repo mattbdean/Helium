@@ -10,13 +10,11 @@ import {
 } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-
 import * as _ from 'lodash';
 import { Observable } from 'rxjs/Observable';
 import * as sinon from 'sinon';
-
-import { Router } from '@angular/router';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
@@ -60,7 +58,7 @@ describe('AppComponent', () => {
     /** An array of TableTiers in a pseudo-random order */
     const types: TableTier[] = [
         'hidden', 'manual', 'lookup', 'manual', 'imported', 'computed',
-        'computed', 'manual', 'imported', 'hidden'
+        'computed', 'manual', 'imported', 'hidden', 'unknown'
     ];
 
     const schemas = ['schema1', 'schema2'];

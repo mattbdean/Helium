@@ -24,7 +24,7 @@ interface SchemaInfo { availableSchemas: string[]; selectedSchema: string; }
 })
 export class AppComponent implements OnDestroy, OnInit {
     public static readonly TIER_ORDER: TableTier[] =
-        ['manual', 'lookup', 'imported', 'computed', 'hidden'];
+        ['manual', 'lookup', 'imported', 'computed', 'hidden', 'unknown'];
 
     /**
      * If the width of the browser (in pixels) is above this value, the sidenav

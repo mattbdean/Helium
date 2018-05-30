@@ -8,7 +8,6 @@ const masterPartSeparator = '__';
 
 export class TableName implements BaseTableName {
     public readonly schema: string;
-
     public readonly name: TransformedName;
     public readonly masterName: TransformedName | null;
     public readonly tier: TableTier;
@@ -23,11 +22,38 @@ export class TableName implements BaseTableName {
 
     public isPartTable() { return this.masterName !== null; }
 
+    /**
+     * Tests if the given raw table name was possibly created by DataJoint.
+     * According to [1], DataJoint class names must be UpperCamelCase. That name
+     * is transformed to snake_case for DB purposes. A Python identifier
+     * (v2, not v3), is composed of letters (upper and lower), underscores, and
+     * except for the first character, numbers ([2]). Therefore, a DataJoint table
+     * name includes only its data tier prefix, lowercase letters, and numbers.
+     * 
+     * [1] https://docs.datajoint.io/data-definition/Create-tables.html#valid-class-names,
+     * [2] https://docs.python.org/3/reference/lexical_analysis.html#identifiers
+     */
+    public static isDataJointName(raw: string): boolean {
+        return /^[_{1,2}~#]?[a-z0-9_]+$/.test(raw);
+    }
+
     private static resolve(parameters: string | TableNameParams): TableNameParams {
         if (typeof parameters === 'object')
             return parameters;
 
         const sqlName = parameters as string;
+
+        // Not a DJ name, nothing to do here
+        if (!TableName.isDataJointName(sqlName)) {
+            return {
+                tier: 'unknown',
+                name: {
+                    raw: sqlName,
+                    clean: sqlName
+                },
+                masterName: null
+            };
+        }
 
         let identifiers = [sqlName];
         if (sqlName.includes(masterPartSeparator)) {
