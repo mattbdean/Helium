@@ -8,16 +8,13 @@ import { MatSnackBar } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-
-import { Observable } from 'rxjs/Observable';
+import { expect } from 'chai';
+import { Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
-
 import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
 import { TableService } from '../../core/table/table.service';
 import { FormHostComponent } from './form-host.component';
-
-const expect = global['chai'].expect;
 
 describe('FormHostComponent', () => {
     let fixture: ComponentFixture<FormHostComponent>;
@@ -32,7 +29,7 @@ describe('FormHostComponent', () => {
     const snackbarStub = {};
 
     const tableNamesObservable = (...rawNames: string[]) => {
-        return Observable.of(rawNames.map((n) => new TableName('schema', n)));
+        return of(rawNames.map((n) => new TableName('schema', n)));
     };
 
     beforeEach(() => {
@@ -49,8 +46,8 @@ describe('FormHostComponent', () => {
                     provide: ActivatedRoute,
                     // name will always be 'master'
                     useValue: {
-                        params: Observable.of({ name: 'master' }),
-                        queryParams: Observable.of({})
+                        params: of({ name: 'master' }),
+                        queryParams: of({})
                     }
                 },
                 { provide: TableService, useValue: tableServiceStub },

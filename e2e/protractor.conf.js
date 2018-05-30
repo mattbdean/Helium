@@ -1,10 +1,12 @@
 // Protractor configuration file, see link for more information
 // https://github.com/angular/protractor/blob/master/lib/config.ts
 
+const path = require('path');
+
 exports.config = {
     allScriptsTimeout: 11000,
     specs: [
-        './e2e/**/*.e2e-spec.ts'
+        './**/*.e2e-spec.ts'
     ],
     capabilities: {
         browserName: 'chrome',
@@ -25,7 +27,7 @@ exports.config = {
     SELENIUM_PROMISE_MANAGER: false,
     beforeLaunch: () => {
         require('ts-node').register({
-            project: 'e2e/tsconfig.e2e.json'
+            project: path.resolve(__dirname, './tsconfig.e2e.json')
         });
         process.on('unhandledRejection', (reason) => {
             process.stderr.write("Unhandled Promise rejection:\n");

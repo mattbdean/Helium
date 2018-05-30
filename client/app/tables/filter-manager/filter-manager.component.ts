@@ -7,7 +7,8 @@ import {
     Validators
 } from '@angular/forms';
 import { isEqual } from 'lodash';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import { Filter, TableMeta } from '../../common/api';
 
 @Component({
@@ -51,9 +52,9 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
                 this.changed.emit([]);
             }
 
-            this.sub = this.formArray.valueChanges
-                .distinctUntilChanged(isEqual)
-                .map(() => {
+            this.sub = this.formArray.valueChanges.pipe(
+                distinctUntilChanged(isEqual),
+                map(() => {
                     return this.formArray.controls
                         // Only use data that is both valid and enabled
                         .filter((group: FormGroup) => {
@@ -69,10 +70,13 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
                             return true;
                         })
                         .map((control) => control.value);
-                })
-                .distinctUntilChanged(isEqual)
+                }),
+                distinctUntilChanged(isEqual)
+            ).subscribe((filters) => 
                 // Notify listeners that the filters have changed
-                .subscribe((filters) => this.changed.emit(filters));
+                this.changed.emit(filters)
+            );
+                
         }
     }
 

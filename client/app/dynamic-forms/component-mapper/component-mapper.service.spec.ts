@@ -1,3 +1,4 @@
+import { expect } from 'chai';
 import { AutocompleteControlComponent } from '../controls/autocomplete-control.component';
 import { CheckboxControlComponent } from '../controls/checkbox-control.component';
 import { DateControlComponent } from '../controls/date-control.component';
@@ -26,12 +27,12 @@ describe('ComponentMapperService', () => {
             };
 
             for (const type of Object.keys(expected)) {
-                mapper.componentFor(type as FormControlType).should.equal(expected[type]);
+                expect(mapper.componentFor(type as FormControlType)).to.equal(expected[type]);
             }
         });
 
         it('should throw an error on unrecognized types', () => {
-            (() => mapper.componentFor('foo' as FormControlType)).should.throw(Error);
+            expect(() => mapper.componentFor('foo' as FormControlType)).to.throw(Error);
         });
     });
 });

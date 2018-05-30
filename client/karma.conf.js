@@ -5,17 +5,14 @@ const path = require('path');
 
 module.exports = function (config) {
     config.set({
-        basePath: '',
-        frameworks: ['mocha', 'sinon-chai', '@angular/cli'],
+        basePath: '..',
+        frameworks: ['mocha', '@angular-devkit/build-angular'],
         plugins: [
             require('karma-mocha'),
-            require('karma-sinon-chai'),
-
             require('karma-mocha-clean-reporter'),
             require('karma-chrome-launcher'),
             require('karma-coverage-istanbul-reporter'),
-
-            require('@angular/cli/plugins/karma')
+            require('@angular-devkit/build-angular/plugins/karma')
         ],
         browserDisconnectTimeout: 30000,
         browserNoActivityTimeout: 30000,

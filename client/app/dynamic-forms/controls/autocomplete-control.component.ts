@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import * as Fuse from 'fuse.js';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 import { AbstractFormControl } from './abstract-form-control';
 
 interface AutocompleteOption { value: string; }
@@ -57,20 +58,21 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
         // Start with an empty string so suggestions pop up before the user has
         // to type anything
         const userInput$ = formControl.valueChanges
-            .startWith("");
+            .pipe(startWith(''));
 
         // Listen to changes in the autocomplete values and construct Fuse
         // objects for that data when it changes
-        const fuse$ = this.spec.autocompleteValues!!
-            .map((values: string[]): AutocompleteOption[] =>
+        const fuse$ = this.spec.autocompleteValues!!.pipe(
+            map((values: string[]): AutocompleteOption[] =>
                 // Wrap each value in an AutocompleteOption so Fuse can work
                 // with it
-                values.map((it) => ({ value: String(it) })))
-            .map((options: AutocompleteOption[]) =>
-                new Fuse(options, AutocompleteControlComponent.fuseOptions));
+                values.map((it) => ({ value: String(it) }))),
+            map((options: AutocompleteOption[]) =>
+                new Fuse(options, AutocompleteControlComponent.fuseOptions))
+        );
         
-        this.currentSuggestions = Observable.combineLatest(userInput$, fuse$)
-            .map((params: [string, Fuse]) => {
+        this.currentSuggestions = combineLatest(userInput$, fuse$).pipe(
+            map((params: [string, Fuse]) => {
                 const [input, fuse] = params;
 
                 // Everything is applicable for no input. Otherwise use fuse to
@@ -80,7 +82,8 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
 
                 // Unwrap the AutocompleteOption to its string value
                 return results.map((r: AutocompleteOption) => r.value);
-            });
+            })
+        );
     }
 
     public onRequestRowPicker(event: Event) {

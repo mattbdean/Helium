@@ -1,8 +1,8 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { cloneDeep } from 'lodash';
-import { BehaviorSubject } from 'rxjs/BehaviorSubject';
-import { Observable } from 'rxjs/Observable';
+import { BehaviorSubject ,  Observable } from 'rxjs';
+import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { AuthData } from '../auth-data/auth-data.interface';
 import { StorageService } from '../storage/storage.service';
 
@@ -89,8 +89,8 @@ export class AuthService {
 
         // Specify observe: 'response' to get the full response, not just the
         // body
-        return this.http.post('/api/v1/login', postData, { observe: 'response' })
-            .map((res: HttpResponse<{ apiKey: string }>): AuthData => {
+        return this.http.post('/api/v1/login', postData, { observe: 'response' }).pipe(
+            map((res: HttpResponse<{ apiKey: string }>): AuthData => {
                 // This is the unix epoch time at which the session expires
                 const expiration = res.headers.get('X-Session-Expiration');
 
@@ -101,8 +101,9 @@ export class AuthService {
                     apiKey: res.body!!.apiKey,
                     expiration: new Date(parseInt(expiration, 10))
                 };
-            })
-            .do((parsed) => this.update(parsed));
+            }),
+            tap((parsed) => this.update(parsed))
+        );
     }
 
     /** Removes all stored authentication data */
@@ -119,9 +120,10 @@ export class AuthService {
         // Each response received by TableService updates the expiration, and
         // therefore updates the observable. Make sure to only listen for
         // distinct values to prevent an infinite loop.
-        return this.authData$
-            .map((data) => data !== null)
-            .distinctUntilChanged();
+        return this.authData$.pipe(
+            map((data) => data !== null),
+            distinctUntilChanged()
+        );
     }
 
     /** Updates the storage service and the BehaviorSubject */

@@ -12,8 +12,9 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { expect } from 'chai';
 import * as _ from 'lodash';
-import { Observable } from 'rxjs/Observable';
+import { Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
@@ -22,8 +23,6 @@ import { TableName } from './common/table-name';
 import { AuthService } from './core/auth/auth.service';
 import { CoreModule } from './core/core.module';
 import { TableService } from './core/table/table.service';
-
-const expect = global['chai'].expect;
 
 describe('AppComponent', () => {
     let fixture: ComponentFixture<AppComponent>;
@@ -67,15 +66,15 @@ describe('AppComponent', () => {
     const counts = _.countBy(types);
 
     const serviceStub = {
-        schemas: () => Observable.of(schemas),
-        tables: (schema: string): Observable<TableName[]> => Observable.of(
+        schemas: () => of(schemas),
+        tables: (schema: string): Observable<TableName[]> => of(
             createTableNames(schema, ...types)
         )
     };
 
     const authStub = {
         // Always logged in
-        watchAuthState: () => Observable.of(true)
+        watchAuthState: () => of(true)
     };
 
     beforeEach(() => {

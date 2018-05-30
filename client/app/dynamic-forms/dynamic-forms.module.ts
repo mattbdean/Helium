@@ -7,11 +7,11 @@ import {
     MatCardModule,
     MatCheckboxModule,
     MatDatepickerModule,
+    MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatSelectModule,
-    MatSnackBarModule,
-    MatFormFieldModule
+    MatSnackBarModule
 } from '@angular/material';
 import { CoreModule } from '../core/core.module';
 import { ComponentMapperService } from './component-mapper/component-mapper.service';

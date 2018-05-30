@@ -67,12 +67,12 @@ describe('AuthService', () => {
     describe('loggedIn', () => {
         it('should be true when there\'s AuthData present', () => {
             updateAuthData(null);
-            service.loggedIn.should.be.false;
+            expect(service.loggedIn).to.be.false;
         });
 
         it('should be false when there\'s no AuthData present', () => {
             updateAuthData(fakeAuthData);
-            service.loggedIn.should.be.true;
+            expect(service.loggedIn).to.be.true;
         });
     });
 

@@ -1,10 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ValidatorFn, Validators } from '@angular/forms';
-
 import { flatten, pickBy } from 'lodash';
 import * as moment from 'moment';
-
-import { Observable } from 'rxjs/Observable';
+import { Observable } from 'rxjs';
 import { flattenCompoundConstraints } from '../../../../common/util';
 import {
     CompoundConstraint, Constraint, DefaultValue, TableHeader, TableMeta

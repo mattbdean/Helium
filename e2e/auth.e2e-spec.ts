@@ -126,7 +126,7 @@ describe('Authentication', () => {
             await expect(sidenav.isToggleable()).to.eventually.be.true;
         });
 
-        it('should select the schema of the schema being viewed, if there is one', async () => {
+        it('should select the schema of the table being viewed, if there is one', async () => {
             const defaultSchema = 'helium_compound_fk_test';
             const expectations: Array<[string, string]> = [
                 [ '/', defaultSchema ], // Default schema is chosen alphabetically

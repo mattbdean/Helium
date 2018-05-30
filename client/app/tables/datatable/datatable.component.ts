@@ -8,7 +8,8 @@ import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angula
 import { Router } from '@angular/router';
 import { clone, flatten, groupBy } from 'lodash';
 import * as moment from 'moment';
-import { BehaviorSubject, Observable, Subscription } from 'rxjs/Rx';
+import { BehaviorSubject, combineLatest, NEVER, Observable, of, Subscription } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { flattenCompoundConstraints } from '../../../../common/util';
 import { Constraint, Filter, SqlRow, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
@@ -100,44 +101,44 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     ) {}
 
     public ngOnInit(): void {
-        this.nameSub = this.name$
-            .filter((n) => n !== null)
-            .map((m) => m!!)
-            .do(() => { this.loading = true; })
-            .switchMap((name) =>
-                this.backend.meta(name.schema, name.name.raw)
-                    .catch((err: HttpErrorResponse) => {
-                        if (err.status !== 404) {
-                            // TODO: Unexpected errors could be handled more
-                            // gracefully
-                            throw err;
-                        }
+        this.nameSub = this.name$.pipe(
+            filter((n) => n !== null),
+            map((m) => m!!),
+            tap(() => { this.loading = true; }),
+            switchMap((name) => this.backend.meta(name.schema, name.name.raw).pipe(
+                catchError((err: HttpErrorResponse) => {
+                    if (err.status !== 404) {
+                        // TODO: Unexpected errors could be handled more
+                        // gracefully
+                        throw err;
+                    }
 
-                        this.tableExists = false;
-                        return Observable.never();
-                    }))
-            .subscribe((meta: TableMeta) => {
-                const names = meta.headers.map((h) => h.name);
+                    this.tableExists = false;
+                    return NEVER;
+                }))
+            )
+        ).subscribe((meta: TableMeta) => {
+            const names = meta.headers.map((h) => h.name);
 
-                if (this.allowInsertLike)
-                    // Add the "insert like" row
-                    names.unshift('__insertLike');
+            if (this.allowInsertLike)
+                // Add the "insert like" row
+                names.unshift('__insertLike');
 
-                this.columnNames = names;
+            this.columnNames = names;
 
-                const flattened = flatten(meta.constraints.map((c) => c.constraints));
-                this.constraints = groupBy(flattened, (c) => c.localColumn);
+            const flattened = flatten(meta.constraints.map((c) => c.constraints));
+            this.constraints = groupBy(flattened, (c) => c.localColumn);
 
-                // Update observables and data source
-                this.meta$.next(meta);
-                this.dataSource.switchTables(meta);
-                if (this.matPaginator)
-                    this.matPaginator.pageIndex = 0;
-                this.loading = false;
-            });
+            // Update observables and data source
+            this.meta$.next(meta);
+            this.dataSource.switchTables(meta);
+            if (this.matPaginator)
+                this.matPaginator.pageIndex = 0;
+            this.loading = false;
+        });
 
         this.recalcSub = this.name$
-            .distinctUntilChanged()
+            .pipe(distinctUntilChanged())
             .subscribe(() => {
                 this.layoutHelper.needsFullLayoutRecalculation = true;
             });
@@ -154,7 +155,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         const fakeCollectionViewer: CollectionViewer = {
             // This is actually pretty similar to what Angular Material gives us
             // as of v5.2.4
-             viewChange: Observable.of({ start: 0, end: Number.MAX_VALUE })
+             viewChange: of({ start: 0, end: Number.MAX_VALUE })
         };
 
         // For whatever reason, subscribing to the header cells causes the
@@ -162,11 +163,11 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         // updated in the DOM, which is what we want
         this.headerCellsSub = this.headerCells.changes.subscribe(() => void 0);
 
-        this.layoutSub = Observable.combineLatest(
+        this.layoutSub = combineLatest(
             this.headerCells.changes,
             this.contentCells.changes,
             this.dataSource.connect(fakeCollectionViewer)
-        ).filter((data): boolean => {
+        ).pipe(filter((data): boolean => {
             const [headers, content, tableData] = data;
 
             // Add 1 for the header row
@@ -182,7 +183,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             // expected amount of cells to be rendered matches the actual amount
             // of rendered cells.
             return (expectedRows * expectedColumns) === headers.length + content.length;
-        }).subscribe(() => {
+        })).subscribe(() => {
             this.recalculateTableLayout();
         });
 

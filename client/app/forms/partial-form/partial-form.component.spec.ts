@@ -5,17 +5,16 @@ import {
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import {
     MatButtonModule, MatCardModule,
-    MatIconModule,
-    MatDialogModule
+    MatDialogModule,
+    MatIconModule
 } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-
-import { Observable } from 'rxjs/Observable';
+import { expect } from 'chai';
+import { Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
-
 import { Constraint } from '../../common/api';
 import { ComponentMapperService } from '../../dynamic-forms/component-mapper/component-mapper.service';
 import { AbstractFormControl } from '../../dynamic-forms/controls/abstract-form-control';
@@ -26,8 +25,6 @@ import {
 } from '../../dynamic-forms/form-control-spec';
 import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';
 import { PartialFormComponent } from './partial-form.component';
-
-const expect = global['chai'].expect;
 
 interface MockTableMeta { name: string; }
 
@@ -64,7 +61,7 @@ describe('PartialFormComponent', () => {
                 formControlName: 'part_fk',
                 placeholder: 'part_fk',
                 required: true,
-                autocompleteValues: Observable.of(["abc", "def", "ghi"])
+                autocompleteValues: of(["abc", "def", "ghi"])
             }
         ]
     };

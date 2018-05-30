@@ -179,9 +179,9 @@ describe('FormSpecGeneratorService', () => {
                 nullable: false,
             } as TableHeader);
 
-            formSpec.validation!!.should.have.lengthOf(0);
-            formSpec.type.should.equal('boolean');
-            formSpec.defaultValue!!.should.be.false;
+            expect(formSpec.validation!!).to.have.lengthOf(0);
+            expect(formSpec.type).to.equal('boolean');
+            expect(formSpec.defaultValue!!).to.be.false;
         });
 
         it('should handle dates', () => {
@@ -209,9 +209,9 @@ describe('FormSpecGeneratorService', () => {
                 nullable: true
             } as TableHeader);
 
-            formSpecNullable.type.should.equal('text');
+            expect(formSpecNullable.type).to.equal('text');
             expect(formSpecNullable.defaultValue).to.be.null;
-            formSpecNullable.disabled!!.should.be.true;
+            expect(formSpecNullable.disabled!!).to.be.true;
 
             // The only difference specifying nullable: false is that the
             // initial value is undefined instead of null.
@@ -221,9 +221,9 @@ describe('FormSpecGeneratorService', () => {
                 nullable: false
             } as TableHeader);
 
-            formSpecNonNull.type.should.equal('text');
+            expect(formSpecNonNull.type).to.equal('text');
             expect(formSpecNonNull.defaultValue).to.be.null;
-            formSpecNonNull.disabled!!.should.be.true;
+            expect(formSpecNonNull.disabled).to.be.true;
         });
     });
 

@@ -6,8 +6,8 @@ import { MatIconRegistry, MatSidenav } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
-import { Observable } from 'rxjs';
-import { Subscription } from 'rxjs/Subscription';
+import { combineLatest, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
+import { filter, map, startWith, switchMap } from 'rxjs/operators';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
 import { AuthService } from './core/auth/auth.service';
@@ -56,13 +56,13 @@ export class AppComponent implements OnDestroy, OnInit {
     public ngOnInit() {
         // Fetch available schemas when the user logs in
         const schemas$: Observable<string[] | null> = this.auth.watchAuthState()
-            .switchMap((isLoggedIn) => {
+            .pipe(switchMap((isLoggedIn) => {
                 if (isLoggedIn) {
                     return this.backend.schemas();
                 } else {
-                    return Observable.of(null);
+                    return of(null);
                 }
-            });
+            }));
         
         const iconNames: string[] = [
             'filter',
@@ -85,36 +85,39 @@ export class AppComponent implements OnDestroy, OnInit {
         this.schemaControl = this.formGroup.get('schemaSelect')!!;
         const selectedSchema$ = this.schemaControl.valueChanges;
 
-        const schemaInfo$: Observable<SchemaInfo | null> = Observable.combineLatest(
+        const schemaInfo$: Observable<SchemaInfo | null> = combineLatest(
             schemas$,
             selectedSchema$
-        ).filter((data: [string[] | null, string | null]) => {
-            // data[0] is an array of available schemas, data[1] is the
-            // currently selected schema. Only emit data when both are non-null
-            // or both are null. The only time one of these is null is when the
-            // user logs out, and is immediately followed by more data coming
-            // through the observable
-            return (data[0] !== null) === (data[1] !== null);
-        })
-            .map((data: [string[] | null, string | null]): SchemaInfo | null => {
+        ).pipe(
+            filter((data: [string[] | null, string | null]) => {
+                // data[0] is an array of available schemas, data[1] is the
+                // currently selected schema. Only emit data when both are non-null
+                // or both are null. The only time one of these is null is when the
+                // user logs out, and is immediately followed by more data coming
+                // through the observable
+                return (data[0] !== null) === (data[1] !== null);
+            }),
+            map((data: [string[] | null, string | null]): SchemaInfo | null => {
                 // Break the nested array structure up into an object. When both
                 // elements are null, simply return null.
                 if (data[0] === null || data[1] === null)
                     return null;
                 return { availableSchemas: data[0]!!, selectedSchema: data[1]!! };
-            });
+            })
+        );
 
-        schemaInfo$
-            .switchMap((info: SchemaInfo | null) => {
+        schemaInfo$.pipe(
+            switchMap((info: SchemaInfo | null) => {
                 if (info === null)
-                    return Observable.of([]);
+                    return of([]);
                 else
                     return this.backend.tables(info.selectedSchema);
-            }).map(unflattenTableNames)
+            }),
+            map(unflattenTableNames),
             // Start with an empty array so the template has something to do
             // before we get actual data
-            .startWith([])
-            .map((names: MasterTableName[]) => {
+            startWith([]),
+            map((names: MasterTableName[]) => {
                 return _(names)
                     .groupBy((n) => n.tier)
                     .map((value: MasterTableName[], key: TableTier): GroupedName => ({
@@ -129,9 +132,7 @@ export class AppComponent implements OnDestroy, OnInit {
                     })
                     .value();
             })
-            // Usually I'd prefer to use the AsyncPipe but for whatever reason
-            // I can't get it to subscribe during testing
-            .subscribe((names) => { this.groupedNames = names; });
+        ).subscribe((names) => { this.groupedNames = names; });
 
         // Listen for the user logging in and automatically select a schema for
         // them
@@ -141,14 +142,13 @@ export class AppComponent implements OnDestroy, OnInit {
             this.schemas = schemas === null ? [] : schemas;
         });
 
-        const windowResize$ = Observable
-            .fromEvent(window, 'resize')
+        const windowResize$ = fromEvent(window, 'resize')
             // Start with a value so adjustSidenav gets called on init
-            .startWith(-1);
+            .pipe(startWith({}));
 
         // When the window is resized or the user logs in or out, adjust the
         // sidenav.
-        this.adjustSidenavSub = Observable.merge(windowResize$, this.auth.watchAuthState())
+        this.adjustSidenavSub = merge(windowResize$, this.auth.watchAuthState())
             .subscribe(() => { this.adjustSidenav(); });
     }
 
