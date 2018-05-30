@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import {
     Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
 } from '@angular/core';
-import { FormArray, FormBuilder, FormGroup, FormControl } from '@angular/forms';
+import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material';
 import * as _ from 'lodash';
 import { BehaviorSubject } from 'rxjs/BehaviorSubject';
@@ -225,9 +225,10 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
         const unused = foreignKeys.slice(0);
 
-        dialogRef.afterClosed().subscribe((data: SqlRow) => {
-            console.log('Got data back to partial form:', data);
-            // TODO handle multiple entries in formArray
+        dialogRef.afterClosed().subscribe((data: SqlRow | undefined) => {
+            // The user closed the dialog before selecting a row
+            if (data === undefined)
+                return;
 
             const patch: { [col: string]: any } = {};
 
