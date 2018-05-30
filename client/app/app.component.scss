@@ -51,63 +51,6 @@ ul.undecorated-list {
 .sidenav-list {
   $normal-color: rgba(0, 0, 0, 0.54);
 
-  .row-item {
-    display: flex;
-    align-items: center;
-
-    min-width: 200px;
-
-    $border: 1px rgba(0, 0, 0, 0.06) solid;
-    border-bottom: $border;
-
-    transition: all 0.3s;
-
-    &:hover {
-      background-color: #eaeaea;
-    }
-
-    &:first-child {
-      border-top: $border;
-    }
-  }
-
-  .nested-list {
-    border-left: 10px rgba(0, 0, 0, 0.24) solid;
-  }
-
-  li.table-ref {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .add-data-icon, .table-name {
-    padding: 20px 16px;
-    transition: all 0.3s;
-
-    &:hover {
-      color: $primary-color;
-    }
-  }
-
-  .active-router-link {
-    // A bit hacky
-    color: $primary-color-dark !important;
-    font-weight: bold;
-  }
-
-  .table-name {
-    flex-grow: 1;
-  }
-
-  li.header {
-    background-color: rgba(0, 0, 0, 0.32);
-    color: hsla(0, 0%, 100%, 0.87);
-    text-transform: uppercase;
-    font-size: 10px;
-    padding: 6px 16px;
-    letter-spacing: 1px;
-  }
-
   a {
     color: $normal-color;
     text-decoration: none;
@@ -118,3 +61,68 @@ ul.undecorated-list {
   }
 }
 
+.row-item {
+  display: flex;
+  align-items: center;
+
+  min-width: 200px;
+
+  $border: 1px rgba(0, 0, 0, 0.06) solid;
+  border-bottom: $border;
+
+  transition: all 0.3s;
+
+  &:hover {
+    background-color: #eaeaea;
+  }
+
+  &:first-child {
+    border-top: $border;
+  }
+}
+
+.nested-list {
+  border-left: 10px rgba(0, 0, 0, 0.24) solid;
+}
+
+li.table-ref {
+  display: flex;
+  flex-direction: column;
+}
+
+.table-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 20px 0 20px 16px;
+}
+
+.add-data-icon, .table-name {
+  transition: all 0.3s;
+
+  &:hover {
+    color: $primary-color;
+  }
+}
+
+.add-data-icon {
+  padding: 20px 16px;
+}
+
+.active-router-link {
+  // A bit hacky
+  color: $primary-color-dark !important;
+  font-weight: bold;
+}
+
+.table-name {
+  flex-grow: 1;
+}
+
+li.header {
+  background-color: rgba(0, 0, 0, 0.32);
+  color: hsla(0, 0%, 100%, 0.87);
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 6px 16px;
+  letter-spacing: 1px;
+}
