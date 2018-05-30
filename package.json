@@ -13,8 +13,8 @@
     "start": "node dist",
     "test": "yarn test:server && yarn test:client && yarn e2e && ng build --prod",
     "test:server": "gulp testPrep && TS_NODE_PROJECT=server/tsconfig.json nyc mocha --opts server/test/mocha.opts",
-    "test:client": "ng test --single-run true --sourcemaps false --code-coverage",
-    "test:client:live": "ng test --single-run false",
+    "test:client": "ng test --watch false --source-map false --code-coverage",
+    "test:client:live": "ng test --watch true",
     "snyk-protect": "snyk protect",
     "prepublish": "yarn snyk-protect"
   },
