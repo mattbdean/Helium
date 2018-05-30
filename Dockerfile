@@ -8,7 +8,7 @@ COPY package.json yarn.lock .snyk ./
 RUN yarn install
 
 # Add all the necessary build-related files
-COPY .angular-cli.json .babelrc Gulpfile.ts tsconfig.json ./
+COPY angular.json .babelrc Gulpfile.ts tsconfig.json ./
 
 # Add all sources
 COPY common ./common
