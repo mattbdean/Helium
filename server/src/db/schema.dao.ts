@@ -6,11 +6,11 @@ import {
     CompoundConstraint, Constraint, ConstraintType, DefaultValue, Filter,
     RawConstraint, SqlRow, TableDataType, TableHeader, TableMeta
 } from '../common/api';
+import { TableInsert } from '../common/api/table-insert';
 import {
     BLOB_STRING_REPRESENTATION, CURRENT_TIMESTAMP, DATE_FORMAT,
     DATETIME_FORMAT
 } from '../common/constants';
-import { TableInsert } from '../common/api/table-insert';
 import { TableName } from '../common/table-name';
 import { unflattenTableNames } from '../common/util';
 import { QueryHelper } from '../db/query-helper';
@@ -539,7 +539,7 @@ export class SchemaDao {
                 .where('TABLE_SCHEMA = ?', schema)
         );
 
-        return result[0].TABLE_COMMENT;
+        return result.length > 0 ? result[0].TABLE_COMMENT : '';
     }
 
     /** Counts the amount of rows in a table */
