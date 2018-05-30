@@ -59,7 +59,8 @@
             "assets": [
               "client/assets",
               "client/metadata"
-            ]
+            ],
+            "codeCoverage": true
           }
         },
         "lint": {
