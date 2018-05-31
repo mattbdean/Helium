@@ -112,7 +112,7 @@ jobs:
             - run:
                 name: Install MySQL client, Yarn, and Chrome
                 command: |
-                    sudo apt-get install mysql-client yarn google-chrome-stable nodejs
+                    sudo apt-get install mysql-client yarn google-chrome-stable
                     # Node 8.9+ is required for @angular/cli 6.0
                     nvm install 8
             - run:
