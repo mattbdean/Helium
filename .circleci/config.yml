@@ -108,14 +108,13 @@ jobs:
                     wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
                     DEBIAN_FRONTEND=noninteractive sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
 
-                    # Node.js
-                    curl -sL https://deb.nodesource.com/setup_10.x | sudo -E bash -
-
                     sudo apt-get update
             - run:
                 name: Install MySQL client, Yarn, and Chrome
                 command: |
                     sudo apt-get install mysql-client yarn google-chrome-stable nodejs
+                    # Node 8.9+ is required for @angular/cli 6.0
+                    nvm install 8
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
