@@ -45,7 +45,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     @Output()
     public rowSelected: EventEmitter<SqlRow> = new EventEmitter();
 
-    public get meta() { return this.meta$.getValue()!!; }
+    public meta: TableMeta;
 
     public columnNames: string[] = [];
 
@@ -88,7 +88,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     /** An observable that keeps track of the table name */
     private name$ = new BehaviorSubject<TableName | null>(null);
-    private meta$ = new BehaviorSubject<TableMeta | null>(null);
     private sort$ = new BehaviorSubject<Sort>({ direction: '', active: '' });
 
     constructor(
@@ -130,7 +129,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             this.constraints = groupBy(flattened, (c) => c.localColumn);
 
             // Update observables and data source
-            this.meta$.next(meta);
+            this.meta = meta;
             this.dataSource.switchTables(meta);
             if (this.matPaginator)
                 this.matPaginator.pageIndex = 0;
@@ -152,12 +151,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             allowInsertLike: this.allowInsertLike
         });
 
-        const fakeCollectionViewer: CollectionViewer = {
-            // This is actually pretty similar to what Angular Material gives us
-            // as of v5.2.4
-             viewChange: of({ start: 0, end: Number.MAX_VALUE })
-        };
-
         // For whatever reason, subscribing to the header cells causes the
         // dataSource subscription to always be fired after the cells have
         // updated in the DOM, which is what we want
@@ -166,7 +159,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         this.layoutSub = combineLatest(
             this.headerCells.changes,
             this.contentCells.changes,
-            this.dataSource.connect(fakeCollectionViewer)
+            this.dataSource.dataChanges()
         ).pipe(filter((data): boolean => {
             const [headers, content, tableData] = data;
 
@@ -313,13 +306,13 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         // Find all date and datetime headers and transform them from their
         // display format to the API format
         for (const headerName of Object.keys(reformatted)) {
-            const header = this.meta$.getValue()!!.headers.find((h) => h.name === headerName);
+            const header = this.meta.headers.find((h) => h.name === headerName);
             if (header === undefined)
                 throw new Error('Can\'t find header with name ' + headerName);
 
             // We only need to provide the next component what information
             // uniquely identifies this row
-            const flattened = flattenCompoundConstraints(this.meta$.getValue()!!.constraints);
+            const flattened = flattenCompoundConstraints(this.meta.constraints);
             const primaryKey = flattened.find((c) =>
                 c.localColumn === header.name && c.type === 'primary');
 

@@ -1,10 +1,10 @@
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { Injectable } from '@angular/core';
 import { MatPaginator, PageEvent, Sort } from '@angular/material';
-import { clone, find } from 'lodash';
+import { clone, find, isEqual } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, combineLatest, NEVER, Observable, of, Subscription, zip } from 'rxjs';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { Filter, SqlRow, TableHeader, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
@@ -39,6 +39,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
     private pageSize$ = new BehaviorSubject<number>(25);
     private sort$ = new BehaviorSubject<string | null>(null);
     private filters$ = new BehaviorSubject<Filter[]>([]);
+    private data$ = new BehaviorSubject<SqlRow[] | null>(null);
 
     // Subscriptions
     private pageSub: Subscription | null = null;
@@ -58,6 +59,8 @@ export class ApiDataSource extends DataSource<SqlRow> {
                 // page size, sorting, and filters, respectively), is optional
                 return data[0] !== null;
             }),
+            // Prevent unnecessary requests
+            distinctUntilChanged(isEqual),
             map((data: [TableMeta, number, number, string, Filter[]]): [TableMeta, ContentRequest] => {
                 const req: ContentRequest = {
                     schema: data[0].schema,
@@ -85,11 +88,14 @@ export class ApiDataSource extends DataSource<SqlRow> {
             }),
             map((data: [PaginatedResponse<SqlRow[]>, TableMeta]) =>
                 // Format the rows before presenting them to the UI
-                this.formatRows(data[1].headers, data[0].data))
+                this.formatRows(data[1].headers, data[0].data)),
+            tap((data: SqlRow[]) => {
+                this.data$.next(data);
+            })
         );
     }
 
-    // overriden from DataSource
+    // overridden from DataSource
     public connect(collectionViewer: CollectionViewer): Observable<SqlRow[]> {
         return this.source;
     }
@@ -142,6 +148,17 @@ export class ApiDataSource extends DataSource<SqlRow> {
             this.filtersSub = this.filters.changed.subscribe((data: Filter[]) => {
                 this.filters$.next(data);
             });
+    }
+
+    /**
+     * Provides an Observable that emits values whenever the data changes. If
+     * there is already an observer for connect(), prefer this method to avoid
+     * duplicate HTTP requests.
+     */
+    public dataChanges(): Observable<SqlRow[]> {
+        return this.data$.pipe(
+            filter((data) => data !== null)
+        ) as Observable<SqlRow[]>;
     }
 
     /**
