@@ -113,8 +113,21 @@ jobs:
                 name: Install MySQL client, Yarn, and Chrome
                 command: |
                     sudo apt-get install mysql-client yarn google-chrome-stable
+            - run:
+                name: Install Node.js
+                command: |
+                    set +e             
+                    curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+                    export NVM_DIR="/opt/circleci/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
                     # Node 8.9+ is required for @angular/cli 6.0
                     nvm install 8
+                    nvm alias default 8
+                    
+                    # Each step uses the same `$BASH_ENV`, so need to modify it
+                    echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
+                    echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
