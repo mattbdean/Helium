@@ -1,5 +1,5 @@
 # Node 8+ should work
-FROM node:8
+FROM node:8-alpine
 
 WORKDIR /usr/src/app
 
