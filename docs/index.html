@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Helium</title>
+        <title>Helium - The Open Source DataJoint Companion</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.css" />
@@ -28,47 +28,70 @@
             </nav>
         </header>
 
-        <div class="gallery">
-            <a href="#" data-featherlight="screenshots/login.png">
-                <img src="screenshots/login.png" alt="Logging in">
+        <!-- <div class="gallery">
+            <a href="#" data-featherlight="media/form.png">
+                <img src="media/form.png">
             </a>
-            <a href="#" data-featherlight="screenshots/filter.png">
-                <img src="screenshots/filter.png">
-            </a>
-            <a href="#" data-featherlight="screenshots/form.png">
-                <img src="screenshots/form.png">
-            </a>
-            <a href="#" data-featherlight="screenshots/form_part.png">
-                <img src="screenshots/form_part.png">
-            </a>
-        </div>
+        </div> -->
 
-        <section>
+        <section class="with-media">
             <h1>Works with any MySQL database</h1>
-            <p>
-                Helium was built to work with any MySQL database, but to be
-                aware of DataJoint conventions. As a result, Helium is smarter
-                than your average database companion and can understands
-                concepts such as the difference between a manual and a computed
-                table.
-            </p>
+            <div class="content">
+                <p>
+                    Helium was built to work with any MySQL database, but to be aware of DataJoint conventions. As a
+                    result, Helium is smarter than your average database companion and can understands concepts such as
+                    the difference between a manual and a computed table.
+                </p>
+                <a href="#" data-featherlight="media/login.png">
+                    <img src="media/login.png" alt="Logging in">
+                </a>
+            </div>
         </section>
 
-        <section>
-            <h1>Makes data entry easy</h1>
-            <p>
-                Helium is capable of building complex forms for any table and
-                even handles <a href="https://docs.datajoint.io/computation/Part-tables.html">master/part table</a>
-                relationships.
-            </p>
+        <section class="with-media">
+            <h1>Data entry made easy</h1>
+            <div class="content">
+                <p>
+                    Helium is capable of building complex forms for any table and even handles
+                    <a href="https://docs.datajoint.io/computation/Part-tables.html">master/part table</a>
+                    relationships. Dates, times, and datetimes are easy to input and use the browser's native date/time
+                    picker for a simpler experience. Everything from booleans to enums have their own specialized inputs.
+                </p>
+                <a href="#" data-featherlight="media/form_part.png">
+                    <img src="media/form_part.png">
+                </a>
+            </div>
+
+            <div class="content">
+                <p>
+                    Helium goes a long way for convenience. Conventionally tricky things like managing compound foreign
+                    keys when inserting data is made simple with a click of a button.
+                </p>
+                <video muted controls loop autoplay>
+                    <source src="media/compound_keys_form.webm" type="video/webm">
+                    It doesn't look like your browser supports HTML5 video
+                </video>
+            </div>
+        </section>
+
+        <section class="with-media">
+            <h1>Simple data browsing</h1>
+            <div class="content">
+                <p>
+                    Helium does everything you'd expect a data table to do. Sorting, filtering, and column resizing are
+                    all essential parts of viewing data.
+                </p>
+                <a href="#" data-featherlight="media/filter.png">
+                    <img src="media/filter.png">
+                </a>
+            </div>
         </section>
 
         <section>
             <h1>RESTful API</h1>
             <p>
-                Every bit of data availble when using Helium is also available
-                programmatically&mdash;from schema names to table content and
-                every bit of metadata in between.
+                Every bit of data available when using Helium is also available <a href="api.html">programmatically</a>
+                &mdash;from schema names to table content and every bit of metadata in between.
             </p>
         </section>
 
@@ -93,14 +116,27 @@
 
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
         <script src="https://cdn.jsdelivr.net/gh/noelboss/featherlight@1.7.13/release/featherlight.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/gh/noelboss/featherlight@1.7.13/release/featherlight.gallery.min.js"></script>
         <script>
-            $('.gallery a').featherlightGallery({
-                previousIcon: '&#9664;',
-                nextIcon: '&#9654;',
-                galleryFadeIn: 100,
-                galleryFadeOut: 300
-            });
+            $(function() {
+                function requestFullscreen(elem) {
+                    // Use requestFullScreen fn if available, otherwise fall
+                    // back to render-engine-specific functions.
+                    var fn = elem.requestFullscreen ||
+                        elem.msRequestFullscreen ||
+                        elem.mozRequestFullScreen ||
+                        elem.webkitRequestFullscreen;
+                    
+                    if (fn === undefined)
+                        console.error('Warning: unable to put element into fullscreen', elem);
+                    
+                    // Make sure we're binding 'this' to the right variable when
+                    // invoking the function. Otherwise we'll get an error
+                    elem[fn.name].call(elem);
+                }
+                $('video').on('dblclick', (function() {
+                    requestFullscreen(this);
+                }));
+            })
         </script>
     </body>
 </html>
