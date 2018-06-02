@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import * as Fuse from 'fuse.js';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { debounceTime, map, startWith } from 'rxjs/operators';
 import { AbstractFormControl } from './abstract-form-control';
 
 interface AutocompleteOption { value: string; }
@@ -41,6 +41,7 @@ interface AutocompleteOption { value: string; }
     `]
 })
 export class AutocompleteControlComponent extends AbstractFormControl implements OnInit {
+    private static readonly AUTOCOMPLETE_RESULT_LIMIT = 10;
     /** The options passed to the Fuse constructor */
     private static fuseOptions: Fuse.FuseOptions = {
         location: 0,
@@ -75,6 +76,7 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
         );
         
         this.currentSuggestions = combineLatest(userInput$, fuse$).pipe(
+            debounceTime(200),
             map((params: [string, Fuse]) => {
                 const [input, fuse] = params;
 
@@ -83,8 +85,10 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
                 const results: AutocompleteOption[] = input.length === 0 ?
                     (fuse as any).list : fuse.search(input);
 
-                // Unwrap the AutocompleteOption to its string value
-                return results.map((r: AutocompleteOption) => r.value);
+                return results
+                    .slice(0, AutocompleteControlComponent.AUTOCOMPLETE_RESULT_LIMIT)
+                    // Unwrap the AutocompleteOption to its string value
+                    .map((r: AutocompleteOption) => r.value);
             })
         );
     }
