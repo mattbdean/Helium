@@ -58,7 +58,10 @@ export class AutocompleteControlComponent extends AbstractFormControl implements
         // Start with an empty string so suggestions pop up before the user has
         // to type anything
         const userInput$ = formControl.valueChanges
-            .pipe(startWith(''));
+            .pipe(
+                startWith(''),
+                map((input) => String(input))
+            );
 
         // Listen to changes in the autocomplete values and construct Fuse
         // objects for that data when it changes
