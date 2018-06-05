@@ -8,7 +8,7 @@
 
 # Temporary directories
 /dist/
-/node_modules/
+node_modules/
 
 # Client
 /client/app/common
@@ -17,6 +17,10 @@
 /server/src/about.json
 /server/src/common
 /server/src/public
+
+# Load testing
+/load-testing/out
+/load-testing/dist
 
 # Package manager error logs
 yarn-error.log

@@ -1,0 +1,19 @@
+{
+  "name": "helium-load-testing",
+  "version": "1.0.0",
+  "repository": "https://github.com/mattbdean/Helium/tree/master/load-testing",
+  "author": "Matthew Dean",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "chart.js": "^2.7.2",
+    "chartjs-node": "^1.7.1",
+    "typescript": "file:../node_modules/typescript"
+  },
+  "devDependencies": {
+    "@types/node": "^10.3.1"
+  }
+}
