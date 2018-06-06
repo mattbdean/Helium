@@ -1,12 +1,13 @@
 import * as bodyParser from 'body-parser';
-import * as express from 'express';
 import { Application } from 'express';
+import * as express from 'express';
 import * as helmet from 'helmet';
 import * as logger from 'morgan';
 import * as path from 'path';
 import { DaoFactory } from './db/dao.factory';
 import { DatabaseHelper } from './db/database.helper';
 import { SchemaDao } from './db/schema.dao';
+import { NODE_ENV, NodeEnv } from './env';
 import { api } from './routes/api';
 import { front } from './routes/front';
 
@@ -36,7 +37,15 @@ export class Helium {
             new SchemaDao(dbHelper.queryHelper(apiKey))
     ) {
         const app = express();
-        app.use(logger('dev'));
+        if (NODE_ENV === NodeEnv.PROD) {
+            // Standard Apache log format, only care about failing status codes
+            app.use(logger('common', {
+                skip: (req, res) => res.statusCode < 400
+            }));
+        } else {
+            // Simple, colorized output
+            app.use(logger('dev'));
+        }
         app.use(bodyParser.urlencoded({ extended: false }));
         app.use(bodyParser.json());
         app.use(helmet());
