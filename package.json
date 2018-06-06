@@ -58,7 +58,6 @@
     "snyk": "^1.69.7",
     "squel": "^5.12.1",
     "web-animations-js": "^2.3.1",
-    "yargs": "^10.0.3",
     "zone.js": "^0.8.26"
   },
   "devDependencies": {

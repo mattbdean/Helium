@@ -30,6 +30,7 @@ export function debug(data: any) {
     if (typeof data === 'function') {
         data();
     } else {
+        // tslint:disable:no-console
         console.log(data);
     }
 }
