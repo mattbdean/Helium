@@ -3,6 +3,7 @@
   "version": "1.0.0-beta",
   "description": "Svoboda Lab experiment metadata collection and standardization",
   "scripts": {
+    "benchmark": "ts-node server/benchmarks/schema-dao.bench.ts",
     "build": "gulp build && ng build",
     "dev": "gulp build && concurrently --raw \"nodemon dist\" \"gulp watch\" \"ng build --watch\"",
     "e2e": "yarn build --progress=false && concurrently --raw --kill-others --success first \"node dist\" \"sleep 1 && yarn e2e:prepped\"",
@@ -79,6 +80,7 @@
     "@types/sinon-chai": "^2.7.28",
     "@types/supertest": "^2.0.2",
     "@types/yargs": "^10.0.0",
+    "benchmark": "^2.1.4",
     "chai": "^4.1.1",
     "chai-as-promised": "^7.1.1",
     "codecov": "^3.0.0",
