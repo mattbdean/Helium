@@ -15,11 +15,13 @@ COPY common ./common
 COPY client ./client
 COPY server ./server
 
-# Build in dev mode
-RUN yarn build
+# Build in production mode
+RUN yarn build:prod
 
 # Helium binds to port 3000 by default
 EXPOSE 3000
+
+ENV NODE_ENV=prod
 
 # All compiled files are located in dist/
 CMD node dist
