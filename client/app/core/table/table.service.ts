@@ -5,7 +5,7 @@ import {
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
-import { map, mapTo, tap } from 'rxjs/operators';
+import { map, mapTo, shareReplay, tap } from 'rxjs/operators';
 import { PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
 import { TableNameParams } from '../../common/table-name-params';
@@ -23,10 +23,17 @@ const encode = encodeURIComponent;
  */
 @Injectable()
 export class TableService {
+    /** Hot observable that replays the last value emitted to new subscribers */
+    private schemas$: Observable<string[]> | null = null;
+
     constructor(private http: HttpClient, private auth: AuthService) {}
 
     public schemas(): Observable<string[]> {
-        return this.get('/schemas');
+        if (!this.schemas$) {
+            this.schemas$ = this.get<string[]>('/schemas').pipe(shareReplay(1));
+        }
+
+        return this.schemas$;
     }
 
     /** Fetches a list of all tables in the given schema */
