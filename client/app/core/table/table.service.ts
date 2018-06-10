@@ -1,11 +1,12 @@
 import {
-    HttpClient, HttpHeaders, HttpParams,
+    HttpClient, HttpErrorResponse, HttpHeaders,
+    HttpParams,
     HttpResponse
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
-import { Observable } from 'rxjs';
-import { map, mapTo, shareReplay, tap } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { catchError, map, mapTo, shareReplay, tap } from 'rxjs/operators';
 import { PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
 import { TableNameParams } from '../../common/table-name-params';
@@ -24,13 +25,27 @@ const encode = encodeURIComponent;
 @Injectable()
 export class TableService {
     /** Hot observable that replays the last value emitted to new subscribers */
-    private schemas$: Observable<string[]> | null = null;
+    private schemas$: Observable<string[] | null> | null = null;
 
     constructor(private http: HttpClient, private auth: AuthService) {}
 
-    public schemas(): Observable<string[]> {
+    /**
+     * Requests the schemas available to the user. Emits a string array of
+     * schema names when successful. Emits null when the API responds with a
+     * 401 Unauthorized.
+     */
+    public schemas(): Observable<string[] | null> {
         if (!this.schemas$) {
-            this.schemas$ = this.get<string[]>('/schemas').pipe(shareReplay(1));
+            this.schemas$ = this.get<string[] | null>('/schemas').pipe(
+                catchError((err) => {
+                    if (err instanceof HttpErrorResponse && err.status === 401) {
+                        return of(null);
+                    } else {
+                        throw err;
+                    }
+                }),
+                shareReplay(1),
+            );
         }
 
         return this.schemas$;

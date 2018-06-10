@@ -2,12 +2,12 @@ import {
     Component, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
-import { MatIconRegistry, MatSidenav } from '@angular/material';
+import { MatIconRegistry, MatSidenav, MatSnackBar } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
 import { combineLatest, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
-import { filter, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, startWith, switchMap } from 'rxjs/operators';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
 import { AuthService } from './core/auth/auth.service';
@@ -50,19 +50,21 @@ export class AppComponent implements OnDestroy, OnInit {
         private backend: TableService,
         private router: Router,
         private iconReg: MatIconRegistry,
-        private domSanitizer: DomSanitizer
+        private domSanitizer: DomSanitizer,
+        private snackBar: MatSnackBar
     ) {}
 
     public ngOnInit() {
         // Fetch available schemas when the user logs in
-        const schemas$: Observable<string[] | null> = this.auth.watchAuthState()
-            .pipe(switchMap((isLoggedIn) => {
+        const schemas$: Observable<string[] | null> = this.auth.watchAuthState().pipe(
+            switchMap((isLoggedIn) => {
                 if (isLoggedIn) {
                     return this.backend.schemas();
                 } else {
                     return of(null);
                 }
-            }));
+            })
+        );
         
         const iconNames: string[] = [
             'filter',
@@ -136,7 +138,12 @@ export class AppComponent implements OnDestroy, OnInit {
 
         // Listen for the user logging in and automatically select a schema for
         // them
-        schemas$.subscribe((schemas) => {
+        schemas$.subscribe((schemas: string[] | null) => {
+            // Out of sync. Either the session has expired or someone restarted
+            // the server.
+            if (schemas === null && this.auth.loggedIn)
+                return this.logout('Your session has expired');
+
             if (schemas !== null && this.schemaControl.value === null)
                 this.schemaControl.setValue(this.determineDefaultSchema(schemas));
             this.schemas = schemas === null ? [] : schemas;
@@ -165,7 +172,12 @@ export class AppComponent implements OnDestroy, OnInit {
         this.sidenav.opened = !this.sidenav.opened;
     }
 
-    public logout() {
+    public logout(message?: string) {
+        if (message)
+            this.snackBar.open(message, 'OK', {
+                duration: 2000
+            });
+
         // Log the user out
         this.auth.logout();
 
