@@ -63,6 +63,12 @@ import { SchemaDao } from './schema.dao';
  * converted into the proper MySQL format.
  */
 export class TableInputValidator {
+    /**
+     * The maximum amount of entries per part table that can be submitted with
+     * one call
+     */
+    public static PART_ENTRY_LIMIT = 25;
+
     private static joi = BaseJoi.extend(JoiDateExtensions);
 
     public constructor(private helper: SchemaDao) {}
@@ -136,8 +142,8 @@ export class TableInputValidator {
 
     /**
      * Creates an ArraySchema that accepts table entries whose headers are given.
-     * If `allowMultiple` is false, the array will only be valid if one entry is
-     * given.
+     * If the TableName is for a part table, the length of the array is capped
+     * to 1.
      */
     public static schemaForTableArray(headers: TableHeader[], name: TableName): ArraySchema {
         const contentsSchema = TableInputValidator.schemaForTable(headers);
@@ -145,6 +151,8 @@ export class TableInputValidator {
         let schema = TableInputValidator.joi.array().items(contentsSchema);
         if (!name.isPartTable())
             schema = schema.length(1);
+        else
+            schema = schema.max(TableInputValidator.PART_ENTRY_LIMIT);
 
         return schema;
     }

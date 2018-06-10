@@ -2,7 +2,7 @@ import * as chai from 'chai';
 import * as chaiAsPromised from 'chai-as-promised';
 import { Schema } from 'joi';
 import * as joi from 'joi';
-import * as _ from 'lodash';
+import { clone, partition, range } from 'lodash';
 import * as moment from 'moment';
 import { inspect } from 'util';
 import { TableHeader } from '../../src/common/api';
@@ -175,13 +175,13 @@ describe('SchemaInputValidator', () => {
              * entries and `params.part` part entries
              */
             const createInput = (params: { master: number, part: number }) => ({
-                _master: _.range(params.master).map(validMasterInput),
-                _master__part: _.range(params.part).map(validPartInput)
+                _master: range(params.master).map(validMasterInput),
+                _master__part: range(params.part).map(validPartInput)
             });
 
             // Define what combinations of number of master/part entries are valid
             // Valid inputs have exactly 1 master entry and 0 or more part entries
-            const valid = _.range(3).map((n) => ({ master: 1, part: n }));
+            const valid = range(3).map((n) => ({ master: 1, part: n }));
 
             // Invalid inputs have any other number of master entries besides 1.
             // The number of part entries should be irrelevant but vary just in
@@ -206,7 +206,7 @@ describe('SchemaInputValidator', () => {
 
     describe('schemaForTableArray', () => {
         const headers = [asHeader({ name: 'foo', type: 'integer', signed: true })];
-        const entry = () => ({ foo: 1 });
+        const entry = (foo: number = 1) => ({ foo });
 
         it('should allow exactly 1 entry for master tables', () => {
             // '#' prefix chosen at random
@@ -239,11 +239,22 @@ describe('SchemaInputValidator', () => {
             // }
             joi.assert([], schema);
         });
+
+        it('should allow a maximum of PART_ENTRY_LIMIT entries for part tables', () => {
+            const tableName = new TableName('schema', 'foo__bar');
+            const schema = TableInputValidator.schemaForTableArray(headers, tableName);
+
+            const validEntries = range(TableInputValidator.PART_ENTRY_LIMIT).map(entry);
+            joi.assert(validEntries, schema);
+
+            const invalidEntries = range(TableInputValidator.PART_ENTRY_LIMIT + 1).map(entry);
+            expect(() => joi.assert(invalidEntries, schema)).to.throw(Error);
+        });
     });
 
     describe('schemaForTable', () => {
         const generateHeaders = (numHeaders: number) =>
-            _.range(numHeaders).map((n) => (asHeader({
+            range(numHeaders).map((n) => (asHeader({
                 name: 'header' + n,
                 type: 'string',
                 maxCharacters: 10
@@ -275,7 +286,7 @@ describe('SchemaInputValidator', () => {
             expectValid(schema, valid);
 
             // Trying to add some unknown key into the object should make it invalid
-            const invalid: any = _.clone(valid);
+            const invalid: any = clone(valid);
             invalid.other = 'baz';
 
             expectInvalid(schema, invalid);
@@ -305,11 +316,11 @@ describe('SchemaInputValidator', () => {
             '2017-01-01 23:11:34',
             '1955-09-30 00:00:00',
             // Create integers from 10^0 up to 10^10
-            ..._.range(11).map((n) => n * Math.pow(10, n)),
+            ...range(11).map((n) => n * Math.pow(10, n)),
             // Add negative numbers into the mix
-            ..._.range(11).map((n) => -n * Math.pow(10, n)),
+            ...range(11).map((n) => -n * Math.pow(10, n)),
             // Create floats from 10^0 as small as 10^-10
-            ..._.range(11).map((n) => n * Math.pow(10, -n)),
+            ...range(11).map((n) => n * Math.pow(10, -n)),
             Infinity,
             -Infinity
         ];
@@ -326,7 +337,7 @@ describe('SchemaInputValidator', () => {
 
             // Split potentialInputs into two arrays, one containing the
             // elements that should be valid and those that should not
-            const [valid, invalid] = _.partition(potentialInputs, shouldBeValid);
+            const [valid, invalid] = partition(potentialInputs, shouldBeValid);
 
             for (const v of valid) {
                 const result = schema.validate(v);
