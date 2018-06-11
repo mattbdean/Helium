@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
     Component, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
@@ -59,7 +60,16 @@ export class AppComponent implements OnDestroy, OnInit {
         const schemas$: Observable<string[] | null> = this.auth.watchAuthState().pipe(
             switchMap((isLoggedIn) => {
                 if (isLoggedIn) {
-                    return this.backend.schemas();
+                    return this.backend.schemas().pipe(
+                        catchError((err) => {
+                            if (err instanceof HttpErrorResponse && err.status === 401) {
+                                this.logout('Your session has expired');
+                                return of(null);
+                            }
+
+                            throw err;
+                        })
+                    );
                 } else {
                     return of(null);
                 }
@@ -139,10 +149,7 @@ export class AppComponent implements OnDestroy, OnInit {
         // Listen for the user logging in and automatically select a schema for
         // them
         schemas$.subscribe((schemas: string[] | null) => {
-            // Out of sync. Either the session has expired or someone restarted
-            // the server.
-            if (schemas === null && this.auth.loggedIn)
-                return this.logout('Your session has expired');
+            console.log('schemas$.subscribe()', schemas, this.auth.loggedIn);
 
             if (schemas !== null && this.schemaControl.value === null)
                 this.schemaControl.setValue(this.determineDefaultSchema(schemas));
@@ -180,6 +187,7 @@ export class AppComponent implements OnDestroy, OnInit {
 
         // Log the user out
         this.auth.logout();
+        console.log('after logout():', this.auth.loggedIn);
 
         // We don't know if the next user will have access to the selected
         // schema

@@ -37,14 +37,7 @@ export class TableService {
     public schemas(): Observable<string[] | null> {
         if (!this.schemas$) {
             this.schemas$ = this.get<string[] | null>('/schemas').pipe(
-                catchError((err) => {
-                    if (err instanceof HttpErrorResponse && err.status === 401) {
-                        return of(null);
-                    } else {
-                        throw err;
-                    }
-                }),
-                shareReplay(1),
+                shareReplay(1)
             );
         }
 
