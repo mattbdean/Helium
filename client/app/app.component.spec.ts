@@ -6,6 +6,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import {
     MatFormFieldModule,
     MatSelectModule, MatSidenavModule,
+    MatSnackBarModule,
     MatToolbarModule
 } from '@angular/material';
 import { By } from '@angular/platform-browser';
@@ -29,7 +30,6 @@ describe('AppComponent', () => {
     let comp: AppComponent;
     let de: DebugElement;
     let service: TableService;
-    let auth: AuthService;
 
     // TABLE_TIER_PREFIX_MAPPING maps prefixes to tiers, invert it so we can
     // map tiers to prefixes
@@ -81,6 +81,7 @@ describe('AppComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 CoreModule,
+                MatSnackBarModule,
                 MatSelectModule,
                 MatFormFieldModule,
                 MatSidenavModule,
@@ -100,7 +101,6 @@ describe('AppComponent', () => {
         comp = fixture.componentInstance;
         de = fixture.debugElement;
         service = de.injector.get(TableService);
-        auth = de.injector.get(AuthService);
 
         // Make the router always return a URL
         sinon.stub(de.injector.get(Router), 'url').get(() => '/foo');
