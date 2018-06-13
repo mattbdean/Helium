@@ -123,6 +123,7 @@ export class FilterComponent implements OnDestroy, OnInit {
             // Make the new spec autocomplete
             if (enableAutocomplete) {
                 newSpec.type = 'autocomplete';
+                newSpec.subtype = 'text';
                 newSpec.autocompleteValues = this.backend.columnValues(this.meta.schema, this.meta.name, param).pipe(
                     // Filter out null values since the user should be using
                     // 'is' or 'isnot' instead of 'eq'
