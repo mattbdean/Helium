@@ -6,8 +6,10 @@ import { FormGroup } from '@angular/forms';
 import { MatCheckbox, MatCheckboxChange } from '@angular/material';
 import { cloneDeep } from 'lodash';
 import { combineLatest, Observable, Subscription } from 'rxjs';
-import { startWith } from 'rxjs/operators';
+import { map, startWith } from 'rxjs/operators';
+import { TableDataType } from '../../../../common/api';
 import { FilterOperation, TableMeta } from '../../common/api';
+import { TableService } from '../../core/table/table.service';
 import {
     FormControlSpec, FormControlType
 } from '../../dynamic-forms/form-control-spec';
@@ -23,6 +25,16 @@ import { Operation } from './operation';
 export class FilterComponent implements OnDestroy, OnInit {
     private static readonly FORM_CONTROL_NAME = 'value';
     private static readonly PLACEHOLDER = 'Value';
+
+    /** Autocomplete is only eligible for columns with these types */
+    private static readonly AUTOCOMPLETE_ENABLED_TYPES: TableDataType[] = [
+        'float', 'integer', 'string'
+    ];
+
+    /** Autocomplete is only eligible for operations of these types */
+    private static readonly AUTOCOMPLETE_ENABLED_OPERATIONS: FilterOperation[] = [
+        'eq'
+    ];
 
     private static readonly defaultSpec: FormControlSpec = {
         type: 'text',
@@ -60,6 +72,7 @@ export class FilterComponent implements OnDestroy, OnInit {
     public ops: Operation[];
 
     public constructor(
+        private backend: TableService,
         private filters: FilterProviderService,
         private formSpecGenerator: FormSpecGeneratorService
     ) {}
@@ -93,13 +106,29 @@ export class FilterComponent implements OnDestroy, OnInit {
                 return spec.formControlName === param;
             }));
 
-            if (newSpec === undefined)
+            // Should we enable autocomplete given this column and operation?
+            // If a column hasn't been selected yet it's a guaranteed no
+            const enableAutocomplete = newSpec === undefined ? false : this.shouldBeAutocomplete(param, op);
+
+            // The column hasn't been selected yet
+            if (newSpec === undefined) {
                 newSpec = cloneDeep(FilterComponent.defaultSpec);
+            }
 
             // Adopt the new spec to our FormGroup
             newSpec.formControlName = FilterComponent.FORM_CONTROL_NAME;
             newSpec.placeholder = FilterComponent.PLACEHOLDER;
             newSpec.required = false;
+
+            // Make the new spec autocomplete
+            if (enableAutocomplete) {
+                newSpec.type = 'autocomplete';
+                newSpec.autocompleteValues = this.backend.columnValues(this.meta.schema, this.meta.name, param).pipe(
+                    // Filter out null values since the user should be using
+                    // 'is' or 'isnot' instead of 'eq'
+                    map((colData: any[]) => colData.filter((el) => el !== null))
+                );
+            }
 
             const val = this.group.get('value')!!.value;
             const newVal = FilterComponent.adaptValue(val, this.currentSpec.type, newSpec.type);
@@ -132,6 +161,24 @@ export class FilterComponent implements OnDestroy, OnInit {
 
     public requestRemove() {
         this.removed.emit(true);
+    }
+
+    /**
+     * Should a filter with the given column name and operation be an
+     * autocomplete field? Must meet these conditions:
+     * 
+     *  1. The column type must be in `AUTOCOMPLETE_ENABLED_TYPES`
+     *  2. The operation must be in `AUTOCOMPLETE_ENABLED_OPERATIONS`
+     *  3. Must currently be showing user input (this.userInput)
+     */
+    private shouldBeAutocomplete(colName: string, op: FilterOperation) {
+        const col = this.meta.headers.find((h) => h.name === colName);
+        if (col === undefined)
+            throw new Error('Could not find column ' + colName);
+        
+        return FilterComponent.AUTOCOMPLETE_ENABLED_TYPES.includes(col.type) &&
+            FilterComponent.AUTOCOMPLETE_ENABLED_OPERATIONS.includes(op) &&
+            this.showUserInput;
     }
 
     private static adaptValue(val: any, from: FormControlType, to: FormControlType): any {
