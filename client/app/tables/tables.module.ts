@@ -4,21 +4,21 @@ import { ReactiveFormsModule } from '@angular/forms';
 import {
     MatButtonModule,
     MatCardModule, MatCheckboxModule, MatFormFieldModule, MatIconModule,
-    MatPaginatorModule,
-    MatProgressBarModule, MatSelectModule, MatSortModule, MatTableModule
+    MatInputModule,
+    MatPaginatorModule, MatProgressBarModule, MatSelectModule, MatSortModule, MatTableModule
 } from '@angular/material';
 import { CoreModule } from '../core/core.module';
-import { DatatableComponent } from './datatable/datatable.component';
-import { TableHostComponent } from './table-host/table-host.component';
-import { TableRoutingModule } from './table-routing.module';
-
 import { DynamicFormsModule } from '../dynamic-forms/dynamic-forms.module';
 import { ApiDataSource } from './api-data-source/api-data-source';
+import { DatatableComponent } from './datatable/datatable.component';
 import { FilterManagerComponent } from './filter-manager/filter-manager.component';
 import { FilterProviderService } from './filter-provider/filter-provider.service';
 import { FilterComponent } from './filter/filter.component';
 import { LayoutHelper } from './layout-helper/layout-helper';
+import { PaginatorComponent } from './paginator/paginator.component';
 import { SortIndicatorComponent } from './sort-indicator/sort-indicator.component';
+import { TableHostComponent } from './table-host/table-host.component';
+import { TableRoutingModule } from './table-routing.module';
 
 @NgModule({
     imports: [
@@ -30,6 +30,7 @@ import { SortIndicatorComponent } from './sort-indicator/sort-indicator.componen
         MatCheckboxModule,
         MatFormFieldModule,
         MatIconModule,
+        MatInputModule,
         MatPaginatorModule,
         MatProgressBarModule,
         MatSelectModule,
@@ -42,6 +43,7 @@ import { SortIndicatorComponent } from './sort-indicator/sort-indicator.componen
         DatatableComponent,
         FilterComponent,
         FilterManagerComponent,
+        PaginatorComponent,
         SortIndicatorComponent,
         TableHostComponent
     ],

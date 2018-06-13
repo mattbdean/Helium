@@ -1,0 +1,9 @@
+<div class="page-selector">
+    <span class="page-label">Page:</span>
+    <form [formGroup]="group">
+        <mat-form-field>
+            <input matInput formControlName="page" [errorStateMatcher]="pageErrorStateMatcher">
+        </mat-form-field>
+    </form>
+</div>
+<mat-paginator [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>

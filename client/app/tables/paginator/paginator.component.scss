@@ -1,0 +1,25 @@
+:host {
+  display: flex;
+  flex-direction: row;
+  background-color: rgb(255, 255, 255);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.page-selector {
+  // Match the paginator right next to it
+  font-size: 12px;
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+
+  & .page-label {
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 8px;
+  }
+
+  & mat-form-field {
+    width: 3rem;
+  }
+}

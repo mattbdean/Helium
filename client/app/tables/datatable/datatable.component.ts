@@ -1,14 +1,14 @@
-import { CollectionViewer } from '@angular/cdk/collections';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
     AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy,
     OnInit, Output, QueryList, Renderer2, ViewChild, ViewChildren
 } from '@angular/core';
-import { MatCell, MatHeaderCell, MatPaginator, MatSnackBar, Sort } from '@angular/material';
+import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
+import { MatCell, MatHeaderCell, Sort } from '@angular/material';
 import { Router } from '@angular/router';
 import { clone, flatten, groupBy } from 'lodash';
 import * as moment from 'moment';
-import { BehaviorSubject, combineLatest, NEVER, Observable, of, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest, NEVER, Observable, Subscription } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 import { flattenCompoundConstraints } from '../../../../common/util';
 import { Constraint, Filter, SqlRow, TableMeta } from '../../common/api';
@@ -18,6 +18,7 @@ import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
 import { LayoutHelper } from '../layout-helper/layout-helper';
+import { PaginatorComponent } from '../paginator/paginator.component';
 import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
 
 @Component({
@@ -51,17 +52,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     public constraints: { [colName: string]: Constraint[] };
 
-    /**
-     * The different amount of rows to display at a time the user may choose
-     * from
-     */
-    public pageSizeOptions = [5, 10, 25, 100];
-
-    /** The amount of rows to show per page */
-    public pageSize = 25;
-
     /** The amount of rows available with the given filters */
-    public get totalRows(): number { return this.matPaginator ? this.matPaginator.length : 0; }
+    public get totalRows(): number { return this.paginator ? this.paginator.totalRows : 0; }
 
     public get allowInsertLike() { return !this.allowSelection; }
 
@@ -79,9 +71,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private headerCellsSub: Subscription;
 
     @ViewChild(FilterManagerComponent) private filterManager: FilterManagerComponent;
-    @ViewChild(MatPaginator) private matPaginator: MatPaginator;
+    @ViewChild(PaginatorComponent) public paginator: PaginatorComponent;
 
-    @ViewChild('tableContainer') private tableContainer: ElementRef;
     @ViewChildren(MatHeaderCell, { read: ElementRef }) private headerCells: QueryList<ElementRef>;
     @ViewChildren(MatCell, { read: ElementRef }) private contentCells: QueryList<ElementRef>;
     @ViewChildren(SortIndicatorComponent) private sortIndicators: QueryList<SortIndicatorComponent>;
@@ -92,7 +83,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     constructor(
         private router: Router,
-        private snackBar: MatSnackBar,
         private backend: TableService,
         public dataSource: ApiDataSource,
         private renderer: Renderer2,
@@ -131,8 +121,6 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
             // Update observables and data source
             this.meta = meta;
             this.dataSource.switchTables(meta);
-            if (this.matPaginator)
-                this.matPaginator.pageIndex = 0;
             this.loading = false;
         });
 
@@ -145,7 +133,7 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     public ngAfterViewInit(): void {
         this.dataSource.init({
-            paginator: this.matPaginator,
+            paginator: this.paginator,
             sort: this.sort$,
             filters: this.filterManager,
             allowInsertLike: this.allowInsertLike
@@ -255,6 +243,8 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
         // Clean up our subscriptions
         this.nameSub.unsubscribe();
         this.layoutSub.unsubscribe();
+        this.recalcSub.unsubscribe();
+        this.headerCellsSub.unsubscribe();
     }
 
     public onInsertLike(row: object) {

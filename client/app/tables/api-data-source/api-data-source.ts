@@ -11,6 +11,7 @@ import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { ContentRequest } from '../../core/table/content-request';
 import { TableService } from '../../core/table/table.service';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
+import { PaginatorComponent } from '../paginator/paginator.component';
 
 /**
  * This is a DataSource that pulls data from the API. It can handle filters,
@@ -29,7 +30,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
     public allowInsertLike = false;
 
     // External components
-    private paginator: MatPaginator | null = null;
+    private paginator: PaginatorComponent | null = null;
     private sort: Observable<Sort> = NEVER;
     private filters: FilterManagerComponent | null;
 
@@ -82,9 +83,8 @@ export class ApiDataSource extends DataSource<SqlRow> {
                 // Update the Paginator in case the filters have changed the
                 // amount of total rows
                 const [res] = data;
-                if (this.paginator !== null) {
-                    this.paginator.length = res.totalRows;
-                }
+                if (this.paginator)
+                    this.paginator.totalRows = res.totalRows;
             }),
             map((data: [PaginatedResponse<SqlRow[]>, TableMeta]) =>
                 // Format the rows before presenting them to the UI
@@ -113,7 +113,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
      * source.
      */
     public init(components: {
-        paginator: MatPaginator,
+        paginator: PaginatorComponent,
         sort: Observable<Sort>,
         filters: FilterManagerComponent,
         allowInsertLike: boolean
@@ -166,6 +166,8 @@ export class ApiDataSource extends DataSource<SqlRow> {
      * page to the first page.
      */
     public switchTables(meta: TableMeta) {
+        if (this.paginator)
+            this.paginator.pageIndex = 0;
         this.sort$.next(null);
         this.table$.next(meta);
     }

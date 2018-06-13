@@ -46,7 +46,7 @@ describe('ApiDataSource', () => {
 
     const createOtherComponents = () => ({
         paginator: {
-            length: 0,
+            totalRows: 0,
             page: of({ pageIndex: 3, pageSize: 100, length: 1000 })
         } as any,
         sort: of({ active: 'pk', direction: 'desc' }) as any,
@@ -94,8 +94,7 @@ describe('ApiDataSource', () => {
             });
         }));
 
-        it('should support hooking up a MatPaginator, MatSort, and FilterManagerComponent', fakeAsync(() => {
-
+        it('should support hooking up a PaginatorComponent, MatSort, and FilterManagerComponent', fakeAsync(() => {
             // Init before we connect
             source.init(createOtherComponents());
             contentStub.returns(emptyResponse());
@@ -163,7 +162,7 @@ describe('ApiDataSource', () => {
             source.connect(collectionViewer).subscribe();
             tick();
 
-            expect(paginator.length).to.equal(100);
+            expect(paginator.totalRows).to.equal(100);
         }));
     });
 });

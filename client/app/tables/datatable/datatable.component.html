@@ -17,7 +17,7 @@
 
     <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
     <div class="mat-elevation-z8">
-        <div #tableContainer class="table-container">
+        <div class="table-container">
             <mat-table [dataSource]="dataSource">
                 <ng-container *ngFor="let colName of columnNames; let i = index" [matColumnDef]="colName">
                     <mat-header-cell
@@ -62,7 +62,7 @@
             </mat-table>
         </div>
         <p class="no-data-message" *ngIf="totalRows === 0">There's nothing here ¯\_(ツ)_/¯</p>
-        <mat-paginator [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions"></mat-paginator>
+        <paginator></paginator>
     </div>
 
 </div>

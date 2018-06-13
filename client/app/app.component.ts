@@ -149,8 +149,6 @@ export class AppComponent implements OnDestroy, OnInit {
         // Listen for the user logging in and automatically select a schema for
         // them
         schemas$.subscribe((schemas: string[] | null) => {
-            console.log('schemas$.subscribe()', schemas, this.auth.loggedIn);
-
             if (schemas !== null && this.schemaControl.value === null)
                 this.schemaControl.setValue(this.determineDefaultSchema(schemas));
             this.schemas = schemas === null ? [] : schemas;
@@ -187,7 +185,6 @@ export class AppComponent implements OnDestroy, OnInit {
 
         // Log the user out
         this.auth.logout();
-        console.log('after logout():', this.auth.loggedIn);
 
         // We don't know if the next user will have access to the selected
         // schema
