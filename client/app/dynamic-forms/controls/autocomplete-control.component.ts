@@ -20,6 +20,7 @@ interface AutocompleteOption { value: string; }
                        [matAutocomplete]="auto"
                        [placeholder]="spec.placeholder"
                        [formControlName]="spec.formControlName"
+                       [title]="spec.hoverHint"
                        [required]="spec.required">
                 <mat-icon class="row-picker-button"
                     matSuffix

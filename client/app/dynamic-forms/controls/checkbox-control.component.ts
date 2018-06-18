@@ -6,7 +6,12 @@ import { AbstractFormControl } from './abstract-form-control';
     selector: 'checkbox-control',
     template: `
         <div [formGroup]="group">
-            <mat-checkbox [formControlName]="spec.formControlName" color="primary">{{ spec.placeholder }}</mat-checkbox>
+            <mat-checkbox
+                [formControlName]="spec.formControlName"
+                [title]="spec.hoverHint"
+                color="primary">
+                {{ spec.placeholder }}
+            </mat-checkbox>
         </div>
     `,
     styles: [`

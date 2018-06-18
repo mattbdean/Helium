@@ -9,6 +9,7 @@ import { AbstractFormControl } from './abstract-form-control';
                 <input matInput
                     [type]="spec.subtype"
                     [placeholder]="spec.placeholder"
+                    [title]="spec.hoverHint"
                     [formControlName]="spec.formControlName"
                     [required]="spec.required">
             </mat-form-field>

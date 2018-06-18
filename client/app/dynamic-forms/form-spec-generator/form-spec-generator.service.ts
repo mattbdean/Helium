@@ -107,6 +107,7 @@ export class FormSpecGeneratorService {
                 disabled,
                 autocompleteValues,
                 defaultValue: FormSpecGeneratorService.defaultValue(h),
+                hoverHint: h.rawType,
                 onRequestRowPicker
             };
 

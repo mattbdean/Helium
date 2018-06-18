@@ -8,6 +8,7 @@ import { AbstractFormControl } from './abstract-form-control';
             <mat-select
                 [required]="spec.required"
                 [placeholder]="spec.placeholder"
+                [title]="spec.hoverHint"
                 [formControlName]="spec.formControlName">
                 <mat-option *ngFor="let option of spec.enumValues" [value]="option">{{ option }}</mat-option>
             </mat-select>

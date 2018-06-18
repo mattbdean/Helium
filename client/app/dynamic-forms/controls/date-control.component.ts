@@ -14,6 +14,7 @@ import { AbstractFormControl } from './abstract-form-control';
                        type="date"
                        [placeholder]="spec.placeholder"
                        [formControlName]="spec.formControlName"
+                       [title]="spec.hoverHint"
                        [required]="spec.required">
             </mat-form-field>
         </div>

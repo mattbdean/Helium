@@ -36,6 +36,9 @@ export interface FormControlSpec {
     /** If true, the form control will be disabled */
     disabled?: boolean;
 
+    /** Shown when the user hovers over the form control */
+    hoverHint?: string;
+
     /**
      * An Observable that lists all values available for autocompletion. Only
      * available when `type` is `'autocomplete'`.
