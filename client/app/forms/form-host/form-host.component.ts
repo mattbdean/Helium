@@ -170,6 +170,9 @@ export class FormHostComponent implements OnDestroy, OnInit {
                     return snackbarRef.onAction()
                         .pipe(mapTo(snackbarRef));
                 } else {
+                    for (const partial of this.partialForms.toArray()) {
+                        partial.reset();
+                    }
                     this.formGroup.reset();
                     snackbarRef = this.snackBar.open('Created new row', 'VIEW', { duration: 3000 });
                     return snackbarRef.onAction().pipe(
@@ -181,11 +184,14 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 }
             })
         // When we finally reach the end, dismiss the snackbar
-        ).subscribe((ref: MatSnackBarRef<any>) => ref.dismiss());
+        ).subscribe((ref: MatSnackBarRef<any>) => {
+            ref.dismiss();
+        });
     }
 
     public ngOnDestroy() {
         this.sub.unsubscribe();
+        this.submitSub.unsubscribe();
     }
 
     public onSubmit(event: Event) {
@@ -196,8 +202,10 @@ export class FormHostComponent implements OnDestroy, OnInit {
         // formGroup.getRawValue() instead
         const raw = this.formGroup.getRawValue();
 
+        const partialForms = this.partialForms.toArray();
+
         // Find all TableMeta objects pulled from the API by each PartialFormComp.
-        const metadata = this.partialForms.toArray().map((f) => f.meta);
+        const metadata = partialForms.map((f) => f.meta);
 
         // Transform dates/datetimes into their appropriate formats
         const preformatted = FormHostComponent.preformatAll(raw, metadata);

@@ -197,6 +197,15 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
         this.formArray.removeAt(index);
     }
 
+    public reset() {
+        // Remove extra part table entries
+        if (this.role === 'part') {
+            for (let i = this.formArray.length; i >= 0; i--) {
+                this.formArray.removeAt(i);
+            }
+        }
+    }
+
     public shouldBeHidden(formControlName: string) {
         const binding = _.find(this.bindings, (b) => b.controlName === formControlName);
         return binding !== undefined;
@@ -247,6 +256,10 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
 
             group.patchValue(patch);
         });
+    }
+
+    private createInitialControls() {
+
     }
 
     /**
