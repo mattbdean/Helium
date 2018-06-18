@@ -3,7 +3,7 @@ import {
     AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy,
     Output, QueryList, Renderer2, ViewChild, ViewChildren
 } from '@angular/core';
-import { MatCell, MatHeaderCell, Sort } from '@angular/material';
+import { MatCell, MatHeaderCell, Sort, SortDirection } from '@angular/material';
 import { ActivatedRoute, Router } from '@angular/router';
 import { clone, flatten, groupBy, isEqual } from 'lodash';
 import * as moment from 'moment';
@@ -323,7 +323,19 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
         const index = this.allowInsertLike ? colIndex - 1 : colIndex;
         // If there are N columns (including the insert like column), then there
         // are N - 1 sortable columns.
-        const sortDir = this.sortIndicators.toArray()[index].nextSort();
+        const indicators = this.sortIndicators.toArray();
+        let sortDir: SortDirection | null = null;
+        for (let i = 0; i < indicators.length; i++) {
+            if (i === index) {
+                sortDir = indicators[i].nextSort();
+            } else {
+                indicators[i].reset();
+            }
+        }
+
+        if (sortDir === null)
+            throw new Error('Could not determine new sort direction');
+
         const colName = this.columnNames[colIndex];
         this.sort$.next({ direction: sortDir, active: colName });
     }

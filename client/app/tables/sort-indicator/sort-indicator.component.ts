@@ -29,6 +29,11 @@ export class SortIndicatorComponent {
             return '';
     }
 
+    /** Sets the SortDirection to none */
+    public reset() {
+        this.state = '';
+    }
+
     /**
      * Switches to and returns the next sorting direction. Behaves in a circular
      * pattern: (none) --> asc --> desc --> (none) and so on.
