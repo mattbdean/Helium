@@ -166,8 +166,6 @@ export class ApiDataSource extends DataSource<SqlRow> {
      * page to the first page.
      */
     public switchTables(meta: TableMeta) {
-        if (this.paginator)
-            this.paginator.pageIndex = 0;
         this.sort$.next(null);
         this.table$.next(meta);
     }

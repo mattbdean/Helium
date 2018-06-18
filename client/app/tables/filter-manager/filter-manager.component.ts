@@ -34,23 +34,31 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     /** The root of this form */
     public formArray: FormArray;
 
-    private sub: Subscription;
+    public preemptiveFilters: {
+        schema: string,
+        table: string,
+        filters: Filter[]
+    } | null = null;
+
+    private sub: Subscription | null = null;
 
     public ngOnInit() {
         this.formArray = new FormArray([]);
     }
 
     public ngOnChanges(changes: SimpleChanges): void {
-        if (changes.meta) {
+        if (changes.meta && changes.meta.currentValue) {
             // The headers have changed (most likely because the user has
             // switched tables), start over
             this.formArray = new FormArray([]);
 
-            if (!changes.meta.firstChange) {
-                // User has switched tables, clear the filters
+            // Re-create this subscription
+            if (this.sub !== null) {
                 this.sub.unsubscribe();
-                this.changed.emit([]);
             }
+
+            // User has switched tables, clear the filters
+            this.changed.emit(this.applyPreemptiveFilters());
 
             this.sub = this.formArray.valueChanges.pipe(
                 distinctUntilChanged(isEqual),
@@ -81,11 +89,12 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     public ngOnDestroy() {
-        this.sub.unsubscribe();
+        if (this.sub !== null)
+            this.sub.unsubscribe();
     }
 
-    public addFilter() {
-        this.formArray.push(FilterManagerComponent.createFilterGroup());
+    public addFilter(data?: Filter) {
+        this.formArray.push(FilterManagerComponent.createFilterGroup(data));
     }
 
     public removeFilter(control: AbstractControl) {
@@ -95,12 +104,26 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
         this.formArray.removeAt(this.formArray.controls.findIndex((c) => c === control));
     }
 
-    public static createFilterGroup() {
-        return new FormGroup({
-            param: new FormControl('', Validators.required),
-            op: new FormControl('', Validators.required),
-            value: new FormControl('', Validators.required)
-        });
+    private applyPreemptiveFilters(): Filter[] {
+        if (this.preemptiveFilters === null ||
+            this.preemptiveFilters.schema !== this.meta.schema ||
+            this.preemptiveFilters.table !== this.meta.name)
+            return [];
 
+        for (const filter of this.preemptiveFilters.filters) {
+            this.addFilter(filter);
+        }
+
+        const newFilters = this.preemptiveFilters.filters;
+        this.preemptiveFilters = null;
+        return newFilters;
+    }
+
+    public static createFilterGroup(data?: Filter) {
+        return new FormGroup({
+            param: new FormControl(data ? data.param : '', Validators.required),
+            op: new FormControl(data ? data.op : '', Validators.required),
+            value: new FormControl(data ? data.value : '', Validators.required)
+        });
     }
 }

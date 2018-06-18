@@ -1,15 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
     AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy,
-    OnInit, Output, QueryList, Renderer2, ViewChild, ViewChildren
+    Output, QueryList, Renderer2, ViewChild, ViewChildren
 } from '@angular/core';
-import { AbstractControl, AsyncValidatorFn, ValidationErrors } from '@angular/forms';
 import { MatCell, MatHeaderCell, Sort } from '@angular/material';
-import { Router } from '@angular/router';
-import { clone, flatten, groupBy } from 'lodash';
+import { ActivatedRoute, Router } from '@angular/router';
+import { clone, flatten, groupBy, isEqual } from 'lodash';
 import * as moment from 'moment';
-import { BehaviorSubject, combineLatest, NEVER, Observable, Subscription } from 'rxjs';
-import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, NEVER, Observable, of, Subscription, zip } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, first, map, switchMap, tap } from 'rxjs/operators';
 import { flattenCompoundConstraints } from '../../../../common/util';
 import { Constraint, Filter, SqlRow, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
@@ -17,16 +16,18 @@ import { TableName } from '../../common/table-name';
 import { TableService } from '../../core/table/table.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
+import { FilterProviderService } from '../filter-provider/filter-provider.service';
 import { LayoutHelper } from '../layout-helper/layout-helper';
 import { PaginatorComponent } from '../paginator/paginator.component';
 import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
+import { InitData } from './init-data';
 
 @Component({
     selector: 'datatable',
     templateUrl: 'datatable.component.html',
     styleUrls: ['datatable.component.scss']
 })
-export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
+export class DatatableComponent implements AfterViewInit, OnDestroy {
     private static readonly DISPLAY_FORMAT_DATE = 'l';
     private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
 
@@ -65,12 +66,15 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     public loading = true;
 
-    private nameSub: Subscription;
-    private layoutSub: Subscription;
-    private recalcSub: Subscription;
-    private headerCellsSub: Subscription;
+    private initDataUsed = false;
 
-    @ViewChild(FilterManagerComponent) private filterManager: FilterManagerComponent;
+    private nameSub: Subscription | undefined;
+    private layoutSub: Subscription | undefined;
+    private recalcSub: Subscription | undefined;
+    private headerCellsSub: Subscription | undefined;
+    private queryUpdaterSub: Subscription | undefined;
+
+    @ViewChild(FilterManagerComponent) public filterManager: FilterManagerComponent;
     @ViewChild(PaginatorComponent) public paginator: PaginatorComponent;
 
     @ViewChildren(MatHeaderCell, { read: ElementRef }) private headerCells: QueryList<ElementRef>;
@@ -82,54 +86,14 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
     private sort$ = new BehaviorSubject<Sort>({ direction: '', active: '' });
 
     constructor(
-        private router: Router,
-        private backend: TableService,
         public dataSource: ApiDataSource,
+        private backend: TableService,
+        private filterProvider: FilterProviderService,
+        private layoutHelper: LayoutHelper,
         private renderer: Renderer2,
-        private layoutHelper: LayoutHelper
+        private route: ActivatedRoute,
+        private router: Router
     ) {}
-
-    public ngOnInit(): void {
-        this.nameSub = this.name$.pipe(
-            filter((n) => n !== null),
-            map((m) => m!!),
-            tap(() => { this.loading = true; }),
-            switchMap((name) => this.backend.meta(name.schema, name.name.raw).pipe(
-                catchError((err: HttpErrorResponse) => {
-                    if (err.status !== 404) {
-                        // TODO: Unexpected errors could be handled more
-                        // gracefully
-                        throw err;
-                    }
-
-                    this.tableExists = false;
-                    return NEVER;
-                }))
-            )
-        ).subscribe((meta: TableMeta) => {
-            const names = meta.headers.map((h) => h.name);
-
-            if (this.allowInsertLike)
-                // Add the "insert like" row
-                names.unshift('__insertLike');
-
-            this.columnNames = names;
-
-            const flattened = flatten(meta.constraints.map((c) => c.constraints));
-            this.constraints = groupBy(flattened, (c) => c.localColumn);
-
-            // Update observables and data source
-            this.meta = meta;
-            this.dataSource.switchTables(meta);
-            this.loading = false;
-        });
-
-        this.recalcSub = this.name$
-            .pipe(distinctUntilChanged())
-            .subscribe(() => {
-                this.layoutHelper.needsFullLayoutRecalculation = true;
-            });
-    }
 
     public ngAfterViewInit(): void {
         this.dataSource.init({
@@ -196,6 +160,131 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
                 this.resizeHeader(state.colIndex, this.layoutHelper.getWidth(state.colIndex));
             }
         });
+        
+        // Read page, page size, filters, and sort from query parameters.
+        // Everything here is validated in regards to type only. Further
+        // validation (eg page index too high) is done at another time.
+        const initData$: Observable<InitData> = this.route.queryParamMap.pipe(
+            // We only care about this data on initialization
+            first(),
+            map(InitData.fromQuery)
+        );
+
+        this.nameSub = this.name$.pipe(
+            filter((n) => n !== null),
+            map((m) => m!!),
+            tap(() => { this.loading = true; }),
+            switchMap((name) => this.backend.meta(name.schema, name.name.raw).pipe(
+                catchError((err: HttpErrorResponse) => {
+                    if (err.status !== 404) {
+                        // TODO: Unexpected errors could be handled more
+                        // gracefully
+                        throw err;
+                    }
+
+                    this.tableExists = false;
+                    return NEVER;
+                }))
+            ),
+            switchMap((meta): Observable<[TableMeta, InitData]> => {
+                // Include the initialization data only on initialization (duh)
+                const result = zip(of(meta), this.initDataUsed ? of(new InitData({})) : initData$);
+                if (!this.initDataUsed)
+                    this.initDataUsed = true;
+                
+                return result;
+            })
+        ).subscribe(([meta, unvalidatedInitData]) => {
+            const names = meta.headers.map((h) => h.name);
+
+            if (this.allowInsertLike)
+                // Add the "insert like" row
+                names.unshift('__insertLike');
+
+            this.columnNames = names;
+
+            const flattened = flatten(meta.constraints.map((c) => c.constraints));
+            this.constraints = groupBy(flattened, (c) => c.localColumn);
+
+            // Validate what was provided in the query against the data we
+            // actually have
+            const initData = unvalidatedInitData.validateAgainst(
+                meta,
+                this.paginator.pageSizeOptions,
+                this.filterProvider.operations().map((o) => o.codeName)
+            );
+
+            // Apply the InitData to the current state
+            if (initData.pageSize)
+                this.paginator.pageSize = initData.pageSize;
+            if (initData.page)
+                this.paginator.pageIndex = initData.page - 1;
+            if (initData.filters && initData.filters.length > 0) {
+                this.filterManager.preemptiveFilters = {
+                    schema: meta.schema,
+                    table: meta.name,
+                    filters: initData.filters
+                };
+                // Make it abundantly clear the data is being filtered
+                this.showFilters = true;
+            }
+            if (initData.sort) {
+                // The SortIndicators aren't available until the table is
+                // rendered, so listen for that
+                this.sortIndicators.changes.pipe(
+                    // We only care about the first change
+                    first(),
+                    map((ql: QueryList<SortIndicatorComponent>) => {
+                        // The columns are rendered in the order they're
+                        // listed in the TableMeta
+                        const sortIndex = this.meta.headers.findIndex((h) => h.name === initData.sort!!.active);
+                        if (sortIndex < 0)
+                            throw new Error('No column named "' + initData.sort!!.active + '"');
+                        return ql.toArray()[sortIndex];
+                    })
+                ).subscribe((comp) => {
+                    // Update on next tick to avoid change detection issues
+                    setTimeout(() => {
+                        comp.state = initData.sort!!.direction;
+                    }, 0);
+                    this.sort$.next(initData.sort!!);
+                });
+            }
+
+            // Update observables and data source
+            this.meta = meta;
+            this.dataSource.switchTables(meta);
+            if (initData.page === undefined)
+                this.paginator.pageIndex = 0;
+            this.loading = false;
+        });
+
+        this.recalcSub = this.name$
+            .pipe(distinctUntilChanged())
+            .subscribe(() => {
+                this.layoutHelper.needsFullLayoutRecalculation = true;
+            });
+
+        this.queryUpdaterSub = combineLatest(
+            this.paginator.page.pipe(map((page) => page.pageIndex + 1)),
+            this.paginator.page.pipe(map((page) => page.pageSize)),
+            this.filterManager.changed,
+            this.sort$
+        ).pipe(
+            distinctUntilChanged(isEqual),
+            map(([page, pageSize, filters, sort]) => new InitData({
+                page,
+                pageSize,
+                filters,
+                sort
+            }))
+        ).subscribe((initData) => {
+            // Create a query featuring only relevant information. Defaults
+            // (like the page being 1) will not be encoded.
+            this.router.navigate([], {
+                queryParams: initData.toQuery()
+            });
+        });
     }
 
     public onResizerMouseDown(event: MouseEvent) {
@@ -241,10 +330,16 @@ export class DatatableComponent implements AfterViewInit, OnInit, OnDestroy {
 
     public ngOnDestroy(): void {
         // Clean up our subscriptions
-        this.nameSub.unsubscribe();
-        this.layoutSub.unsubscribe();
-        this.recalcSub.unsubscribe();
-        this.headerCellsSub.unsubscribe();
+        const subs = [
+            this.nameSub,
+            this.layoutSub,
+            this.recalcSub,
+            this.headerCellsSub,
+            this.queryUpdaterSub
+        ];
+        for (const sub of subs)
+            if (sub)
+                sub.unsubscribe();
     }
 
     public onInsertLike(row: object) {
