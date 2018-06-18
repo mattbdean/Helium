@@ -258,10 +258,6 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
         });
     }
 
-    private createInitialControls() {
-
-    }
-
     /**
      * Creates a new FormGroup according to the given FormControlSpecs. This
      * function automatically takes care of binding the appropriate controls.
