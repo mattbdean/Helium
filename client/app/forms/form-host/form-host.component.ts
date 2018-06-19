@@ -67,7 +67,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             flatMap((data: [Params, { [key: string]: string } | null]) => {
                 const { schema, table } = data[0];
                 const pluckSelectors = data[1];
-                if (pluckSelectors == null) {
+                if (pluckSelectors == null || Object.keys(pluckSelectors).length === 0) {
                     return of({});
                 } else {
                     return this.backend.pluck(schema, table, pluckSelectors);
