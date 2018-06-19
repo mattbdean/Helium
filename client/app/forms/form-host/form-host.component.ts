@@ -43,7 +43,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
      * "insert like" button in the datatable. If there is no data available,
      * this object will have no keys.
      */
-    private prefilled: TableInsert = {};
+    public prefilled: TableInsert = {};
 
     @ViewChildren('partialForms')
     private partialForms: QueryList<PartialFormComponent>;
@@ -60,14 +60,11 @@ export class FormHostComponent implements OnDestroy, OnInit {
         // Empty group to start off with
         this.formGroup = this.fb.group({});
 
-        const pluckedRowJson$ = this.route.queryParams
-            .pipe(map((p) => p.row ? JSON.parse(p.row) : null));
-
         const pluckedRow$: Observable<TableInsert> = combineLatest(
             this.route.params,
-            pluckedRowJson$
-        )
-            .pipe(flatMap((data: [Params, { [key: string]: string } | null]) => {
+            this.route.queryParams,
+        ).pipe(
+            flatMap((data: [Params, { [key: string]: string } | null]) => {
                 const { schema, table } = data[0];
                 const pluckSelectors = data[1];
                 if (pluckSelectors == null) {
@@ -75,7 +72,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 } else {
                     return this.backend.pluck(schema, table, pluckSelectors);
                 }
-            }));
+            })
+        );
 
         this.sub = combineLatest(
             this.route.params.pipe(switchMap((params) => this.backend.tables(params.schema))),

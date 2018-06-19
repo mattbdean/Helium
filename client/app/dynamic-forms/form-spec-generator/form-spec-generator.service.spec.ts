@@ -1,8 +1,6 @@
 import { Validators } from '@angular/forms';
-
 import { expect } from 'chai';
-
-import { CompoundConstraint, Constraint, TableHeader, TableMeta } from '../../common/api';
+import { CompoundConstraint, TableHeader, TableMeta } from '../../common/api';
 import { flattenCompoundConstraints } from '../../common/util';
 import { TableService } from '../../core/table/table.service';
 import { FormControlSpec } from '../form-control-spec';
@@ -106,7 +104,8 @@ describe('FormSpecGeneratorService', () => {
                 placeholder: 'bar',
                 validation: [],
                 required: false,
-                disabled: false
+                disabled: false,
+                hoverHint: 'mock string'
             };
             expect(formSpec).to.deep.equal(expected);
         });
@@ -121,7 +120,8 @@ describe('FormSpecGeneratorService', () => {
                 placeholder: 'bar',
                 validation: [Validators.required],
                 required: true,
-                disabled: false
+                disabled: false,
+                hoverHint: 'mock string'
             };
             expect(formSpec).to.deep.equal(expected);
         });
@@ -166,7 +166,8 @@ describe('FormSpecGeneratorService', () => {
                 validation: [],
                 enumValues,
                 required: false,
-                disabled: false
+                disabled: false,
+                hoverHint: 'mock string'
             };
 
             expect(formSpec).to.deep.equal(expected);

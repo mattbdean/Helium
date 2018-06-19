@@ -430,7 +430,7 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
                     DatatableComponent.DISPLAY_FORMAT_DATETIME).format(DATETIME_FORMAT);
         }
 
-        return { row: JSON.stringify(reformatted) };
+        return reformatted;
     }
 
     private resizeColumn(colIndex: number, newWidth: number) {
