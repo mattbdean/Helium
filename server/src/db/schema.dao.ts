@@ -237,7 +237,7 @@ export class SchemaDao {
             'COLUMN_NAME', 'ORDINAL_POSITION', 'IS_NULLABLE', 'DATA_TYPE',
             'CHARACTER_MAXIMUM_LENGTH', 'NUMERIC_SCALE', 'NUMERIC_PRECISION',
             'CHARACTER_SET_NAME', 'COLUMN_TYPE', 'COLUMN_COMMENT', 'TABLE_NAME',
-            'COLUMN_DEFAULT'
+            'COLUMN_DEFAULT', 'EXTRA'
         ];
 
         const result = await this.helper.execute((squel) => {
@@ -253,13 +253,29 @@ export class SchemaDao {
                 .order('ORDINAL_POSITION');
         });
 
+        // Get the next AUTO_INCREMENT value, or null if there is no column with
+        // AUTO_INCREMENT.
+        const autoIncValue = (await this.helper.execute((squel) =>
+            squel.select()
+                .from('INFORMATION_SCHEMA.tables')
+                .field('AUTO_INCREMENT')
+                .where('TABLE_SCHEMA = ?', schema)
+                .where('TABLE_NAME LIKE ?', table)
+                .limit(1)
+        ))[0]['AUTO_INCREMENT'];
+
         // Map each BinaryRow into a TableHeader, removing any additional rows
         // that share the same name
         return _.map(result, (row: any): TableHeader => {
             const rawType = row.COLUMN_TYPE as string;
             const type = SchemaDao.parseType(rawType);
             const isNumerical = type === 'integer' || type === 'float';
-            const defaultValue = SchemaDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT);
+
+            // A column is AUTO_INCREMENT'd if the 'EXTRA' column includes the
+            // string "auto_increment." Otherwise that value isn't applicable.
+            const actualAutoInc = row.EXTRA.indexOf('auto_increment') >= 0 ?
+                autoIncValue : null;
+            const defaultValue = SchemaDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT, actualAutoInc);
 
             return {
                 name: row.COLUMN_NAME as string,
@@ -639,7 +655,14 @@ export class SchemaDao {
         return v;
     }
 
-    private static identifyDefaultValue(rawType: string, type: TableDataType, rawDefault: string): DefaultValue {
+    private static identifyDefaultValue(
+        rawType: string,
+        type: TableDataType,
+        rawDefault: string,
+        autoIncValue: number | null
+    ): DefaultValue {
+        if (autoIncValue !== null)
+            return autoIncValue;
         if (rawDefault === CURRENT_TIMESTAMP && (rawType === 'datetime' || rawType === 'timestamp'))
             return { constantName: CURRENT_TIMESTAMP };
 

@@ -651,6 +651,18 @@ describe('SchemaDao', () => {
             const data = await dao.headers(db, table);
             joi.assert(data, joi.array().items(joi.object()).length(numColumns));
         });
+
+        it('should prioritize auto-increment defaults', async () => {
+            const meta = await dao.meta('helium_sample', 'defaults_test');
+            const headers = meta.headers;
+            const autoIncCol = 'pk';
+            const expectedAutoIncValue = meta.totalRows + 1;
+            const pk = headers.find((h) => h.name === autoIncCol);
+            expect(pk!!.defaultValue).to.equal(expectedAutoIncValue);
+
+            const other = headers.find((h) => h.name !== autoIncCol);
+            expect(other!!.defaultValue).to.not.equal(expectedAutoIncValue);
+        });
     });
 
     describe('pluck', () => {
