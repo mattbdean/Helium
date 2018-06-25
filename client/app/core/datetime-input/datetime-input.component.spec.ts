@@ -174,7 +174,7 @@ describe('DatetimeInputComponent', () => {
         it('should throw an Error when given anything but a string', () => {
             fixture.detectChanges();
 
-            for (const obj of [true, null, undefined, {}, []]) {
+            for (const obj of [true, undefined, {}, []]) {
                 expect(() => comp.writeValue(obj)).to.throw(Error);
             }
         });

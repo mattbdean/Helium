@@ -127,6 +127,16 @@ CREATE TABLE big_table(
     pk INTEGER PRIMARY KEY AUTO_INCREMENT
 );
 
+CREATE TABLE validation_test(
+    pk INTEGER PRIMARY KEY AUTO_INCREMENT,
+    unsigned_int INTEGER UNSIGNED,
+    signed_int INTEGER,
+    `float` FLOAT,
+    varchar_5 VARCHAR(5),
+    autocomplete INTEGER NOT NULL,
+    FOREIGN KEY (autocomplete) REFERENCES product(product_id)
+);
+
 # A few customers, organizations, and products
 INSERT INTO customer VALUES (0, "Some Guy"), (1, "Another Guy");
 INSERT INTO organization VALUES (10, "Some Big Company", 0), (11, "Another Big Company", 1);

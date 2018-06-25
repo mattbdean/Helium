@@ -12,6 +12,7 @@ import { AbstractFormControl } from './abstract-form-control';
                     [title]="spec.hoverHint"
                     [formControlName]="spec.formControlName"
                     [required]="spec.required">
+                <mat-error *ngIf="currentError() !== null">{{ currentError() }}</mat-error>
             </mat-form-field>
         </div>
     `

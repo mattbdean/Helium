@@ -26,6 +26,7 @@ interface AutocompleteOption { value: string; }
                     matSuffix
                     *ngIf="spec.onRequestRowPicker"
                     (click)="onRequestRowPicker($event)">search</mat-icon>
+                <mat-error *ngIf="currentError() !== null">{{ currentError() }}</mat-error>
             </mat-form-field>
             
             <mat-autocomplete #auto="matAutocomplete">

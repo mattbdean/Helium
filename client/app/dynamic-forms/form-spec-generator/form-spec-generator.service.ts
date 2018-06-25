@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ValidatorFn, Validators } from '@angular/forms';
+import { ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { flatten, pickBy } from 'lodash';
 import * as moment from 'moment';
 import { Observable } from 'rxjs';
@@ -15,6 +15,7 @@ import {
 import { TableName } from '../../common/table-name';
 import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
 import { TableService } from '../../core/table/table.service';
+import { validateInteger } from '../../tables/paginator/page-index.validator';
 import {
     FormControlSpec, FormControlType
 } from '../form-control-spec';
@@ -44,9 +45,9 @@ export class FormSpecGeneratorService {
                     validators.push(Validators.required);
                     required = true;
                 }
-                if (h.maxCharacters)
-                    validators.push(Validators.maxLength(h.maxCharacters));
             }
+            if (h.maxCharacters)
+                validators.push(Validators.maxLength(h.maxCharacters));
 
             let type: FormControlType = 'text';
             let subtype: string | undefined;
@@ -66,6 +67,16 @@ export class FormSpecGeneratorService {
                 case 'float':
                 case 'integer':
                     subtype = 'number';
+                    if (!h.signed)
+                        validators.push(Validators.min(0));
+                    
+                    if (h.type === 'integer') {
+                        validators.push((control): ValidationErrors | null => {
+                            const key = 'integer';
+                            const integer = validateInteger(control.value);
+                            return integer === null ? { [key]: 'Not an integer' } : null;
+                        });
+                    }
                     break;
                 case 'enum':
                     type = 'enum';
