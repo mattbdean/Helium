@@ -88,12 +88,12 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
 
     // overridden from ControlValueAccessor
     public writeValue(obj: any): void {
-        if (typeof obj !== 'string') {
+        if (obj !== null && typeof obj !== 'string') {
             // This could be changed to allow Date or Moment inputs
             throw new Error('datetime-input only accepts strings');
         }
 
-        if (obj === '') {
+        if (obj === '' || obj === null) {
             this.date.nativeElement.value = '';
             this.time.nativeElement.value = '';
             return;
