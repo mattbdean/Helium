@@ -22,6 +22,21 @@ mat-sidenav {
   box-shadow: 3px 0 6px rgba(0,0,0,.24);
   // Sidenav must have a fixed width for larger screens to display properly without a manual window resize
   width: 240px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-container {
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.bug-report-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60px;
 }
 
 .schema-selector-container {
