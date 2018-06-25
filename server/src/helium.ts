@@ -1,6 +1,7 @@
 import * as bodyParser from 'body-parser';
-import { Application } from 'express';
+import * as compression from 'compression';
 import * as express from 'express';
+import { Application } from 'express';
 import * as helmet from 'helmet';
 import * as logger from 'morgan';
 import * as path from 'path';
@@ -42,6 +43,10 @@ export class Helium {
             app.use(logger('common', {
                 skip: (req, res) => res.statusCode < 400
             }));
+
+            // This will be fine for now, if we ever need to handle a lot of
+            // users this can quickly become a bottleneck.
+            app.use(compression());
         } else {
             // Simple, colorized output
             app.use(logger('dev'));
