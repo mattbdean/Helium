@@ -10,65 +10,63 @@
     </button>
 </h1>
 
-<div *ngIf="tableExists else tableNotFound">
-    <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">{{ meta.comment }}</h4>
+<h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">{{ meta.comment }}</h4>
 
-    <filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
+<filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
 
-    <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
-    <div class="mat-elevation-z8">
-        <div class="table-container">
-            <mat-table [dataSource]="dataSource">
-                <ng-container *ngFor="let colName of columnNames; let i = index" [matColumnDef]="colName">
-                    <mat-header-cell
-                        *matHeaderCellDef
-                        (click)="onSortRequested(i)">
+<mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
+<div class="mat-elevation-z8">
+    <div *ngIf="currentError === null" class="table-container">
+        <mat-table [dataSource]="dataSource">
+            <ng-container *ngFor="let colName of columnNames; let i = index" [matColumnDef]="colName">
+                <mat-header-cell
+                    *matHeaderCellDef
+                    (click)="onSortRequested(i)">
 
-                        <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
-                        <span class="header-cell-name">{{ allowInsertLike && colName === '__insertLike' ? '' : colName }}</span>
+                    <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
+                    <span class="header-cell-name">{{ allowInsertLike && colName === '__insertLike' ? '' : colName }}</span>
 
-                        <!--
-                        Use our custom indicator instead of AngularMaterial's because it renders the sort indicator
-                        after the column resizer, where we want it the other way around
-                        -->
+                    <!--
+                    Use our custom indicator instead of AngularMaterial's because it renders the sort indicator
+                    after the column resizer, where we want it the other way around
+                    -->
 
-                        <span *ngIf="allowResizingAndSorting(i)" class="sort-indicator-wrapper">
-                            <sort-indicator></sort-indicator>
-                        </span>
-                        <div *ngIf="allowResizingAndSorting(i)" class="col-resizer-handle" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)">
-                            <div class="col-resizer"></div>
-                        </div>
-                    </mat-header-cell>
+                    <span *ngIf="allowResizingAndSorting(i)" class="sort-indicator-wrapper">
+                        <sort-indicator></sort-indicator>
+                    </span>
+                    <div *ngIf="allowResizingAndSorting(i)" class="col-resizer-handle" (mousedown)="onResizerMouseDown($event)" (click)="onResizerClick($event)">
+                        <div class="col-resizer"></div>
+                    </div>
+                </mat-header-cell>
 
-                    <mat-cell
-                        *matCellDef="let row"
-                        [class.insert-like-col]="allowInsertLike && colName === '__insertLike'">
+                <mat-cell
+                    *matCellDef="let row"
+                    [class.insert-like-col]="allowInsertLike && colName === '__insertLike'">
 
-                        <span *ngIf="allowInsertLike && colName === '__insertLike' else normalCell">
-                             <mat-icon
-                                 (click)="onInsertLike(row)"
-                                 class="insert-like-icon"
-                                 title="Copy data to a new form">add_box</mat-icon>
-                        </span>
+                    <span *ngIf="allowInsertLike && colName === '__insertLike' else normalCell">
+                            <mat-icon
+                                (click)="onInsertLike(row)"
+                                class="insert-like-icon"
+                                title="Copy data to a new form">add_box</mat-icon>
+                    </span>
 
-                        <ng-template #normalCell>
-                            <span class="cell-content" [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
-                        </ng-template>
-                    </mat-cell>
-                </ng-container>
+                    <ng-template #normalCell>
+                        <span class="cell-content" [class.special-cell]="row[colName] === null || isBlob(colName)">{{ row[colName] === null ? 'null' : row[colName] }}</span>
+                    </ng-template>
+                </mat-cell>
+            </ng-container>
 
-                <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
-                <mat-row [class.selectable]="allowSelection" (click)="onRowClicked(row)" *matRowDef="let row; columns: columnNames;"></mat-row>
-            </mat-table>
-        </div>
-        <p class="no-data-message" *ngIf="totalRows === 0">There's nothing here ¯\_(ツ)_/¯</p>
-        <paginator></paginator>
+            <mat-header-row *matHeaderRowDef="columnNames"></mat-header-row>
+            <mat-row [class.selectable]="allowSelection" (click)="onRowClicked(row)" *matRowDef="let row; columns: columnNames;"></mat-row>
+        </mat-table>
     </div>
-
+    <p class="error-message" *ngIf="currentError !== null">{{ currentError }}</p>
+    <p class="error-message" *ngIf="currentError === null && totalRows === 0">There's nothing here ¯\_(ツ)_/¯</p>
+    <paginator></paginator>
 </div>
 
-<ng-template #tableNotFound>
-    <div class="table-not-found">
-        <p>This table doesn't exist or you don't have access to it</p>
+<ng-template #errorContainer>
+    <div class="mat-elevation-z8">
+        <p class="error-message">{{ currentError }}</p>
     </div>
 </ng-template>

@@ -53,6 +53,8 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
 
     public constraints: { [colName: string]: Constraint[] };
 
+    public currentError: string | null = null;
+
     /** The amount of rows available with the given filters */
     public get totalRows(): number { return this.paginator ? this.paginator.totalRows : 0; }
 
@@ -60,9 +62,6 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
 
     /** FilterManagerComponent will be visible when this is true */
     public showFilters = false;
-
-    /** If the table could be found */
-    public tableExists = true;
 
     public loading = true;
 
@@ -176,13 +175,8 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
             tap(() => { this.loading = true; }),
             switchMap((name) => this.backend.meta(name.schema, name.name.raw).pipe(
                 catchError((err: HttpErrorResponse) => {
-                    if (err.status !== 404) {
-                        // TODO: Unexpected errors could be handled more
-                        // gracefully
-                        throw err;
-                    }
-
-                    this.tableExists = false;
+                    this.loading = false;
+                    this.currentError = err.status === 404 ? 'Table not found' : err.error.error.message;
                     return NEVER;
                 }))
             ),
@@ -195,6 +189,7 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
                 return result;
             })
         ).subscribe(([meta, unvalidatedInitData]) => {
+            this.currentError = null;
             const names = meta.headers.map((h) => h.name);
 
             if (this.allowInsertLike)
