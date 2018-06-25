@@ -112,6 +112,11 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
             this.contentCells.changes,
             this.dataSource.dataChanges()
         ).pipe(filter((data): boolean => {
+            // The metadata hasn't loaded yet, guaranteed to not be ready for
+            // recalculation yet
+            if (!this.meta)
+                return false;
+            
             const [headers, content, tableData] = data;
 
             // Add 1 for the header row
