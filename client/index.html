@@ -6,13 +6,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Helium</title>
     <base href="/">
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet">
     <link rel="shortcut icon" href="/metadata/favicon.ico" type="image/x-icon">
     <link rel="manifest" href="/metadata/manifest.json">
 </head>
 <body>
     <app></app>
+
+    <noscript id="deferred-styles">
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    </noscript>
+
+    <script>
+        function loadDeferredStyles() {
+            var addStylesNode = document.getElementById('deferred-styles');
+            var replacement = document.createElement('div');
+            replacement.innerHTML = addStylesNode.textContent;
+            document.body.appendChild(replacement)
+            addStylesNode.parentElement.removeChild(addStylesNode);
+        }
+
+        var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+            window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+
+        // Prefer using requestAnimationFrame for this task, but fall back to
+        // window.onload if it's not available
+        if (raf)
+            raf(function() { window.setTimeout(loadDeferredStyles, 0); });
+        else
+            window.addEventListener('load', loadDeferredStyles);
+    </script>
 </body>
 </html>
