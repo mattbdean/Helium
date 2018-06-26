@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import * as _ from 'lodash';
 import { combineLatest, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
 import { catchError, filter, map, startWith, switchMap } from 'rxjs/operators';
+import { environment } from '../environments/environment';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
 import { AuthService } from './core/auth/auth.service';
@@ -84,7 +85,9 @@ export class AppComponent implements OnDestroy, OnInit {
         ];
 
         for (const svgIcon of iconNames) {
-            const safeUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(`/assets/${svgIcon}.svg`);
+            const safeUrl = this.domSanitizer.bypassSecurityTrustResourceUrl(
+                `${environment.baseUrl}assets/${svgIcon}.svg`);
+                
             this.iconReg.addSvgIconInNamespace('app', svgIcon, safeUrl);
         }
 

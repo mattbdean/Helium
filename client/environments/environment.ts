@@ -5,5 +5,6 @@
 
 export const environment = {
   production: false,
-  preview: false
+  preview: false,
+  baseUrl: '/'
 };
