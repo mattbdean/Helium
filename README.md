@@ -109,5 +109,14 @@ When finished, kill the container
 $ docker kill mysql-helium
 ```
 
+## Preview mode
+
+A preview of Helium is available through [GitHub Pages](https://mattbdean.github.io/Helium/preview). This is how it works:
+
+ 1. When building the site with "preview" configuration, [`environment.ts`](https://github.com/mattbdean/Helium/blob/master/client/environments/environment.ts) is replaced with [`environment.preview.ts`](https://github.com/mattbdean/Helium/blob/master/client/environments/environment.prod.ts)
+ 2. Mock authentication and API services are used instead of the real ones if the environment's `preview` flag is true.
+ 3. The site is built at `docs/preview` with `yarn deploy:preview`. The base href (required for Angular's Router) and the deploy URL (for determining where the compiled JS files are located) are changed to where the site will be available on GitHub Pages.
+ 4. The new files under `docs/preview` are pushed, and GitHub Pages does the rest.
+
 ## License
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmattbdean%2FHelium.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmattbdean%2FHelium?ref=badge_large)
