@@ -367,6 +367,11 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
     }
 
     public onFiltersChanged(filters: Filter[]) {
+        // If the page index isn't 0 and the filter excludes all data, the API
+        // will return a 400 because the page is too high. Better be on the safe
+        // side.
+        this.paginator.pageIndex = 0;
+
         // Only hide if going from 1 to 0 filters
         if (filters.length === 0 && this.filterManager.visibleFilters === 0)
             this.showFilters = false;
