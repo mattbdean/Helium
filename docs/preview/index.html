@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Helium</title>
+    <base href="/preview">    <link rel="shortcut icon" href="/metadata/favicon.ico" type="image/x-icon">
+    <link rel="manifest" href="/metadata/manifest.json">
+<link rel="stylesheet" href="styles.d9f4794ca599fc32f1d5.css"></head>
+<body>
+    <app></app>
+
+    <noscript>
+        <p style="text-align: center">Please enable JavaScript to use Helium</p>
+    </noscript>
+
+    <noscript id="deferred-styles">
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    </noscript>
+
+    <script>
+        function loadDeferredStyles() {
+            var addStylesNode = document.getElementById('deferred-styles');
+            var replacement = document.createElement('div');
+            replacement.innerHTML = addStylesNode.textContent;
+            document.body.appendChild(replacement)
+            addStylesNode.parentElement.removeChild(addStylesNode);
+        }
+
+        var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+            window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+
+        // Prefer using requestAnimationFrame for this task, but fall back to
+        // window.onload if it's not available
+        if (raf)
+            raf(function() { window.setTimeout(loadDeferredStyles, 0); });
+        else
+            window.addEventListener('load', loadDeferredStyles);
+    </script>
+<script type="text/javascript" src="runtime.a66f828dca56eeb90e02.js"></script><script type="text/javascript" src="polyfills.db5ba64b8d45874d6129.js"></script><script type="text/javascript" src="main.1cfe50df5b69ee339a0f.js"></script></body>
+</html>

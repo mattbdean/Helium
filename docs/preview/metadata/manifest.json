@@ -1,0 +1,19 @@
+{
+  "name": "Helium",
+  "icons": [
+    {
+      "src": "/metadata/favicon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/metadata/favicon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/?source=pwa",
+  "background_color": "#ECEFF1",
+  "theme_color": "#512DA8",
+  "display": "standalone"
+}
