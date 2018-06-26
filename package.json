@@ -7,6 +7,7 @@
     "build": "gulp build && ng build",
     "build:prod": "gulp build && ng build --prod",
     "dev": "gulp build && concurrently --raw \"nodemon dist\" \"gulp watch\" \"ng build --watch\"",
+    "deploy:preview": "ng build -c preview --output-path docs/preview --base-href \"Helium/preview\" --deploy-url \"/Helium/preview\"",
     "e2e": "yarn build --progress=false && concurrently --raw --kill-others --success first \"node dist\" \"sleep 1 && yarn e2e:prepped\"",
     "e2e:debug": "yarn build && concurrently --raw --kill-others \"node dist\" \"sleep 1 && yarn e2e:prepped -- -ee\"",
     "e2e:prepped": "ng e2e",
