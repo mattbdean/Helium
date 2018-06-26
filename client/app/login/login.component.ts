@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 import { AuthService } from '../core/auth/auth.service';
 
 @Component({
@@ -11,6 +12,10 @@ import { AuthService } from '../core/auth/auth.service';
 })
 export class LoginComponent {
     public form: FormGroup;
+
+    public get previewMode() {
+        return environment.preview;
+    }
 
     public constructor(
         private fb: FormBuilder,

@@ -4,16 +4,13 @@ import {
     HttpTestingController
 } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-
+import { expect } from 'chai';
 import * as _ from 'lodash';
-
 import { AuthService } from '../auth/auth.service';
 import { MockStorageService } from '../auth/auth.service.spec';
 import { StorageService } from '../storage/storage.service';
-import { TableService } from './table.service';
-
-import { expect } from 'chai';
 import { ContentRequest } from './content-request';
+import { TableService } from './table.service';
 
 // NB: The purpose of these tests aren't to verify that the API returns the
 // right data, rather that the service makes the calls to the correct URL and
@@ -143,9 +140,9 @@ describe('TableService', () => {
     });
 
     describe('submitRow', () => {
-        it('should request PUT /api/v1/schemas/:schema/:table/data', () => {
+        it('should request POST /api/v1/schemas/:schema/data', () => {
             const body = { foo: 'bar', baz: 4, qux: false };
-            service.submitRow(schemaName, tableName, body).subscribe(verifyExpirationUpdate);
+            service.submitRow(schemaName, body).subscribe(verifyExpirationUpdate);
             http.expectOne((r: HttpRequest<any>): boolean => {
                 if (r.method !== 'POST') return false;
                 return _.isEqual(r.body, body);

@@ -42,6 +42,14 @@
                   "with": "client/environments/environment.prod.ts"
                 }
               ]
+            },
+            "preview": {
+              "fileReplacements": [
+                {
+                  "replace": "client/environments/environment.ts",
+                  "with": "client/environments/environment.preview.ts"
+                }
+              ]
             }
           }
         },

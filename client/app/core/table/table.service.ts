@@ -1,12 +1,8 @@
-import {
-    HttpClient, HttpErrorResponse, HttpHeaders,
-    HttpParams,
-    HttpResponse
-} from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
-import { Observable, of } from 'rxjs';
-import { catchError, map, mapTo, shareReplay, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, mapTo, shareReplay, tap } from 'rxjs/operators';
 import { PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
 import { TableNameParams } from '../../common/table-name-params';
@@ -85,7 +81,7 @@ export class TableService {
      * Attempts to add a row to the database for a given table. The table must
      * exist and the body must have the shape of a SqlRow.
      */
-    public submitRow(schema: string, tableName: string, body: SqlRow): Observable<null> {
+    public submitRow(schema: string, body: SqlRow): Observable<null> {
         return this.http.post(
             `/api/v1/schemas/${encode(schema)}/data`,
             body,

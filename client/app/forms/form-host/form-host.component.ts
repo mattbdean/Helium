@@ -6,7 +6,7 @@ import {
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import * as _ from 'lodash';
+import { mapValues } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, combineLatest, from, NEVER, Observable, of, Subscription, zip } from 'rxjs';
 import { catchError, filter, flatMap, map, mapTo, switchMap, switchMapTo } from 'rxjs/operators';
@@ -137,7 +137,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             // Only allow non-null and non-undefined values
             filter((form) => form !== undefined && form !== null),
             switchMap((form: any) => {
-                return this.backend.submitRow(this.mainName.schema, this.mainName.name.raw, form).pipe(
+                return this.backend.submitRow(this.mainName.schema, form).pipe(
                     // Assume no error
                     mapTo(null),
                     // Handle any errors
@@ -244,8 +244,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
      * the API expects.
      */
     private static preformat(form: any, headers: TableHeader[]): any {
-        return _.mapValues(form, (value, controlName) => {
-            const header = _.find(headers, (h) => h.name === controlName);
+        return mapValues(form, (value, controlName) => {
+            const header = headers.find((h) => h.name === controlName);
             if (header === undefined)
                 throw new Error(`Could not find header for control '${controlName}'`);
             if (header.type === 'date')

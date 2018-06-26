@@ -14,7 +14,7 @@ export class AuthService {
     public static readonly KEY_API_KEY = 'apiKey';
     public static readonly KEY_EXPIRATION = 'expiration';
 
-    private authData$: BehaviorSubject<AuthData | null> = new BehaviorSubject(null);
+    protected authData$: BehaviorSubject<AuthData | null> = new BehaviorSubject(null);
 
     public constructor(private http: HttpClient, private storage: StorageService) {
         // Load previously stored data
