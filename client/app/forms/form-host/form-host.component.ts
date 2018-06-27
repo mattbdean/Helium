@@ -32,6 +32,7 @@ import { PartialFormComponent } from '../partial-form/partial-form.component';
 export class FormHostComponent implements OnDestroy, OnInit {
     public formGroup: FormGroup;
     public metaInUse: TableMeta[] = [];
+    public unsubmittableForm: boolean = false;
     private mainName: MasterTableName;
     private completedForm$ = new BehaviorSubject<object | null>(null);
 
@@ -121,17 +122,18 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 );
             })
         ).subscribe((data: [MasterTableName, TableMeta[]]) => {
-                const [currentMaster, allMeta] = data;
+            const [currentMaster, allMeta] = data;
 
-                // Reinitialize the FormGroup so that we don't keep data from
-                // previously created forms
-                if (Object.keys(this.formGroup.controls).length > 0)
-                    this.formGroup = this.fb.group({});
+            // Reinitialize the FormGroup so that we don't keep data from
+            // previously created forms
+            if (Object.keys(this.formGroup.controls).length > 0)
+                this.formGroup = this.fb.group({});
 
-                // Pass this data on to the form
-                this.mainName = currentMaster;
-                this.metaInUse = allMeta;
-            });
+            // Pass this data on to the form
+            this.mainName = currentMaster;
+            this.unsubmittableForm = FormHostComponent.determineUnsubmittable(allMeta);
+            this.metaInUse = allMeta;
+        });
 
         this.submitSub = this.completedForm$.pipe(
             // Only allow non-null and non-undefined values
@@ -255,5 +257,14 @@ export class FormHostComponent implements OnDestroy, OnInit {
 
             return value;
         });
+    }
+
+    private static determineUnsubmittable(metas: TableMeta[]): boolean {
+        for (const meta of metas)
+            for (const header of meta.headers)
+                if (header.type === 'blob' && !header.nullable)
+                    return true;
+        
+        return false;
     }
 }

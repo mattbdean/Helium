@@ -137,6 +137,11 @@ CREATE TABLE validation_test(
     FOREIGN KEY (autocomplete) REFERENCES product(product_id)
 );
 
+CREATE TABLE unsubmittable(
+    pk INTEGER PRIMARY KEY AUTO_INCREMENT,
+    reason BLOB NOT NULL
+);
+
 # A few customers, organizations, and products
 INSERT INTO customer VALUES (0, "Some Guy"), (1, "Another Guy");
 INSERT INTO organization VALUES (10, "Some Big Company", 0), (11, "Another Big Company", 1);

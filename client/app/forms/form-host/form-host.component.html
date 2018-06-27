@@ -1,3 +1,5 @@
+<p class="unsubmittable-message" *ngIf="unsubmittableForm">This form is unsubmittable due to a non-null blob column.</p>
+
 <form class="centered-horizontally" novalidate [formGroup]="formGroup" (ngSubmit)="onSubmit($event)">
     <div class="form-container">
 
