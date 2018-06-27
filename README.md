@@ -10,40 +10,27 @@
 
 ## Quickstart
 
-Make sure to have [yarn](https://yarnpkg.com/lang/en/docs/install/) and [Node.js](https://nodejs.org/en/download/) (version 8 or higher) installed.
+Make sure to have the latest version of [Docker](https://docs.docker.com/install/) installed.
 
-```sh
-$ git clone https://github.com/mattbdean/Helium
-$ cd Helium
-$ git checkout tags/v1.0.0-beta
-$ yarn install
+```
+$ docker run -d --rm -p 3000:3000 --name helium mattbdean/helium:1.0.0
 ```
 
-Run the website on [localhost:3000](http://localhost:3000):
+This will make Helium available at [localhost:3000](http://localhost:3000)
 
-```sh
-$ yarn prod
+To make the website accessible without a port (`http://localhost`), bind the container's port 3000 to the host machine's port 80.
+
+```
+$ docker run -d --rm -p 80:3000 --name helium mattbdean/helium:1.0.0
 ```
 
-Once the website is built, you can re-run it with
+Use `docker kill` to stop Helium
 
-```sh
-$ node dist
 ```
-
-Change the port like this:
-
-```sh
-$ PORT=3001 yarn prod
+$ docker kill helium
 ```
-
-Now you can access the website at [localhost:3001](http://localhost:3001).
-
-> If you want to run Helium on the default HTTP port (80), you'll have to run it as root. 
 
 ## Docker
-
-Helium provides several experimental Docker images. Full support will come with the release of [1.0.0](https://github.com/mattbdean/Helium/milestone/3).
 
 The newest Docker image that passed CI is located at `mattbdean/helium:latest-dev`. For branches other than master, use `mattbdean/helium:latest-dev-{branch}`.
 
