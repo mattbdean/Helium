@@ -179,7 +179,7 @@ export class AppComponent implements AfterViewInit, OnDestroy, OnInit {
             // Delay 1ms to open on next change detection cycle
             delay(1)
         ).subscribe((width) => {
-            if (width <= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH) {
+            if (width <= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH && this.router.url === '/tables') {
                 this.sidenav.open('program');
             }
         });
