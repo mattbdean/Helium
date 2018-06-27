@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-    Component, OnDestroy, OnInit, ViewChild
+    AfterViewInit, Component, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
 import { MatIconRegistry, MatSidenav, MatSnackBar } from '@angular/material';
@@ -8,7 +8,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
 import { combineLatest, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
-import { catchError, filter, map, startWith, switchMap } from 'rxjs/operators';
+import { catchError, delay, filter, first, map, startWith, switchMap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
@@ -24,7 +24,7 @@ interface SchemaInfo { availableSchemas: string[]; selectedSchema: string; }
     templateUrl: 'app.component.html',
     styleUrls: ['app.component.scss']
 })
-export class AppComponent implements OnDestroy, OnInit {
+export class AppComponent implements AfterViewInit, OnDestroy, OnInit {
     public static readonly TIER_ORDER: TableTier[] =
         ['manual', 'lookup', 'imported', 'computed', 'hidden', 'unknown'];
 
@@ -41,6 +41,8 @@ export class AppComponent implements OnDestroy, OnInit {
     private adjustSidenavSub: Subscription;
     public formGroup: FormGroup;
     public schemaControl: AbstractControl;
+
+    private windowWidth$: Observable<number>;
 
     @ViewChild(MatSidenav)
     private sidenav: MatSidenav;
@@ -157,14 +159,30 @@ export class AppComponent implements OnDestroy, OnInit {
             this.schemas = schemas === null ? [] : schemas;
         });
 
-        const windowResize$ = fromEvent(window, 'resize')
+        this.windowWidth$ = fromEvent(window, 'resize')
             // Start with a value so adjustSidenav gets called on init
-            .pipe(startWith({}));
+            .pipe(
+                map(() => window.innerWidth),
+                startWith(window.innerWidth)
+            );
 
         // When the window is resized or the user logs in or out, adjust the
         // sidenav.
-        this.adjustSidenavSub = merge(windowResize$, this.auth.watchAuthState())
-            .subscribe(() => { this.adjustSidenav(); });
+        this.adjustSidenavSub = combineLatest(this.windowWidth$, this.auth.watchAuthState())
+            .subscribe((data) => { this.adjustSidenav(data[0]); });
+    }
+
+    public ngAfterViewInit() {
+        // Open the sidenav automatically on smaller devices
+        this.windowWidth$.pipe(
+            first(),
+            // Delay 1ms to open on next change detection cycle
+            delay(1)
+        ).subscribe((width) => {
+            if (width <= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH) {
+                this.sidenav.open('program');
+            }
+        });
     }
 
     public ngOnDestroy() {
@@ -197,11 +215,11 @@ export class AppComponent implements OnDestroy, OnInit {
         return this.router.navigate(['/login']);
     }
 
-    private adjustSidenav() {
+    private adjustSidenav(newWidth: number) {
         if (!this.auth.loggedIn) {
             this.sidenav.opened = false;
         } else {
-            const alwaysShow = window.innerWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
+            const alwaysShow = newWidth >= AppComponent.ALWAYS_SHOW_SIDENAV_WIDTH;
             this.sidenavMode = alwaysShow ? 'side' : 'over';
             this.sidenav.opened = alwaysShow;
         }
