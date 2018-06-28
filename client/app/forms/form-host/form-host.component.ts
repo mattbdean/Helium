@@ -17,7 +17,7 @@ import { TableInsert } from '../../common/api/table-insert';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name';
 import { unflattenTableNames } from '../../common/util';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
 
 /**
@@ -54,7 +54,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
         private router: Router,
         private snackBar: MatSnackBar,
         private fb: FormBuilder,
-        private backend: TableService
+        private backend: ApiService
     ) {}
 
     public ngOnInit() {

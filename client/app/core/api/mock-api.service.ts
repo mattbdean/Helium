@@ -3,11 +3,11 @@ import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
 import { CompoundConstraint, PaginatedResponse, SqlRow, TableHeader, TableInsert, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
+import { ApiService } from './api.service';
 import { ContentRequest } from './content-request';
-import { TableService } from './table.service';
 
 @Injectable()
-export class MockTableService extends TableService {
+export class MockApiService extends ApiService {
     public schemas(): Observable<string[] | null> {
         return this.delay(['schema1', 'schema2']);
     }

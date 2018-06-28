@@ -19,7 +19,7 @@ const encode = encodeURIComponent;
  * of the custom X-Session-Expiration header sent with API responses.
  */
 @Injectable()
-export class TableService {
+export class ApiService {
     /** Hot observable that replays the last value emitted to new subscribers */
     private schemas$: Observable<string[] | null> | null = null;
 

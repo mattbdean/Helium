@@ -117,7 +117,7 @@ export class AuthService {
      * the opposite when the user logs out.
      */
     public watchAuthState(): Observable<boolean> {
-        // Each response received by TableService updates the expiration, and
+        // Each response received by ApiService updates the expiration, and
         // therefore updates the observable. Make sure to only listen for
         // distinct values to prevent an infinite loop.
         return this.authData$.pipe(

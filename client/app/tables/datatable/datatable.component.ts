@@ -13,7 +13,7 @@ import { flattenCompoundConstraints } from '../../../../common/util';
 import { Constraint, Filter, SqlRow, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
 import { FilterProviderService } from '../filter-provider/filter-provider.service';
@@ -86,7 +86,7 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
 
     constructor(
         public dataSource: ApiDataSource,
-        private backend: TableService,
+        private backend: ApiService,
         private filterProvider: FilterProviderService,
         private layoutHelper: LayoutHelper,
         private renderer: Renderer2,

@@ -13,16 +13,16 @@ import { Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
 import { TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
 import { FormHostComponent } from './form-host.component';
 
 describe('FormHostComponent', () => {
     let fixture: ComponentFixture<FormHostComponent>;
     let comp: FormHostComponent;
-    let service: TableService;
+    let service: ApiService;
     let de: DebugElement;
 
-    const tableServiceStub = {
+    const ApiServiceStub = {
         tables: (name: string): Observable<any> => Observable.throw('Not stubbed')
     };
 
@@ -50,7 +50,7 @@ describe('FormHostComponent', () => {
                         queryParams: of({})
                     }
                 },
-                { provide: TableService, useValue: tableServiceStub },
+                { provide: ApiService, useValue: ApiServiceStub },
                 { provide: MatSnackBar, useValue: snackbarStub }
             ],
             // Ignore missing children (aka PartialFormComponent)
@@ -59,7 +59,7 @@ describe('FormHostComponent', () => {
 
         fixture = TestBed.createComponent(FormHostComponent);
         comp = fixture.componentInstance;
-        service = fixture.componentRef.injector.get(TableService);
+        service = fixture.componentRef.injector.get(ApiService);
         de = fixture.debugElement;
     });
 

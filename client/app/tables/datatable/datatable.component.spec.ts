@@ -17,7 +17,7 @@ import * as sinonChai from 'sinon-chai';
 import { CompoundConstraint, Constraint, PaginatedResponse, SqlRow, TableDataType, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
 import { CoreModule } from '../../core/core.module';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterProviderService } from '../filter-provider/filter-provider.service';
 import { LayoutHelper } from '../layout-helper/layout-helper';
@@ -35,13 +35,13 @@ describe.skip('DatatableComponent', () => {
     let fixture: ComponentFixture<DatatableComponent>;
     let comp: DatatableComponent;
     let de: DebugElement;
-    let service: TableService;
+    let service: ApiService;
     let router: Router;
 
     let metaStub: sinon.SinonStub;
     let contentStub: sinon.SinonStub;
 
-    const tableServiceStub = {
+    const ApiServiceStub = {
         meta: (_: string): Observable<TableMeta> =>
             throwError(new Error('not stubbed')),
         content: (_): Observable<PaginatedResponse<SqlRow[]>> =>
@@ -125,7 +125,7 @@ describe.skip('DatatableComponent', () => {
                 ApiDataSource,
                 FilterProviderService,
                 { provide: ActivatedRoute, useValue: activedRouteStub },
-                { provide: TableService, useValue: tableServiceStub },
+                { provide: ApiService, useValue: ApiServiceStub },
                 { provide: Router, useValue: routerStub },
                 { provide: LayoutHelper, useValue: layoutHelperStub },
             ],
@@ -138,7 +138,7 @@ describe.skip('DatatableComponent', () => {
         fixture = TestBed.createComponent(DatatableComponent);
         comp = fixture.componentInstance;
         de = fixture.debugElement;
-        service = de.injector.get(TableService);
+        service = de.injector.get(ApiService);
         router = de.injector.get(Router);
 
         comp.name = new TableName(SCHEMA, DEFAULT_TABLE_NAME);

@@ -8,7 +8,7 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { PaginatedResponse, SqlRow, TableHeader, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
 import { ApiDataSource } from './api-data-source';
 
 chai.use(sinonChai);
@@ -57,14 +57,14 @@ describe('ApiDataSource', () => {
     });
 
     let source: ApiDataSource;
-    let api: TableService;
+    let api: ApiService;
     let collectionViewer: CollectionViewer;
     let contentStub: sinon.SinonStub;
 
     beforeEach(() => {
         api = {
             content: (_): Observable<PaginatedResponse<SqlRow>> => NEVER
-        } as TableService;
+        } as ApiService;
         contentStub = sinon.stub(api, 'content');
         // By default, calls to api.content() will return no data
         contentStub.returns(emptyResponse());

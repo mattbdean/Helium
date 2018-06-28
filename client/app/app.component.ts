@@ -13,7 +13,7 @@ import { environment } from '../environments/environment';
 import { MasterTableName, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
 import { AuthService } from './core/auth/auth.service';
-import { TableService } from './core/table/table.service';
+import { ApiService } from './core/api/api.service';
 
 interface GroupedName { tier: TableTier; names: MasterTableName[]; }
 
@@ -51,7 +51,7 @@ export class AppComponent implements AfterViewInit, OnDestroy, OnInit {
 
     public constructor(
         public auth: AuthService,
-        private backend: TableService,
+        private backend: ApiService,
         private router: Router,
         private iconReg: MatIconRegistry,
         private domSanitizer: DomSanitizer,

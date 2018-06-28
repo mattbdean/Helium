@@ -2,7 +2,7 @@ import { Validators } from '@angular/forms';
 import { expect } from 'chai';
 import { CompoundConstraint, TableHeader, TableMeta } from '../../common/api';
 import { flattenCompoundConstraints } from '../../common/util';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
 import { FormControlSpec } from '../form-control-spec';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
 
@@ -84,8 +84,8 @@ describe('FormSpecGeneratorService', () => {
 
     beforeEach(() => {
         // Mock this if necessary
-        const tableService: TableService = {} as TableService;
-        generator = new FormSpecGeneratorService(tableService);
+        const ApiService: ApiService = {} as ApiService;
+        generator = new FormSpecGeneratorService(ApiService);
     });
 
     const generateSingle = (header: TableHeader) => {

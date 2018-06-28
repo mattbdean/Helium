@@ -9,7 +9,7 @@ import { combineLatest, Observable, Subscription } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { TableDataType } from '../../../../common/api';
 import { FilterOperation, TableMeta } from '../../common/api';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
 import {
     FormControlSpec, FormControlType
 } from '../../dynamic-forms/form-control-spec';
@@ -72,7 +72,7 @@ export class FilterComponent implements OnDestroy, OnInit {
     public ops: Operation[];
 
     public constructor(
-        private backend: TableService,
+        private backend: ApiService,
         private filters: FilterProviderService,
         private formSpecGenerator: FormSpecGeneratorService
     ) {}

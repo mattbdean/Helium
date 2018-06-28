@@ -9,15 +9,15 @@ import * as _ from 'lodash';
 import { AuthService } from '../auth/auth.service';
 import { MockStorageService } from '../auth/auth.service.spec';
 import { StorageService } from '../storage/storage.service';
+import { ApiService } from './api.service';
 import { ContentRequest } from './content-request';
-import { TableService } from './table.service';
 
 // NB: The purpose of these tests aren't to verify that the API returns the
 // right data, rather that the service makes the calls to the correct URL and
 // with the correct HTTP method, body, query, etc.
 
-describe('TableService', () => {
-    let service: TableService;
+describe('ApiService', () => {
+    let service: ApiService;
     let http: HttpTestingController;
     let auth: AuthService;
     const schemaName = 'baz';
@@ -32,13 +32,13 @@ describe('TableService', () => {
                 HttpClientTestingModule
             ],
             providers: [
-                TableService,
+                ApiService,
                 AuthService,
                 { provide: StorageService, useClass: MockStorageService }
             ]
         });
 
-        service = TestBed.get(TableService);
+        service = TestBed.get(ApiService);
         http = TestBed.get(HttpTestingController);
         auth = TestBed.get(AuthService);
 

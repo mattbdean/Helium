@@ -8,8 +8,8 @@ import { distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operator
 import { Filter, SqlRow, TableHeader, TableMeta } from '../../common/api';
 import { PaginatedResponse } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
-import { ContentRequest } from '../../core/table/content-request';
-import { TableService } from '../../core/table/table.service';
+import { ApiService } from '../../core/api/api.service';
+import { ContentRequest } from '../../core/api/content-request';
 import { FilterManagerComponent } from '../filter-manager/filter-manager.component';
 import { PaginatorComponent } from '../paginator/paginator.component';
 
@@ -49,7 +49,7 @@ export class ApiDataSource extends DataSource<SqlRow> {
 
     private source: Observable<SqlRow[]>;
 
-    public constructor(private backend: TableService) {
+    public constructor(private backend: ApiService) {
         super();
 
         this.source = combineLatest(
