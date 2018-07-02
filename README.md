@@ -96,6 +96,38 @@ When finished, kill the container
 $ docker kill mysql-helium
 ```
 
+### Versioning
+
+1. Run `yarn version` to update `package.json` and create a tag. Don't push yet.
+
+2. Make sure the unit and integration tests pass
+
+```
+$ yarn test:server && yarn test:client
+```
+
+3. Build the Docker image. The version name should start with "v", e.g. `v1.2.3`
+
+```
+$ docker build . -t mattbdean/helium:<new version>
+```
+
+4. Make sure the end-to-end tests pass
+
+```
+$ docker run -d --rm -p 3000:3000 --name helium mattbdean/helium:<new version>
+$ yarn e2e:prepped
+$ docker kill helium
+```
+
+5. Push the new tag and Docker image
+
+```
+$ git push --tags
+$ docker push mattbdean/helium:<new version>
+```
+
+
 ## Preview mode
 
 A preview of Helium is available through [GitHub Pages](https://mattbdean.github.io/Helium/preview). This is how it works:
