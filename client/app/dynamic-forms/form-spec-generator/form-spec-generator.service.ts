@@ -72,6 +72,11 @@ export class FormSpecGeneratorService {
                     
                     if (h.type === 'integer') {
                         validators.push((control): ValidationErrors | null => {
+                            // Ignore missing values, they'll be handled by
+                            // Validators.required if applicable
+                            if (control.value === '' || control.value === null || control.value === undefined)
+                                return null;
+
                             const key = 'integer';
                             const integer = validateInteger(control.value);
                             return integer === null ? { [key]: 'Not an integer' } : null;
