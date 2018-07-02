@@ -63,8 +63,11 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
 
     public get allowInsertLike() { return !this.allowSelection; }
 
+    private _sf = false;
+    public get showFilters() { return this._sf; }
+    public set showFilters(val) { console.log('showFilters: ', val); this._sf = val; }
     /** FilterManagerComponent will be visible when this is true */
-    public showFilters = false;
+    // public showFilters = false;
 
     public loading = true;
 
@@ -369,14 +372,24 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
         }
     }
 
-    public onFiltersChanged(filters: Filter[]) {
+    /**
+     * Called when there has been a change in the filters to be applied. Only
+     * valid and enabled filters are provided.
+     */
+    public onFiltersChanged() {
         // If the page index isn't 0 and the filter excludes all data, the API
         // will return a 400 because the page is too high. Better be on the safe
         // side.
         this.paginator.pageIndex = 0;
+    }
 
-        // Only hide if going from 1 to 0 filters
-        if (filters.length === 0 && this.filterManager.visibleFilters === 0)
+    /**
+     * Called when the FilterManager has changed how many filter forms are
+     * currently being displayed on the screen, regardless of if their validaity
+     * or if they're disabled.
+     */
+    public onVisibleFiltersChanged(count: number) {
+        if (count === 0)
             this.showFilters = false;
     }
 

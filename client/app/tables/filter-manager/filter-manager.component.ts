@@ -28,6 +28,9 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
     @Output()
     public changed = new EventEmitter<Filter[]>();
 
+    @Output()
+    public visible = new EventEmitter<number>();
+
     /** The number of filters being shown to the user */
     public get visibleFilters() { return this.formArray.length; }
 
@@ -95,6 +98,7 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
 
     public addFilter(data?: Filter) {
         this.formArray.push(FilterManagerComponent.createFilterGroup(data));
+        this.visible.emit(this.visibleFilters);
     }
 
     public removeFilter(control: AbstractControl) {
@@ -102,6 +106,7 @@ export class FilterManagerComponent implements OnInit, OnChanges, OnDestroy {
         // remove(AbstractControl) method so this'll work as long as we can
         // compare controls by ===
         this.formArray.removeAt(this.formArray.controls.findIndex((c) => c === control));
+        this.visible.emit(this.visibleFilters);
     }
 
     private applyPreemptiveFilters(): Filter[] {
