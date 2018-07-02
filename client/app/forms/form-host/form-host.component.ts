@@ -9,7 +9,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { mapValues } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, combineLatest, from, NEVER, Observable, of, Subscription, zip } from 'rxjs';
-import { catchError, filter, flatMap, map, mapTo, switchMap, switchMapTo } from 'rxjs/operators';
+import { catchError, filter, flatMap, mapTo, switchMap, switchMapTo } from 'rxjs/operators';
 import {
     MasterTableName, TableHeader, TableMeta
 } from '../../common/api';
@@ -19,6 +19,7 @@ import { TableName } from '../../common/table-name';
 import { unflattenTableNames } from '../../common/util';
 import { ApiService } from '../../core/api/api.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
+import { environment } from '../../../environments/environment';
 
 /**
  * This component creates a dynamically generated form based on the 'name'
@@ -33,6 +34,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
     public formGroup: FormGroup;
     public metaInUse: TableMeta[] = [];
     public unsubmittableForm: boolean = false;
+    public preview = environment.preview;
+    
     private mainName: MasterTableName;
     private completedForm$ = new BehaviorSubject<object | null>(null);
 

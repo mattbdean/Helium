@@ -13,6 +13,7 @@
 <h4 class="table-description" *ngIf="meta && meta.comment.trim() !== ''">{{ meta.comment }}</h4>
 
 <filter-manager [hidden]="!showFilters" [meta]="meta" (changed)="onFiltersChanged($event)"></filter-manager>
+<p *ngIf="showFilters && preview" class="preview-mode-msg">Note: Filters aren't available in preview mode</p>
 
 <mat-progress-bar [hidden]="!loading" mode="indeterminate"></mat-progress-bar>
 <div class="mat-elevation-z8">

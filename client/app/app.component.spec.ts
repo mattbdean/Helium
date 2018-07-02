@@ -22,9 +22,9 @@ import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
 import { TABLE_TIER_PREFIX_MAPPING } from './common/constants';
 import { TableName } from './common/table-name';
+import { ApiService } from './core/api/api.service';
 import { AuthService } from './core/auth/auth.service';
 import { CoreModule } from './core/core.module';
-import { ApiService } from './core/api/api.service';
 
 describe('AppComponent', () => {
     let fixture: ComponentFixture<AppComponent>;

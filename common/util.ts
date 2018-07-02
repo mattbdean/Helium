@@ -19,7 +19,7 @@ export const unflattenTableNames = (names: TableName[]): MasterTableName[] => {
     const parts: TableName[] = partitioned[1];
 
     for (const part of parts) {
-        const masterIndex = findIndex(masters, (m) => part.masterName && m.name.raw === part.masterName.raw);
+        const masterIndex = findIndex(masters, ((m) => part.masterName && m.name.raw === part.masterName.raw) as any);
         if (masterIndex < 0)
             throw new Error(`Could not find master table with name ${part.masterName!!.raw}`);
 

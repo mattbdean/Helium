@@ -21,6 +21,7 @@ import { LayoutHelper } from '../layout-helper/layout-helper';
 import { PaginatorComponent } from '../paginator/paginator.component';
 import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
 import { InitData } from './init-data';
+import { environment } from '../../../environments/environment';
 
 @Component({
     selector: 'datatable',
@@ -46,6 +47,8 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
     /** Outputs the value of the selected row if `selectionMode` is true. */
     @Output()
     public rowSelected: EventEmitter<SqlRow> = new EventEmitter();
+
+    public preview = environment.preview;
 
     public meta: TableMeta;
 

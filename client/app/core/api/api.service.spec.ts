@@ -141,7 +141,7 @@ describe('ApiService', () => {
 
     describe('submitRow', () => {
         it('should request POST /api/v1/schemas/:schema/data', () => {
-            const body = { foo: 'bar', baz: 4, qux: false };
+            const body = { some_table: [{ foo: 'bar', baz: 4, qux: false }] };
             service.submitRow(schemaName, body).subscribe(verifyExpirationUpdate);
             http.expectOne((r: HttpRequest<any>): boolean => {
                 if (r.method !== 'POST') return false;

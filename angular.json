@@ -59,6 +59,14 @@
                   "with": "client/environments/environment.preview.ts"
                 }
               ]
+            },
+            "preview:dev": {
+              "fileReplacements": [
+                {
+                  "replace": "client/environments/environment.ts",
+                  "with": "client/environments/environment.preview.ts"
+                }
+              ]
             }
           }
         },

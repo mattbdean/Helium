@@ -8,6 +8,7 @@ import { TableName } from '../../common/table-name';
 import { TableNameParams } from '../../common/table-name-params';
 import { AuthService } from '../auth/auth.service';
 import { ContentRequest } from './content-request';
+import { BaseApiService } from './base-api-service';
 
 const encode = encodeURIComponent;
 
@@ -19,7 +20,7 @@ const encode = encodeURIComponent;
  * of the custom X-Session-Expiration header sent with API responses.
  */
 @Injectable()
-export class ApiService {
+export class ApiService implements BaseApiService {
     /** Hot observable that replays the last value emitted to new subscribers */
     private schemas$: Observable<string[] | null> | null = null;
 
@@ -52,7 +53,7 @@ export class ApiService {
     }
 
     /** Fetches paginated data from a given table */
-    public content(req: ContentRequest): Observable<PaginatedResponse<SqlRow[]>> {
+    public content(req: ContentRequest): Observable<PaginatedResponse<SqlRow>> {
         const shouldUseFilters = req.filters === undefined || req.filters.length === 0;
 
         // If a property is null or undefined, it won't be included in the query
@@ -81,7 +82,7 @@ export class ApiService {
      * Attempts to add a row to the database for a given table. The table must
      * exist and the body must have the shape of a SqlRow.
      */
-    public submitRow(schema: string, body: SqlRow): Observable<null> {
+    public submitRow(schema: string, body: TableInsert): Observable<null> {
         return this.http.post(
             `/api/v1/schemas/${encode(schema)}/data`,
             body,
