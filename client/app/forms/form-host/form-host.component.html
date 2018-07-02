@@ -14,6 +14,6 @@
 
         <button mat-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>
 
-        <p class="preview-mode-msg">Note: Data created in preview mode won't be available after a refresh.</p>
+        <p *ngIf="preview" class="preview-mode-msg">Note: Data created in preview mode won't be available after a refresh.</p>
     </div>
 </form>
