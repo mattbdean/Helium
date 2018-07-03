@@ -96,6 +96,7 @@ export class FilterComponent implements OnDestroy, OnInit {
             // only being applied to null values.
             this.showUserInput = op !== 'is' && op !== 'isnot';
             if (!this.showUserInput) {
+                this.currentSpec = FilterComponent.defaultSpec;
                 // Only used when 'Is Null' or 'Is Not Null' is selected
                 this.group.patchValue({ value: 'null' });
             }

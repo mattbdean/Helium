@@ -63,11 +63,8 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
 
     public get allowInsertLike() { return !this.allowSelection; }
 
-    private _sf = false;
-    public get showFilters() { return this._sf; }
-    public set showFilters(val) { console.log('showFilters: ', val); this._sf = val; }
     /** FilterManagerComponent will be visible when this is true */
-    // public showFilters = false;
+    public showFilters = false;
 
     public loading = true;
 
