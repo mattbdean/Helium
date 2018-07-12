@@ -477,7 +477,11 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
     }
 
     private recalculateTableLayout() {
-        const result = this.layoutHelper.recalculate();
+        const result = this.layoutHelper.recalculate((table) => {
+            for (const row of table)
+                for (const cell of row)
+                    this.renderer.removeStyle(cell, 'width');
+        });
 
         for (const { el, width } of result) {
             this.renderer.setStyle(el, 'width', width + 'px');

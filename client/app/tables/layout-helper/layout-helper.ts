@@ -70,10 +70,11 @@ export class LayoutHelper {
      * @returns Elements to resize and the width they should be resized to (in
      * pixels)
      */
-    public recalculate(): Array<{ el: any, width: number }> {
+    public recalculate(beforeFullLayoutRecalc: (table: any[][]) => void): Array<{ el: any, width: number }> {
         const table = this.table();
 
         if (this.needsFullLayoutRecalculation) {
+            beforeFullLayoutRecalc(table);
             this.recalculateAll(table);
         }
 
