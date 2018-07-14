@@ -35,7 +35,7 @@ $ docker kill helium
 The newest Docker image that passed CI is located at `mattbdean/helium:latest-dev`. For branches other than master, use `mattbdean/helium:latest-dev-{branch}`.
 
 ```sh
-$ docker run -d -p --name helium 3000:3000 mattbdean/helium:latest-dev
+$ docker run -d -p 3000:3000 --name helium mattbdean/helium:latest-dev
 $ curl localhost:3000  # do some work
 $ docker kill helium  # stop helium when you're done
 ```
