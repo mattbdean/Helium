@@ -13,7 +13,7 @@ import {
 } from '../common/constants';
 import { TableName } from '../common/table-name';
 import { unflattenTableNames } from '../common/util';
-import { QueryHelper } from '../db/query-helper';
+import { QueryHelper } from './query-helper';
 import { ValidationError } from '../routes/api/validation-error';
 import { TableInputValidator } from './schema-input.validator';
 

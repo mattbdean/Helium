@@ -6,6 +6,7 @@ import * as sinonChai from 'sinon-chai';
 import * as supertest from 'supertest';
 import { Response } from 'supertest';
 import { Filter } from '../src/common/api';
+import { SessionPing } from '../src/common/api';
 import { ConnectionConf } from '../src/db/connection-conf';
 import { QueryHelper } from '../src/db/query-helper';
 import { SchemaDao } from '../src/db/schema.dao';
@@ -178,6 +179,7 @@ describe('API v1', () => {
     });
 
     describe('Post-authentication', () => {
+        let hasPoolStub: sinon.SinonStub;
         beforeEach(async () => {
             // Bypass Passport authentication
             (app.database as any).pools.set(MOCK_API_KEY, { mockPool: true });
@@ -185,7 +187,7 @@ describe('API v1', () => {
             // Make sure that the server thinks that there is an active
             // connection for the testing key. We don't actually use any DB
             // connections since we stub SchemaDao, so this is perfectly fine.
-            sinon.stub(app.database, 'hasPool')
+            hasPoolStub = sinon.stub(app.database, 'hasPool')
                 .withArgs(MOCK_API_KEY)
                 .returns(true);
         });
@@ -454,6 +456,45 @@ describe('API v1', () => {
                 });
 
                 expect(stub).to.have.been.calledWithExactly('foo', 'bar', query);
+            });
+        });
+
+        describe('GET /api/v1/ping', async () => {
+            it('should 400 when no API key is present', async () => {
+                hasPoolStub.returns(false);
+
+                // Have to use supertest directly because the helper
+                // automatically sets the X-API-Key header
+                await supertest(app.express)
+                    .get('/api/v1/ping')
+                    .set('Accept', 'application/json')
+                    .expect('Content-Type', /application\/json/)
+                    .expect(400);
+            });
+
+            it('should handle valid keys', async () => {
+                const expiration = Date.now();
+
+                hasPoolStub.returns(true);
+                sinon.stub(app.database, 'expiration').returns(expiration);
+
+                await request.get('/ping', 200, (data: SessionPing) => {
+                    expect(data).to.deep.equal({
+                        validApiKey: true,
+                        expiresAt: expiration
+                    });
+                });
+            });
+
+            it('should handle invalid keys', async () => {
+                hasPoolStub.returns(false);
+                
+                await request.get('/ping', 200, (data: SessionPing) => {
+                    expect(data).to.deep.equal({
+                        validApiKey: false,
+                        expiresAt: null
+                    });
+                });
             });
         });
     });
