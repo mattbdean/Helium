@@ -44,15 +44,24 @@ See also [#59](https://github.com/mattbdean/Helium/issues/59).
 
 ## Contributing
 
-Helium runs on a TypeScript-based MEAN stack (but with MySQL instead of MongoDB) and is tested with Mocha, Chai, Karma, and Protractor.
+Helium is written in TypeScript. A JSON API is made available using a Node.js/Express.js server and the front-end is built with Angular 6. Helium is tested with Mocha, Chai, Karma, and Protractor.
 
-Make sure to have a MySQL database running on your local machine. Then run the contents of `server/test/init.sql` to insert test data.
 
-```sh
-$ mysql -u root -p < server/test/init.sql
-```
+### Project Structure
 
-This will (re)create a user with name `user` and password `password`, as well as the `helium` database.
+ - `.circleci/`: Configuration for the [CircleCI workflow](https://circleci.com/gh/mattbdean/Helium)
+ - `client/`: Front-end code. Anything Angular can be found here.
+ - `common/`: Code and typings common to the front-end and server-side code. Copied to `client/app/common/` and `server/src/common/` when building.
+ - `dist/`: Compiled files live here. Once compiled, run `node dist` to start the server.
+ - `dist/public/`: All files in this directory will be made available as static assets. The code in `client/` is built to this directory
+ - `docs/`: Source for the [GitHub Pages website](https://mattbdean.github.io/Helium/).
+ - `docs/preview/`: The preview version of the front-end is built to this directory
+ - `e2e/`: End-to-end tests. Use `ng e2e` to run.
+ - `load-testing/`: Very simple load testing scripts. It has its own [README](https://github.com/mattbdean/Helium/blob/master/load-testing/README.md).
+ - `server/`: The Node.js-based server. 
+ - `server/benchmarks/`: Simple benchmarks for the server-side code. Use `yarn ts-node server/benchmarks/{file}.ts` to run a benchmark.
+ 
+### Building
 
 Use the `dev` script for developing:
 
@@ -60,7 +69,7 @@ Use the `dev` script for developing:
 $ yarn dev
 ```
 
-This will watch for any changes to server-side and client-side code and restart the server when necessary. HMR and livereload aren't supported at the moment, so a manual browser refresh is necessary to see the latest changes.
+While running, any changes to the front-end code will cause a small rebuild and any changes to server-side code will cause the server to restart.
 
 ### Testing
 
@@ -90,7 +99,7 @@ $ mysql -u root -p -h 127.0.0.1 < server/test/init.sql
 Enter password: (enter value of MYSQL_ROOT_PASSWORD from before)
 ```
 
-When finished, kill the container
+This will (re)create a user with name `user` and password `password`, as well as the `helium` database. When finished, kill the container
 
 ```
 $ docker kill mysql-helium
@@ -128,7 +137,7 @@ $ docker push mattbdean/helium:<new version>
 ```
 
 
-## Preview mode
+### Preview mode
 
 A preview of Helium is available through [GitHub Pages](https://mattbdean.github.io/Helium/preview). This is how it works:
 
