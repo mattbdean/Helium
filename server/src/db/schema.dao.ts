@@ -1,7 +1,7 @@
 import * as joi from 'joi';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { MysqlSquel, ParamString, Select } from 'squel';
+import { Select } from 'squel';
 import {
     CompoundConstraint, Constraint, ConstraintType, DefaultValue, Filter,
     RawConstraint, SqlRow, TableDataType, TableHeader, TableMeta
@@ -13,8 +13,8 @@ import {
 } from '../common/constants';
 import { TableName } from '../common/table-name';
 import { unflattenTableNames } from '../common/util';
-import { QueryHelper } from './query-helper';
 import { ValidationError } from '../routes/api/validation-error';
+import { QueryHelper } from './query-helper';
 import { TableInputValidator } from './schema-input.validator';
 
 /**
