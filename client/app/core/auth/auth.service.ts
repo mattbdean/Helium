@@ -13,6 +13,8 @@ import { StorageService } from '../storage/storage.service';
 export class AuthService {
     public static readonly KEY_API_KEY = 'apiKey';
     public static readonly KEY_EXPIRATION = 'expiration';
+    public static readonly KEY_USERNAME = 'username';
+    public static readonly KEY_HOST = 'host';
 
     protected authData$: BehaviorSubject<AuthData | null> = new BehaviorSubject(null);
 
@@ -26,7 +28,9 @@ export class AuthService {
             // otherwise pull data from the storage provider
             const data: AuthData | null = expiration < Date.now() ? null : {
                 apiKey: this.storage.get(AuthService.KEY_API_KEY)!!,
-                expiration: new Date(parseInt(this.storage.get(AuthService.KEY_EXPIRATION)!!, 10))
+                expiration: new Date(parseInt(this.storage.get(AuthService.KEY_EXPIRATION)!!, 10)),
+                username: this.storage.get(AuthService.KEY_USERNAME)!!,
+                host: this.storage.get(AuthService.KEY_HOST)!!
             };
 
             // Update the BehaviorSubject. If data is null, will also remove the
@@ -99,7 +103,9 @@ export class AuthService {
 
                 return {
                     apiKey: res.body!!.apiKey,
-                    expiration: new Date(parseInt(expiration, 10))
+                    expiration: new Date(parseInt(expiration, 10)),
+                    username: data.username,
+                    host: data.host
                 };
             }),
             tap((parsed) => this.update(parsed))
@@ -131,9 +137,19 @@ export class AuthService {
         if (data === null) {
             // Might have to change this if we start storing other data
             this.storage.clear();
+            const keys = [
+                AuthService.KEY_API_KEY,
+                AuthService.KEY_EXPIRATION,
+                AuthService.KEY_HOST,
+                AuthService.KEY_USERNAME
+            ];
+            for (const key of keys)
+                this.storage.delete(key);
         } else {
             this.storage.set(AuthService.KEY_API_KEY, data.apiKey);
             this.storage.set(AuthService.KEY_EXPIRATION, String(data.expiration.getTime()));
+            this.storage.set(AuthService.KEY_HOST, data.host);
+            this.storage.set(AuthService.KEY_USERNAME, data.username);
         }
 
         this.authData$.next(data);
@@ -142,6 +158,11 @@ export class AuthService {
     public updateExpiration(unixTime: number) {
         if (!this.loggedIn)
             throw new Error('not logged in, refusing to update expiration');
-        this.update({ apiKey: this.apiKey!!, expiration: new Date(unixTime) });
+        this.update({
+            apiKey: this.apiKey!!,
+            expiration: new Date(unixTime),
+            username: this.storage.get(AuthService.KEY_USERNAME)!!,
+            host: this.storage.get(AuthService.KEY_HOST)!!,
+        });
     }
 }

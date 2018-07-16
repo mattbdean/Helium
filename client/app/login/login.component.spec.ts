@@ -16,10 +16,9 @@ import * as sinon from 'sinon';
 import { AuthService } from '../core/auth/auth.service';
 import { LoginComponent } from './login.component';
 
-describe.only('LoginComponent', () => {
+describe('LoginComponent', () => {
     let fixture: ComponentFixture<LoginComponent>;
     let comp: LoginComponent;
-    let de: DebugElement;
     let authService: AuthService;
     let router: Router;
     let activatedRoute: ActivatedRoute;
@@ -57,7 +56,6 @@ describe.only('LoginComponent', () => {
 
         fixture = TestBed.createComponent(LoginComponent);
         comp = fixture.componentInstance;
-        de = fixture.debugElement;
 
         authService = TestBed.get(AuthService);
         router = TestBed.get(Router);

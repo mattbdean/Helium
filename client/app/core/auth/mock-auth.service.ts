@@ -12,16 +12,18 @@ export class MockAuthService extends AuthService {
         super(http, storage);
     }
 
-    public login() {
+    public login(data) {
         const mockData: AuthData = {
             apiKey: 'mock API key',
             // expires 1 year in advance
-            expiration: new Date(Date.now() + (365 * 24 * 60 * 60 * 1000))
+            expiration: new Date(Date.now() + (365 * 24 * 60 * 60 * 1000)),
+            username: data.username,
+            host: data.host
         };
 
         return of(mockData).pipe(
             delay(10 + Math.random() * 10),
-            tap((data) => this.update(data))
+            tap((authData) => this.update(authData))
         );
     }
 }

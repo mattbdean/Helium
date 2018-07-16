@@ -43,7 +43,12 @@ describe('ApiService', () => {
         auth = TestBed.get(AuthService);
 
         // Set the initial API key and expiration
-        auth.update({ apiKey: 'foo', expiration: new Date(prevExpiration) });
+        auth.update({
+            apiKey: 'foo',
+            expiration: new Date(prevExpiration),
+            username: 'luser',
+            host: 'localhost'
+        });
     });
 
     /**
