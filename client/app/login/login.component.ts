@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -114,6 +114,14 @@ export class LoginComponent implements OnInit, OnDestroy {
     public hasError(control: string, error: string): boolean {
         const ctrl = this.form.controls[control];
         return ctrl.errors !== null && ctrl.errors[error] !== undefined;
+    }
+
+    public static createRedirectQuery(data: { username: string, host: string, path: string }): Params {
+        return {
+            from_user: data.username,
+            from_host: data.host,
+            from_path: data.path
+        };
     }
 
     public static parseQueryString(query?: string): { [key: string]: string } {

@@ -1,8 +1,9 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { cloneDeep } from 'lodash';
-import { BehaviorSubject ,  Observable } from 'rxjs';
-import { distinctUntilChanged, map, tap } from 'rxjs/operators';
+import { BehaviorSubject ,  NEVER, Observable, timer } from 'rxjs';
+import { distinctUntilChanged, map, mapTo, switchMap, tap } from 'rxjs/operators';
+import { SessionPing } from '../../common/api';
 import { AuthData } from '../auth-data/auth-data.interface';
 import { StorageService } from '../storage/storage.service';
 
@@ -18,10 +19,20 @@ export class AuthService {
 
     protected authData$: BehaviorSubject<AuthData | null> = new BehaviorSubject(null);
 
+    private _lastValidAuthData: AuthData | null = null;
+
+    /** The last valid auth data, or null if the user has never logged in */
+    public get lastValidAuthData() { return this._lastValidAuthData; }
+
+    /** Emits false when the session expires */
+    private expiration$: Observable<boolean>;
+
     public constructor(private http: HttpClient, private storage: StorageService) {
         // Load previously stored data
-        if (this.storage.has(AuthService.KEY_API_KEY) && this.storage.has(AuthService.KEY_EXPIRATION)) {
-            // Parse the expiration key abUTHe 10 int
+        if (this.storage.hasAll(AuthService.KEY_API_KEY,
+            AuthService.KEY_EXPIRATION, AuthService.KEY_HOST, AuthService.KEY_USERNAME)) {
+
+            // Parse the expiration key as a base 10 int
             const expiration = parseInt(this.storage.get(AuthService.KEY_EXPIRATION)!!, 10);
 
             // Create a null AuthData if the stored data is already expired,
@@ -37,6 +48,16 @@ export class AuthService {
             // stored data from the storage provider
             this.update(data);
         }
+
+        this.expiration$ = this.authData$.pipe(
+            map((data) => data === null ? null : data.expiration),
+            distinctUntilChanged(),
+            // Switch to a new timer Observable every time we get a new
+            // expiration. Never emit when not authenticated.
+            switchMap((exp: Date | null) => exp === null ? NEVER : timer(exp)),
+            // Always emits false
+            mapTo(false)
+        );
     }
 
     /** Returns true if there is an unexpired API key on file */
@@ -112,6 +133,32 @@ export class AuthService {
         );
     }
 
+    /**
+     * Pings the API to test if the session is still active. Updates the current
+     * auth data with the expiration returned.
+     */
+    public ping(): Observable<SessionPing> {
+        return (this.http.get('/api/v1/ping', {
+            headers: {
+                'X-API-Key': this.requireApiKey()
+            }
+        }) as Observable<SessionPing>).pipe(
+            tap((ping: SessionPing) => {
+                // The session has expired underneath our noses
+                if (!ping.validApiKey && this.apiKey !== null)
+                    this.update(null);
+
+                // Sync the expiration time if necessary
+                if (ping.validApiKey &&
+                    ping.expiresAt &&
+                    this.expiration &&
+                    this.expiration.getTime() !== ping.expiresAt)
+
+                    this.updateExpiration(ping.expiresAt);
+            })
+        );
+    }
+
     /** Removes all stored authentication data */
     public logout() {
         this.update(null);
@@ -132,6 +179,9 @@ export class AuthService {
         );
     }
 
+    /** Emits false when the session expires */
+    public expirationTimer() { return this.expiration$; }
+
     /** Updates the storage service and the BehaviorSubject */
     public update(data: AuthData | null) {
         if (data === null) {
@@ -150,6 +200,7 @@ export class AuthService {
             this.storage.set(AuthService.KEY_EXPIRATION, String(data.expiration.getTime()));
             this.storage.set(AuthService.KEY_HOST, data.host);
             this.storage.set(AuthService.KEY_USERNAME, data.username);
+            this._lastValidAuthData = data;
         }
 
         this.authData$.next(data);

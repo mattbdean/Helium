@@ -16,7 +16,7 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { expect } from 'chai';
 import * as _ from 'lodash';
-import { Observable, of } from 'rxjs';
+import { NEVER, Observable, of } from 'rxjs';
 import * as sinon from 'sinon';
 import { AppComponent } from './app.component';
 import { TableTier } from './common/api';
@@ -75,7 +75,8 @@ describe('AppComponent', () => {
 
     const authStub = {
         // Always logged in
-        watchAuthState: () => of(true)
+        watchAuthState: () => of(true),
+        expirationTimer: () => NEVER
     };
 
     beforeEach(() => {

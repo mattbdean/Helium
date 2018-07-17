@@ -7,13 +7,14 @@ import { MatIconRegistry, MatSidenav, MatSnackBar } from '@angular/material';
 import { DomSanitizer } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import * as _ from 'lodash';
-import { combineLatest, fromEvent, merge, Observable, of, Subscription } from 'rxjs';
-import { catchError, delay, filter, first, map, startWith, switchMap } from 'rxjs/operators';
+import { combineLatest, fromEvent, NEVER, Observable, of, Subscription } from 'rxjs';
+import { catchError, delay, filter, first, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { environment } from '../environments/environment';
-import { MasterTableName, TableTier } from './common/api';
+import { MasterTableName, SessionPing, TableTier } from './common/api';
 import { unflattenTableNames } from './common/util';
-import { AuthService } from './core/auth/auth.service';
 import { ApiService } from './core/api/api.service';
+import { AuthService } from './core/auth/auth.service';
+import { LoginComponent } from './login/login.component';
 
 interface GroupedName { tier: TableTier; names: MasterTableName[]; }
 
@@ -170,6 +171,25 @@ export class AppComponent implements AfterViewInit, OnDestroy, OnInit {
         // sidenav.
         this.adjustSidenavSub = combineLatest(this.windowWidth$, this.auth.watchAuthState())
             .subscribe((data) => { this.adjustSidenav(data[0]); });
+
+        // The session has expired
+        this.auth.expirationTimer().pipe(
+            switchMap(() => {
+                // Ping the API to make absolutely sure
+                return this.auth.ping().pipe(
+                    map((ping: SessionPing) =>
+                        // Consider a token invalid if it's gonna expire in the
+                        // next second
+                        ping.validApiKey && ping.expiresAt && Date.now() < ping.expiresAt - 1000
+                    )
+                );
+            })
+        ).subscribe((valid: boolean) => {
+            if (!valid) {
+                // Expired, log out and redirect
+                this.logout('Your session has expired');
+            }
+        });
     }
 
     public ngAfterViewInit() {
@@ -198,7 +218,7 @@ export class AppComponent implements AfterViewInit, OnDestroy, OnInit {
         this.sidenav.opened = !this.sidenav.opened;
     }
 
-    public logout(message?: string) {
+    public logout(message?: string, redirectInfo: boolean = true) {
         if (message)
             this.snackBar.open(message, 'OK', {
                 duration: 2000
@@ -207,12 +227,19 @@ export class AppComponent implements AfterViewInit, OnDestroy, OnInit {
         // Log the user out
         this.auth.logout();
 
+        const data = this.auth.lastValidAuthData;
+
         // We don't know if the next user will have access to the selected
         // schema
         this.schemaControl.reset();
 
         // Automatically redirect to the login page
-        return this.router.navigate(['/login']);
+        const query = redirectInfo && data !== null ? LoginComponent.createRedirectQuery({
+            username: data.username,
+            host: data.host,
+            path: this.router.url
+        }) : {};
+        return this.router.navigate(['/login'], { queryParams: query });
     }
 
     private adjustSidenav(newWidth: number) {

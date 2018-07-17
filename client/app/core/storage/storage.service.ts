@@ -16,6 +16,14 @@ export class StorageService {
         return this.get(key) !== null;
     }
 
+    /** Returns true if all the keys exist */
+    public hasAll(...keys: string[]): boolean {
+        for (const key of keys)
+            if (!this.has(key))
+                return false;
+        return true;
+    }
+
     /** Sets key-value pair in the storage */
     public set(key: string, value: string) {
         localStorage.setItem(key, value);

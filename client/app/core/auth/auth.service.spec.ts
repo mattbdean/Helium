@@ -154,6 +154,12 @@ export class MockStorageService {
 
     public get(key: string) { return this.data[key]; }
     public has(key: string) { return this.data[key] !== undefined; }
+    public hasAll(...keys: string[]) {
+        for (const key of keys)
+            if (!this.has(key))
+                return false;
+        return true;
+     }
     public set(key: string, value: string) { this.data[key] = value; }
     public clear() { this.data = {}; }
     public delete(key: string) { delete this.data[key]; }

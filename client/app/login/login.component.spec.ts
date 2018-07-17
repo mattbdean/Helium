@@ -150,4 +150,18 @@ describe('LoginComponent', () => {
             expect(LoginComponent.validateHost('foo:bar:baz')).to.not.be.null;
         });
     });
+
+    describe('#createRedirectQuery', () => {
+        it('should return a Params object', () => {
+            expect(LoginComponent.createRedirectQuery({
+                username: 'luser',
+                host: 'example.com',
+                path: '/foo/bar?baz=qux'
+            })).to.deep.equal({
+                from_user: 'luser',
+                from_host: 'example.com',
+                from_path: '/foo/bar?baz=qux'
+            });
+        });
+    });
 });
