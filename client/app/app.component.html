@@ -57,7 +57,7 @@
             Helium
         </span>
 
-        <button *ngIf="auth.loggedIn" class="logout-button" mat-button (click)="logout()">Logout</button>
+        <button *ngIf="auth.loggedIn" class="logout-button" mat-button (click)="logout(undefined, false)">Logout</button>
     </mat-toolbar>
 
     <div class="router-content">
