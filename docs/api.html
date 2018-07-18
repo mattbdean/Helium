@@ -285,6 +285,19 @@
                 
                 <p>See <span data-gh-link="server/src/db/schema-input.validator.ts">SchemaInputValidator</span> for a
                     detailed overview of how data passed to this endpoint is validated.
+
+                <h2>GET /api/v1/ping</h2>
+                <span class="chip chip-accepts">Accepts: <span class="monospace">application/json</span></span>
+
+                <p>Tests the validity of the API key specified by the X-API-Key header.</p>
+                
+                <p>Model documentation: <span data-api-model>SessionPing</span>
+
+                <pre><code class="json">{
+    "validApiKey": true,
+    "expiresAt": 1531543523338
+}
+                </code></pre>
             </div>
 
             <div class="toc sticky"></div>

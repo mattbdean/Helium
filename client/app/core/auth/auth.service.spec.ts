@@ -33,7 +33,9 @@ describe('AuthService', () => {
     
     const fakeAuthData: AuthData = {
         apiKey: 'foo',
-        expiration: new Date(Date.now() + 10000)
+        expiration: new Date(Date.now() + 10000),
+        username: 'luser',
+        host: 'localhost'
     };
 
     const updateAuthData = (data: AuthData | null) => {
@@ -44,6 +46,8 @@ describe('AuthService', () => {
     describe('(constructor)', () => {
         it('should load previously stored data when not expired', () => {
             storage.set(AuthService.KEY_API_KEY, 'foo');
+            storage.set(AuthService.KEY_USERNAME, 'luser');
+            storage.set(AuthService.KEY_HOST, 'localhost');
             // Expiration 
             const expiration = Date.now() + 1000;
             storage.set(AuthService.KEY_EXPIRATION, String(expiration));
@@ -51,7 +55,12 @@ describe('AuthService', () => {
             // Reuse the previously created services to manually create this
             // service to test the constructor
             const s = new AuthService(http as any, storage);
-            expect(s.current).to.deep.equal({ apiKey: 'foo', expiration: new Date(expiration) });
+            expect(s.current).to.deep.equal({
+                apiKey: 'foo',
+                expiration: new Date(expiration),
+                username: 'luser',
+                host: 'localhost'
+            });
         });
 
         it('should remove expired stored data', () => {
@@ -78,7 +87,7 @@ describe('AuthService', () => {
 
     describe('login', () => {
         it('should send the login request and update the stored data and observable', () => {
-            const reqBody = { username: 'username', password: 'password', host: 'host' };
+            const reqBody = { username: 'luser', password: 'password', host: 'localhost' };
 
             service.login(reqBody)
                 .subscribe((result: AuthData) => {
@@ -99,16 +108,18 @@ describe('AuthService', () => {
         });
         
         it('should separate the port from the host if one is provided', () => {
-            const reqBody = { username: 'foo', password: 'bar', host: 'baz:qux' };
+            const reqBody = { username: 'luser', password: 'password', host: 'localhost:port' };
 
             service.login(reqBody)
                 .subscribe((result: AuthData) => {
-                    expect(result).to.deep.equal(fakeAuthData);
+                    const expected = cloneDeep(fakeAuthData);
+                    expected.host = reqBody.host;
+                    expect(result).to.deep.equal(expected);
                 });
             
             const expectedReqBody = cloneDeep(reqBody) as any;
-            expectedReqBody.host = 'baz';
-            expectedReqBody.port = 'qux';
+            expectedReqBody.host = 'localhost';
+            expectedReqBody.port = 'port';
             
             const res = http.expectOne((req: HttpRequest<any>): boolean => {
                 return req.method === 'POST' &&
@@ -143,6 +154,12 @@ export class MockStorageService {
 
     public get(key: string) { return this.data[key]; }
     public has(key: string) { return this.data[key] !== undefined; }
+    public hasAll(...keys: string[]) {
+        for (const key of keys)
+            if (!this.has(key))
+                return false;
+        return true;
+     }
     public set(key: string, value: string) { this.data[key] = value; }
     public clear() { this.data = {}; }
     public delete(key: string) { delete this.data[key]; }

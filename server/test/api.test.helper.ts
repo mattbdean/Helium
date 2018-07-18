@@ -37,7 +37,7 @@ export class RequestContext {
             // Add a query string if applicable
             .query(conf.query)
             // Let the server know we want JSON
-            .set('Accept', /application\/json/)
+            .set('Accept', 'application/json')
             // Send our API key for every request
             .set('X-API-Key', this.apiKey)
             // Send our data, if applicable

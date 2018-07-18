@@ -8,7 +8,7 @@
 
         <div>
             <mat-form-field>
-                <input type="password" placeholder="Password" matInput formControlName="password" required>
+                <input #password type="password" placeholder="Password" matInput formControlName="password" required>
             </mat-form-field>
         </div>
 
@@ -26,3 +26,4 @@
 </mat-card>
 
 <p class="preview-mode-msg" *ngIf="previewMode">Hint: Any username, password, and host works in preview mode</p>
+<p class="preview-mode-msg" *ngIf="redirect">Your session has expired. Please login to continue.</p>

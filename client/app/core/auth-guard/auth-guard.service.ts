@@ -6,6 +6,8 @@ import {
     RouterStateSnapshot
 } from '@angular/router';
 import { Observable } from 'rxjs';
+import { LoginComponent } from '../../login/login.component';
+import { AuthData } from '../auth-data/auth-data.interface';
 import { AuthService } from '../auth/auth.service';
 
 /**
@@ -18,24 +20,26 @@ export class AuthGuard implements CanActivate {
 
     public canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot):
         boolean | Observable<boolean> | Promise<boolean> {
-            
-        // If we were never logged in we know we can return false immediately
-        if (!this.auth.loggedIn)
-            return this.reroute();
         
         // Check to make sure the data we have isn't expired
         if (this.auth.expiration === null || this.auth.expiration.getTime() < Date.now()) {
             // If it is expired, remove the existing data and return false
             this.auth.update(null);
-            return this.reroute();
+            return this.reroute(this.auth.lastValidAuthData, state.url);
         }
 
         // We have non-expired data
         return true;
     }
 
-    private reroute(): false {
-        this.router.navigate(['/login']);
+    private reroute(lastValidAuthData: AuthData | null, url: string): false {
+        this.router.navigate(['/login'], {
+            queryParams: lastValidAuthData === null ? {} : LoginComponent.createRedirectQuery({
+                username:  lastValidAuthData.username,
+                host: lastValidAuthData.host,
+                path: url
+            })
+        });
         return false;
     }
 }

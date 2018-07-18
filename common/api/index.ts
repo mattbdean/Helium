@@ -11,6 +11,7 @@ export * from './filter';
 export * from './master-table-name';
 export * from './raw-constraint';
 export * from './paginated-response';
+export * from './session-ping';
 export * from './special-default-value';
 export * from './sql-row';
 export * from './table-data-type';
