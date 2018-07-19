@@ -129,13 +129,21 @@ $ yarn e2e:prepped
 $ docker kill helium
 ```
 
-5. Push the new tag and Docker image
+5. Push the new commit, tag, and Docker image
 
 ```
-$ git push --tags
+$ git push && git push --tags
 $ docker push mattbdean/helium:<new version>
 ```
 
+6. Deploy the preview build to GitHub Pages
+
+```
+$ yarn deploy:preview
+$ git add docs/preview
+$ git commit
+$ git push
+```
 
 ### Preview mode
 
