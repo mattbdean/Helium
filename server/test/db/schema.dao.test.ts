@@ -88,7 +88,7 @@ describe('SchemaDao', () => {
         const rowContents = joi.object().length(numColumns);
 
         it('should bring back 25 records by default', async () => {
-            const data = await dao.content(db, table);
+            const data = await dao.content({ schema: db, table });
             const schema = joi.array().items(rowContents).length(25);
             joi.assert(data.rows, schema);
         });
@@ -97,7 +97,7 @@ describe('SchemaDao', () => {
             // Request that we sort some row (defined above) in a particular
             // direction
             const sort: Sort = { by: 'pk', direction: 'asc'};
-            const data = (await dao.content('helium_sample', 'big_table', { sort })).rows;
+            const data = (await dao.content({ schema: 'helium_sample', table: 'big_table', sort })).rows;
 
             // Make sure we're still returning 25 elements by default
             joi.assert(data, joi.array().length(25));
@@ -111,21 +111,21 @@ describe('SchemaDao', () => {
         it('should request different data when passed a different page', async () => {
             // Request the first 2 pages
             const [page1, page2] = await Promise.all(
-                [1, 2].map((page) => dao.content(db, table, { page }))
+                [1, 2].map((page) => dao.content({ schema: db, table, page }))
             );
             expect(page1).to.not.deep.equal(page2);
         });
 
         it('should throw an error given an invalid page', async () => {
             for (const pageNum of [-1, 0, 10000]) {
-                await expect(dao.content(db, table, { page: pageNum })).to.eventually
+                await expect(dao.content({ schema: db, table, page: pageNum })).to.eventually
                     .be.rejectedWith(Error);
             }
         });
 
         it('should only allow limits >= 1', async () => {
             for (const limit of [-1, 0]) {
-                await expect(dao.content(db, table, { limit })).to.eventually
+                await expect(dao.content({ schema: db, table, limit })).to.eventually
                     .be.rejectedWith(Error);
             }
 
@@ -133,12 +133,12 @@ describe('SchemaDao', () => {
             // records in the chosen table
             for (const limit of [1, 10, 100]) {
                 const schema = joi.array().items(rowContents).length(limit);
-                joi.assert((await dao.content(db, table, { limit })).rows, schema);
+                joi.assert((await dao.content({ schema: db, table, limit })).rows, schema);
             }
         });
 
         it('should format dates and datetimes', async () => {
-            const data = await dao.content('helium_sample', 'datatypeshowcase');
+            const data = await dao.content({ schema: 'helium_sample', table: 'datatypeshowcase' });
 
             for (const row of data.rows) {
                 if (row.date !== null)
@@ -150,7 +150,7 @@ describe('SchemaDao', () => {
         });
 
         it('should format blobs', async () => {
-            const data = await dao.content('helium_sample', 'datatypeshowcase');
+            const data = await dao.content({ schema: 'helium_sample', table: 'datatypeshowcase' });
 
             for (const row of data.rows) {
                 if (row.blob !== null) {
@@ -161,7 +161,7 @@ describe('SchemaDao', () => {
 
         describe('filters', () => {
             const fetch = (tableName: string, filters: Filter[]) =>
-                dao.content('helium_sample', tableName, {}, filters);
+                dao.content({ schema: 'helium_sample', table: tableName, filters });
 
             it('should return the number of rows that apply to the given filters', async () => {
                 const data = await fetch('big_table', [{ param: 'pk', op: 'lt', value: '101' }]);
@@ -342,7 +342,6 @@ describe('SchemaDao', () => {
                 await expect(fetch('product', [filter])).to.be.rejectedWith(Error);
             });
         });
-
     });
 
     describe('meta', () => {
@@ -381,6 +380,37 @@ describe('SchemaDao', () => {
 
         it('should throw an Error when the table doesn\'t exist', async () => {
             await expect(dao.meta('helium_sample', 'unknown_table')).to.eventually.be.rejected;
+        });
+    });
+
+    describe('defaults', () => {
+        it('should return only the requested table when it has no part tables', async () => {
+            const defaults = await dao.defaults('helium_sample', 'defaults_test');
+
+            // The `pk` field is auto_increment, try to detect what the next
+            // value is
+            const pkSearchResults = await dao.content({
+                schema: 'helium_sample',
+                table: 'defaults_test',
+                limit: 1,
+                sort: { by: 'pk', direction: 'desc' }
+            });
+
+            const pkValue = 1 + (pkSearchResults.count > 0 ? pkSearchResults.rows[0].pk : 0);
+
+            expect(defaults).to.deep.equal({
+                pk: pkValue,
+                int: 5,
+                float: 10.0,
+                date: '2017-01-01',
+                datetime: '2017-01-01 12:00:00',
+                // The default is CURRENT_TIMESTAMP, but this should be
+                // resolved to a datetime string.
+                datetime_now: moment().format('YYYY-MM-DD HH:mm:ss'),
+                boolean: true,
+                enum: 'a',
+                no_default: null
+            });
         });
     });
 
@@ -713,7 +743,7 @@ describe('SchemaDao', () => {
         });
 
         it('should format blobs', async () => {
-            const data = await dao.content('helium_sample', 'datatypeshowcase');
+            const data = await dao.content({ schema: 'helium_sample', table: 'datatypeshowcase' });
 
             for (const row of data.rows) {
                 if (row.blob !== null) {

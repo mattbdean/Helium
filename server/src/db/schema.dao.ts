@@ -1,4 +1,5 @@
 import * as joi from 'joi';
+import { zipObject } from 'lodash';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 import { Select } from 'squel';
@@ -93,10 +94,16 @@ export class SchemaDao {
      * @returns {Promise<SqlRow[]>} A promise that resolves to the requested
      * data
      */
-    public async content(schema: string,
-                         table: string,
-                         opts: { page?: number, limit?: number, sort?: Sort} = {},
-                         filters: Filter[] = []): Promise<{ rows: SqlRow[], count: number }> {
+    public async content(opts: {
+        schema: string,
+        table: string,
+        page?: number,
+        limit?: number,
+        sort?: Sort,
+        filters?: Filter[]
+    }): Promise<{ rows: SqlRow[], count: number }> {
+        const { schema, table } = opts;
+        const filters = opts.filters === undefined ? [] : opts.filters;
 
         // Resolve each option to a non-undefined value
         const page: number = opts.page !== undefined ? opts.page : 1;
@@ -172,6 +179,25 @@ export class SchemaDao {
             comment,
             parts
         };
+    }
+
+    /**
+     * Returns the default values for a table at the time of this call. Auto
+     * increment and CURRENT_TIMESTAMP fields will have their proper values.
+     */
+    public async defaults(schema: string, table: string): Promise<SqlRow> {
+        const headers = await this.headers(schema, table);
+
+        return zipObject(
+            headers.map((h) => h.name),
+            headers.map((h) => {
+                if ((h.defaultValue || {} as any).constantName === CURRENT_TIMESTAMP) {
+                    return moment().format(DATETIME_FORMAT);
+                } else {
+                    return h.defaultValue;
+                }
+            })
+        );
     }
 
     /**
@@ -663,6 +689,8 @@ export class SchemaDao {
     ): DefaultValue {
         if (autoIncValue !== null)
             return autoIncValue;
+        if (rawDefault === null)
+            return null;
         if (rawDefault === CURRENT_TIMESTAMP && (rawType === 'datetime' || rawType === 'timestamp'))
             return { constantName: CURRENT_TIMESTAMP };
 

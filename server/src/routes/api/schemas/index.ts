@@ -4,8 +4,7 @@ import {
 import * as paginate from 'express-paginate';
 import * as joi from 'joi';
 import { ValidationError as JoiValidationError } from 'joi';
-import { SqlRow } from '../../../../../client/app/common/api';
-import { ErrorResponse, Filter, PaginatedResponse } from '../../../common/api';
+import { ErrorResponse, Filter, PaginatedResponse, SqlRow } from '../../../common/api';
 import { DaoFactory } from '../../../db/dao.factory';
 import { DatabaseHelper } from '../../../db/database.helper';
 import { SchemaDao, Sort } from '../../../db/schema.dao';
@@ -137,15 +136,22 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
         const filters: Filter[] = result.value;
 
         // We have everything we need, request the data
-        return daoFor(req).content(req.params.schema, req.params.table, {
+        return daoFor(req).content({
+            schema: req.params.schema,
+            table: req.params.table,
             page: req.query.page,
             limit: req.query.limit,
-            sort
-        }, filters)
+            sort,
+            filters
+        })
         // Once we have the data, wrap it in a PaginatedResponse
             .then((data: { rows: SqlRow[], count: number }): PaginatedResponse<any> =>
                 ({ size: data.rows.length, data: data.rows, totalRows: data.count }));
     }));
+
+    r.get('/:schema/:table/defaults', wrap(async (req: Request): Promise<SqlRow> =>
+        daoFor(req).defaults(req.params.schema, req.params.table)
+    ));
 
     // This is where all error handling for the router happens
     r.use((err, req, res, next) => {

@@ -298,6 +298,25 @@
     "expiresAt": 1531543523338
 }
                 </code></pre>
+
+                <h2>GET /api/v1/schemas/:schema/:table/defaults</h2>
+                <span class="chip chip-returns">Returns: <span class="monospace">application/json</span></span>
+
+                <p>Fetches the default values for the given table at the time of the call. Every field will be resolved
+                    to a string, number, or <code>null</code>. Any auto_increment fields will be resolved to their next
+                    value and any <code>CURRENT_TIMESTAMP</code> will be resolved to a datetime string.
+                
+                <pre><code class="json">{
+    "pk": 9,
+    "int": 5,
+    "float": 10,
+    "date": "2017-01-01",
+    "datetime": "2017-01-01 12:00:00",
+    "datetime_now": "2018-07-19 09:37:00",
+    "boolean": true,
+    "enum": "a",
+    "no_default": null
+}</code></pre>
             </div>
 
             <div class="toc sticky"></div>

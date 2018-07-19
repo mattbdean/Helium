@@ -305,8 +305,14 @@ describe('API v1', () => {
 
                 await request.get('/schemas/foo/bar/data', 200);
 
-                expect(stub).calledWithExactly('foo', 'bar',
-                    { limit: 25, page: 1, sort: undefined }, []);
+                expect(stub).calledWithExactly({
+                    schema: 'foo',
+                    table: 'bar',
+                    limit: 25,
+                    page: 1,
+                    sort: undefined,
+                    filters: []
+                });
             });
 
             it('should 404 when either the schema or table don\'t exist', async () => {
@@ -333,8 +339,14 @@ describe('API v1', () => {
                     }
                 });
 
-                expect(stub).calledWithExactly('foo', 'bar',
-                    { limit: 10, page: 2, sort: { by: 'baz', direction: 'desc' }}, []);
+                expect(stub).calledWithExactly({
+                    schema: 'foo',
+                    table: 'bar',
+                    limit: 10,
+                    page: 2,
+                    sort: { by: 'baz', direction: 'desc' },
+                    filters: []
+                });
             });
 
             it('should 400 when the sorting column doesn\'t exist', async () => {
@@ -361,12 +373,14 @@ describe('API v1', () => {
                     }
                 });
 
-                expect(stub).to.have.been.calledWithExactly(
-                    'schema',
-                    'table',
-                    { limit: 25, page: 1, sort: undefined },
+                expect(stub).to.have.been.calledWithExactly({
+                    schema: 'schema',
+                    table: 'table',
+                    limit: 25,
+                    page: 1,
+                    sort: undefined,
                     filters
-                );
+                });
             });
 
             it('should 400 when given malformed filters', async () => {
@@ -404,9 +418,14 @@ describe('API v1', () => {
                     }
                 });
 
-                expect(stub).to.have.been.calledWithExactly('schema', 'table', {
-                    page: 1, limit: 25, sort: undefined
-                }, []);
+                expect(stub).to.have.been.calledWithExactly({
+                    schema: 'schema',
+                    table: 'table',
+                    page: 1,
+                    limit: 25,
+                    sort: undefined,
+                    filters: []
+                });
             });
         });
 

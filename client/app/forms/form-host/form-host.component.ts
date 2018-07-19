@@ -3,15 +3,16 @@ import {
     Component, OnDestroy, OnInit, QueryList,
     ViewChildren
 } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { mapValues } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, combineLatest, from, NEVER, Observable, of, Subscription, zip } from 'rxjs';
 import { catchError, filter, flatMap, mapTo, switchMap, switchMapTo } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 import {
-    MasterTableName, TableHeader, TableMeta
+    MasterTableName, SqlRow, TableHeader, TableMeta
 } from '../../common/api';
 import { TableInsert } from '../../common/api/table-insert';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
@@ -19,7 +20,6 @@ import { TableName } from '../../common/table-name';
 import { unflattenTableNames } from '../../common/util';
 import { ApiService } from '../../core/api/api.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
-import { environment } from '../../../environments/environment';
 
 /**
  * This component creates a dynamically generated form based on the 'name'
@@ -159,6 +159,16 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 );
             }),
             flatMap((err: any | null) => {
+                // No reason to fetch the defaults if the form couldn't be
+                // submitted
+                const defaults$: Observable<SqlRow | null> = err === null ?
+                    this.backend.defaults(this.mainName.schema, this.mainName.name.raw) : of(null);
+
+                const err$ = of(err);
+
+                return zip(defaults$, err$);
+            }),
+            flatMap(([defaults, err]: [SqlRow | null, any | null]) => {
                 let snackbarRef: MatSnackBarRef<any>;
 
                 if (err) {
@@ -177,6 +187,12 @@ export class FormHostComponent implements OnDestroy, OnInit {
                         partial.reset();
                     }
                     this.formGroup.reset();
+
+                    const mainFormArray = this.formGroup.get(this.mainName.name.raw) as FormArray;
+                    const mainGroup = mainFormArray.at(0);
+
+                    mainGroup.setValue(defaults);
+
                     snackbarRef = this.snackBar.open('Created new row', 'VIEW', { duration: 3000 });
                     return snackbarRef.onAction().pipe(
                         // Navigate to /tables/:name when 'VIEW' is clicked

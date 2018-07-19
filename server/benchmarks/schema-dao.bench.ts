@@ -10,20 +10,18 @@ function createBenchmarks(dao: SchemaDao): AsyncBenchmarkSuite {
         benchmarks: {
             'schemas': () => dao.schemas(),
             'tables': () => dao.tables('helium_sample'),
-            'content': () => dao.content('helium_sample', 'order'),
-            'content (all options)': () => dao.content(
-                'helium_sample',
-                'big_table',
-                {
-                    page: 3,
-                    limit: 25,
-                    sort: { direction: 'asc', by: 'pk' },
-                },
-                [
+            'content': () => dao.content({ schema: 'helium_sample', table: 'order' }),
+            'content (all options)': () => dao.content({
+                schema: 'helium_sample',
+                table: 'big_table',
+                page: 3,
+                limit: 25,
+                sort: { direction: 'asc', by: 'pk' },
+                filters: [
                     { op: 'lt', value: '200', param: 'pk' },
                     { op: 'gt', value: '50', param: 'pk' }
                 ]
-            ),
+            }),
             'meta': () => dao.meta('helium_sample', 'datatypeshowcase'),
             'columnContent': () => dao.columnContent('helium_sample', 'big_table', 'pk'),
             'insertRow': () => dao.insertRow('helium_sample', {

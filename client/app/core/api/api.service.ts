@@ -7,8 +7,8 @@ import { PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/
 import { TableName } from '../../common/table-name';
 import { TableNameParams } from '../../common/table-name-params';
 import { AuthService } from '../auth/auth.service';
-import { ContentRequest } from './content-request';
 import { BaseApiService } from './base-api-service';
+import { ContentRequest } from './content-request';
 
 const encode = encodeURIComponent;
 
@@ -98,6 +98,10 @@ export class ApiService implements BaseApiService {
             tap((res) => this.updateSession(res)),
             mapTo(null)
         );
+    }
+
+    public defaults(schema: string, table: string): Observable<SqlRow> {
+        return this.get(`/schemas/${encode(schema)}/${encode(table)}/defaults`);
     }
 
     /**
