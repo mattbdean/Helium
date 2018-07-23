@@ -48,7 +48,9 @@ footer {
 }
 
 mat-dialog-container {
-  max-height: 100vh;
+  // Has to be !important otherwise it would be overridden by Angular Material
+  // styles
+  max-height: 100vh !important;
 }
 
 .preview-mode-msg {
