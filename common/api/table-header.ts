@@ -9,10 +9,13 @@ export interface TableHeader {
     /** The exact type the column was created with (varchar(16), int(11), etc.) */
     rawType: string;
 
-    /** True when the type is numeric (int, decimal, double, etc.) */
+    /** True when the type is displayed with numbers (int, decimal, double, etc.) */
     isNumerical: boolean;
 
-    /** True when the type is textual (text, tinytext, varchar, date, etc.) */
+    /**
+     * True when the type can be contain or be displayed with with non-numbers
+     * (text, tinytext, varchar, date, etc.)
+     */
     isTextual: boolean;
 
     /** The position at which this column was defined (1 = first col, 2 = second, etc.) */

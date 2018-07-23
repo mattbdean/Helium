@@ -17,6 +17,7 @@ import { unflattenTableNames } from '../common/util';
 import { ValidationError } from '../routes/api/validation-error';
 import { QueryHelper } from './query-helper';
 import { TableInputValidator } from './schema-input.validator';
+import { SqlType } from './sql-type';
 
 /**
  * Simple interface for describing the way some data is to be organized.
@@ -292,23 +293,28 @@ export class SchemaDao {
 
         // Map each BinaryRow into a TableHeader, removing any additional rows
         // that share the same name
-        return _.map(result, (row: any): TableHeader => {
+        return result.map((row: any): TableHeader => {
             const rawType = row.COLUMN_TYPE as string;
-            const type = SchemaDao.parseType(rawType);
-            const isNumerical = type === 'integer' || type === 'float';
+            const type = new SqlType(rawType);
 
             // A column is AUTO_INCREMENT'd if the 'EXTRA' column includes the
             // string "auto_increment." Otherwise that value isn't applicable.
             const actualAutoInc = row.EXTRA.indexOf('auto_increment') >= 0 ?
                 autoIncValue : null;
-            const defaultValue = SchemaDao.identifyDefaultValue(rawType, type, row.COLUMN_DEFAULT, actualAutoInc);
+
+            const defaultValue = SchemaDao.identifyDefaultValue(rawType, type.tableDataType,
+                row.COLUMN_DEFAULT, actualAutoInc);
+
+            const enumValues = type.tableDataType !== 'enum' ? null : type.params
+                // Remove quotation marks
+                .map((p) => p.slice(1, p.length - 1));
 
             return {
                 name: row.COLUMN_NAME as string,
-                type,
-                isNumerical,
-                isTextual: !isNumerical,
-                signed: isNumerical && !rawType.includes('unsigned'),
+                type: type.tableDataType,
+                isNumerical: type.numeric,
+                isTextual: type.textual,
+                signed: type.numeric && !rawType.includes('unsigned'),
                 ordinalPosition: row.ORDINAL_POSITION as number,
                 rawType,
                 defaultValue,
@@ -317,7 +323,7 @@ export class SchemaDao {
                 charset: row.CHARACTER_SET_NAME as string,
                 numericPrecision: row.NUMERIC_PRECISION as number,
                 numericScale: row.NUMERIC_SCALE as number,
-                enumValues: SchemaDao.findEnumValues(row.COLUMN_TYPE as string),
+                enumValues,
                 comment: row.COLUMN_COMMENT as string,
                 tableName: row.TABLE_NAME as string
             };
@@ -713,26 +719,5 @@ export class SchemaDao {
         }
 
         throw new Error(`Could not determine default header for type=${type}`);
-    }
-
-    private static parseType(rawType: string): TableDataType {
-        if (rawType.includes('tinyint(1)')) return 'boolean';
-        if (rawType.includes('int')) return 'integer';
-        if (rawType.includes('double') || rawType.includes('float') || rawType.includes('decimal')) return 'float';
-        if (rawType === 'date') return 'date';
-        if (rawType === 'datetime' || rawType === 'timestamp') return 'datetime';
-        if (rawType.startsWith('enum')) return 'enum';
-        if (rawType.includes('char') || rawType.includes('text')) return 'string';
-        if (rawType.includes('blob')) return 'blob';
-
-        throw Error(`Could not determine TableDataType for raw type '${rawType}'`);
-    }
-
-    private static findEnumValues(raw: string): string[] | null {
-        if (!/^enum\(/.test(raw)) return null;
-        const matches = raw.match(/^enum\('(.*)'\)$/);
-        if (matches === null || matches.length !== 2)
-            throw new Error(`Expecting a match from input string ${raw}`);
-        return matches[1].split('\',\'');
     }
 }

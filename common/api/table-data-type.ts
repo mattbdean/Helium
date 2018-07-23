@@ -1,2 +1,2 @@
 
-export type TableDataType = 'string' | 'integer' | 'float' | 'date' | 'datetime' | 'boolean' | 'enum' | 'blob';
+export type TableDataType = 'string' | 'integer' | 'float' | 'date' | 'datetime' | 'boolean' | 'enum' | 'blob' | 'time';
