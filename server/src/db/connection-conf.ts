@@ -1,5 +1,5 @@
 /**
- * A small subset of relevant connection options supported by mysqljs. See
+ * A small subset of relevant connection options supported by promise-mysql. See
  * https://github.com/mysqljs/mysql#connection-options for the full list.
  */
 export interface ConnectionConf {

@@ -91,7 +91,6 @@
     "codecov": "^3.0.0",
     "concurrently": "^3.4.0",
     "del": "^3.0.0",
-    "env-test": "^1.0.0",
     "gulp": "^3.9.1",
     "gulp-about": "^1.1.0",
     "gulp-typescript": "^3.2.1",

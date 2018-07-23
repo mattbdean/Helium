@@ -8,7 +8,7 @@ import * as path from 'path';
 import { DaoFactory } from './db/dao.factory';
 import { DatabaseHelper } from './db/database.helper';
 import { SchemaDao } from './db/schema.dao';
-import { NODE_ENV, NodeEnv } from './env';
+import { NodeEnv } from './env';
 import { api } from './routes/api';
 import { front } from './routes/front';
 
@@ -32,13 +32,20 @@ export class Helium {
         return this.db;
     }
 
-    public async start(
+    public async start(conf?: {
         // The poor man's dependency injection. Mainly for testing.
-        daoFactory: DaoFactory = (dbHelper: DatabaseHelper, apiKey: string) =>
-            new SchemaDao(dbHelper.queryHelper(apiKey))
-    ) {
+        daoFactory?: DaoFactory,
+        env?: NodeEnv
+    }) {
+        // Default DaoFactory
+        const daoFactory = conf && conf.daoFactory ? conf.daoFactory :
+            (dbHelper, apiKey) => new SchemaDao(dbHelper.queryHelper(apiKey));
+        
+        // Default NodeEnv
+        const env = conf && conf.env ? conf.env : NodeEnv.getDefault();
+
         const app = express();
-        if (NODE_ENV === NodeEnv.PROD) {
+        if (env.state === 'prod') {
             // Standard Apache log format, only care about failing status codes
             app.use(logger('common', {
                 skip: (req, res) => res.statusCode < 400
@@ -56,7 +63,7 @@ export class Helium {
         app.use(helmet());
 
         const db = new DatabaseHelper(Helium.SESSION_LENGTH);
-        app.use('/api/v1', api(db, daoFactory));
+        app.use('/api/v1', api(env, db, daoFactory));
         this.db = db;
 
         // Clear out the unused sessions every once and a while. SESSION_LENGTH

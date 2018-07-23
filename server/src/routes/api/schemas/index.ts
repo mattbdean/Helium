@@ -8,10 +8,10 @@ import { ErrorResponse, Filter, PaginatedResponse, SqlRow } from '../../../commo
 import { DaoFactory } from '../../../db/dao.factory';
 import { DatabaseHelper } from '../../../db/database.helper';
 import { SchemaDao, Sort } from '../../../db/schema.dao';
-import { debug, NODE_ENV, NodeEnv } from '../../../env';
+import { NodeEnv } from '../../../env';
 import { ValidationError } from '../validation-error';
 
-export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Router {
+export function schemasRouter(env: NodeEnv, db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();
 
     /**
@@ -182,7 +182,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
     const handleDatabaseError = (req: Request, res: Response, err: any) => {
         // Create a generic message
         let message = 'Unknown issue accessing the database' +
-            (NODE_ENV !== NodeEnv.PROD ? ` (${err.code}: ${err.message})` : '');
+            (env.state !== 'prod' ? ` (${err.code}: ${err.message})` : '');
 
         // 400 Bad Request will be used if this remains null
         let code: number | null = null;
@@ -210,7 +210,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
             case 'ER_PARSE_ERROR':
                 // We should never see this unless we've seriously messed up on
                 // our side. This should be treated as an internal server error.
-                debug({
+                env.debug({
                     message: 'generated invalid SQL',
                     data: req.body
                 });
@@ -244,7 +244,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
     /** Handles unexpected internal errors */
     const handleInternalError = (res: Response, err: any) => {
         // Print to console when not in production
-        debug(err);
+        env.debug(err);
 
         // Send 500 Internal Server Error
         res.status(500).json(createErrorResponse('Unable to execute request', err));
@@ -259,7 +259,7 @@ export function schemasRouter(db: DatabaseHelper, daoFactory: DaoFactory): Route
         const data: ErrorResponse = { message: 'Unable to execute request' };
 
         // Show error information when not in production
-        if (NODE_ENV !== NodeEnv.PROD) {
+        if (env.state !== 'prod') {
             data.error = {
                 name: err.name,
                 message: err.message,

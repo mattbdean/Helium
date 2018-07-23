@@ -2,13 +2,14 @@ import { Request, Response, Router } from 'express';
 import { ErrorResponse } from '../../common/api';
 import { DaoFactory } from '../../db/dao.factory';
 import { DatabaseHelper } from '../../db/database.helper';
+import { NodeEnv } from '../../env';
 import { loginRouter } from './login';
 import { pingRouter } from './ping';
 import { schemasRouter } from './schemas';
 
-export function api(db: DatabaseHelper, daoFactory: DaoFactory): Router {
+export function api(env: NodeEnv, db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const router = Router();
-    router.use('/schemas', schemasRouter(db, daoFactory));
+    router.use('/schemas', schemasRouter(env, db, daoFactory));
     router.use('/login', loginRouter(db));
     router.use('/ping', pingRouter(db));
 

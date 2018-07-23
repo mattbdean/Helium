@@ -10,6 +10,7 @@ import { SessionPing } from '../src/common/api';
 import { ConnectionConf } from '../src/db/connection-conf';
 import { QueryHelper } from '../src/db/query-helper';
 import { SchemaDao } from '../src/db/schema.dao';
+import { NodeEnv } from '../src/env';
 import { Helium } from '../src/helium';
 import { RequestContext } from './api.test.helper';
 
@@ -43,7 +44,10 @@ describe('API v1', () => {
         schemaDao = new SchemaDao({} as any as QueryHelper);
 
         // Always return the testing SchemaDao when trying to access the DB
-        await app.start(() => schemaDao);
+        await app.start({
+            daoFactory: () => schemaDao,
+            env: new NodeEnv('test')
+        });
 
         request = new RequestContext(app, MOCK_API_KEY);
     });
