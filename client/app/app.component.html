@@ -2,7 +2,7 @@
     <!-- Everything inside here will be placed in the sidenav content -->
     <mat-toolbar color="primary">
         <span>
-            <button [hidden]="(toggleMode$ | async) !== 'toggleRequired'" mat-button class="sidenav-toggle" (click)="sidenav.toggle()">
+            <button [hidden]="!auth.loggedIn || (toggleMode$ | async) === 'alwaysDisplayed'" mat-button class="sidenav-toggle" (click)="sidenav.toggle()">
                 <i class="material-icons mat-light">menu</i>
             </button>
             Helium

@@ -102,7 +102,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
     ) {}
 
     public ngOnInit() {
-        this.auth.watchAuthState().subscribe(console.log);
         this.schemas$ = this.auth.watchAuthState().pipe(
             switchMap((isLoggedIn) => {
                 return isLoggedIn ? this.api.schemas() : of([]);
