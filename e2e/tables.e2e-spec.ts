@@ -17,6 +17,7 @@ describe('Tables', () => {
     });
 
     it('should be accessible from the sidenav', async () => {
+        await browser.wait(() => sidenav.isVisible());
         await sidenav.browseData('TableA');
         await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables\/helium_compound_fk_test\/table_a$/);
     });

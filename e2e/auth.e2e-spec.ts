@@ -1,4 +1,4 @@
-import { browser } from 'protractor';
+import { browser, ExpectedConditions } from 'protractor';
 import { ISize } from 'selenium-webdriver';
 import { AuthHelper } from './helpers/auth-helper';
 import { FormHelper } from './helpers/form-helper';
@@ -50,13 +50,13 @@ describe('Authentication', () => {
             await page.fillForm(AuthHelper.USERNAME, AuthHelper.PASSWORD);
 
             // Now that the form is valid, the submit button should be enabled
-            expect(submitButton.isEnabled()).to.eventually.be.true;
+            await expect(submitButton.isEnabled()).to.eventually.be.true;
 
             // Login
             await form.submit();
 
             // We should be redirected to /tables
-            await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables$/);
+            await browser.wait(async () => /\/tables$/.test(await browser.getCurrentUrl()));
 
             // We should be able to see the sidenav now
             await expect(sidenav.isVisible()).to.eventually.be.true;
@@ -89,9 +89,7 @@ describe('Authentication', () => {
             await browser.get('/');
             // Use this to preserve the original window size
             prevSize = await browser.driver.manage().window().getSize();
-        });
 
-        beforeEach(async () => {
             // Use authHelper so we don't have to mess with the DOM again
             await authHelper.login({ refreshAfter: true });
         });
@@ -126,7 +124,7 @@ describe('Authentication', () => {
             await expect(sidenav.isToggleable()).to.eventually.be.true;
         });
 
-        it('should select the schema of the table being viewed, if there is one', async () => {
+        it('should select the schema of the table being viewed if there is one', async () => {
             const defaultSchema = 'helium_compound_fk_test';
             const expectations: Array<[string, string]> = [
                 [ '/', defaultSchema ], // Default schema is chosen alphabetically
@@ -138,8 +136,18 @@ describe('Authentication', () => {
 
             for (const [url, schema] of expectations) {
                 await browser.get(url);
+
+                // Ensure we aren't making expectations on a sidenav that's
+                // still initializing
+                await browser.wait(async () => (await sidenav.selectedSchema()) !== '');
+
                 await expect(sidenav.selectedSchema()).to.eventually.equal(schema);
             }
+        });
+
+        it.skip('should redirect the user from /login to /tables if navigated there manually', async () => {
+            await browser.get('/login');
+            await expect(browser.getCurrentUrl()).to.eventually.match(/\/tables$/);
         });
     });
 });

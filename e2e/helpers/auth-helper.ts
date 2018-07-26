@@ -20,8 +20,6 @@ export class AuthHelper {
     // Singleton
     private constructor() {}
 
-    public static get() { return AuthHelper.INSTANCE; }
-
     /**
      * Requests an API key if necessary and then authenticates the testing
      * browser by modifying the localStorage. A refresh is mandatory in order
@@ -31,13 +29,20 @@ export class AuthHelper {
         if (this.authData === null)
             this.authData = await AuthHelper.freshLogin();
 
-        this.storage.clear();
-        this.storage.set('apiKey', this.authData.apiKey);
-        this.storage.set('expiration', this.authData.expiration.getTime().toString());
+        await this.storage.clear();
+        await this.storage.setAll({
+            apiKey: this.authData.apiKey,
+            expiration: this.authData.expiration.getTime().toString(),
+            username: this.authData.username,
+            host: this.authData.host
+        });
 
-        if (opts && opts.refreshAfter)
+        if (opts && opts.refreshAfter) {
             await browser.refresh(3000);
+        }
     }
+
+    public static get() { return AuthHelper.INSTANCE; }
 
     /** Uses the JSON API to request an API key */
     private static async freshLogin(): Promise<AuthData> {
@@ -47,6 +52,12 @@ export class AuthHelper {
 
         const apiKey = res.body.apiKey;
         const expiration = parseInt(res.header['x-session-expiration'], 10);
-        return { apiKey, expiration: new Date(expiration) };
+
+        return {
+            apiKey,
+            expiration: new Date(expiration),
+            username: AuthHelper.USERNAME,
+            host: ''
+        };
     }
 }

@@ -17,6 +17,12 @@ export class StorageHelper {
         return browser.executeScript(this.createCall(`setItem('${key}', '${value}')`));
     }
 
+    public async setAll(data: { [key: string]: string }) {
+        for (const key of Object.keys(data)) {
+            await this.set(key, data[key]);
+        }
+    }
+
     private createCall(storageAction: string) {
         return `window.${this.storageName}.${storageAction}`;
     }

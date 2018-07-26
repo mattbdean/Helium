@@ -9,6 +9,7 @@ export class TablesPage {
         return element.all(by.css('mat-header-cell'));
     }
 
+    /** Selects all rows in the table. Does not include the header row. */
     public rows() {
         return element.all(by.css('mat-row'));
     }
