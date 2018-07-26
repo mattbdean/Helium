@@ -5,7 +5,7 @@
     ],
     "jsRules": {},
     "rules": {
-        "quotemark": ["single"],
+        "quotemark": [true, "single"],
         "trailing-comma": false,
         "interface-name": false,
         "curly": false,

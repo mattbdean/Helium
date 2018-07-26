@@ -5,11 +5,18 @@ import * as _ from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import { delay, map, tap } from 'rxjs/operators';
 import { TableDataType } from '../../../../server/src/common/api';
-import { CompoundConstraint, PaginatedResponse, SqlRow, TableHeader, TableInsert, TableMeta, ErrorResponse } from '../../common/api';
+import {
+    CompoundConstraint,
+    ErrorResponse,
+    PaginatedResponse,
+    SqlRow,
+    TableHeader,
+    TableInsert,
+    TableMeta
+} from '../../common/api';
 import { TableName } from '../../common/table-name';
-import { AuthService } from '../auth/auth.service';
-import { ContentRequest } from './content-request';
 import { BaseApiService } from './base-api-service';
+import { ContentRequest } from './content-request';
 
 /**
  * Emulates the Helium API. Constructor invocation can be costly depending on
@@ -25,12 +32,12 @@ export class MockApiService implements BaseApiService {
     private readonly data: DataDef[];
 
     public constructor() {
-        const result = TABLES.map(MockApiService.compileTableDef)
+        const result = TABLES.map(MockApiService.compileTableDef);
         this.metas = result.map((r) => r.meta);
         this.data = result.map((r) => r.data);
     }
 
-    public schemas(): Observable<string[] | null> {
+    public schemas(): Observable<string[]> {
         return this.delay(_(this.metas)
             .map((m) => m.schema)
             .uniq()
@@ -54,7 +61,7 @@ export class MockApiService implements BaseApiService {
                     message: 'Not found'
                 },
                 status: 404
-            }))
+            }));
         else
             obs = of(meta);
         
@@ -87,14 +94,14 @@ export class MockApiService implements BaseApiService {
                     size: applicableData.length,
                     data: applicableData,
                     totalRows
-                }
+                };
             })
         );
     }
 
     public pluck(schema: string, table: string, selectors: { [key: string]: string }): Observable<TableInsert> {
         const dataDef = this.data.find((d) => d.schema === schema && d.table === table);
-        let rows: SqlRow[] = [];
+        const rows: SqlRow[] = [];
 
         if (dataDef !== undefined) {
             const props = Object.keys(selectors);
@@ -136,7 +143,7 @@ export class MockApiService implements BaseApiService {
                         throw this.errorResponse({
                             res: { message: `Table not found: ${schema}.${table}` },
                             status: 400
-                        })
+                        });
                     
                     dataDef.data.push(...body[table]);
                 }
@@ -158,7 +165,7 @@ export class MockApiService implements BaseApiService {
      */
     private delayTime() {
         // Delay 10-20 ms
-        return 10 + Math.random() * 10
+        return 10 + Math.random() * 10;
     }
 
     /**
@@ -176,7 +183,7 @@ export class MockApiService implements BaseApiService {
                     message: 'Not found'
                 },
                 status: 404
-            }))
+            }));
         else
             obs = of(data.data);
         
@@ -191,7 +198,7 @@ export class MockApiService implements BaseApiService {
         return new HttpErrorResponse({
             error: { error: init.res },
             status: init.status
-        })
+        });
     }
 
     /**
@@ -247,7 +254,7 @@ export class MockApiService implements BaseApiService {
             totalRows: def.totalRows,
             comment: def.comment ? def.comment : '',
             parts: []
-        }
+        };
 
         const fields = _(def.fields)
             .map((f) => f.name)
@@ -268,7 +275,7 @@ export class MockApiService implements BaseApiService {
             schema: def.schema,
             table: def.name,
             data: rows
-        }
+        };
 
         return { meta, data };
     }
@@ -353,7 +360,7 @@ interface DataDef {
     data: SqlRow[];
 }
 
-const schema = 'sample';
+const mockSchema = 'sample';
 const idCol: FieldDef = { name: 'id', type: 'integer', pk: true };
 const numManufacturers = 20;
 const numProducts = 1000;
@@ -361,7 +368,7 @@ const numCustomers = 10000;
 
 const TABLES: TableDef[] = [
     {
-        schema,
+        schema: mockSchema,
         name: 'manufacturer',
         fields: [
             idCol,
@@ -380,7 +387,7 @@ const TABLES: TableDef[] = [
         })
     },
     {
-        schema,
+        schema: mockSchema,
         name: 'product',
         fields: [
             idCol,
@@ -397,7 +404,7 @@ const TABLES: TableDef[] = [
         })
     },
     {
-        schema,
+        schema: mockSchema,
         name: 'customer',
         fields: [
             idCol,
@@ -410,7 +417,7 @@ const TABLES: TableDef[] = [
         })
     },
     {
-        schema,
+        schema: mockSchema,
         name: 'order',
         fields: [
             idCol,
@@ -428,4 +435,4 @@ const TABLES: TableDef[] = [
             purchased_by_ip_addr: faker.internet.ipv6()
         })
     }
-]
+];

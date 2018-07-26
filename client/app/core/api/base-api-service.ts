@@ -1,15 +1,14 @@
-import { Observable } from "rxjs";
-import { TableName } from "../../common/table-name";
-import { TableMeta, SqlRow, PaginatedResponse, TableInsert } from "../../common/api";
-import { ContentRequest } from "./content-request";
+import { Observable } from 'rxjs';
+import { PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
+import { TableName } from '../../common/table-name';
+import { ContentRequest } from './content-request';
 
 export interface BaseApiService {
     /**
      * Requests the schemas available to the user. Emits a string array of
-     * schema names when successful. Emits null when the API responds with a
-     * 401 Unauthorized.
+     * schema names when successful.
      */
-    schemas(): Observable<string[] | null>;
+    schemas(): Observable<string[]>;
 
     /** Fetches a list of all tables in the given schema */
     tables(schema: string): Observable<TableName[]>;

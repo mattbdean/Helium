@@ -1,0 +1,60 @@
+<mat-sidenav-container>
+    <mat-sidenav [mode]="mode" [disableClose]="disableClose" autoFocus="false">
+        <!--
+        The reason tabindex="-1" is present on all focusable elements is that when the sidenav is opened, it
+        automatically focuses the first focusable element. If that element was at the very top and the user had scrolled
+        down some, it would focus that element upon opening and scroll all the way up so that the user could see that
+        element. It turns out that if there are no focusable elements, no scrolling occurs, which is what tabindex="-1"
+        does.
+        -->
+        <div class="nav-container">
+            <form [formGroup]="formGroup" class="schema-selector-container">
+                <mat-form-field class="schema-selector">
+                    <mat-select tabindex="-1" formControlName="schemaSelect" placeholder="Schema">
+                        <mat-option *ngFor="let schema of schemas$ | async" [value]="schema">{{ schema }}</mat-option>
+                    </mat-select>
+                </mat-form-field>
+            </form>
+            <ul tabindex="-1" class="sidenav-list undecorated-list" *ngFor="let groupedName of (tables$ | async)">
+                <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
+                <li class="table-ref-container" *ngFor="let table of groupedName.names">
+                    <span class="table-ref table-ref-master row-item">
+                        <a class="table-name"
+                            tabindex="-1"
+                            [routerLink]="['/tables', table.schema, table.name.raw]"
+                            [title]="table.name.clean"
+                            routerLinkActive="active-router-link"
+                            (click)="close()">{{ table.name.clean }}</a>
+                        <a class="material-icons add-data-icon"
+                            tabindex="-1"
+                            [title]="'Add data to ' + table.name.clean"
+                            [routerLink]="['/forms', table.schema, table.name.raw]"
+                            routerLinkActive="active-router-link"
+                            (click)="close()">add</a>
+                    </span>
+
+                    <ul class="undecorated-list nested-list" *ngIf="table.parts.length > 0">
+                        <li class="table-ref-container" *ngFor="let part of table.parts">
+                            <span class="table-ref table-ref-part row-item">
+                                <a class="table-name"
+                                    tabindex="-1"
+                                    [routerLink]="['/tables', part.schema, part.name.raw]"
+                                    routerLinkActive="active-router-link"
+                                    (click)="close()"
+                                >
+                                    {{ part.name.clean }}
+                                </a>
+                            </span>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="bug-report-wrapper">
+            <a href="https://github.com/mattbdean/Helium/issues/new" target="_blank" mat-button color="warn">Report a bug <mat-icon>bug_report</mat-icon></a>
+        </div>
+    </mat-sidenav>
+
+    <ng-content></ng-content>
+</mat-sidenav-container>

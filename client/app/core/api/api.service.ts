@@ -21,38 +21,21 @@ const encode = encodeURIComponent;
  */
 @Injectable()
 export class ApiService implements BaseApiService {
-    /** Hot observable that replays the last value emitted to new subscribers */
-    private schemas$: Observable<string[] | null> | null = null;
-
     constructor(private http: HttpClient, private auth: AuthService) {}
 
-    /**
-     * Requests the schemas available to the user. Emits a string array of
-     * schema names when successful. Emits null when the API responds with a
-     * 401 Unauthorized.
-     */
-    public schemas(): Observable<string[] | null> {
-        if (!this.schemas$) {
-            this.schemas$ = this.get<string[] | null>('/schemas').pipe(
-                shareReplay(1)
-            );
-        }
-
-        return this.schemas$;
+    public schemas(): Observable<string[]> {
+        return this.get<string[]>('/schemas');
     }
 
-    /** Fetches a list of all tables in the given schema */
     public tables(schema: string): Observable<TableName[]> {
         return this.get<TableNameParams[]>(`/schemas/${schema}`)
             .pipe(map((params) => params.map((p) => new TableName(schema, p))));
     }
 
-    /** Fetches meta for a given table */
     public meta(schema: string, table: string): Observable<TableMeta> {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}`);
     }
 
-    /** Fetches paginated data from a given table */
     public content(req: ContentRequest): Observable<PaginatedResponse<SqlRow>> {
         const shouldUseFilters = req.filters === undefined || req.filters.length === 0;
 
@@ -78,10 +61,6 @@ export class ApiService implements BaseApiService {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}/column/${encode(column)}`);
     }
 
-    /**
-     * Attempts to add a row to the database for a given table. The table must
-     * exist and the body must have the shape of a SqlRow.
-     */
     public submitRow(schema: string, body: TableInsert): Observable<null> {
         return this.http.post(
             `/api/v1/schemas/${encode(schema)}/data`,

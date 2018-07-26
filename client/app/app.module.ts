@@ -22,6 +22,7 @@ import { NotFoundComponent } from './not-found.component';
 
 import '@angular/material/prebuilt-themes/deeppurple-amber.css';
 import 'normalize.css/normalize.css';
+import { SidenavComponent } from './sidenav/sidenav.component';
 
 @NgModule({
     imports: [
@@ -46,6 +47,7 @@ import 'normalize.css/normalize.css';
     ],
     declarations: [
         AppComponent,
+        SidenavComponent,
         NotFoundComponent
     ],
     bootstrap: [ AppComponent ]
