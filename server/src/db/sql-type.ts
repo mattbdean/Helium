@@ -11,7 +11,7 @@ export class SqlType {
      * 
      * Only the base type is required.
      */
-    private static readonly regex = /^([A-Z]+)(?:\(([A-Z0-9, ']*)\))? ?([A-Z ]+)?$/i;
+    private static readonly regex = /^([A-Z]+)(?:\((.*)\))? ?([A-Z ]+)?$/i;
 
     /**
      * The raw data type, as found in `INFORMATION_SCHEMA.COLUMNS` under the
