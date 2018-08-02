@@ -5,15 +5,12 @@
 # Recommended by datajoint
 SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';
 
-# Ensure the user exists by creating it
-GRANT ALL ON *.* TO 'user'@'%' IDENTIFIED BY 'password';
-# Drop the newly-created user (the above query can be replaced by DROP USER
-# IF EXISTS) with MySQL 5.7
-DROP USER 'user'@'%';
-# Create the user again to ensure that the user exists
-GRANT ALL ON helium_sample.* TO 'user'@'%' IDENTIFIED BY 'password';
-GRANT ALL ON helium_cross_schema_ref_test.* TO 'user'@'%';
-GRANT ALL ON helium_compound_fk_test.* TO 'user'@'%';
+# (Re-)create the user
+DROP USER IF EXISTS 'user'@'%';
+CREATE USER 'user'@'%' IDENTIFIED BY 'password';
+
+# Grant necessary privileges to `helium_*` databases
+GRANT CREATE,DROP,SELECT ON `helium\_%`.* TO 'user'@'%';
 
 # Other DB for cross-schema testing
 DROP DATABASE IF EXISTS helium_cross_schema_ref_test;

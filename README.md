@@ -52,6 +52,7 @@ Helium is written in TypeScript. A JSON API is made available using a Node.js/Ex
  - `.circleci/`: Configuration for the [CircleCI workflow](https://circleci.com/gh/mattbdean/Helium)
  - `client/`: Front-end code. Anything Angular can be found here.
  - `common/`: Code and typings common to the front-end and server-side code. Copied to `client/app/common/` and `server/src/common/` when building.
+ - `datajoint-compat/`: Test DataJoint compatibility
  - `dist/`: Compiled files live here. Once compiled, run `node dist` to start the server.
  - `dist/public/`: All files in this directory will be made available as static assets. The code in `client/` is built to this directory
  - `docs/`: Source for the [GitHub Pages website](https://mattbdean.github.io/Helium/).
