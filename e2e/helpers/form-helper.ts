@@ -1,16 +1,10 @@
 import { zipObject } from 'lodash';
-import { browser, by, element } from 'protractor';
+import { browser, by, element, ElementArrayFinder, ElementFinder } from 'protractor';
 
 export class FormHelper {
-    public formControl(controlName: string) {
-        return this.formControls(controlName).first();
-    }
-
-    public formControls(controlName: string) {
-        // [formControlName] bindings become ng-reflect-name attributes in the
-        // DOM. The formControlName attribute will be inaccessible directly
-        // unless it's not used as a binding.
-        return element.all(by.css(`[ng-reflect-name=${controlName}]`));
+    /** Locates the 'Submit' button for the form */
+    public get submitButton() {
+        return browser.findElement(by.css('button[type=submit]'));
     }
 
     /** Fills out a form. */
@@ -18,14 +12,11 @@ export class FormHelper {
         for (const controlName of Object.keys(data)) {
             const inputData: any = Array.isArray(data[controlName]) ? data[controlName] : [data[controlName]];
 
-            const controls = this.formControls(controlName);
-            const actual = await controls.count();
-            if (actual !== inputData.length)
-                throw new Error(`Expected to find ${inputData.length} ` +
-                    `elements with formControlName=${controlName}, got ${actual}`);
+            const controls: ElementArrayFinder =
+                await this.formControls(controlName, inputData.length) as any;
 
-            await controls.map((el, index) => {
-                return el!!.sendKeys(inputData[index!!]);
+            await controls.map((el: ElementFinder, index: number) => {
+                el!!.sendKeys(inputData[index!!]);
             });
         }
     }
@@ -36,7 +27,7 @@ export class FormHelper {
      */
     public async pluck(...formControlNames: string[]): Promise<{ [formControlName: string]: string | boolean | null }> {
         // Get an ElementFinder associated with each form control
-        const controls = formControlNames.map((controlName) => this.formControl(controlName));
+        const controls = await Promise.all(formControlNames.map((controlName) => this.formControl(controlName)));
         const values: Array<string | boolean | null> = [];
 
         for (const control of controls) {
@@ -77,13 +68,31 @@ export class FormHelper {
         return zipObject(formControlNames, values);
     }
 
-    /** Locates the 'Submit' button for the form */
-    public get submitButton() {
-        return browser.findElement(by.css('button[type=submit]'));
-    }
-
     /** Clicks the 'submit' button */
     public submit() {
         return this.submitButton.click();
+    }
+
+    private async formControls(controlName: string, controlCount: number): Promise<ElementArrayFinder> {
+        // Either one of these attributes could be listed depending on how the
+        // form is being used
+        const attrs = ['ng-reflect-name', 'formcontrolname'];
+
+        for (const attr of attrs) {
+            const results = element.all(by.css(`[${attr}=${controlName}`));
+
+            const count = await results.count();
+            if (count === controlCount) {
+                return results as any;
+            } else if (count > 0) {
+                throw new Error(`Found ${count} form controls with name "${controlName}", expected ${controlCount}`);
+            }
+        }
+
+        throw new Error(`Could not find a form control with name "${controlName}"`);
+    }
+
+    private async formControl(controlName: string): Promise<ElementFinder> {
+        return (await this.formControls(controlName, 1) as any as ElementArrayFinder).first();
     }
 }
