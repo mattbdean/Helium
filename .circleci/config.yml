@@ -204,14 +204,16 @@ workflows:
             - test-server:
                 requires:
                     - cache-preinstalled
-            - test-e2e:
-                requires:
-                    - cache-preinstalled
+            # - test-e2e:
+            #     requires:
+            #         - cache-preinstalled
+            - test-dj-compat
             - codecov:
                 requires:
                     - test-client
                     - test-server
             - deploy:
                 requires:
-                    - test-e2e
+                    # - test-e2e
                     - codecov # by extension also requires test-client and test-server
+                    - test-dj-compat
