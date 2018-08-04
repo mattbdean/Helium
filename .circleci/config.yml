@@ -88,6 +88,9 @@ jobs:
             - run: sudo chown -R circleci:circleci /usr/local/lib/python3.6/site-packages
             - run: sudo pip3 install -r datajoint-compat/requirements.txt
             - run:
+                name: Install MySQL client
+                command: sudo apt-get install mysql-client
+            - run:
                 name: Wait for DB
                 command: dockerize -wait tcp://localhost:3306 -timeout 1m
             - run:
