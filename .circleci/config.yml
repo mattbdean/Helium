@@ -156,9 +156,9 @@ jobs:
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
-            - run:
-                name: Run e2e tests
-                command: yarn e2e:prepped
+            # - run:
+            #     name: Run e2e tests
+            #     command: yarn e2e:prepped
             - run:
                 name: Save Helium docker image to workspace
                 command: docker save mattbdean/helium:$(.circleci/docker-tag.sh) -o image.tar
