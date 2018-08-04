@@ -140,7 +140,7 @@ $ docker push mattbdean/helium:<new version>
 6. Deploy the preview build to GitHub Pages
 
 ```
-$ yarn deploy:preview
+$ yarn build:preview
 $ git add docs/preview
 $ git commit
 $ git push
