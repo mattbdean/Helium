@@ -9,7 +9,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { mapValues } from 'lodash';
 import * as moment from 'moment';
 import { BehaviorSubject, combineLatest, from, NEVER, Observable, of, Subscription, zip } from 'rxjs';
-import { catchError, filter, flatMap, mapTo, switchMap, switchMapTo } from 'rxjs/operators';
+import { catchError, filter, first, flatMap, mapTo, switchMap, switchMapTo } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
     MasterTableName, SqlRow, TableHeader, TableMeta
@@ -68,6 +68,7 @@ export class FormHostComponent implements OnDestroy, OnInit {
             this.route.params,
             this.route.queryParams,
         ).pipe(
+            first(),
             flatMap((data: [Params, { [key: string]: string } | null]) => {
                 const { schema, table } = data[0];
                 const pluckSelectors = data[1];
@@ -78,6 +79,8 @@ export class FormHostComponent implements OnDestroy, OnInit {
                 }
             })
         );
+
+        pluckedRow$.subscribe(console.log);
 
         this.sub = combineLatest(
             this.route.params.pipe(switchMap((params) => this.backend.tables(params.schema))),
