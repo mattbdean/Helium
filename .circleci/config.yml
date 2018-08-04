@@ -98,74 +98,74 @@ jobs:
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
             - run: python3 datajoint-compat/create_schema.py
             - run: python3 datajoint-compat/test.py
-    # test-e2e:
-    #     machine: true
-    #     steps:
-    #         - checkout
-    #         - restore_cache:
-    #             <<: *restore_deps_cache
-    #         - run:
-    #             name: Start MySQL via Docker
-    #             command: |
-    #                 docker run -d --name mysql -p 3306:3306 \
-    #                     -e "MYSQL_ALLOW_EMPTY_PASSWORD=true" \
-    #                     -e "MYSQL_HOST=127.0.0.1" \
-    #                     -e "MYSQL_ROOT_HOST=%" \
-    #                     mysql/mysql-server:5.7
-    #         - run:
-    #             name: Build Helium Docker image
-    #             command: docker build -t mattbdean/helium:$(.circleci/docker-tag.sh) .
-    #         - run:
-    #             name: Start Helium via Docker
-    #             command: docker run -d --name helium --net=host -p 3000:3000 mattbdean/helium:$(.circleci/docker-tag.sh)
-    #         - run:
-    #             name: Add required APT repositories
-    #             command: |
-    #                 # Yarn
-    #                 curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-    #                 echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+    test-e2e:
+        machine: true
+        steps:
+            - checkout
+            - restore_cache:
+                <<: *restore_deps_cache
+            - run:
+                name: Start MySQL via Docker
+                command: |
+                    docker run -d --name mysql -p 3306:3306 \
+                        -e "MYSQL_ALLOW_EMPTY_PASSWORD=true" \
+                        -e "MYSQL_HOST=127.0.0.1" \
+                        -e "MYSQL_ROOT_HOST=%" \
+                        mysql/mysql-server:5.7
+            - run:
+                name: Build Helium Docker image
+                command: docker build -t mattbdean/helium:$(.circleci/docker-tag.sh) .
+            - run:
+                name: Start Helium via Docker
+                command: docker run -d --name helium --net=host -p 3000:3000 mattbdean/helium:$(.circleci/docker-tag.sh)
+            - run:
+                name: Add required APT repositories
+                command: |
+                    # Yarn
+                    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+                    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
 
-    #                 # Chrome
-    #                 wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-    #                 echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
+                    # Chrome
+                    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+                    echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
 
-    #                 # MySQL
-    #                 wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
-    #                 DEBIAN_FRONTEND=noninteractive sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
+                    # MySQL
+                    wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
+                    DEBIAN_FRONTEND=noninteractive sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
 
-    #                 sudo apt-get update
-    #         - run:
-    #             name: Install MySQL client, Yarn, and Chrome
-    #             command: |
-    #                 sudo apt-get install mysql-client yarn google-chrome-stable
-    #         - run:
-    #             name: Install Node.js
-    #             command: |
-    #                 set +e             
-    #                 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
-    #                 export NVM_DIR="/opt/circleci/.nvm"
-    #                 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                    sudo apt-get update
+            - run:
+                name: Install MySQL client, Yarn, and Chrome
+                command: |
+                    sudo apt-get install mysql-client yarn google-chrome-stable
+            - run:
+                name: Install Node.js
+                command: |
+                    set +e             
+                    curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+                    export NVM_DIR="/opt/circleci/.nvm"
+                    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-    #                 # Node 8.9+ is required for @angular/cli 6.0
-    #                 nvm install 8
-    #                 nvm alias default 8
+                    # Node 8.9+ is required for @angular/cli 6.0
+                    nvm install 8
+                    nvm alias default 8
                     
-    #                 # Each step uses the same `$BASH_ENV`, so need to modify it
-    #                 echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
-    #                 echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
-    #         - run:
-    #             name: Initialize DB
-    #             command: mysql -u root -h 127.0.0.1 < server/test/init.sql
-    #         - run:
-    #             name: Run e2e tests
-    #             command: yarn e2e:prepped
-    #         - run:
-    #             name: Save Helium docker image to workspace
-    #             command: docker save mattbdean/helium:$(.circleci/docker-tag.sh) -o image.tar
-    #         - persist_to_workspace:
-    #             root: .
-    #             paths:
-    #                 - "image.tar"
+                    # Each step uses the same `$BASH_ENV`, so need to modify it
+                    echo 'export NVM_DIR="/opt/circleci/.nvm"' >> $BASH_ENV
+                    echo "[ -s \"$NVM_DIR/nvm.sh\" ] && . \"$NVM_DIR/nvm.sh\"" >> $BASH_ENV
+            - run:
+                name: Initialize DB
+                command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - run:
+                name: Run e2e tests
+                command: yarn e2e:prepped
+            - run:
+                name: Save Helium docker image to workspace
+                command: docker save mattbdean/helium:$(.circleci/docker-tag.sh) -o image.tar
+            - persist_to_workspace:
+                root: .
+                paths:
+                    - "image.tar"
     codecov:
         docker:
             - image: circleci/node:8
@@ -209,9 +209,9 @@ workflows:
             - test-server:
                 requires:
                     - cache-preinstalled
-            # - test-e2e:
-            #     requires:
-            #         - cache-preinstalled
+            - test-e2e:
+                requires:
+                    - cache-preinstalled
             - test-dj-compat
             - codecov:
                 requires:
@@ -219,6 +219,6 @@ workflows:
                     - test-server
             - deploy:
                 requires:
-                    # - test-e2e
+                    - test-e2e
                     - codecov # by extension also requires test-client and test-server
                     - test-dj-compat
