@@ -4,6 +4,7 @@ This module tests assumptions Helium makes when working with schemas generated f
 
 ```
 $ pip3 install -r requirements.txt
+$ python3 create_schema.py
 $ python3 test.py
 ```
 

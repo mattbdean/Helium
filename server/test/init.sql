@@ -10,7 +10,7 @@ DROP USER IF EXISTS 'user'@'%';
 CREATE USER 'user'@'%' IDENTIFIED BY 'password';
 
 # Grant necessary privileges to `helium_*` databases
-GRANT CREATE,DROP,SELECT ON `helium\_%`.* TO 'user'@'%';
+GRANT CREATE,DROP,SELECT,INSERT ON `helium\_%`.* TO 'user'@'%';
 
 # Other DB for cross-schema testing
 DROP DATABASE IF EXISTS helium_cross_schema_ref_test;
