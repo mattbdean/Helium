@@ -80,8 +80,6 @@ export class FormHostComponent implements OnDestroy, OnInit {
             })
         );
 
-        pluckedRow$.subscribe(console.log);
-
         this.sub = combineLatest(
             this.route.params.pipe(switchMap((params) => this.backend.tables(params.schema))),
             this.route.params,
