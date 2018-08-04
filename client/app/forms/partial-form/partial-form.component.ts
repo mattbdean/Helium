@@ -212,8 +212,12 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     public onRequestRowPicker(colName: string) {
-        const foreignKeys = flattenCompoundConstraints(this.meta.constraints)
+        const constraints = flattenCompoundConstraints(this.meta.constraints);
+        const foreignKeys = constraints
             .filter((c) => c.type === 'foreign');
+        const primaryKeys = constraints
+            .filter((c) => c.type === 'primary');
+        
         // Try to find the foreign key associated with the given column 
         const foreignKey = foreignKeys.find((c: Constraint) => c.localColumn === colName);
         
@@ -231,7 +235,7 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
             data: params
         });
 
-        const unused = foreignKeys.slice(0);
+        const unused = primaryKeys.slice(0);
 
         dialogRef.afterClosed().subscribe((data: SqlRow | undefined) => {
             // The user closed the dialog before selecting a row
@@ -241,9 +245,9 @@ export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
             const patch: { [col: string]: any } = {};
 
             for (const referencedColumn of Object.keys(data)) {
-                const index = unused.findIndex((c) => c.ref!!.column === referencedColumn);
+                const index = unused.findIndex((c) => c.localColumn === referencedColumn);
 
-                // Not a foreign key, ignore
+                // Not a primary key, ignore
                 if (index < 0)
                     continue;
                 
