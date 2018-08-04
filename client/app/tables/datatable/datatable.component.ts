@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import {
-    AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy,
-    Output, QueryList, Renderer2, ViewChild, ViewChildren
+    AfterViewInit, Component, ElementRef, EventEmitter, Injector, Input,
+    OnDestroy, OnInit, Output, QueryList, Renderer2, ViewChild, ViewChildren
 } from '@angular/core';
 import { MatCell, MatHeaderCell, Sort, SortDirection } from '@angular/material';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -10,6 +10,7 @@ import * as moment from 'moment';
 import { BehaviorSubject, combineLatest, NEVER, Observable, of, Subscription, zip } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, first, map, switchMap, tap } from 'rxjs/operators';
 import { flattenCompoundConstraints } from '../../../../common/util';
+import { environment } from '../../../environments/environment';
 import { Constraint, Filter, SqlRow, TableMeta } from '../../common/api';
 import { DATE_FORMAT, DATETIME_FORMAT } from '../../common/constants';
 import { TableName } from '../../common/table-name';
@@ -20,15 +21,25 @@ import { FilterProviderService } from '../filter-provider/filter-provider.servic
 import { LayoutHelper } from '../layout-helper/layout-helper';
 import { PaginatorComponent } from '../paginator/paginator.component';
 import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
-import { InitData } from './init-data';
-import { environment } from '../../../environments/environment';
+import { QueryTableStateStorage } from './query-table-state-storage';
+import { TableState, TableStateParams } from './table-state';
+import { TableStateStorage } from './table-state-storage';
+import { NoopTableStateStorage } from './noop-table-state-storage';
 
+/**
+ * This component is responsible for showing tabular data to the user.
+ * 
+ * Links to this component are made shareable by storing the data selectors into
+ * the query. These data selectors include things like the page number, filters,
+ * and sorting. This feature is only available if `saveState` is true.
+ */
 @Component({
     selector: 'datatable',
     templateUrl: 'datatable.component.html',
     styleUrls: ['datatable.component.scss']
 })
-export class DatatableComponent implements AfterViewInit, OnDestroy {
+export class DatatableComponent implements OnInit, AfterViewInit, OnDestroy {
+    public static readonly DEFAULT_PAGE_SIZE = 25;
     private static readonly DISPLAY_FORMAT_DATE = 'l';
     private static readonly DISPLAY_FORMAT_DATETIME = 'LLL';
 
@@ -43,6 +54,9 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
      */
     @Input()
     public allowSelection = false;
+
+    @Input()
+    public saveState = false;
 
     /** Outputs the value of the selected row if `selectionMode` is true. */
     @Output()
@@ -68,13 +82,22 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
 
     public loading = true;
 
-    private initDataUsed = false;
+    /**
+     * True if the TableState has already been used to initialize this component
+     */
+    private initialStateLoaded = false;
+
+    /**
+     * How the state will be stored. Created based on the value of the
+     * `saveState` input.
+     */
+    private stateStorage: TableStateStorage;
 
     private nameSub: Subscription | undefined;
     private layoutSub: Subscription | undefined;
     private recalcSub: Subscription | undefined;
     private headerCellsSub: Subscription | undefined;
-    private queryUpdaterSub: Subscription | undefined;
+    private stateWatcherSub: Subscription | undefined;
 
     @ViewChild(FilterManagerComponent) public filterManager: FilterManagerComponent;
     @ViewChild(PaginatorComponent) public paginator: PaginatorComponent;
@@ -91,11 +114,17 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
         public dataSource: ApiDataSource,
         private backend: ApiService,
         private filterProvider: FilterProviderService,
+        private injector: Injector,
         private layoutHelper: LayoutHelper,
         private renderer: Renderer2,
         private route: ActivatedRoute,
         private router: Router
     ) {}
+
+    public ngOnInit() {
+        this.stateStorage = this.injector.get(
+            this.saveState ? QueryTableStateStorage : NoopTableStateStorage);
+    }
 
     public ngAfterViewInit(): void {
         this.dataSource.init({
@@ -171,11 +200,12 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
         // Read page, page size, filters, and sort from query parameters.
         // Everything here is validated in regards to type only. Further
         // validation (eg page index too high) is done at another time.
-        const initData$: Observable<InitData> = this.route.queryParamMap.pipe(
+        const initData$: Observable<TableState> = this.route.queryParamMap.pipe(
             // We only care about this data on initialization
             first(),
-            map(InitData.fromQuery)
+            map(TableState.fromQuery)
         );
+        // const initData$ = this.stateStorage.initialData;
 
         this.nameSub = this.name$.pipe(
             filter((n) => n !== null),
@@ -188,11 +218,11 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
                     return NEVER;
                 }))
             ),
-            switchMap((meta): Observable<[TableMeta, InitData]> => {
+            switchMap((meta): Observable<[TableMeta, TableState]> => {
                 // Include the initialization data only on initialization (duh)
-                const result = zip(of(meta), this.initDataUsed ? of(new InitData({})) : initData$);
-                if (!this.initDataUsed)
-                    this.initDataUsed = true;
+                const result = zip(of(meta), this.initialStateLoaded ? of(new TableState({})) : initData$);
+                if (!this.initialStateLoaded)
+                    this.initialStateLoaded = true;
                 
                 return result;
             })
@@ -211,27 +241,33 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
 
             // Validate what was provided in the query against the data we
             // actually have
-            const initData = unvalidatedInitData.validateAgainst(
+            const initialState = unvalidatedInitData.validateAgainst({
                 meta,
-                this.paginator.pageSizeOptions,
-                this.filterProvider.operations().map((o) => o.codeName)
-            );
+                pageSizeOptions: this.paginator.pageSizeOptions,
+                ops: this.filterProvider.operations().map((o) => o.codeName),
+                defaults: {
+                    filters: [],
+                    page: 1,
+                    pageSize: DatatableComponent.DEFAULT_PAGE_SIZE,
+                    sort: undefined
+                }
+            });
 
-            // Apply the InitData to the current state
-            if (initData.pageSize)
-                this.paginator.pageSize = initData.pageSize;
-            if (initData.page)
-                this.paginator.pageIndex = initData.page - 1;
-            if (initData.filters && initData.filters.length > 0) {
+            // Apply the initial TableState to the current state
+            if (initialState.pageSize)
+                this.paginator.pageSize = initialState.pageSize;
+            if (initialState.page)
+                this.paginator.pageIndex = initialState.page - 1;
+            if (initialState.filters && initialState.filters.length > 0) {
                 this.filterManager.preemptiveFilters = {
                     schema: meta.schema,
                     table: meta.name,
-                    filters: initData.filters
+                    filters: initialState.filters
                 };
                 // Make it abundantly clear the data is being filtered
                 this.showFilters = true;
             }
-            if (initData.sort) {
+            if (initialState.sort) {
                 // The SortIndicators aren't available until the table is
                 // rendered, so listen for that
                 this.sortIndicators.changes.pipe(
@@ -240,24 +276,24 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
                     map((ql: QueryList<SortIndicatorComponent>) => {
                         // The columns are rendered in the order they're
                         // listed in the TableMeta
-                        const sortIndex = this.meta.headers.findIndex((h) => h.name === initData.sort!!.active);
+                        const sortIndex = this.meta.headers.findIndex((h) => h.name === initialState.sort!!.active);
                         if (sortIndex < 0)
-                            throw new Error('No column named "' + initData.sort!!.active + '"');
+                            throw new Error('No column named "' + initialState.sort!!.active + '"');
                         return ql.toArray()[sortIndex];
                     })
                 ).subscribe((comp) => {
                     // Update on next tick to avoid change detection issues
                     setTimeout(() => {
-                        comp.state = initData.sort!!.direction;
+                        comp.state = initialState.sort!!.direction;
                     }, 0);
-                    this.sort$.next(initData.sort!!);
+                    this.sort$.next(initialState.sort!!);
                 });
             }
 
             // Update observables and data source
             this.meta = meta;
             this.dataSource.switchTables(meta);
-            if (initData.page === undefined)
+            if (initialState.page === undefined)
                 this.paginator.pageIndex = 0;
             this.loading = false;
         });
@@ -268,25 +304,21 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
                 this.layoutHelper.needsFullLayoutRecalculation = true;
             });
 
-        this.queryUpdaterSub = combineLatest(
+        this.stateWatcherSub = combineLatest(
             this.paginator.page.pipe(map((page) => page.pageIndex + 1)),
             this.paginator.page.pipe(map((page) => page.pageSize)),
             this.filterManager.changed,
             this.sort$
         ).pipe(
             distinctUntilChanged(isEqual),
-            map(([page, pageSize, filters, sort]) => new InitData({
+            map(([page, pageSize, filters, sort]): TableStateParams => ({
                 page,
                 pageSize,
                 filters,
                 sort
             }))
-        ).subscribe((initData) => {
-            // Create a query featuring only relevant information. Defaults
-            // (like the page being 1) will not be encoded.
-            this.router.navigate([], {
-                queryParams: initData.toQuery()
-            });
+        ).subscribe((state: TableStateParams) => {
+            this.stateStorage.update(state);
         });
     }
 
@@ -350,7 +382,7 @@ export class DatatableComponent implements AfterViewInit, OnDestroy {
             this.layoutSub,
             this.recalcSub,
             this.headerCellsSub,
-            this.queryUpdaterSub
+            this.stateWatcherSub
         ];
         for (const sub of subs)
             if (sub)

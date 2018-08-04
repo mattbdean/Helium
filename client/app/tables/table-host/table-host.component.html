@@ -1,5 +1,5 @@
 <div class="datatable-wrapper" *ngIf="selectedTable; else noSelectedTable">
-    <datatable [name]="selectedTable"></datatable>
+    <datatable [name]="selectedTable" [saveState]="true"></datatable>
 </div>
 
 <ng-template #noSelectedTable>

@@ -16,14 +16,14 @@ import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { CompoundConstraint, Constraint, PaginatedResponse, SqlRow, TableDataType, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
-import { CoreModule } from '../../core/core.module';
 import { ApiService } from '../../core/api/api.service';
+import { CoreModule } from '../../core/core.module';
 import { ApiDataSource } from '../api-data-source/api-data-source';
 import { FilterProviderService } from '../filter-provider/filter-provider.service';
 import { LayoutHelper } from '../layout-helper/layout-helper';
 import { PaginatorComponent } from '../paginator/paginator.component';
 import { DatatableComponent } from './datatable.component';
-import { paramMap } from './init-data.spec';
+import { paramMap } from './table-state.spec';
 
 chai.use(sinonChai);
 const expect = chai.expect;
@@ -41,7 +41,7 @@ describe.skip('DatatableComponent', () => {
     let metaStub: sinon.SinonStub;
     let contentStub: sinon.SinonStub;
 
-    const ApiServiceStub = {
+    const apiServiceStub = {
         meta: (_: string): Observable<TableMeta> =>
             throwError(new Error('not stubbed')),
         content: (_): Observable<PaginatedResponse<SqlRow[]>> =>
@@ -125,7 +125,7 @@ describe.skip('DatatableComponent', () => {
                 ApiDataSource,
                 FilterProviderService,
                 { provide: ActivatedRoute, useValue: activedRouteStub },
-                { provide: ApiService, useValue: ApiServiceStub },
+                { provide: ApiService, useValue: apiServiceStub },
                 { provide: Router, useValue: routerStub },
                 { provide: LayoutHelper, useValue: layoutHelperStub },
             ],
@@ -273,6 +273,4 @@ describe.skip('DatatableComponent', () => {
         const query = { queryParams: { row: JSON.stringify({ integer: 4 }) }};
         expect(routerSpy).to.have.been.calledWithExactly(route, query);
     }));
-
-    it.skip('should allow selections when [selectionMode] is "one"');
 });

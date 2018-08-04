@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { FilterOperation } from '../../../../common/api';
 import { TableMeta } from '../../common/api';
 import { PaginatorComponent } from '../paginator/paginator.component';
-import { InitData } from './init-data';
+import { TableState, TableStateParams } from './table-state';
 
 /** Creates a very simple ParamMap */
 export const paramMap = (data: { [key: string]: string }): ParamMap => ({
@@ -13,10 +13,10 @@ export const paramMap = (data: { [key: string]: string }): ParamMap => ({
     keys: Object.keys(data)
 });
 
-describe('InitData', () => {
+describe('TableState', () => {
     describe('toQuery', () => {
         it('should serialize complex data', () => {
-            const initData = new InitData({
+            const initData = new TableState({
                 page: 3,
                 pageSize: 100,
                 filters: [{ param: 'foo', op: 'eq', value: 'bar' }],
@@ -34,18 +34,18 @@ describe('InitData', () => {
 
     describe('fromQuery', () => {
         it('should decode data produced by toQuery', () => {
-            const initData = new InitData({
+            const initData = new TableState({
                 page: 3,
                 pageSize: 100,
                 filters: [{ param: 'foo', op: 'eq', value: 'bar' }],
                 sort: { direction: 'asc', active: 'baz' }
             });
 
-            expect(InitData.fromQuery(paramMap(initData.toQuery()))).to.deep.equal(initData);
+            expect(TableState.fromQuery(paramMap(initData.toQuery()))).to.deep.equal(initData);
         });
 
         it('should not accept malformed JSON for filters', () => {
-            const parseFilters = (json: string) => InitData.fromQuery(paramMap({ filters: json })).filters;
+            const parseFilters = (json: string) => TableState.fromQuery(paramMap({ filters: json })).filters;
             const invalid = [
                 '&^2', // not JSON
                 '{}', // not an array
@@ -66,22 +66,46 @@ describe('InitData', () => {
     });
 
     describe('validateAgainst', () => {
-        it('should exclude the page size if it\'s not one of the provided options', () => {
-            const initData = new InitData({ pageSize: 15 });
-            expect(initData.validateAgainst({} as TableMeta, [25, 50, 100], []).pageSize)
-                .to.be.undefined;
+        // Use randomly-picked values so that we make sure that validateAgainst
+        // actually pulls from these defaults
+        const defaults: TableStateParams = {
+            filters: [{
+                op: 'eq',
+                param: 'some_column',
+                value: 'some_value'
+            }],
+            page: 143214,
+            pageSize: 4314212,
+            sort: { active: 'fdsfa', direction: 'asc' }
+        };
+
+        it('should use the page size if it\'s not one of the provided options', () => {
+            const initData = new TableState({ pageSize: 15 });
+            expect(initData.validateAgainst({
+                meta: {} as TableMeta,
+                pageSizeOptions: [25, 50, 100],
+                
+                ops: [],
+                defaults
+            }).pageSize).to.equal(defaults.pageSize);
         });
         
         it('should exclude page if it\'s an invalid page number', () => {
             const tableMeta = { totalRows: 100 } as TableMeta;
-            const validate = (page: number) =>
-                new InitData({ page }).validateAgainst(tableMeta, [25], []);
+            const validate = (page: number) => {
+                return new TableState({ page }).validateAgainst({
+                    meta: tableMeta,
+                    pageSizeOptions: [25],
+                    ops: [],
+                    defaults
+                });
+            };
             
             const maxPage = Math.ceil(tableMeta.totalRows / PaginatorComponent.DEFAULT_PAGE_SIZE);
 
             // Anything less than 1 or greater than maxPage should not be valid
-            expect(validate(0).page).to.be.undefined;
-            expect(validate(maxPage + 1).page).to.be.undefined;
+            expect(validate(0).page).to.equal(defaults.page);
+            expect(validate(maxPage + 1).page).to.equal(defaults.page);
 
             // Anything between 1 and maxPage (inclusive) should be valid
             expect(validate(1).page).to.equal(1);
@@ -95,7 +119,7 @@ describe('InitData', () => {
                 }]
             } as TableMeta;
 
-            const data = new InitData({
+            const data = new TableState({
                 filters: [
                     // this one is fine
                     { param: 'foo', op: 'eq', value: 'hello' },
@@ -106,7 +130,12 @@ describe('InitData', () => {
                 ]
             });
 
-            expect(data.validateAgainst(meta, [], ['eq']).filters).to.deep.equal([
+            expect(data.validateAgainst({
+                meta,
+                pageSizeOptions: [],
+                ops: ['eq'],
+                defaults
+            }).filters).to.deep.equal([
                 { param: 'foo', op: 'eq', value: 'hello' }
             ]);
         });
@@ -118,11 +147,16 @@ describe('InitData', () => {
                 }]
             } as TableMeta;
 
-            const data = new InitData({
+            const data = new TableState({
                 sort: { active: 'bar', direction: 'asc' }
             });
 
-            expect(data.validateAgainst(meta, [], []).sort).to.be.undefined;
+            expect(data.validateAgainst({
+                meta,
+                pageSizeOptions: [],
+                ops: [],
+                defaults
+            }).sort).to.equal(defaults.sort);
         });
     });
 });

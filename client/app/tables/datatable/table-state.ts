@@ -6,7 +6,7 @@ import { Filter, TableMeta } from '../../common/api';
 import { validateInteger } from '../paginator/page-index.validator';
 import { PaginatorComponent } from '../paginator/paginator.component';
 
-export interface InitDataParams {
+export interface TableStateParams {
     page?: number;
     pageSize?: number;
     filters?: Filter[];
@@ -25,15 +25,17 @@ export interface InitDataParams {
  * 
  * A consequence of this is that now pages containing DatatableComponent are
  * shareable, as long as the other user has access to the table.
+ * 
+ * Note that `DatatableComponent.saveState` must be `true` in order for this to
  */
-export class InitData implements InitDataParams {
+export class TableState implements TableStateParams {
     /** Page number (1-indexed) */
     public readonly page?: number;
     public readonly pageSize?: number;
     public readonly filters?: Filter[];
     public readonly sort?: Sort;
 
-    public constructor(params: InitDataParams) {
+    public constructor(params: TableStateParams) {
         this.page = params.page;
         this.pageSize = params.pageSize;
         this.filters = params.filters;
@@ -41,11 +43,18 @@ export class InitData implements InitDataParams {
     }
 
     /**
-     * Creates a new InitData with any aspect of data that doesn't match up with
-     * the provided TableMeta, page size options, or filter operations unset.
+     * Creates a new TableState with any aspect of data that doesn't match up
+     * with the provided TableMeta, page size options, or filter operations unset.
      */
-    public validateAgainst(meta: TableMeta, pageSizeOptions: number[], ops: FilterOperation[]): InitData {
-        const validated: InitDataParams = {};
+    public validateAgainst(opts: {
+        meta: TableMeta,
+        pageSizeOptions: number[],
+        ops: FilterOperation[],
+        defaults: TableStateParams
+    }): TableState {
+        const { meta, pageSizeOptions, ops, defaults } = opts;
+
+        const validated: TableStateParams = {};
         if (this.pageSize && pageSizeOptions.includes(this.pageSize))
             validated.pageSize = this.pageSize;
         
@@ -66,7 +75,13 @@ export class InitData implements InitDataParams {
             validated.sort = this.sort;
         }
 
-        return new InitData(validated);
+        // Apply defaults if necessary
+        for (const key of Object.keys(defaults)) {
+            if (validated[key] === undefined)
+                validated[key] = defaults[key];
+        }
+
+        return new TableState(validated);
     }
 
     /**
@@ -107,10 +122,10 @@ export class InitData implements InitDataParams {
      * shape of the data, not its actual contents. Use `validateAgainst` for
      * complete validation.
      */
-    public static fromQuery(query: ParamMap): InitData {
+    public static fromQuery(query: ParamMap): TableState {
         // Prefer a ParamMap over a Params object because it's safer if the user
         // happens to specify two values for the same key in the query
-        const initData: InitDataParams = {};
+        const initData: TableStateParams = {};
         if (query.has('pageSize')) {
             const pageSize = Number(query.get('pageSize'));
             if (!isNaN(pageSize))
@@ -122,7 +137,7 @@ export class InitData implements InitDataParams {
                 initData.page = page;
         }
         if (query.has('filters')) {
-            const filters = InitData.parseFilters(query.get('filters')!!);
+            const filters = TableState.parseFilters(query.get('filters')!!);
             if (filters.length > 0)
                 initData.filters = filters;
         }
@@ -135,7 +150,7 @@ export class InitData implements InitDataParams {
             initData.sort = sort;
         }
 
-        return new InitData(initData);
+        return new TableState(initData);
     }
 
     private static parseFilters(json: string): Filter[] {

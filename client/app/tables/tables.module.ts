@@ -11,6 +11,8 @@ import { CoreModule } from '../core/core.module';
 import { DynamicFormsModule } from '../dynamic-forms/dynamic-forms.module';
 import { ApiDataSource } from './api-data-source/api-data-source';
 import { DatatableComponent } from './datatable/datatable.component';
+import { NoopTableStateStorage } from './datatable/noop-table-state-storage';
+import { QueryTableStateStorage } from './datatable/query-table-state-storage';
 import { FilterManagerComponent } from './filter-manager/filter-manager.component';
 import { FilterProviderService } from './filter-provider/filter-provider.service';
 import { FilterComponent } from './filter/filter.component';
@@ -53,7 +55,9 @@ import { TableRoutingModule } from './table-routing.module';
     providers: [
         ApiDataSource,
         FilterProviderService,
-        LayoutHelper
+        LayoutHelper,
+        QueryTableStateStorage,
+        NoopTableStateStorage
     ]
 })
 export class TablesModule {}
