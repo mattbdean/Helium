@@ -32,7 +32,8 @@ export class MockApiService implements BaseApiService {
     private readonly data: DataDef[];
 
     public constructor() {
-        const result = TABLES.map(MockApiService.compileTableDef);
+        const ids = TABLES.map((t) => ({ schema: t.schema, name: t.name }));
+        const result = TABLES.map((def) => MockApiService.compileTableDef(def, ids));
         this.metas = result.map((r) => r.meta);
         this.data = result.map((r) => r.data);
     }
@@ -84,7 +85,7 @@ export class MockApiService implements BaseApiService {
                 }
 
                 const start = (page - 1) * limit;
-                if (start >= applicableData.length) {
+                if (start >= applicableData.length && totalRows !== 0) {
                     throw new Error('Page too high');
                 }
 
@@ -205,7 +206,7 @@ export class MockApiService implements BaseApiService {
      * Turns a TableDef into a TableMeta and data, what consumers of this
      * service expect.
      */
-    private static compileTableDef(def: TableDef): { data: DataDef, meta: TableMeta } {
+    private static compileTableDef(def: TableDef, names: TableId[]): { data: DataDef, meta: TableMeta } {
         const headers: TableHeader[] = [];
         const constraints: CompoundConstraint[] = [];
 
@@ -246,14 +247,19 @@ export class MockApiService implements BaseApiService {
             headers.push(MockApiService.tableHeader(field, ordinalPosition++, def.name));
         }
 
+        const parts = names
+            .filter((id) =>
+                id.schema === def.schema && id.name.startsWith(def.name + '__'))
+            .map((id) => new TableName(id.schema, id.name));
+
         const meta: TableMeta = {
             schema: def.schema,
             name: def.name,
             headers,
             constraints,
-            totalRows: def.totalRows,
+            totalRows: def.totalRows || 0,
             comment: def.comment ? def.comment : '',
-            parts: []
+            parts
         };
 
         const fields = _(def.fields)
@@ -261,8 +267,12 @@ export class MockApiService implements BaseApiService {
             .sortBy()
             .value();
 
-        const rows: SqlRow[] = _.range(def.totalRows).map((index) => {
-            const row = def.createRow(index);
+        if (def.totalRows && !def.createRow) {
+            throw new Error('totalRows was provided, but createRow was not');
+        }
+
+        const rows: SqlRow[] = !def.totalRows ? [] : _.range(def.totalRows).map((index) => {
+            const row = def.createRow!(index);
             const props = _.sortBy(Object.keys(row));
             if (!_.isEqual(props, fields)) {
                 throw new Error(`Row at index ${index} did not specify exactly the fields allowed`);
@@ -323,18 +333,21 @@ export class MockApiService implements BaseApiService {
     }
 }
 
-interface TableDef {
+interface TableId {
     schema: string;
     name: string;
+}
+
+interface TableDef extends TableId {
     fields: FieldDef[];
-    totalRows: number;
+    totalRows?: number;
     comment?: string;
 
     /**
      * Generate row `n` this table. Does not have to produce the same result on
      * subsequent calls with the same value for `index`.
      */
-    createRow: (index: number) => SqlRow;
+    createRow?: (index: number) => SqlRow;
 }
 
 interface FieldDef {
@@ -434,5 +447,29 @@ const TABLES: TableDef[] = [
             purchased_by: Math.floor(Math.random() * numCustomers),
             purchased_by_ip_addr: faker.internet.ipv6()
         })
+    },
+    {
+        schema: mockSchema,
+        name: 'master',
+        fields: [
+            idCol
+        ],
+        totalRows: 0,
+    },
+    {
+        schema: mockSchema,
+        name: 'master__part_a',
+        fields: [
+            idCol,
+            { name: 'reference_to_master', type: 'integer', fk: { table: 'master', col: 'id' } }
+        ]
+    },
+    {
+        schema: mockSchema,
+        name: 'master__part_b',
+        fields: [
+            idCol,
+            { name: 'reference_to_master', type: 'integer', fk: { table: 'master', col: 'id' } }
+        ]
     }
 ];

@@ -12,6 +12,7 @@
     "e2e": "yarn build --progress=false && concurrently --raw --kill-others --success first \"node dist\" \"sleep 1 && yarn e2e:prepped\"",
     "e2e:debug": "yarn build && concurrently --raw --kill-others \"node dist\" \"sleep 1 && yarn e2e:prepped -- -ee\"",
     "e2e:prepped": "ng e2e",
+    "preview": "ng serve -c preview --optimization false",
     "prod": "gulp build && ng build --prod && node dist",
     "test": "yarn test:server && yarn test:client && yarn e2e && ng build --prod",
     "test:server": "gulp testPrep && TS_NODE_PROJECT=server/tsconfig.json nyc mocha --opts server/test/mocha.opts",
