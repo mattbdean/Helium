@@ -256,7 +256,7 @@ export function schemasRouter(env: NodeEnv, db: DatabaseHelper, daoFactory: DaoF
      */
     const createErrorResponse = (message: string, err: any): ErrorResponse => {
         // Generic JSON response
-        const data: ErrorResponse = { message: 'Unable to execute request' };
+        const data: ErrorResponse = { message };
 
         // Show error information when not in production
         if (env.state !== 'prod') {

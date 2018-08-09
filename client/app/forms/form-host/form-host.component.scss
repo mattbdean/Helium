@@ -1,38 +1,23 @@
-.unsubmittable-message {
-  text-align: center;
-  color: #c62828;
-  margin: 0;
-}
+$card-width: 500px;
 
-.centered-horizontally {
+:host {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-$container-width: 500px;
-
-.form-container {
-  width: $container-width;
+// Ensure all direct children are centered and responsive
+:host > * {
+  width: 100%;
+  max-width: $card-width;
 }
 
 .partial-form-container {
-  $padding: 15px;
-  padding-top: $padding;
-  padding-bottom: $padding;
+  padding: 15px 0;
 }
 
-@media all and (max-width: $container-width + 100px) {
-  .form-container {
-    width: 80vw;
-  }
+.unsubmittable-message {
+  text-align: center;
+  color: #c62828;
+  margin: 0;
 }
-
-::ng-deep .mat-form-field {
-  width: 100%;
-}
-
-::ng-deep .mat-select {
-  width: 100%;
-}
-

@@ -1,310 +1,196 @@
-import { animate, style, transition, trigger } from '@angular/animations';
-import {
-    Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
-} from '@angular/core';
-import { FormArray, FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { MatDialog } from '@angular/material';
-import * as _ from 'lodash';
-import { BehaviorSubject, Observable, Subscription, zip } from 'rxjs';
-import { debounceTime, map } from 'rxjs/operators';
-import { Constraint, SqlRow, TableMeta } from '../../common/api';
+import { AfterViewInit, Component, Input, OnChanges, QueryList, ViewChildren } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { combineLatest, Observable, zip } from 'rxjs';
+import { distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { SqlRow, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
-import { flattenCompoundConstraints } from '../../common/util';
-import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
-import { FormSpecGeneratorService } from '../../dynamic-forms/form-spec-generator/form-spec-generator.service';
-import { RowPickerDialogComponent, RowPickerParams } from '../row-picker-dialog/row-picker-dialog.component';
-
-interface Binding {
-    controlName: string;
-    valueChanges: Observable<any>;
-    subscriptions: Subscription[];
-    lastValue: any;
-}
+import { FormEntryComponent, FormEntrySnapshot } from '../form-entry/form-entry.component';
 
 /**
- * A "partial" form handles data entry for exactly one table. Each instance
- * handles zero or more entries to that table. Upon receiving `rootGroup`, a
- * FormArray is added to that group whose key is the raw name of the table.
- *
- * If this form is for a part table, it is possible that one or more of the
- * controls in each FormGroup in the FormArray can be "bound" to another
- * control. When this happens, the control will be disabled and will
- * automatically update to the value of the control in the master table that
- * it's bound to. Bound controls are hidden from the user.
- *
- * @see FormSpecGeneratorService.bindingConstraints
+ * A partial form handles zero or more form entries for a particular table. A
+ * partial form has two distinct modes of operation, or "roles." The role of
+ * 'master' will allow exactly one form entry. The role of 'part' allows zero
+ * or more entries.
  */
 @Component({
     selector: 'partial-form',
     templateUrl: 'partial-form.component.html',
-    styleUrls: ['partial-form.component.scss'],
-    animations: [
-        trigger('fade', [
-            transition(':enter', [
-                style({ height: 0, opacity: 0 }),
-                animate('0.5s ease-out', style({ height: '*', opacity: 1 }))
-            ]),
-            transition(':leave', [
-                style({ height: '*', opacity: 1 }),
-                animate('0.5s ease-out', style({ height: 0, opacity: 0 }))
-            ])
-        ])
-    ]
+    styleUrls: ['partial-form.component.scss']
 })
-export class PartialFormComponent implements OnChanges, OnInit, OnDestroy {
-    /** The table whose data we are creating a form for */
-    public get meta(): TableMeta { return this.meta$.getValue()!!; }
+export class PartialFormComponent implements OnChanges, AfterViewInit {
+    @Input()
+    public meta: TableMeta;
 
-    /** The FormGroup from which all other controls are added */
-    public get rootGroup(): FormGroup { return this.rootGroup$.getValue()!!; }
-
-    public name$: Observable<TableName>;
-
-    @Input('meta')
-    public metaPropertyBinding: TableName;
-    private meta$ = new BehaviorSubject<TableMeta | null>(null);
-
-    @Input('rootGroup')
-    public rootGroupPropertyBinding: FormGroup;
-    private rootGroup$ = new BehaviorSubject<FormGroup | null>(null);
+    /**
+     * Determines how this component should handle adding and removing entries.
+     * Master tables have exactly one entry that cannot be removed. Part tables
+     * start with zero entries but can have (in theory) infinite.
+     */
+    @Input()
+    public role: 'master' | 'part' = 'master';
 
     @Input()
-    public role: 'master' | 'part';
+    public initialData: SqlRow[] = [];
 
-    @Input()
-    public prefilled: SqlRow[] = [];
+    /** Emits true when the form is now valid and false for the opposite. */
+    public validityChange: Observable<boolean>;
 
-    public formSpec: FormControlSpec[];
+    @ViewChildren(FormEntryComponent)
+    public formEntries: QueryList<FormEntryComponent>;
 
-    private sub: Subscription;
-    public formArray: FormArray;
+    /** IDs for the form snapshots. `ids[i]` corresponds to `state[i]`. */
+    public ids: string[] = [];
 
-    /** A list of all bound controls for this form */
-    private bindings: Binding[] = [];
+    /**
+     * The latest snapshots from the form entries. A null value represents an
+     * entry that has yet to report its first snapshot.
+     */
+    public state: Array<FormEntrySnapshot | null> = [];
 
-    private lastValueWatchers: { [controlName: string]: Subscription } = {};
+    /** True if all form entries this component handles report as valid. */
+    public get valid() {
+        return this.state.find((s) => s === null || !s.valid) !== undefined;
+    }
 
-    public constructor(
-        private formSpecGenerator: FormSpecGeneratorService,
-        private fb: FormBuilder,
-        private dialog: MatDialog
-    ) {}
+    /** The current value of this partial form */
+    public get value(): SqlRow[] {
+        return this.state.map((s) => s === null ? {} : s.value);
+    }
 
-    public ngOnInit() {
-        const spec$ = this.meta$.pipe(map((meta) =>
-            this.formSpecGenerator.generate(meta!!, (colName) => this.onRequestRowPicker(colName))));
+    /** The name of the table as it would be presented in DataJoint */
+    public get cleanName() {
+        return this.meta ? new TableName('(unused)', this.meta.name).name.clean : '';
+    }
 
-        this.name$ = this.meta$.pipe(map((m) => new TableName('(unused)', m!!.name)));
+    public ngOnChanges() {
 
-        // Combine the latest output from the FormControlSpec array generated
-        // from the table name/meta and the rootGroup
-        this.sub = zip(
-            this.meta$,
-            this.rootGroup$,
-            spec$,
-        ).pipe(
-            // This is required since altering the FormGroup in the subscribe()
-            // causes its "valid" property to change while Angular is still
-            // running change detection, resulting in an error in dev mode.
-            debounceTime(0)
-        ).subscribe((data: [TableMeta, FormGroup, FormControlSpec[]]) => {
-            const [tableMeta, rootFormGroup, formSpec] = data;
-            this.formSpec = formSpec;
-            const name = new TableName('(unused)', tableMeta.name);
+        // Changes have been made after the view has been initialized, it's okay
+        // to call this method here
+        if (this.formEntries !== undefined) {
+            this.propagateInitialForm();
 
-            // Master tables start off with one entry
-            const prefilled: Array<SqlRow | null> =
-                this.role === 'master' && this.prefilled.length === 0 ?
-                    [null] : this.prefilled;
+            // Change to the TableMeta, role, or prefilled data. Either way, we're
+            // going to have to fully reset.
+            this.reset();
+        }
 
-            const initialControls = prefilled.map((p) =>
-                this.createItem(this.formSpec, p));
-
-            this.formArray = this.fb.array(initialControls);
-            rootFormGroup.addControl(name.name.raw, this.formArray);
-
-            const masterRawName = name.masterName ? name.masterName.raw : null;
-            const bindings = this.formSpecGenerator.bindingConstraints(masterRawName, tableMeta);
-            // If we have binding constraints, this is guaranteed to be a
-            // part table
-            if (bindings.length > 0) {
-                // The FormGroup for the master table is created first
-                const masterFormArray =
-                    rootFormGroup.controls[name.masterName!!.raw] as FormArray;
-
-                // The master table form array only contains one entry
-                const masterGroup = masterFormArray.at(0) as FormGroup;
-
-                for (const binding of bindings) {
-                    // Make a note of what local control should be bound to
-                    // what Observable
-                    const b = {
-                        controlName: binding.localColumn,
-                        valueChanges: masterGroup.controls[binding.ref!!.column].valueChanges,
-                        subscriptions: [],
-                        lastValue: ''
-                    };
-                    this.bindings.push(b);
-
-                    // Subscribe to the observable so we know what value to
-                    // give a newly created bound form control
-                    this.lastValueWatchers[binding.localColumn] =
-                        b.valueChanges.subscribe((value) => {
-                            b.lastValue = value;
-                        });
-                }
+        // Master tables have exactly 1 entry
+        if (this.role === 'part') {
+            // Part table. Add FormEntry for every prefilled entry we have
+            // tslint:disable-next-line:prefer-for-of
+            for (let i = 0; i < this.initialData.length; i++) {
+                this.addEntry();
             }
-        });
+        } else {
+            this.addEntry();
+        }
     }
 
-    public ngOnChanges(changes: SimpleChanges): void {
-        // Changes to the root group occur when the user switches master table
-        // forms
-        if (changes.rootGroupPropertyBinding)
-            this.rootGroup$.next(changes.rootGroupPropertyBinding.currentValue);
-        if (changes.metaPropertyBinding)
-            this.meta$.next(changes.metaPropertyBinding.currentValue);
+    public ngAfterViewInit() {
+        // Call this here so that we can be sure the QueryList is defined
+        this.propagateInitialForm();
+
+        const formEntryChanges$ = this.formEntries.changes.pipe(
+            startWith(this.formEntries)
+        );
+
+        this.validityChange = formEntryChanges$.pipe(
+            switchMap((ql: QueryList<FormEntryComponent>) => {
+                return combineLatest(...ql.toArray().map((f) =>
+                    f.group.statusChanges.pipe(
+                        startWith(f.group.status)
+                    )));
+            }),
+            map((validities: Array<'VALID' | 'INVALID' | 'PENDING' | 'DISABLED'>) => {
+                return validities.find((v) => v !== 'VALID') === undefined;
+            }),
+            distinctUntilChanged(),
+            // A form is initially valid if it's a part table because 0 entries
+            // by default means nothing to validate
+            startWith(this.role === 'part')
+        );
     }
 
-    public ngOnDestroy() {
-        this.sub.unsubscribe();
-
-        for (const controlName of Object.keys(this.lastValueWatchers))
-            this.lastValueWatchers[controlName].unsubscribe();
-
-        for (const binding of this.bindings)
-            for (const sub of binding.subscriptions)
-                sub.unsubscribe();
+    public handleEntryChange(index: number, event: FormEntrySnapshot) {
+        this.state[index] = event;
     }
 
     public addEntry() {
-        this.formArray.push(this.createItem(this.formSpec, null));
+        this.ids.push(Math.random().toString(36));
+        this.state.push(null);
     }
 
-    public removeEntry(index) {
-        if (index >= this.formArray.length)
-            throw new Error(`Tried to remove control at index ${index}, but ` +
-                `length was ${this.formArray.length}`);
-
-        // Make sure to unsubscribe to any bindings before removing the control.
-        // For every binding, remove the subscription at the given index.
-        for (const binding of this.bindings) {
-            // Unsubscribe and remove the Subscription from the array
-            binding.subscriptions[index].unsubscribe();
-            binding.subscriptions.slice(index, 1);
-        }
-
-        this.formArray.removeAt(index);
+    public removeEntry(index: number) {
+        this.ids.splice(index, 1);
+        this.state.splice(index, 1);
     }
 
-    public reset() {
-        // Remove extra part table entries
-        if (this.role === 'part') {
-            for (let i = this.formArray.length; i >= 0; i--) {
-                this.formArray.removeAt(i);
-            }
-        }
-    }
-
-    public shouldBeHidden(formControlName: string) {
-        const binding = _.find(this.bindings, (b) => b.controlName === formControlName);
-        return binding !== undefined;
-    }
-
-    public onRequestRowPicker(colName: string) {
-        const constraints = flattenCompoundConstraints(this.meta.constraints);
-        const foreignKeys = constraints
-            .filter((c) => c.type === 'foreign');
-        const primaryKeys = constraints
-            .filter((c) => c.type === 'primary');
-        
-        // Try to find the foreign key associated with the given column 
-        const foreignKey = foreignKeys.find((c: Constraint) => c.localColumn === colName);
-        
-        if (foreignKey === undefined)
-            throw new Error(`Cannot show row picker for column ${colName}: not a foreign key`);
-
-        const ref = foreignKey.ref!!;
-
-        // Open the dialog to let the user pick a row
-        const params: RowPickerParams = {
-            tableName: ref.table,
-            schemaName: ref.schema
-        };
-        const dialogRef = this.dialog.open(RowPickerDialogComponent, {
-            data: params
-        });
-
-        const unused = primaryKeys.slice(0);
-
-        dialogRef.afterClosed().subscribe((data: SqlRow | undefined) => {
-            // The user closed the dialog before selecting a row
-            if (data === undefined)
-                return;
-
-            const patch: { [col: string]: any } = {};
-
-            for (const referencedColumn of Object.keys(data)) {
-                const index = unused.findIndex((c) => c.localColumn === referencedColumn);
-
-                // Not a primary key, ignore
-                if (index < 0)
-                    continue;
+    public get(columnName: string, entryIndex: number): Observable<FormControl> {
+        return this.getAll(columnName).pipe(
+            map((formControls: FormControl[]) => {
+                const control = formControls[entryIndex];
+                if (control === undefined)
+                    throw new Error('Invalid entry index: ' + entryIndex);
                 
-                const key = unused.splice(index, 1)[0];
+                return control;
+            })
+        );
+    }
 
-                this.formArray.at(0);
-                patch[key.localColumn] = data[referencedColumn];
-            }
-            const group: FormGroup = this.formArray.at(0) as FormGroup;
+    public getAll(columnName: string): Observable<FormControl[]> {
+        return this.formEntries.changes.pipe(
+            startWith(this.formEntries),
+            map((ql: QueryList<FormEntryComponent>) => {
+                const formEntries = ql.toArray();
 
-            group.patchValue(patch);
-        });
+                const controls: FormControl[] = [];
+                for (const formEntry of formEntries) {
+                    const control = formEntry.group.get(columnName);
+
+                    if (control === null)
+                        throw new Error(`No such column: "${columnName}"`);
+
+                    controls.push(control as FormControl);
+                }
+                
+                return controls;
+            })
+        );
     }
 
     /**
-     * Creates a new FormGroup according to the given FormControlSpecs. This
-     * function automatically takes care of binding the appropriate controls.
+     * Resets the form to its original state, as if the user was navigating to
+     * the form for the first time. If role is 'part', then all entries will be
+     * cleared. If role is 'master', the FormEntryComponent will simply be
+     * cleared.
      */
-    private createItem(formSpec: FormControlSpec[], initialData: SqlRow | null): FormGroup {
-        const names = _.map(formSpec, (spec) => spec.formControlName);
-        return this.fb.group(_.zipObject(
-            names,
-            _.map(formSpec, (spec, index) => {
-                const controlName = names[index];
+    public reset() {
+        if (this.role === 'part') {
+            this.state = [];
+            this.ids = [];
+        } else {
+            this.formEntries.toArray()[0].group.reset();
+        }
+    }
 
-                // Look for a binding for the current form control name
-                const binding = _(this.bindings).find((b) => b.controlName === controlName);
+    private propagateInitialForm() {
+        if (this.role === 'master' && this.initialData.length > 1)
+            throw new Error('Master tables can have at most one prefilled ' +
+                'entry, was given ' + this.initialData.length);
+        else if (this.role === 'part' && this.initialData.length !== this.formEntries.length)
+            throw new Error(`Expecting ${this.initialData.length} entries, ` +
+                `got ${this.formEntries.length}`);
+        
+        const entries = this.formEntries.toArray();
 
-                // Fall back to the spec's initial value if there is no binding
-                // for this particular control
-                // const initialValue = binding ? binding.lastValue : spec.defaultValue;
-
-                let initialValue = spec.defaultValue;
-                if (binding)
-                    initialValue = binding.lastValue;
-                if (initialData !== null && !_.isNil(initialData[controlName]))
-                    initialValue = initialData[controlName];
-
-                // Create the actual form control. Bound controls are always
-                // disabled.
-                const conf = {
-                    value: initialValue,
-                    disabled: !!spec.disabled || binding !== undefined
-                };
-                const control = this.fb.control(conf, spec.validation);
-
-                if (binding !== undefined) {
-                    // Do the actual "binding" -- whenever we get a new value
-                    // from the master table's FormControl, update the bound
-                    // control's value.
-                    binding.subscriptions.push(binding.valueChanges.subscribe((value) => {
-                        control.setValue(value);
-                    }));
-                }
-
-                return control;
-            })
-        ));
+        // Wait until next event loop cycle for change detection purposes
+        setTimeout(() => {
+            // Use initialData.length as upper bound because it will always be
+            // equal to or less than the number of prefilled entries in case of
+            // a master table role
+            for (let i = 0; i < this.initialData.length; i++) {
+                entries[i].patchValue(this.initialData[i]);
+            }
+        }, 0);
     }
 }

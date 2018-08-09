@@ -1,0 +1,5 @@
+<div class="entry-container">
+    <div *ngFor="let spec of formSpecs">
+        <ng-template dynamicFormControl [group]="group" [control]="spec"></ng-template>
+    </div>
+</div>

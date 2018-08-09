@@ -5,14 +5,13 @@ import * as moment from 'moment';
 import { Observable } from 'rxjs';
 import { flattenCompoundConstraints } from '../../../../common/util';
 import {
-    CompoundConstraint, Constraint, DefaultValue, TableHeader, TableMeta
+    DefaultValue, TableHeader, TableMeta
 } from '../../common/api';
 import {
     CURRENT_TIMESTAMP,
     DATE_FORMAT,
     DATETIME_FORMAT
 } from '../../common/constants';
-import { TableName } from '../../common/table-name';
 import { ApiService } from '../../core/api/api.service';
 import { DatetimeInputComponent } from '../../core/datetime-input/datetime-input.component';
 import { validateInteger } from '../../tables/paginator/page-index.validator';
@@ -132,48 +131,6 @@ export class FormSpecGeneratorService {
             // { a: 1 }.
             return pickBy(spec, (value) => value !== undefined) as FormControlSpec;
         });
-    }
-
-    /**
-     * Since entries to part tables have to be inserted at the same time as
-     * the master table they reference, foreign keys have to match exactly the
-     * value of the primary key of the master column, creating a "binding."
-     * Consider this situation:
-     *
-     * CREATE TABLE master(
-     *   pk INTEGER PRIMARY KEY
-     * )
-     *
-     * CREATE TABLE master__part(
-     *   fk_master INTEGER,
-     *   fk_other INTEGER,
-     *   FOREIGN KEY (fk_master) REFERENCES master(pk)
-     *   FOREIGN KEY (fk_other) REFERENCES foo(bar)
-     * )
-     *
-     * In this example, master__part.fk_master is a binding constraint, while
-     * master__part.fk_other is not.
-     *
-     * @param {string} masterRawName The SQL name of the master table's name. If
-     *                               null, an empty array will be returned
-     *                               (signifying this table is a master table).
-     * @param {TableMeta} tableMeta The metadata for the part table
-     * @returns {Constraint[]} An array of binding constraints in this master/
-     *                         part relationship.
-     */
-    public bindingConstraints(masterRawName: string | null, tableMeta: TableMeta): Constraint[] {
-        if (masterRawName === null)
-            // The given TableMeta is for a master table, nothing to do
-            return [];
-
-        const tableName = new TableName(tableMeta.schema, tableMeta.name);
-        if (tableName.masterName!!.raw !== masterRawName)
-            throw new Error(`Given TableMeta was not a part table of ` +
-                `${masterRawName}, but actually for ${tableName.masterName!!.raw}`);
-
-        const flattenedConstraints = flattenCompoundConstraints(tableMeta.constraints);
-
-        return flattenedConstraints.filter((c) => c.ref !== null && c.ref.table === masterRawName);
     }
 
     /**

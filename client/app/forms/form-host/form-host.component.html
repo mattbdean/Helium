@@ -1,19 +1,15 @@
-<p class="unsubmittable-message" *ngIf="unsubmittableForm">This form is unsubmittable due to a non-null blob column.</p>
+<p *ngIf="!(submittable$ | async)" class="unsubmittable-message">This form is unsubmittable due to a required blob column.</p>
 
-<form class="centered-horizontally" novalidate [formGroup]="formGroup" (ngSubmit)="onSubmit($event)">
-    <div class="form-container">
+<div *ngFor="let partTableData of (data$ | async); index as i" class="partial-form-container">
+    <partial-form
+        [meta]="partTableData.meta"
+        [role]="i === 0 ? 'master' : 'part'"
+        [initialData]="partTableData.initialForm"
+    ></partial-form>
+</div>
 
-        <div class="partial-form-container" *ngFor="let meta of metaInUse">
-            <partial-form
-                #partialForms
-                [rootGroup]="formGroup"
-                [meta]="meta"
-                [role]="getRole(meta)"
-                [prefilled]="prefilled[meta.name] ? prefilled[meta.name] : []"></partial-form>
-        </div>
+<div class="submit-button-wrapper">
+    <button mat-raised-button color="primary" type="submit" (click)="handleSubmit()" [disabled]="!(validityChange | async)">SUBMIT</button>
+</div>
 
-        <button mat-raised-button color="primary" type="submit" (ngSubmit)="onSubmit($event)" [disabled]="formGroup.invalid">SUBMIT</button>
-
-        <p *ngIf="preview" class="preview-mode-msg">Note: Data created in preview mode won't be available after a refresh.</p>
-    </div>
-</form>
+<p *ngIf="preview" class="preview-mode-msg">Note: Data created in preview mode won't be available after a refresh.</p>

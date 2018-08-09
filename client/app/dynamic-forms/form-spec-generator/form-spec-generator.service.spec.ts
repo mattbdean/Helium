@@ -84,8 +84,8 @@ describe('FormSpecGeneratorService', () => {
 
     beforeEach(() => {
         // Mock this if necessary
-        const ApiService: ApiService = {} as ApiService;
-        generator = new FormSpecGeneratorService(ApiService);
+        const apiService: ApiService = {} as ApiService;
+        generator = new FormSpecGeneratorService(apiService);
     });
 
     const generateSingle = (header: TableHeader) => {
@@ -225,82 +225,6 @@ describe('FormSpecGeneratorService', () => {
             expect(formSpecNonNull.type).to.equal('text');
             expect(formSpecNonNull.defaultValue).to.be.null;
             expect(formSpecNonNull.disabled).to.be.true;
-        });
-    });
-
-    describe('bindingConstraints', () => {
-        it('should throw an error if the given part tables aren\'t actually ' + '' +
-            'part tables of the master', () => {
-            const mockMeta = { name: 'bar__part' } as TableMeta;
-            expect(() => { generator.bindingConstraints('foo', mockMeta ); }).to.throw(Error);
-        });
-
-        it('should pick out FK constraints', () => {
-            const schema = 'schema';
-            const mockMeta = {
-                name: 'master__part',
-                constraints: [
-                    // throw in two FK constraints that reference master
-                    {
-                        name: 'master__part_ibfk_1',
-                        type: 'foreign',
-                        constraints: [{
-                            ref: {
-                                schema,
-                                column: 'part_fk1',
-                                table: 'master'
-                            },
-                            localColumn: 'part_fk1',
-                            type: 'foreign'
-                        }]
-                    },
-                    {
-                        name: 'master__part_ibfk_2',
-                        type: 'foreign',
-                        constraints: [{
-                            localColumn: 'part_fk2',
-                            ref: {
-                                schema,
-                                table: 'master',
-                                column: 'master_pk2'
-                            },
-                            type: 'foreign'
-                        }]
-                    },
-                    // should not be included since it's a unique constraint and
-                    // not a FK constraint
-                    {
-                        name: 'part_unique',
-                        type: 'unique',
-                        constraints: [{
-                            localColumn: 'part_unique',
-                            type: 'unique',
-                            ref: null
-                        }]
-                    },
-                    // should not be included since it's a FK that references a
-                    // table that isn't the master table
-                    {
-                        name: 'master__part_ibfk3',
-                        type: 'foreign',
-                        constraints: [{
-                            localColumn: 'part_fk3',
-                            ref: {
-                                schema,
-                                table: 'not_master',
-                                column: 'foo'
-                            },
-                            type: 'foreign'
-                        }]
-                    }
-                ]
-            } as TableMeta;
-
-            const expected = flattenCompoundConstraints(mockMeta.constraints)
-                .filter((c) => c.type === 'foreign' && c.ref !== null && c.ref.table === 'master');
-
-            expect(generator.bindingConstraints('master', mockMeta)).to.deep
-                .equal(expected);
         });
     });
 });

@@ -100,6 +100,7 @@ CREATE TABLE master(pk INTEGER PRIMARY KEY);
 CREATE TABLE master__part(
     part_pk INTEGER PRIMARY KEY,
     master INTEGER,
+    default_test INTEGER DEFAULT 12345,
     FOREIGN KEY (master) REFERENCES master(pk)
 );
 CREATE TABLE master__part2(

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import * as Fuse from 'fuse.js';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { debounceTime, map, startWith } from 'rxjs/operators';
@@ -24,7 +25,7 @@ interface AutocompleteOption { value: string; }
                        [required]="spec.required">
                 <mat-icon class="row-picker-button"
                     matSuffix
-                    *ngIf="spec.onRequestRowPicker"
+                    *ngIf="spec.onRequestRowPicker && !group.get(spec.formControlName)?.disabled"
                     (click)="onRequestRowPicker($event)">search</mat-icon>
                 <mat-error *ngIf="currentError() !== null">{{ currentError() }}</mat-error>
             </mat-form-field>

@@ -1,34 +1,31 @@
-<mat-card>
-    <h1 class="form-title">{{ (name$ | async).name.clean }}</h1>
+<mat-card class="partial-form-wrapper" *ngIf="meta">
+    <h1 class="form-title">{{ cleanName }}</h1>
+    <div *ngFor="let entryId of ids; index as i" class="form-entry-container">
+        <form-entry
+            [for]="meta"
+            (entryUpdated)="handleEntryChange(i, $event)"
+            (removalRequested)="removeEntry(i)"
+        ></form-entry>
 
-    <div class="form-content">
-        <div class="entry-container" [@fade] *ngFor="let group of formArray?.controls; let i = index">
-            <div class="form-controls-container">
-                <div [ngClass]="{ 'control-container': true, gone: shouldBeHidden(spec.formControlName) }" *ngFor="let spec of formSpec">
-                    <ng-template dynamicFormControl [group]="group" [control]="spec"></ng-template>
-                </div>
-            </div>
-
-            <div class="remove-button-wrapper" *ngIf="role === 'part'">
-                <button *ngIf="role === 'part'"
-                        mat-icon-button
-                        type="button"
-                        tabindex="-1"
-                        title="Remove this entry"
-                        (click)="removeEntry(i)">
-                    <mat-icon>remove_circle</mat-icon>
-                </button>
-            </div>
-        </div>
-
-        <div class="add-button-wrapper" *ngIf="role === 'part'">
-            <button *ngIf="role === 'part'"
-                    mat-icon-button
-                    type="button"
-                    title="Add another entry"
-                    (click)="addEntry()">
-                <mat-icon color="primary">add_circle</mat-icon>
-            </button>
-        </div>
+        <button
+            *ngIf="role === 'part'"
+            (click)="removeEntry(i)"
+            mat-icon-button
+            tabindex="-1"
+            title="Remove this entry"
+        >
+            <mat-icon>remove_circle</mat-icon>
+        </button>
     </div>
+
+    <button
+        *ngIf="role === 'part'"
+        class="add-entry-button"
+        mat-icon-button
+        (click)="addEntry()"
+        tabindex="-1"
+        title="Add another entry"
+    >
+        <mat-icon color="primary">add_circle</mat-icon>
+    </button>
 </mat-card>
