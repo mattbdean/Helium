@@ -21,10 +21,10 @@ import { FilterProviderService } from '../filter-provider/filter-provider.servic
 import { LayoutHelper } from '../layout-helper/layout-helper';
 import { PaginatorComponent } from '../paginator/paginator.component';
 import { SortIndicatorComponent } from '../sort-indicator/sort-indicator.component';
+import { NoopTableStateStorage } from './noop-table-state-storage';
 import { QueryTableStateStorage } from './query-table-state-storage';
 import { TableState, TableStateParams } from './table-state';
 import { TableStateStorage } from './table-state-storage';
-import { NoopTableStateStorage } from './noop-table-state-storage';
 
 /**
  * This component is responsible for showing tabular data to the user.
@@ -205,7 +205,6 @@ export class DatatableComponent implements OnInit, AfterViewInit, OnDestroy {
             first(),
             map(TableState.fromQuery)
         );
-        // const initData$ = this.stateStorage.initialData;
 
         this.nameSub = this.name$.pipe(
             filter((n) => n !== null),
@@ -215,10 +214,13 @@ export class DatatableComponent implements OnInit, AfterViewInit, OnDestroy {
                 catchError((err: HttpErrorResponse) => {
                     this.loading = false;
                     this.currentError = err.status === 404 ? 'Table not found' : err.error.error.message;
-                    return NEVER;
+                    // Use an empty observable to stop here. There's probably a
+                    // better way to do this that involves setting loading and
+                    // currentError in the subscribe callback
+                    return of();
                 }))
             ),
-            switchMap((meta): Observable<[TableMeta, TableState]> => {
+            switchMap((meta: TableMeta): Observable<[TableMeta, TableState]> => {
                 // Include the initialization data only on initialization (duh)
                 const result = zip(of(meta), this.initialStateLoaded ? of(new TableState({})) : initData$);
                 if (!this.initialStateLoaded)
