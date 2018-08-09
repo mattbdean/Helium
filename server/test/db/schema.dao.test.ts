@@ -661,8 +661,8 @@ describe('SchemaDao', () => {
                     pk: masterPk
                 }],
                 master__part: [
-                    { part_pk: randInt(), master: masterPk },
-                    { part_pk: randInt(), master: masterPk }
+                    { part_pk: randInt(), master: masterPk, default_test: 4 },
+                    { part_pk: randInt(), master: masterPk, default_test: 5 }
                 ]
             });
         });
@@ -715,7 +715,7 @@ describe('SchemaDao', () => {
             expect(await dao.pluck('helium_sample', 'master', { pk: '1001' }))
                 .to.deep.equal({
                     master: [{ pk: 1001 }],
-                    master__part: [{ part_pk: 100, master: 1001 }]
+                    master__part: [{ part_pk: 100, master: 1001, default_test: 12345 }]
                 });
 
             expect(await dao.pluck('helium_sample', 'master', { pk: '1002' }))
@@ -724,8 +724,8 @@ describe('SchemaDao', () => {
                         { pk: 1002 }
                     ],
                     master__part: [
-                        { part_pk: 101, master: 1002 },
-                        { part_pk: 102, master: 1002 }
+                        { part_pk: 101, master: 1002, default_test: 12345 },
+                        { part_pk: 102, master: 1002, default_test: 12345 }
                     ],
                     master__part2: [
                         { part2_pk: 100, master: 1002 }
