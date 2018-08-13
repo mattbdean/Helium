@@ -18,7 +18,7 @@ export function validateInteger(userInput: string): number | null {
  * input is not a valid index input. A valid index input must be:
  * 
  *  1. A string strictly comprised of digits 0-9 (no decimals allowed)
- *  2. At least 0 and at most the last-emitted value of maxIndex$
+ *  2. At least 1 and at most the last-emitted value of maxIndex$
  */
 export function pageIndexValidator(maxIndex$: Observable<number>): AsyncValidatorFn {
     return (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -28,7 +28,7 @@ export function pageIndexValidator(maxIndex$: Observable<number>): AsyncValidato
                 if (index === null)
                     return { pageIndex: 'not an integer' };
 
-                if (index < 0 || index > maxIndex)
+                if (index < 1 || index > maxIndex)
                     return { pageIndex: 'index < 0 || index > ' + maxIndex };
 
                 return null;
