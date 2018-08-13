@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material';
 import { zipObject } from 'lodash';
+import { delay, startWith } from 'rxjs/operators';
 import { Constraint, SqlRow, TableMeta } from '../../common/api';
 import { flattenCompoundConstraints } from '../../common/util';
 import { FormControlSpec } from '../../dynamic-forms/form-control-spec';
@@ -59,11 +60,16 @@ export class FormEntryComponent implements OnChanges {
         );
         this.group = new FormGroup(controls);
 
-        this.group.valueChanges.subscribe(() =>
+        this.group.valueChanges.pipe(
+            // Make sure to emit the default values as well
+            startWith(this.group.value),
+            delay(1)
+        ).subscribe(() => {
             this.entryUpdated.emit({
                 value: this.value,
                 valid: this.valid
-            }));
+            });
+        });
     }
 
     /**
