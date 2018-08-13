@@ -1,9 +1,10 @@
 import { AfterViewInit, Component, Input, OnChanges, QueryList, ViewChildren } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { combineLatest, Observable, zip } from 'rxjs';
-import { distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, Observable, of, zip } from 'rxjs';
+import { catchError, distinctUntilChanged, map, startWith, switchMap, tap } from 'rxjs/operators';
 import { SqlRow, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
+import { ApiService } from '../../core/api/api.service';
 import { FormEntryComponent, FormEntrySnapshot } from '../form-entry/form-entry.component';
 
 /**
@@ -61,6 +62,10 @@ export class PartialFormComponent implements OnChanges, AfterViewInit {
     public get cleanName() {
         return this.meta ? new TableName('(unused)', this.meta.name).name.clean : '';
     }
+
+    public constructor(
+        private api: ApiService
+    ) {}
 
     public ngOnChanges() {
 
@@ -170,6 +175,17 @@ export class PartialFormComponent implements OnChanges, AfterViewInit {
             this.ids = [];
         } else {
             this.formEntries.toArray()[0].group.reset();
+
+            // Defaults need to be requested manually for the master table
+            this.api.defaults(this.meta.schema, this.meta.name).pipe(
+                catchError((err: any) => {
+                    // tslint:disable-next-line:no-console
+                    console.error('Unable to request defaults:', err);
+                    return of();
+                })
+            ).subscribe((defaults: SqlRow) => {
+                this.formEntries.toArray()[0].patchValue(defaults);
+            });
         }
     }
 
