@@ -1,9 +1,9 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { MatSnackBar, MatSnackBarRef } from '@angular/material';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { isEqual, pickBy, zipObject } from 'lodash';
+import { cloneDeep, isEqual, pickBy, zipObject } from 'lodash';
+import * as moment from 'moment';
 import { BehaviorSubject, combineLatest, from, merge, Observable, of, Subscription, zip } from 'rxjs';
 import {
     catchError,
@@ -18,7 +18,8 @@ import {
     tap
 } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ErrorResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
+import { ErrorResponse, SqlRow, TableHeader, TableInsert, TableMeta } from '../../common/api';
+import { DATETIME_FORMAT } from '../../common/constants';
 import { flattenCompoundConstraints } from '../../common/util';
 import { ApiService } from '../../core/api/api.service';
 import { PartialFormComponent } from '../partial-form/partial-form.component';
@@ -290,13 +291,60 @@ export class FormHostComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     public handleSubmit() {
-        this.completedForm$.next(this.value);
+        const prepared = FormHostComponent.prepareTableInsert(this.value,
+            this.partialForms.toArray().map((p) => p.meta));
+
+        this.completedForm$.next(prepared);
     }
 
     private reset() {
         for (const form of this.partialForms.toArray()) {
             form.reset();
         }
+    }
+
+    /**
+     * Attempts to format each value in the provided TableInsert into a format
+     * the API can understand/will accept.
+     */
+    private static prepareTableInsert(data: TableInsert, tables: TableMeta[]): TableInsert {
+        const result = cloneDeep(data);
+        for (const tableName of Object.keys(data)) {
+            const table = tables.find((t) => t.name === tableName);
+            if (table === undefined)
+                throw new Error('No such table: ' + tableName);
+
+            const tableEntries = data[tableName];
+            for (let i = 0; i < tableEntries.length; i++) {
+                const tableEntry = tableEntries[i];
+                for (const headerName of Object.keys(tableEntry)) {
+                    const header = table.headers.find((h) => h.name === headerName);
+                    if (header === undefined)
+                        throw new Error('No such header: ' + headerName);
+                    
+                    result[tableName][i][headerName] = FormHostComponent.formatValue(
+                        tableEntry[headerName],
+                        header
+                    );
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Formats a single value into a form the API can understand/will accept.
+     * 
+     * @param value Some value entered by the user
+     * @param header The header that corresponds to the value
+     */
+    private static formatValue(value: any, header: TableHeader): any {
+        if (header.type === 'datetime') {
+            return moment(value).format(DATETIME_FORMAT);
+        }
+
+        return value;
     }
 }
 
