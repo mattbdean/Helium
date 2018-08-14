@@ -9,6 +9,7 @@ import {
     MatSnackBarModule
 } from '@angular/material';
 import { CoreModule } from '../core/core.module';
+import { LoginGuard } from './login-guard.service';
 import { LoginRoutingModule } from './login-routing.module';
 import { LoginComponent } from './login.component';
 
@@ -27,6 +28,9 @@ import { LoginComponent } from './login.component';
     ],
     declarations: [
         LoginComponent
+    ],
+    providers: [
+        LoginGuard
     ]
 })
 export class LoginModule { }
