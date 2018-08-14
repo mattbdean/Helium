@@ -108,7 +108,9 @@ export class DatabaseHelper {
         // Internally, node-lru-cache uses Symbols for "internal" properties.
         // The 'cache' symbol is the key for the internal ES2015 Map where it
         // stores all of the data.
-        const cacheSymbol = Symbol.for('cache');
+        const cacheSymbol = Object.getOwnPropertySymbols(this.pools).find((s) => s.toString() === 'Symbol(cache)');
+        if (cacheSymbol === undefined)
+            throw new Error('Could not locate cache');
         const map = this.pools[cacheSymbol];
 
         if (!map.has(key))
