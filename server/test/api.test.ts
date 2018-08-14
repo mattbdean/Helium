@@ -353,6 +353,20 @@ describe('API v1', () => {
                 });
             });
 
+            it.only('should 400 when given a non-positive limit', async () => {
+                sinon.stub(schemaDao, 'content')
+                    .throws(new Error('should not have been called'));
+                
+                await request.spec({
+                    method: 'GET',
+                    relPath: '/schemas/foo/bar/data',
+                    expectedStatus: 400,
+                    query: {
+                        limit: '0'
+                    }
+                });
+            });
+
             it('should 400 when the sorting column doesn\'t exist', async () => {
                 sinon.stub(schemaDao, 'content')
                     .rejects(mysqlError('ER_BAD_FIELD_ERROR'));

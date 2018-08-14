@@ -2884,14 +2884,14 @@ express-list-endpoints@^3.0.0:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/express-list-endpoints/-/express-list-endpoints-3.0.1.tgz#d304fe9457ad14b8cf8692759398e3eea21abcb2"
 
-express-paginate@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/express-paginate/-/express-paginate-0.3.0.tgz#2aa2eb2d8d1737e9fdcd8fab47497e905100d156"
+express-paginate@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/express-paginate/-/express-paginate-1.0.0.tgz#b9ebc6b6baec7273eac916cfa55a9b5e4977666b"
   dependencies:
     lodash.assign "^4.2.0"
     lodash.clone "^4.5.0"
     lodash.isobject "^3.0.2"
-    querystring "^0.2.0"
+    qs "^6.5.1"
 
 express@^4.15.4, express@^4.16.2:
   version "4.16.3"
@@ -7066,7 +7066,7 @@ querystring-es3@^0.2.0, querystring-es3@~0.2.0:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/querystring-es3/-/querystring-es3-0.2.1.tgz#9ec61f79049875707d69414596fd907a4d711e73"
 
-querystring@0.2.0, querystring@^0.2.0:
+querystring@0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/querystring/-/querystring-0.2.0.tgz#b209849203bb25df820da756e747005878521620"
 

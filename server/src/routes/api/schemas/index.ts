@@ -135,6 +135,9 @@ export function schemasRouter(env: NodeEnv, db: DatabaseHelper, daoFactory: DaoF
 
         const filters: Filter[] = result.value;
 
+        if (req.query.limit <= 0)
+            throw new ValidationError('limit must be above 0', 'INVALID_LIMIT');
+
         // We have everything we need, request the data
         return daoFor(req).content({
             schema: req.params.schema,
