@@ -156,10 +156,10 @@ describe('PaginatorComponent', () => {
             });
 
             // Invalid
-            comp.group.setValue({ page: -1 });
+            comp.group.setValue({ page: 0 });
             comp.group.setValue({ page: Math.floor(totalRows / pageSize) + 1 });
             // Valid
-            comp.group.setValue({ page: 0 });
+            comp.group.setValue({ page: 2 });
         });
     });
 
