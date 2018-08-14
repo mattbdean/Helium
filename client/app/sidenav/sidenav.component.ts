@@ -227,6 +227,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
      */
     public currentPath(): string[] {
         const urlTree = this.router.parseUrl(this.router.url);
+        if (!urlTree.root.children.primary)
+            return [];
         return urlTree.root.children.primary.segments.map((s) => s.path);
     }
 }
