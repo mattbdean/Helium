@@ -4,36 +4,16 @@ import {
 import * as paginate from 'express-paginate';
 import * as joi from 'joi';
 import { ValidationError as JoiValidationError } from 'joi';
-import { ErrorResponse, Filter, PaginatedResponse, SqlRow } from '../../../common/api';
+import { Erd, ErrorResponse, Filter, PaginatedResponse, SqlRow } from '../../../common/api';
 import { DaoFactory } from '../../../db/dao.factory';
 import { DatabaseHelper } from '../../../db/database.helper';
 import { SchemaDao, Sort } from '../../../db/schema.dao';
 import { NodeEnv } from '../../../env';
+import { requireActiveSession, wrap } from '../util';
 import { ValidationError } from '../validation-error';
 
 export function schemasRouter(env: NodeEnv, db: DatabaseHelper, daoFactory: DaoFactory): Router {
     const r = Router();
-
-    /**
-     * Wraps a standard Express route handler. If the handler successfully
-     * resolves to a value, that value is sent to the response as JSON. If the
-     * handler rejects, that error is passed to the next error handling
-     * middleware.
-     *
-     * @returns A function that can be passed directly to a routing method such
-     * as `get` or `post`.
-     */
-    const wrap = (handler: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
-        return (req: Request, res: Response, next: NextFunction) => {
-            handler(req, res, next)
-                .then((data) => {
-                    res.json(data);
-                })
-                .catch((err) => {
-                    next(err);
-                });
-        };
-    };
 
     const filtersSchema = joi.array().items(
         joi.object({
@@ -43,36 +23,8 @@ export function schemasRouter(env: NodeEnv, db: DatabaseHelper, daoFactory: DaoF
         }).requiredKeys('op', 'param', 'value')
     );
 
-    /**
-     * Routing callback "middleware" that only passes control to the next
-     * callback if the request has an active session and that session has a
-     * database associated with it
-     */
-    const requireActiveSession = (req: Request, res: Response, next: NextFunction) => {
-        const apiKey = req.header('x-api-key');
-        if (apiKey === undefined) {
-            // Require an active session
-            const resp: ErrorResponse = {
-                message: 'Please specify an X-API-Key header with your API ' +
-                    'key from POST /api/v1/login'
-            };
-            return res.status(401).json(resp);
-        }
-
-        if (!db.hasPool(apiKey)) {
-            const resp: ErrorResponse = {
-                message: 'No database connection associated with this session'
-            };
-            return res.status(401).json(resp);
-        } else {
-            // All good, set expiration header
-            res.header('X-Session-Expiration', String(db.expiration(apiKey)));
-            next();
-        }
-    };
-
     // All endpoints defined here must have an active session
-    r.use(requireActiveSession);
+    r.use(requireActiveSession(db));
 
     const daoFor = (req: Request): SchemaDao => daoFactory(db, req.header('x-api-key')!!);
 

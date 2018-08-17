@@ -60,6 +60,7 @@
     "rxjs": "^6.2.2",
     "snyk": "^1.69.7",
     "squel": "^5.12.1",
+    "vis": "^4.21.0",
     "web-animations-js": "^2.3.1",
     "zone.js": "^0.8.26"
   },
@@ -82,6 +83,7 @@
     "@types/sinon": "^4.0.0",
     "@types/sinon-chai": "^2.7.28",
     "@types/supertest": "^2.0.2",
+    "@types/vis": "^4.21.6",
     "@types/yargs": "^10.0.0",
     "benchmark": "^2.1.4",
     "chai": "^4.1.1",

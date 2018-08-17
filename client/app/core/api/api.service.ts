@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import * as _ from 'lodash';
 import { Observable } from 'rxjs';
 import { map, mapTo, shareReplay, tap } from 'rxjs/operators';
-import { PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
+import { Erd, PaginatedResponse, SqlRow, TableInsert, TableMeta } from '../../common/api';
 import { TableName } from '../../common/table-name';
 import { TableNameParams } from '../../common/table-name-params';
 import { AuthService } from '../auth/auth.service';
@@ -81,6 +81,10 @@ export class ApiService implements BaseApiService {
 
     public defaults(schema: string, table: string): Observable<SqlRow> {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}/defaults`);
+    }
+
+    public erd(): Observable<Erd> {
+        return this.get('/erd');
     }
 
     /**

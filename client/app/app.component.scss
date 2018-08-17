@@ -1,6 +1,7 @@
 mat-toolbar {
   display: flex;
   justify-content: space-between;
+  flex-shrink: 0;
 }
 
 .sidenav-toggle {
@@ -9,5 +10,7 @@ mat-toolbar {
 }
 
 .router-content {
+  display: flex;
+  flex-grow: 1;
   margin: 15px;
 }

@@ -21,6 +21,13 @@ mat-sidenav {
   flex-direction: column;
 }
 
+.sidenav-content {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 .active-router-link {
   // A bit hacky
   color: $primary-color-dark !important;

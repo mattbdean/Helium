@@ -10,19 +10,18 @@ import {
 } from '@angular/material';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { LoginModule } from './login/login.module';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
+import { ErdComponent } from './erd/erd.component';
 import { FormsModule } from './forms/forms.module';
-import { TablesModule } from './tables/tables.module';
-
+import { LoginModule } from './login/login.module';
 import { NotFoundComponent } from './not-found.component';
+import { SidenavComponent } from './sidenav/sidenav.component';
+import { TablesModule } from './tables/tables.module';
 
 import '@angular/material/prebuilt-themes/deeppurple-amber.css';
 import 'normalize.css/normalize.css';
-import { SidenavComponent } from './sidenav/sidenav.component';
 
 @NgModule({
     imports: [
@@ -48,6 +47,7 @@ import { SidenavComponent } from './sidenav/sidenav.component';
     declarations: [
         AppComponent,
         SidenavComponent,
+        ErdComponent,
         NotFoundComponent
     ],
     bootstrap: [ AppComponent ]
