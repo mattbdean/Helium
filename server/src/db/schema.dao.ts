@@ -1,11 +1,12 @@
+import * as crypto from 'crypto';
 import * as joi from 'joi';
-import { zipObject } from 'lodash';
 import * as _ from 'lodash';
+import { zipObject } from 'lodash';
 import * as moment from 'moment';
 import { Select } from 'squel';
 import {
-    CompoundConstraint, Constraint, ConstraintType, DefaultValue, Filter,
-    RawConstraint, SqlRow, TableDataType, TableHeader, TableMeta
+    CompoundConstraint, Constraint, ConstraintType, DefaultValue, Erd, ErdEdge,
+    ErdNode, Filter, RawConstraint, SqlRow, TableDataType, TableHeader, TableMeta
 } from '../common/api';
 import { TableInsert } from '../common/api/table-insert';
 import {
@@ -434,6 +435,62 @@ export class SchemaDao {
         }
 
         return resolved;
+    }
+
+    public async erd(): Promise<Erd> {
+        const edges: ErdEdge[] = [];
+
+        const data: SqlRow[] = await this.helper.execute((squel) =>
+            squel.select()
+                .fields(['TABLE_SCHEMA', 'TABLE_NAME', 'REFERENCED_TABLE_SCHEMA', 'REFERENCED_TABLE_NAME'])
+                .from('information_schema.KEY_COLUMN_USAGE')
+                .where('TABLE_SCHEMA <> "mysql"')
+                .where('TABLE_SCHEMA <> "sys"')
+                .where('REFERENCED_TABLE_SCHEMA IS NOT NULL')
+        );
+
+        const fullTableName = (schema: string, table: string) =>
+            this.helper.escapeId(schema) + '.' + this.helper.escapeId(table);
+
+        let nextId = 0;
+        const ids = new Map<string, number>();
+
+        const tableId = (schema: string, table: string): number => {
+            const name = fullTableName(schema, table);
+            if (ids.has(name))
+                return ids.get(name)!;
+            
+            const id = nextId++;
+            ids.set(name, id);
+            return id;
+        };
+
+        const tempNodes: Array<{ schema: string, table: string }> = [];
+
+        for (const row of data) {
+            edges.push({
+                from: tableId(row.TABLE_SCHEMA, row.TABLE_NAME),
+                to: tableId(row.REFERENCED_TABLE_SCHEMA, row.REFERENCED_TABLE_NAME)
+            });
+
+            tempNodes.push({ schema: row.TABLE_SCHEMA, table: row.TABLE_NAME });
+            tempNodes.push({ schema: row.REFERENCED_TABLE_SCHEMA, table: row.REFERENCED_TABLE_NAME });
+        }
+
+        const uniqueNodes = _.uniqBy(tempNodes, (n) => fullTableName(n.schema, n.table));
+
+        const nodes: ErdNode[] = uniqueNodes.map((n) => {
+            const id = ids.get(fullTableName(n.schema, n.table));
+            if (id === undefined)
+                throw new Error('Table is a node but not part of an edge: ' + fullTableName(n.schema, n.table));
+            
+            return {
+                id,
+                table: new TableName(n.schema, n.table)
+            };
+        });
+
+        return { nodes, edges };
     }
 
     /**

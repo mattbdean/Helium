@@ -6,6 +6,7 @@ export * from './constraint';
 export * from './constraint-type';
 export * from './default-value';
 export * from './error-response';
+export * from './erd';
 export * from './filter-operation';
 export * from './filter';
 export * from './master-table-name';

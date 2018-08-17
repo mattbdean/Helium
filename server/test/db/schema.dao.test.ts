@@ -752,4 +752,13 @@ describe('SchemaDao', () => {
             }
         });
     });
+
+    describe('erd', () => {
+        it('TODO', async () => {
+            // TODO
+            const { nodes, edges } = await dao.erd();
+            console.log(nodes.map((n) => ({ id: n.id, table: n.table.schema + '.' + n.table.name.raw })));
+            console.log(edges);
+        });
+    });
 });
