@@ -55,15 +55,9 @@ export class ErdComponent implements OnInit, AfterViewInit {
             const options: Options = {
                 physics: {
                     enabled: false
-                },
-                layout: {
-                    hierarchical: {
-                        direction: 'DU'
-                    }
                 }
             };
             const network = new Network(container, erd, options);
-            console.log(network);
         });
     }
 }
