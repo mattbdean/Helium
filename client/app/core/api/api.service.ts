@@ -83,8 +83,25 @@ export class ApiService implements BaseApiService {
         return this.get(`/schemas/${encode(schema)}/${encode(table)}/defaults`);
     }
 
+    /**
+     * Requests the ERD for all tables in all schemas the user has access to
+     */
     public erd(): Observable<Erd> {
-        return this.get('/erd');
+        return this.get('/erd').pipe(
+            map((erd: Erd): Erd => {
+                return {
+                    edges: erd.edges,
+                    nodes: erd.nodes.map((n) => {
+                        return {
+                            id: n.id,
+                            // n.table is a TableNameParams, recreate it as
+                            // an actual TableName
+                            table: new TableName(n.table.schema, n.table.name.raw)
+                        };
+                    })
+                };
+            })
+        );
     }
 
     /**

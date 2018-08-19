@@ -1,8 +1,16 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+
+  flex-grow: 1;
+}
+
 $card-width: 300px;
 
 .login-form-card {
-  max-width: $card-width;
-  margin: 0 auto;
+  width: $card-width;
 }
 
 mat-form-field {

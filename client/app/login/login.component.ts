@@ -10,6 +10,7 @@ import { AuthService } from '../core/auth/auth.service';
 import { RedirectInfo } from './redirect-info';
 
 @Component({
+    selector: 'login',
     templateUrl: 'login.component.html',
     styleUrls: ['login.component.scss']
 })
