@@ -15,6 +15,9 @@
                     </mat-select>
                 </mat-form-field>
             </form>
+            <div class="button-wrapper erd-button-wrapper">
+                <a routerLink="/erd" routerLinkActive="active-router-link" mat-button>ERD<mat-icon>zoom_out</mat-icon></a>
+            </div>
             <ul tabindex="-1" class="sidenav-list undecorated-list" *ngFor="let groupedName of (tables$ | async)">
                 <li class="header" [attr.data-tier]="groupedName.tier">{{ groupedName.tier }} tables</li>
                 <li class="table-ref-container" *ngFor="let table of groupedName.names">
@@ -51,7 +54,7 @@
             </ul>
         </div>
 
-        <div class="bug-report-wrapper">
+        <div class="button-wrapper report-button-wrapper">
             <a href="https://github.com/mattbdean/Helium/issues/new" target="_blank" mat-button color="warn">Report a bug <mat-icon>bug_report</mat-icon></a>
         </div>
     </mat-sidenav>

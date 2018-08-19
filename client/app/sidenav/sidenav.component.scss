@@ -52,10 +52,17 @@ li.header {
   overflow: auto;
 }
 
-.bug-report-wrapper {
+.button-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.erd-button-wrapper {
+  margin-bottom: 20px;
+}
+
+.report-button-wrapper {
   min-height: 60px;
 }
 
