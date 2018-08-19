@@ -446,7 +446,6 @@ export class SchemaDao {
                 .from('information_schema.KEY_COLUMN_USAGE')
                 .where('TABLE_SCHEMA <> "mysql"')
                 .where('TABLE_SCHEMA <> "sys"')
-                .where('REFERENCED_TABLE_SCHEMA IS NOT NULL')
         );
 
         const fullTableName = (schema: string, table: string) =>
@@ -468,21 +467,24 @@ export class SchemaDao {
         const tempNodes: Array<{ schema: string, table: string }> = [];
 
         for (const row of data) {
-            edges.push({
-                from: tableId(row.TABLE_SCHEMA, row.TABLE_NAME),
-                to: tableId(row.REFERENCED_TABLE_SCHEMA, row.REFERENCED_TABLE_NAME)
-            });
-
+            // We know at a minimum this table has a primary key
             tempNodes.push({ schema: row.TABLE_SCHEMA, table: row.TABLE_NAME });
-            tempNodes.push({ schema: row.REFERENCED_TABLE_SCHEMA, table: row.REFERENCED_TABLE_NAME });
+
+            // If there's a referenced table, that means this is a foreign key
+            if (row.REFERENCED_TABLE_SCHEMA) {
+                edges.push({
+                    from: tableId(row.TABLE_SCHEMA, row.TABLE_NAME),
+                    to: tableId(row.REFERENCED_TABLE_SCHEMA, row.REFERENCED_TABLE_NAME)
+                });
+
+                tempNodes.push({ schema: row.REFERENCED_TABLE_SCHEMA, table: row.REFERENCED_TABLE_NAME });
+            }
         }
 
         const uniqueNodes = _.uniqBy(tempNodes, (n) => fullTableName(n.schema, n.table));
 
         const nodes: ErdNode[] = uniqueNodes.map((n) => {
-            const id = ids.get(fullTableName(n.schema, n.table));
-            if (id === undefined)
-                throw new Error('Table is a node but not part of an edge: ' + fullTableName(n.schema, n.table));
+            const id = tableId(n.schema, n.table);
             
             return {
                 id,
