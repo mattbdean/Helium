@@ -38,12 +38,11 @@ export class FormSpecGeneratorService {
             const validators: ValidatorFn[] = [];
             let required = false;
 
-            // booleans require no validation
-            if (h.type !== 'boolean') {
-                if (!h.nullable) {
-                    validators.push(Validators.required);
-                    required = true;
-                }
+            // Booleans require no validation. For non-nullable strings, the
+            // default will be an empty string when there is no default.
+            if (h.type !== 'boolean' && h.type !== 'string' && !h.nullable) {
+                validators.push(Validators.required);
+                required = true;
             }
             if (h.maxCharacters)
                 validators.push(Validators.maxLength(h.maxCharacters));
@@ -176,6 +175,11 @@ export class FormSpecGeneratorService {
                 // an initial value of false, except the user will expect an
                 // unchecked checkbox to represent 'false' instead of null.
                 defaultValue = !(defaultValue === null || defaultValue === undefined);
+                break;
+            case 'string':
+                if (!header.nullable && defaultValue === null)
+                    defaultValue = '';
+                break;
         }
 
         return defaultValue;
