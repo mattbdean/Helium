@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatSidenav } from '@angular/material';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import * as _ from 'lodash';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, first, map, switchMap } from 'rxjs/operators';
@@ -86,8 +86,16 @@ export class SidenavComponent implements OnInit, OnDestroy {
         return this.toggleMode === 'alwaysDisplayed';
     }
 
+    /**
+     * The current value of the schema selector. All table names in this
+     * component belong to this schema.
+     */
     public get schema(): string | null {
         return this.formGroup.value.schemaSelect;
+    }
+
+    public set schema(val: string | null) {
+        this.formGroup.setValue({ schemaSelect: val });
     }
 
     @ViewChild(MatSidenav)
@@ -150,6 +158,22 @@ export class SidenavComponent implements OnInit, OnDestroy {
             map((schemas) => this.defaultSchema(schemas))
         ).subscribe((defaultSchema) => {
             this.formGroup.setValue({ schemaSelect: defaultSchema });
+        });
+
+        // Update the schema input whenever we navigate to a table or form in
+        // a different schema
+        this.router.events.pipe(
+            filter((e) => e instanceof NavigationEnd),
+            map((e: NavigationEnd) => e.urlAfterRedirects),
+            filter((path: string) => path.startsWith('/tables/') || path.startsWith('/forms/')),
+            map((path: string) => {
+                // Index 2 is the schema
+                return path.split('/')[2];
+            }),
+            distinctUntilChanged()
+        ).subscribe((schema: string) => {
+            if (this.schema !== schema)
+                this.schema = schema;
         });
     }
 
