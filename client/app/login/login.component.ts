@@ -99,12 +99,14 @@ export class LoginComponent implements OnInit, OnDestroy {
             (err: any) => {
                 let msg: string = 'An unknown error has occurred';
 
-                if (err instanceof HttpErrorResponse && err.status < 500) {
-                    msg = 'Invalid login information';
+                if (err instanceof HttpErrorResponse) {
+                    if (err.status === 400)
+                        msg = 'Invalid login information';
+                    else if (err.status === 0)
+                        msg = 'Could not contact Helium API, are you online?';
+                    else
+                        msg = `Unknown HTTP error: ${err.status} ${err.statusText}`;
                 }
-
-                if (err instanceof Error)
-                    msg = err.message;
                 
                 this.snackbar.open(msg, undefined, { duration: 3000 });
             }
