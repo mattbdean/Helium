@@ -2,10 +2,11 @@ import { DebugElement } from '@angular/core';
 import {
     ComponentFixture, TestBed,
 } from '@angular/core/testing';
-import { MatFormFieldModule, MatInputModule } from '@angular/material';
+import { MatFormFieldModule, MatIconModule, MatInputModule } from '@angular/material';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import * as chai from 'chai';
+import * as moment from 'moment';
 import * as sinon from 'sinon';
 import * as sinonChai from 'sinon-chai';
 import { DatetimeInputComponent } from './datetime-input.component';
@@ -27,6 +28,7 @@ describe('DatetimeInputComponent', () => {
             declarations: [DatetimeInputComponent],
             imports: [
                 MatInputModule,
+                MatIconModule,
                 MatFormFieldModule,
                 NoopAnimationsModule
             ]
@@ -55,7 +57,6 @@ describe('DatetimeInputComponent', () => {
     };
 
     describe('placeholder', () => {
-
         it('should show the given placeholder for only the date input when provided', () => {
             comp.placeholder = 'Foo';
             fixture.detectChanges();
@@ -191,6 +192,19 @@ describe('DatetimeInputComponent', () => {
             for (const input of invalid) {
                 expect(() => comp.writeValue(input)).to.throw(Error);
             }
+        });
+    });
+
+    describe('setToNow button', () => {
+        it('should update the value of the two inputs when clicked', () => {
+            fixture.detectChanges();
+            const spy = sinon.spy();
+            comp.registerOnChange(spy);
+
+            de.query(By.css('.insert-now-button')).nativeElement.click();
+
+            expect(spy).to.have.been.calledWithExactly(
+                moment().format('YYYY-MM-DD HH:mm') + ':00');
         });
     });
 });

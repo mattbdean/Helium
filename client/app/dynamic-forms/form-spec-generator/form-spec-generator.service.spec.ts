@@ -1,7 +1,6 @@
 import { Validators } from '@angular/forms';
 import { expect } from 'chai';
 import { CompoundConstraint, TableHeader, TableMeta } from '../../common/api';
-import { flattenCompoundConstraints } from '../../common/util';
 import { ApiService } from '../../core/api/api.service';
 import { FormControlSpec } from '../form-control-spec';
 import { FormSpecGeneratorService } from './form-spec-generator.service';
@@ -104,22 +103,6 @@ describe('FormSpecGeneratorService', () => {
                 placeholder: 'bar',
                 validation: [],
                 required: false,
-                disabled: false,
-                hoverHint: 'mock string'
-            };
-            expect(formSpec).to.deep.equal(expected);
-        });
-
-        it('should make non-null headers required', () => {
-            const formSpec = generateSingle(textualHeader({ name: 'bar', nullable: false }));
-
-            const expected: FormControlSpec = {
-                type: 'text',
-                subtype: 'text',
-                formControlName: 'bar',
-                placeholder: 'bar',
-                validation: [Validators.required],
-                required: true,
                 disabled: false,
                 hoverHint: 'mock string'
             };

@@ -1,9 +1,9 @@
 import {
-    Component, ElementRef, forwardRef, Input, OnInit, ViewChild
+    Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import * as moment from 'moment';
-import { combineLatest, fromEvent, Observable, Subscription } from 'rxjs';
+import { combineLatest, fromEvent, merge, Observable, Subject, Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 import { DATETIME_FORMAT } from '../../common/constants';
 
@@ -19,7 +19,7 @@ import { DATETIME_FORMAT } from '../../common/constants';
         }
     ]
 })
-export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
+export class DatetimeInputComponent implements OnInit, ControlValueAccessor, OnDestroy {
     /** Format used by <input> fields with type=date */
     public static readonly DATE_INPUT_FORMAT = 'YYYY-MM-DD';
 
@@ -53,13 +53,19 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
     @ViewChild('time')
     private time: ElementRef;
 
+    // These two are used to notify the component that the value of the date
+    // and/or time inputs have been changed internally via the input's native
+    // elements
+    private manualDateChange = new Subject<string>();
+    private manualTimeChange = new Subject<string>();
+
     private sub: Subscription;
 
     public ngOnInit() {
         // Get the latest values emitted from both the date and time inputs
         this.sub = combineLatest(
-            DatetimeInputComponent.valueChanges(this.date),
-            DatetimeInputComponent.valueChanges(this.time),
+            merge(DatetimeInputComponent.valueChanges(this.date), this.manualDateChange),
+            merge(DatetimeInputComponent.valueChanges(this.time), this.manualTimeChange),
             // Map the values into an object with keys 'date' and 'time'
             (date, time) => ({ date, time })
         ).pipe(
@@ -84,6 +90,11 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
             }),
             distinctUntilChanged()
         ).subscribe((val: any) => this._onChange(val));
+    }
+
+    public ngOnDestroy() {
+        if (this.sub)
+            this.sub.unsubscribe();
     }
 
     // overridden from ControlValueAccessor
@@ -118,6 +129,17 @@ export class DatetimeInputComponent implements OnInit, ControlValueAccessor {
     // overridden from ControlValueAccessor
     public registerOnTouched(fn: any): void {
         this._onTouched = fn;
+    }
+
+    public handleInsertNow() {
+        const now = moment();
+        const date = now.format(DatetimeInputComponent.DATE_INPUT_FORMAT);
+        const time = now.format(DatetimeInputComponent.TIME_INPUT_FORMAT);
+
+        this.manualDateChange.next(date);
+        this.manualTimeChange.next(time);
+        this.date.nativeElement.value = date;
+        this.time.nativeElement.value = time;
     }
 
     /**

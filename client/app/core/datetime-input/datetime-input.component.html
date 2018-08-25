@@ -3,4 +3,10 @@
 </mat-form-field>
 <mat-form-field>
     <input #time matInput type="time" [placeholder]="placeholder ? '' : 'Time'" [required]="required" (blur)="_onTouched()">
+    <mat-icon
+        matSuffix
+        class="insert-now-button"
+        (click)="handleInsertNow()"
+        title="Set to current time"
+    >home</mat-icon>
 </mat-form-field>
