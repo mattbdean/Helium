@@ -351,7 +351,29 @@ export class DatatableComponent implements OnInit, AfterViewInit, OnDestroy {
         this.layoutHelper.onDragStart(event, colIndex, headerElement.clientWidth);
     }
 
-    public onSortRequested(colIndex: number) {
+    public onSortRequested(event: MouseEvent, colIndex: number) {
+        // Avoid sorting when a foreign key icon is clicked, since that can
+        // sometimes trigger sorting by the column that was just clicked after
+        // the redirect, which will probably cause an error
+        if (event.target !== null && event.target) {
+            const target = event.target as any;
+            let current = target;
+
+            while (current !== null &&
+                current.dataset &&
+                current.dataset.constraintType !== 'foreign') {
+
+                current = current.parentNode;
+            }
+
+            if (current !== null &&
+                current.dataset &&
+                current.dataset.constraintType === 'foreign') {
+
+                return;
+            }
+        }
+
         // Prevent sorting when the user is currently resizing a column since
         // that probably isn't what they're trying to do
         if (this.layoutHelper.pressed)

@@ -22,10 +22,13 @@
             <ng-container *ngFor="let colName of columnNames; let i = index" [matColumnDef]="colName">
                 <mat-header-cell
                     *matHeaderCellDef
-                    (click)="onSortRequested(i)"
+                    (click)="onSortRequested($event, i)"
                     [title]="titleFor(colName)">
 
-                    <constraint-icons *ngIf="colName !== '__insertLike'" [constraints]="constraints[colName]"></constraint-icons>
+                    <constraint-icons
+                        *ngIf="colName !== '__insertLike'"
+                        [constraints]="constraints[colName]"
+                    ></constraint-icons>
                     <span class="header-cell-name">{{ allowInsertLike && colName === '__insertLike' ? '' : colName }}</span>
 
                     <!--
