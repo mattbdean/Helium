@@ -353,7 +353,7 @@ describe('API v1', () => {
                 });
             });
 
-            it.only('should 400 when given a non-positive limit', async () => {
+            it('should 400 when given a non-positive limit', async () => {
                 sinon.stub(schemaDao, 'content')
                     .throws(new Error('should not have been called'));
                 

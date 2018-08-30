@@ -24,6 +24,9 @@ CREATE DATABASE helium_sample CHARACTER SET utf8;
 DROP DATABASE IF EXISTS helium_compound_fk_test;
 CREATE DATABASE helium_compound_fk_test CHARACTER SET utf8;
 
+DROP DATABASE IF EXISTS helium_external_form_binding_test;
+CREATE DATABASE helium_external_form_binding_test CHARACTER SET utf8;
+
 # Select the new database
 USE helium_sample;
 
@@ -253,3 +256,17 @@ INSERT INTO table_b VALUES
   (101, 102, 103),
   (104, 105, 106),
   (107, 108, 109);
+
+USE helium_external_form_binding_test;
+
+CREATE TABLE master(
+    pk INTEGER PRIMARY KEY,
+    master_ref INTEGER,
+    FOREIGN KEY (master_ref) REFERENCES helium_sample.customer(customer_id)
+);
+
+CREATE TABLE master__part(
+    pk INTEGER PRIMARY KEY,
+    part_ref INTEGER,
+    FOREIGN KEY (part_ref) REFERENCES helium_sample.customer(customer_id)
+);
