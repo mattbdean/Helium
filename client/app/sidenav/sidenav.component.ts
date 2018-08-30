@@ -126,8 +126,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
             map((form) => form.schemaSelect),
             distinctUntilChanged()
         );
-        
-        selectedSchema$.subscribe(console.log);
 
         this.tables$ = combineLatest(this.auth.watchAuthState(), selectedSchema$).pipe(
             switchMap(([isLoggedIn, schema]) => {
