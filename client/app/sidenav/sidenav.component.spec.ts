@@ -41,7 +41,10 @@ describe('SidenavComponent', () => {
         tables: () => { throw new Error('ApiService.tables() not stubbed'); }
     };
 
-    const routerStub = {};
+    const routerStub = {
+        events: of()
+    };
+
     let currentPathStub: sinon.SinonStub;
 
     beforeEach(() => {
