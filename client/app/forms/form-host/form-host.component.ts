@@ -227,22 +227,42 @@ export class FormHostComponent implements OnInit, AfterViewInit, OnDestroy {
                 const masterTable = masterForm.meta;
                 const partTablePartials = partialForms;
 
+                const masterForeignKeys = flattenCompoundConstraints(masterTable.constraints)
+                    .filter((c) => c.type === 'foreign');
+
                 const bindings: Array<Observable<FormBinding>> = [];
 
                 for (const partTable of partTablePartials) {
                     // Identify constraints in part tables that reference the
                     // master table
-                    const bindingConstraints = flattenCompoundConstraints(partTable.meta.constraints)
-                        .filter((c) => c.type === 'foreign' &&
-                            c.ref!.schema === masterTable.schema &&
-                            c.ref!.table === masterTable.name);
+                    const bindingConstraints: Array<{ masterCol: string, partCol: string }> =
+                        flattenCompoundConstraints(partTable.meta.constraints)
+                        .filter((c) => c.type === 'foreign')
+                        .map((c): { masterCol: string, partCol: string } | null => {
+                            // An internal binding is when a part table directly
+                            // references its master table. An external binding
+                            // is when a part table and its master table
+                            // reference a 3rd table.
+                            const externalRef = masterForeignKeys.find((f) => isEqual(f.ref, c.ref));
+                            const isInternalRef = c.ref!.schema === masterTable.schema &&
+                                c.ref!.table === masterTable.name;
+
+                            if (externalRef) {
+                                return { masterCol: externalRef.localColumn, partCol: c.localColumn };
+                            } else if (isInternalRef) {
+                                return { masterCol: c.ref!.column, partCol: c.localColumn };
+                            }
+
+                            return null;
+                        })
+                        .filter((c) => c !== null) as Array<{ masterCol: string, partCol: string }>;
                     
                     for (const bindingConstraint of bindingConstraints) {
                         // Keep track of the source FormControl in the master
                         // table and all FormControls in each partial form
                         const obs: Observable<FormBinding> = combineLatest(
-                            masterForm.get(bindingConstraint.ref!.column, 0),
-                            partTable.getAll(bindingConstraint.localColumn)
+                            masterForm.get(bindingConstraint.masterCol, 0),
+                            partTable.getAll(bindingConstraint.partCol)
                         ).pipe(
                             // Pretty the output up a bit
                             map(([source, dest]: [FormControl, FormControl[]]) => {
