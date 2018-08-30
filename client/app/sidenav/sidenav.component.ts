@@ -122,16 +122,16 @@ export class SidenavComponent implements OnInit, OnDestroy {
             schemaSelect: new FormControl()
         });
 
-        const selectedSchema$: Observable<string> = this.formGroup.valueChanges.pipe(
+        const selectedSchema$: Observable<string | null> = this.formGroup.valueChanges.pipe(
             map((form) => form.schemaSelect),
-            // The schema may be null if there are no schemas available
-            filter((schema) => schema !== null),
             distinctUntilChanged()
         );
+        
+        selectedSchema$.subscribe(console.log);
 
         this.tables$ = combineLatest(this.auth.watchAuthState(), selectedSchema$).pipe(
             switchMap(([isLoggedIn, schema]) => {
-                return isLoggedIn ? this.api.tables(schema) : of([]);
+                return isLoggedIn && schema !== null ? this.api.tables(schema) : of([]);
             }),
             // Group part tables with their master tables
             map(unflattenTableNames),
