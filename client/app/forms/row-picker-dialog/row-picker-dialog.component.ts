@@ -20,7 +20,7 @@ export class RowPickerDialogComponent {
         this.name = new TableName(data.schemaName, data.tableName);
     }
 
-    public onRowSelected(data: SqlRow) {
+    public onRowSelected(data) {
         this.ref.close(data);
     }
 }

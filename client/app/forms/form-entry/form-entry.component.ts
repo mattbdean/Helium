@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material';
-import { zipObject } from 'lodash';
+import { isEqual, zipObject } from 'lodash';
 import { delay, startWith } from 'rxjs/operators';
 import { Constraint, SqlRow, TableMeta } from '../../common/api';
 import { flattenCompoundConstraints } from '../../common/util';
@@ -110,14 +110,18 @@ export class FormEntryComponent implements OnChanges {
             data: params
         });
 
-        dialogRef.afterClosed().subscribe((data: SqlRow | undefined) => {
+        dialogRef.afterClosed().subscribe((data: { row: SqlRow, table: TableMeta } | undefined) => {
             // The user closed the dialog before selecting a row
             if (data === undefined)
                 return;
 
+            // Foreign keys from the table being plucked from
+            const otherForeignKeys = flattenCompoundConstraints(data.table.constraints)
+                .filter((c) => c.type === 'foreign');
+
             const patch: { [col: string]: any } = {};
 
-            for (const selectedColumnName of Object.keys(data)) {
+            for (const selectedColumnName of Object.keys(data.row)) {
                 // Try to find other foreign keys in this table that reference
                 // the same table as the selected foreign key
                 const foreignKey = foreignKeys.find((c) => {
@@ -126,8 +130,26 @@ export class FormEntryComponent implements OnChanges {
                         c.ref!.column === selectedColumnName;
                 });
 
-                if (foreignKey !== undefined)
-                    patch[foreignKey.localColumn] = data[selectedColumnName];
+                if (foreignKey !== undefined) {
+                    patch[foreignKey.localColumn] = data.row[selectedColumnName];
+                } else {
+                    // Try to find foreign keys from this table and the table
+                    // being plucked from that reference the same thing. See
+                    // #148 for more.
+                    const otherKey = foreignKeys.find((c) => {
+                        for (const otherFk of otherForeignKeys) {
+                            if (otherFk.localColumn === selectedColumnName && isEqual(otherFk.ref, c.ref)) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    });
+
+                    if (otherKey !== undefined) {
+                        patch[otherKey.localColumn] = data.row[selectedColumnName];
+                    }
+                }
             }
 
             this.patchValue(patch);

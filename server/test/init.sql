@@ -16,16 +16,20 @@ GRANT CREATE,DROP,SELECT,INSERT ON `helium\_%`.* TO 'user'@'%';
 DROP DATABASE IF EXISTS helium_cross_schema_ref_test;
 CREATE DATABASE helium_cross_schema_ref_test CHARACTER SET utf8;
 
-# Ensure an empty database
-DROP DATABASE IF EXISTS helium_sample;
-CREATE DATABASE helium_sample CHARACTER SET utf8;
+DROP DATABASE IF EXISTS helium_external_form_binding_test;
+CREATE DATABASE helium_external_form_binding_test CHARACTER SET utf8;
 
 # Compound foreign key testing
 DROP DATABASE IF EXISTS helium_compound_fk_test;
 CREATE DATABASE helium_compound_fk_test CHARACTER SET utf8;
 
-DROP DATABASE IF EXISTS helium_external_form_binding_test;
-CREATE DATABASE helium_external_form_binding_test CHARACTER SET utf8;
+# DB for testing situations as described in #148
+DROP DATABASE IF EXISTS helium_compound_pluck_test;
+CREATE DATABASE helium_compound_pluck_test CHARACTER SET utf8;
+
+# Ensure an empty database
+DROP DATABASE IF EXISTS helium_sample;
+CREATE DATABASE helium_sample CHARACTER SET utf8;
 
 # Select the new database
 USE helium_sample;
@@ -270,3 +274,27 @@ CREATE TABLE master__part(
     part_ref INTEGER,
     FOREIGN KEY (part_ref) REFERENCES helium_sample.customer(customer_id)
 );
+
+USE helium_compound_pluck_test;
+
+CREATE TABLE table_b(
+    attribute_two_from_b INTEGER PRIMARY KEY
+);
+
+CREATE TABLE table_a(
+    attribute_one_from_a INTEGER PRIMARY KEY,
+    attribute_two_from_a INTEGER,
+    FOREIGN KEY (attribute_two_from_a) REFERENCES table_b(attribute_two_from_b)
+);
+
+CREATE TABLE form_target(
+    pk INTEGER PRIMARY KEY,
+    attribute_one INTEGER,
+    attribute_two INTEGER,
+    unrelated_column INTEGER,
+    FOREIGN KEY (attribute_one) REFERENCES table_a(attribute_one_from_a),
+    FOREIGN KEY (attribute_two) REFERENCES table_b(attribute_two_from_b)
+);
+
+INSERT INTO table_b VALUES (2), (4), (6);
+INSERT INTO table_a VALUES (1, 2), (3, 4), (5, 6);

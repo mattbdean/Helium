@@ -60,7 +60,7 @@ export class DatatableComponent implements OnInit, AfterViewInit, OnDestroy {
 
     /** Outputs the value of the selected row if `selectionMode` is true. */
     @Output()
-    public rowSelected: EventEmitter<SqlRow> = new EventEmitter();
+    public rowSelected: EventEmitter<{ row: SqlRow, table: TableMeta }> = new EventEmitter();
 
     public preview = environment.preview;
 
@@ -421,7 +421,7 @@ export class DatatableComponent implements OnInit, AfterViewInit, OnDestroy {
 
     public onRowClicked(row: SqlRow) {
         if (this.allowSelection) {
-            this.rowSelected.next(row);
+            this.rowSelected.next({ row, table: this.meta });
         }
     }
 
