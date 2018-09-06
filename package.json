@@ -1,6 +1,6 @@
 {
   "name": "helium",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Svoboda Lab experiment metadata collection and standardization",
   "scripts": {
     "benchmark": "ts-node server/benchmarks/schema-dao.bench.ts",
