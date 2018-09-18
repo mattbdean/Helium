@@ -1,7 +1,7 @@
 version: 2
 restore_deps_cache: &restore_deps_cache
     keys:
-        - deps-node8-v1-{{ checksum "yarn.lock" }}
+        - deps-node8-{{ checksum "yarn.lock" }}
 jobs:
     cache-preinstalled:
         docker:
@@ -18,10 +18,9 @@ jobs:
                 command: yarn install
             # Save the cache here
             - save_cache:
-                key: deps-node8-v1-{{ checksum "yarn.lock" }}
+                key: deps-node8-{{ checksum "yarn.lock" }}
                 paths:
                     - "node_modules"
-                    - "/home/circleci/.cache/Cypress"
     test-client:
         docker:
             - image: circleci/node:8-browsers
@@ -153,6 +152,7 @@ jobs:
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
+            - run: yarn cypress install
             - run:
                 name: Run e2e tests
                 command: yarn cypress run --config video=false
