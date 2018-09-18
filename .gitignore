@@ -18,6 +18,9 @@ node_modules/
 /server/src/common
 /server/src/public
 
+# e2e
+/cypress/videos
+
 # Load testing
 /load-testing/out
 /load-testing/dist
