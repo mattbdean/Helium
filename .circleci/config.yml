@@ -21,6 +21,7 @@ jobs:
                 key: deps-node8-{{ checksum "yarn.lock" }}
                 paths:
                     - "node_modules"
+                    - "/home/circleci/.cache/Cypress"
     test-client:
         docker:
             - image: circleci/node:8-browsers
