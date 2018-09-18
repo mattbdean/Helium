@@ -18,7 +18,7 @@ jobs:
                 command: yarn install
             # Save the cache here
             - save_cache:
-                key: deps-node8-{{ checksum "yarn.lock" }}
+                key: deps-node8-v1-{{ checksum "yarn.lock" }}
                 paths:
                     - "node_modules"
                     - "/home/circleci/.cache/Cypress"
