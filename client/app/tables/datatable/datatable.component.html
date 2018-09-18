@@ -6,7 +6,7 @@
         [title]="showFilters ? 'Hide filters' : 'Show filters'"
         (click)="toggleFilters()">
 
-        <mat-icon class="filter-icon" svgIcon="app:filter"></mat-icon>
+        <mat-icon data-cy-toggle-filters-button class="filter-icon" svgIcon="app:filter"></mat-icon>
     </button>
 </h1>
 
@@ -50,6 +50,7 @@
 
                     <span *ngIf="allowInsertLike && colName === '__insertLike' else normalCell">
                             <mat-icon
+                                data-cy-copy-to-form
                                 (click)="onInsertLike(row)"
                                 class="insert-like-icon"
                                 title="Copy data to a new form">add_box</mat-icon>

@@ -125,19 +125,15 @@ jobs:
                     curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
                     echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
 
-                    # Chrome
-                    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-                    echo 'deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main' | sudo tee /etc/apt/sources.list.d/google-chrome.list
-
                     # MySQL
                     wget https://dev.mysql.com/get/mysql-apt-config_0.8.9-1_all.deb
                     DEBIAN_FRONTEND=noninteractive sudo dpkg -i mysql-apt-config_0.8.9-1_all.deb
 
                     sudo apt-get update
             - run:
-                name: Install MySQL client, Yarn, and Chrome
+                name: Install MySQL client and Yarn
                 command: |
-                    sudo apt-get install mysql-client yarn google-chrome-stable
+                    sudo apt-get install mysql-client yarn
             - run:
                 name: Install Node.js
                 command: |
@@ -156,9 +152,10 @@ jobs:
             - run:
                 name: Initialize DB
                 command: mysql -u root -h 127.0.0.1 < server/test/init.sql
-            # - run:
-            #     name: Run e2e tests
-            #     command: yarn e2e:prepped
+            - run: yarn cypress install
+            - run:
+                name: Run e2e tests
+                command: yarn cypress run --config video=false
             - run:
                 name: Save Helium docker image to workspace
                 command: docker save mattbdean/helium:$(.circleci/docker-tag.sh) -o image.tar
@@ -185,7 +182,6 @@ jobs:
     deploy:
         machine: true
         steps:
-            - checkout
             - attach_workspace:
                 at: /tmp/workspace
             - run:
