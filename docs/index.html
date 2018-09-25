@@ -5,52 +5,62 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.css" />
-        <link href="https://fonts.googleapis.com/css?family=Roboto|Slabo+27px" rel="stylesheet"> 
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/noelboss/featherlight@1.7.13/release/featherlight.min.css">
-        <link rel="stylesheet" href="styles/global.css">
-        <link rel="stylesheet" href="styles/landing-page.css">
+        <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400" rel="stylesheet"> 
+        <link rel="stylesheet" href="index.css">
         <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     </head>
     <body>
         <header>
-            <div class="header-main">
-                <div class="ptable-el">
-                    <h1>He</h1>
-                    <h2>Helium</h2>
-                </div>
-                <p>The open source DataJoint companion</p>
-            </div>
-
-            <nav>
-                <a href="https://helium.gitbook.io/project">User Guide</a>
-                <a href="preview">Preview</a>
-                <a href="https://github.com/mattbdean/Helium">GitHub</a>
-                <a href="https://github.com/mattbdean/Helium/blob/master/LICENSE">License</a>
-                <a href="https://helium.gitbook.io/project/api">API</a>
-            </nav>
+            <h1>Helium<span class="ptable-el">He</span></h1>
+            <h2>The open source DataJoint companion</h2>
         </header>
 
-        <!-- <div class="gallery">
-            <a href="#" data-featherlight="media/form.png">
-                <img src="media/form.png">
-            </a>
-        </div> -->
+        <nav>
+            <a href="https://helium.gitbook.io/project">User Guide</a>
+            <a href="preview">Preview</a>
+            <a href="https://github.com/mattbdean/Helium">GitHub</a>
+            <a href="https://github.com/mattbdean/Helium/blob/master/LICENSE">License</a>
+            <a href="https://helium.gitbook.io/project/api">API</a>
+        </nav>
 
-        <section class="with-media">
+        <section>
+            <h1>About Helium</h1>
+            <p>
+                Helium is a simplistic visual companion interface for DataJoint. Helium was built for people who either
+                don't have the technical knowledge to use DataJoint via Python or MATLAB or simply prefer a
+                graphical interface to view and mutate their dataset. Helium focuses on doing a few things very well
+                instead of trying to recreate every feature found in these APIs. Most notable, Helium provides
+
+            <ul>
+                <li>A fully featured data viewer
+                <li>Powerful form generation that can suite any table
+                <li>Simple navigation
+                <li>A RESTful JSON API
+            </ul>
+        </section>
+
+        <div class="slideshow">
+            <img src="media/login.png" title="Logging in">
+            <img src="media/form_part.png" title="Form for a master table with two part tables">
+            <video muted autoplay loop title="Filling in a form with complex references to other tables">
+                <source src="media/compound_keys_form.webm" type="video/webm">
+                It doesn't look like your browser supports HTML5 video
+            </video>
+            <img src="media/filter.png" title="Filtering a table">
+        </div>
+
+        <section>
             <h1>Works with any MySQL database</h1>
             <div class="content">
                 <p>
-                    Helium was built to work with any MySQL database, but to be aware of DataJoint conventions. As a
-                    result, Helium is smarter than your average database companion and can understands concepts such as
-                    the difference between a manual and a computed table.
+                    Helium was built to work with any database that utilizes the MySQL protocol such as MariaDB. Helium
+                    is aware of DataJoint conventions and as a result, Helium is smarter than your average database
+                    companion. It understands concepts such as the difference between a manual and a computed table.
                 </p>
-                <a href="#" data-featherlight="media/login.png">
-                    <img src="media/login.png" alt="Logging in">
-                </a>
             </div>
         </section>
 
-        <section class="with-media">
+        <section>
             <h1>Data entry made easy</h1>
             <div class="content">
                 <p>
@@ -59,9 +69,6 @@
                     relationships. Dates, times, and datetimes are easy to input and use the browser's native date/time
                     picker for a simpler experience. Everything from booleans to enums have their own specialized inputs.
                 </p>
-                <a href="#" data-featherlight="media/form_part.png">
-                    <img src="media/form_part.png">
-                </a>
             </div>
 
             <div class="content">
@@ -69,40 +76,49 @@
                     Helium goes a long way for convenience. Conventionally tricky things like managing compound foreign
                     keys when inserting data is made simple with a click of a button.
                 </p>
-                <video muted controls loop autoplay>
-                    <source src="media/compound_keys_form.webm" type="video/webm">
-                    It doesn't look like your browser supports HTML5 video
-                </video>
             </div>
         </section>
 
-        <section class="with-media">
+        <section>
             <h1>Simple data browsing</h1>
             <div class="content">
                 <p>
                     Helium does everything you'd expect a data table to do. Sorting, filtering, and column resizing are
-                    all essential parts of viewing data.
+                    all essential parts of viewing data. Helium's data viewing capabilities are designed to be intuitive
+                    and easy to use.
                 </p>
-                <a href="#" data-featherlight="media/filter.png">
-                    <img src="media/filter.png">
-                </a>
             </div>
         </section>
 
         <section>
             <h1>RESTful API</h1>
             <p>
-                Every bit of data available when using Helium is also available <a href="api.html">programmatically</a>
+                Every bit of data available when using Helium is also available <a href="https://helium.gitbook.io/project/api">programmatically</a>
                 &mdash;from schema names to table content and every bit of metadata in between.
             </p>
+
+            <pre>$ curl &lt;helium-host&gt;/api/v1/schemas \
+    -H "X-API-Key: my-api-key"</pre>
+            <pre>["some_schema", "another_schema"]</pre>
         </section>
 
         <section>
             <h1>Open source</h1>
             <p>
-                Helium is available for free (as in speech) and its source code
-                is available on <a href="https://github.com/mattbdean/Helium">GitHub</a>
-                under the <a href="https://github.com/mattbdean/Helium/blob/master/LICENSE">MIT license</a>.
+                Helium is available for free (as in speech) and its source code  is available on
+                <a href="https://github.com/mattbdean/Helium">GitHub</a> under the
+                <a href="https://github.com/mattbdean/Helium/blob/master/LICENSE">MIT license</a>. If there's a feature
+                you'd like added or a bug you need fixed, <a href="https://github.com/mattbdean/Helium/issues/new"> let
+                us know</a> (or even better, send us a pull request)!
+            </p>
+        </section>
+
+        <section>
+            <h1>Built with industry standard tools</h1>
+            <p>
+                Helium is built with fast, powerful, and secure libraries like Angular and Express.js. These libraries
+                are trusted by thousands developers everywhere from freelance jobs to companies like Google, PayPal, and
+                IBM.
             </p>
         </section>
 
@@ -116,29 +132,108 @@
             for the <a href="https://www.janelia.org/lab/svoboda-lab">Svoboda Lab</a>
         </footer>
 
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/gh/noelboss/featherlight@1.7.13/release/featherlight.min.js"></script>
+        <div class="fullscreen-backdrop gone" tabindex="0">
+            <div class="fullscreen-media"></div>
+            <p class="fullscreen-el caption"></p>
+            <span class="fullscreen-el control control-left" title="Previous">&larr;</span>
+            <span class="fullscreen-el control control-right" title="Next">&rarr;</span>
+            <span class="fullscreen-el control control-close" title="Close">&#215;</span>
+        </div>
+
         <script>
-            $(function() {
-                function requestFullscreen(elem) {
-                    // Use requestFullScreen fn if available, otherwise fall
-                    // back to render-engine-specific functions.
-                    var fn = elem.requestFullscreen ||
-                        elem.msRequestFullscreen ||
-                        elem.mozRequestFullScreen ||
-                        elem.webkitRequestFullscreen;
-                    
-                    if (fn === undefined)
-                        console.error('Warning: unable to put element into fullscreen', elem);
-                    
-                    // Make sure we're binding 'this' to the right variable when
-                    // invoking the function. Otherwise we'll get an error
-                    elem[fn.name].call(elem);
+            const availableMedia = document.querySelectorAll('.slideshow img, .slideshow video');
+            const backdrop = document.querySelector('.fullscreen-backdrop');
+            const mediaContainer = document.querySelector('.fullscreen-media');
+            const captionEl = document.querySelector('.fullscreen-el.caption');
+
+            let mediaIndex = -1;
+
+            // Click to close
+            backdrop.onclick = () => exitFullscreen();
+
+            // Keyboard shortcuts
+            backdrop.onkeydown = (e) => {
+                // 37 => left, 39 => right, 27 => escape
+                if (e.keyCode === 37) {
+                    prev();
+                } else if (e.keyCode === 39) {
+                    next();
+                } else if (e.keyCode === 27) {
+                    exitFullscreen();
                 }
-                $('video').on('dblclick', (function() {
-                    requestFullscreen(this);
-                }));
-            })
+            }
+
+            const mediaList = document.querySelectorAll('.slideshow *');
+            mediaList.forEach((media, index) => {
+                const caption = captionFor(media);
+                media.onclick = () => {
+                    showMedia(media, caption);
+                    mediaIndex = index;
+                }
+            });
+
+            document.querySelector('.control-right').onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                next();
+            }
+
+            document.querySelector('.control-left').onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                prev();
+            }
+
+            function next() {
+                mediaIndex++;
+                if (mediaIndex >= mediaCount()) {
+                    mediaIndex = 0;
+                }
+
+                showMedia(availableMedia[mediaIndex]);
+            }
+
+            function prev() {
+                mediaIndex--;
+                if (mediaIndex < 0) {
+                    mediaIndex = mediaCount() - 1;
+                }
+
+                showMedia(availableMedia[mediaIndex]);
+            }
+
+            function showMedia(sourceNode, caption) {
+                // Get rid of any media currently being shown, if there is any
+                clearMedia();
+                // Show the backdrop
+                backdrop.classList.remove('gone');
+                // Copy the media to the container
+                mediaContainer.appendChild(sourceNode.cloneNode(true));
+                // Add the caption
+                captionEl.innerHTML = caption ? caption : captionFor(sourceNode);
+                // Focus the backdrop to enable keyboard controls
+                backdrop.focus();
+            }
+
+            function mediaCount() {
+                return document.querySelectorAll('.slideshow img, .slideshow video').length;
+            }
+
+            function captionFor(mediaNode) {
+                const titleAttr = mediaNode.attributes.getNamedItem('title');
+                return titleAttr === null ? '' : titleAttr.value;
+            }
+
+            function clearMedia() {
+                if (mediaContainer.firstChild) {
+                    mediaContainer.removeChild(mediaContainer.firstChild);
+                }
+            }
+
+            function exitFullscreen() {
+                backdrop.classList.add('gone');
+                clearMedia();
+            }
         </script>
     </body>
 </html>
