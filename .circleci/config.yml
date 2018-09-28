@@ -114,10 +114,10 @@ jobs:
                         mysql/mysql-server:5.7
             - run:
                 name: Build Helium Docker image
-                command: docker build -t mattbdean/helium:$(.circleci/docker-tag.sh) .
+                command: docker build -t mattbdean/helium:latest-dev .
             - run:
                 name: Start Helium via Docker
-                command: docker run -d --name helium --net=host -p 3000:3000 mattbdean/helium:$(.circleci/docker-tag.sh)
+                command: docker run -d --name helium --net=host -p 3000:3000 mattbdean/helium:latest-dev
             - run:
                 name: Add required APT repositories
                 command: |
@@ -158,7 +158,7 @@ jobs:
                 command: yarn cypress run --config video=false
             - run:
                 name: Save Helium docker image to workspace
-                command: docker save mattbdean/helium:$(.circleci/docker-tag.sh) -o image.tar
+                command: docker save mattbdean/helium:latest-dev -o image.tar
             - persist_to_workspace:
                 root: .
                 paths:
@@ -192,7 +192,7 @@ jobs:
                 command: docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}
             - run:
                 name: Push to DockerHub
-                command: docker push mattbdean/helium:$(.circleci/docker-tag.sh)
+                command: docker push mattbdean/helium:latest-dev
 
 workflows:
     version: 2
@@ -218,3 +218,6 @@ workflows:
                     - test-e2e
                     - codecov # by extension also requires test-client and test-server
                     - test-dj-compat
+                filters:
+                    branches:
+                        only: master
