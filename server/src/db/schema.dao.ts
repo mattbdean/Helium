@@ -438,7 +438,7 @@ export class SchemaDao {
     }
 
     public async erd(): Promise<Erd> {
-        const edges: ErdEdge[] = [];
+        const tempEdges: ErdEdge[] = [];
 
         const data: SqlRow[] = await this.helper.execute((squel) =>
             squel.select()
@@ -472,7 +472,7 @@ export class SchemaDao {
 
             // If there's a referenced table, that means this is a foreign key
             if (row.REFERENCED_TABLE_SCHEMA) {
-                edges.push({
+                tempEdges.push({
                     from: tableId(row.TABLE_SCHEMA, row.TABLE_NAME),
                     to: tableId(row.REFERENCED_TABLE_SCHEMA, row.REFERENCED_TABLE_NAME)
                 });
@@ -482,6 +482,7 @@ export class SchemaDao {
         }
 
         const uniqueNodes = _.uniqBy(tempNodes, (n) => fullTableName(n.schema, n.table));
+        const uniqueEdges = _.uniqBy(tempEdges, (e) => `${e.from},${e.to}`);
 
         const nodes: ErdNode[] = uniqueNodes.map((n) => {
             const id = tableId(n.schema, n.table);
@@ -492,7 +493,7 @@ export class SchemaDao {
             };
         });
 
-        return { nodes, edges };
+        return { nodes, edges: uniqueEdges };
     }
 
     /**
