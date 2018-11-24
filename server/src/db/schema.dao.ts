@@ -446,6 +446,7 @@ export class SchemaDao {
                 .from('information_schema.KEY_COLUMN_USAGE')
                 .where('TABLE_SCHEMA <> "mysql"')
                 .where('TABLE_SCHEMA <> "sys"')
+                .where('TABLE_NAME NOT LIKE "~%"')
         );
 
         const fullTableName = (schema: string, table: string) =>
