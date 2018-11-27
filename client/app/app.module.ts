@@ -14,7 +14,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CoreModule } from './core/core.module';
-import { ErdComponent } from './erd/erd.component';
 import { FormsModule } from './forms/forms.module';
 import { LoginModule } from './login/login.module';
 import { NotFoundComponent } from './not-found.component';
@@ -23,6 +22,7 @@ import { TablesModule } from './tables/tables.module';
 
 import '@angular/material/prebuilt-themes/deeppurple-amber.css';
 import 'normalize.css/normalize.css';
+import { ErdModule } from './erd/erd.module';
 
 @NgModule({
     imports: [
@@ -44,12 +44,12 @@ import 'normalize.css/normalize.css';
         LoginModule,
         TablesModule,
         FormsModule,
+        ErdModule,
         AppRoutingModule
     ],
     declarations: [
         AppComponent,
         SidenavComponent,
-        ErdComponent,
         NotFoundComponent
     ],
     bootstrap: [ AppComponent ]

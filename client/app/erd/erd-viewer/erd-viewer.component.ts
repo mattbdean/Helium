@@ -3,20 +3,20 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { from, NEVER, Observable, of } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import * as vizmodule from 'viz.js';
-import { environment } from '../../environments/environment';
-import { Erd, ErdNode } from '../common/api';
-import { ApiService } from '../core/api/api.service';
-import { SchemaSelectorComponent } from '../core/schema-selector/schema-selector.component';
+import { environment } from '../../../environments/environment';
+import { Erd, ErdNode } from '../../common/api';
+import { ApiService } from '../../core/api/api.service';
+import { SchemaSelectorComponent } from '../../core/schema-selector/schema-selector.component';
 
 // tslint:disable-next-line:variable-name
 const Viz = vizmodule['default'];
 
 @Component({
-    selector: 'erd',
-    templateUrl: 'erd.component.html',
-    styleUrls: ['erd.component.scss']
+    selector: 'erd-viewer',
+    templateUrl: 'erd-viewer.component.html',
+    styleUrls: ['erd-viewer.component.scss']
 })
-export class ErdComponent implements OnInit, AfterViewInit {
+export class ErdViewerComponent implements OnInit, AfterViewInit {
     /**
      * True if the ERD is in transit from the server or is being transformed
      * from a string to an SVG to display.
@@ -84,7 +84,7 @@ export class ErdComponent implements OnInit, AfterViewInit {
                 let graph = [
                     'digraph {',
                     '  graph [bgcolor=transparent]',
-                    `  node [fontname="Helvetica,Arial,sans-serif",fontsize="${ErdComponent.FONT_SIZE}"]`
+                    `  node [fontname="Helvetica,Arial,sans-serif",fontsize="${ErdViewerComponent.FONT_SIZE}"]`
                 ].join('\n');
 
                 graph += '\n';
@@ -94,8 +94,8 @@ export class ErdComponent implements OnInit, AfterViewInit {
                 }
 
                 for (const edge of erd.edges) {
-                    graph += '  ' + ErdComponent.nodeIdString(edge.from) +
-                        ' -> ' + ErdComponent.nodeIdString(edge.to) + '\n';
+                    graph += '  ' + ErdViewerComponent.nodeIdString(edge.from) +
+                        ' -> ' + ErdViewerComponent.nodeIdString(edge.to) + '\n';
                 }
 
                 graph += '}';
@@ -117,7 +117,7 @@ export class ErdComponent implements OnInit, AfterViewInit {
     public ngAfterViewInit() {
         this.dot$.pipe(
             switchMap((graph: string) => {
-                const viz = new Viz({ workerURL: ErdComponent.workerUrl });
+                const viz = new Viz({ workerURL: ErdViewerComponent.workerUrl });
                 return from(viz.renderSVGElement(graph));
             })
         ).subscribe((svg: SVGElement) => {
@@ -163,7 +163,7 @@ export class ErdComponent implements OnInit, AfterViewInit {
 
         const label = schema.toLowerCase() === node.table.schema.toLowerCase() ?
             '"' + node.table.name.clean + '"' :
-            `<${node.table.name.clean}<br/><font point-size="${ErdComponent.SMALLER_FONT_SIZE}">` +
+            `<${node.table.name.clean}<br/><font point-size="${ErdViewerComponent.SMALLER_FONT_SIZE}">` +
             `${node.table.schema}</font>>`;
 
         if (node.table.isPartTable()) {
@@ -193,7 +193,7 @@ export class ErdComponent implements OnInit, AfterViewInit {
             .map((key) => `${key}="${attrs[key]}"`)
             .join(' ') + ' label=' + label;
 
-        return `${ErdComponent.nodeIdString(node)} [${attrString}]`;
+        return `${ErdViewerComponent.nodeIdString(node)} [${attrString}]`;
     }
 
     private static nodeIdString(id: ErdNode | number) {
