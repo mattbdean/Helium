@@ -1,5 +1,10 @@
 <mat-progress-bar mode="indeterminate" [style.visibility]="working ? 'visible' : 'hidden'"></mat-progress-bar>
 <div #networkContainer class="network-container" [style.display]="failed ? 'none' : 'block'"></div>
 <div *ngIf="failed" class="failure-message">
-    <p>Couldn't create the ERD. The table doesn't exist, the schema has no tables, or we made a mistake.</p>
+    <p>Couldn't create the ERD. The table doesn't exist, the schema has no relevant tables, or we made a mistake.</p>
+</div>
+<div class="toolbar">
+    <schema-selector #schemaSelector></schema-selector>
+    <button class="download-button" mat-icon-button title="Download" [disabled]="!erdShowing" (click)="handleDownloadRequest()"><mat-icon svgIcon="app:download"></mat-icon></button>
+    <button class="help-button" mat-icon-button title="Help">?</button>
 </div>

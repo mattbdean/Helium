@@ -1,11 +1,12 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { from, NEVER, Observable, of } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import * as vizmodule from 'viz.js';
 import { environment } from '../../environments/environment';
 import { Erd, ErdNode } from '../common/api';
 import { ApiService } from '../core/api/api.service';
+import { SchemaSelectorComponent } from '../core/schema-selector/schema-selector.component';
 
 // tslint:disable-next-line:variable-name
 const Viz = vizmodule['default'];
@@ -25,15 +26,23 @@ export class ErdComponent implements OnInit, AfterViewInit {
     /** True if the ERD request returned an error or the ERD was empty. */
     public failed = false;
 
+    public get erdShowing() {
+        if (!this.networkContainer) return false;
+        return !!this.networkContainer.nativeElement.querySelector('svg');
+    }
+
     /**
      * Emits a graph described in graphviz's DOT language created from the
      * schema in the URL.
      */
     private dot$: Observable<string | null>;
 
+    @ViewChild(SchemaSelectorComponent)
+    private schemaSelector: SchemaSelectorComponent;
+
     private static workerUrl = environment.baseUrl + 'assets/full.render.js';
 
-    private static readonly FONT_SIZE = 14.0;
+    private static readonly FONT_SIZE = 12.0;
     private static readonly SMALLER_FONT_SIZE = 10.0;
 
     @ViewChild('networkContainer')
@@ -41,7 +50,8 @@ export class ErdComponent implements OnInit, AfterViewInit {
 
     public constructor(
         private api: ApiService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private router: Router
     ) {}
 
     public ngOnInit() {
@@ -115,6 +125,36 @@ export class ErdComponent implements OnInit, AfterViewInit {
             host.appendChild(svg);
             this.working = false;
         });
+
+        // Navigate to the page for that ERD when a schema is selected from the
+        // toolbar
+        this.schemaSelector.schemaChange.subscribe((schema: string | null) => {
+            if (schema === null) {
+                this.failed = true;
+            } else {
+                this.router.navigate(['/erd', schema]);
+            }
+        });
+    }
+
+    public handleDownloadRequest() {
+        // Create a data URL out of the SVG
+        const svg = this.networkContainer.nativeElement.querySelector('svg');
+        const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        // Format the file name
+        const now = new Date();
+        const dateString = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+        const filename = `erd_${this.route.snapshot.params.schema}_${dateString}.svg`;
+
+        // Download the blob
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     private nodeAsDot(node: ErdNode, schema: string) {

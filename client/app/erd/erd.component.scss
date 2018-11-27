@@ -21,3 +21,30 @@
     text-align: center;
   }
 }
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: baseline;
+  padding: 15px 15px 0 15px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+schema-selector {
+  padding-right: 15px;
+}
+
+.download-button, .help-button {
+  color: rgba(0, 0, 0, 0.54);
+  transition: color 0.2s ease-in;
+
+  &:hover:not([disabled]) {
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+.help-button {
+  font-size: 19px;
+  font-weight: bold;
+}

@@ -47,7 +47,7 @@ export class AppComponent implements OnDestroy, OnInit {
 
     public ngOnInit() {
         // Make these icons available
-        this.registerSvgIcons(['filter', 'key-change', 'key', 'snowflake']);
+        this.registerSvgIcons(['filter', 'key-change', 'key', 'snowflake', 'download']);
 
         this.windowWidth$ = fromEvent(window, 'resize').pipe(
             map(() => window.innerWidth),

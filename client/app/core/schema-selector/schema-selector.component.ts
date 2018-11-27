@@ -90,7 +90,7 @@ export class SchemaSelectorComponent implements OnInit, OnDestroy {
             return null;
         
         const segments = this.currentPath();
-        if (segments.length > 1 && (segments[0] === 'tables' || segments[0] === 'forms')) {
+        if (segments.length > 1 && (segments[0] === 'tables' || segments[0] === 'forms' || segments[0] === 'erd')) {
             // The URL indicates a selected schema, pick it if the user has
             // access to it.
             const loadedSchema = segments[1];
