@@ -1,0 +1,7 @@
+<form [formGroup]="formGroup" class="schema-selector-container">
+    <mat-form-field class="schema-selector">
+        <mat-select tabindex="-1" formControlName="schemaSelect" placeholder="Schema">
+            <mat-option *ngFor="let schema of schemas$ | async" [value]="schema">{{ schema }}</mat-option>
+        </mat-select>
+    </mat-form-field>
+</form>

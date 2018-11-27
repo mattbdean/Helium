@@ -1,9 +1,9 @@
-<div class="datatable-wrapper" *ngIf="selectedTable; else noSelectedTable">
+<div class="datatable-wrapper content-area" *ngIf="selectedTable; else noSelectedTable">
     <datatable [name]="selectedTable" [saveState]="true"></datatable>
 </div>
 
 <ng-template #noSelectedTable>
-    <div class="no-selected-table">
+    <div class="no-selected-table content-area">
         <h1 class="mat-headline">Welcome to Helium</h1>
         <p class="subtle">Pick out a table from the sidebar</p>
     </div>

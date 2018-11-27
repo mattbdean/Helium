@@ -1,8 +1,23 @@
 :host {
-  display: block;
-  flex-grow: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .network-container {
+  overflow: auto;
+  flex-grow: 1;
+}
+
+.failure-message {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
   height: 100%;
+
+  & p {
+    margin: 15px;
+    text-align: center;
+  }
 }

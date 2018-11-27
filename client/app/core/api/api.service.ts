@@ -86,10 +86,11 @@ export class ApiService implements BaseApiService {
     /**
      * Requests the ERD for all tables in all schemas the user has access to
      */
-    public erd(): Observable<Erd> {
-        return this.get('/erd').pipe(
+    public erd(schema: string): Observable<Erd> {
+        return this.get('/erd/' + encode(schema)).pipe(
             map((erd: Erd): Erd => {
                 return {
+                    schema: erd.schema,
                     edges: erd.edges,
                     nodes: erd.nodes.map((n) => {
                         return {

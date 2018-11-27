@@ -1,14 +1,12 @@
-import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { MatSidenav } from '@angular/material';
-import { Router } from '@angular/router';
 import * as _ from 'lodash';
-import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, first, map, switchMap } from 'rxjs/operators';
+import { Observable, of, Subscription } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { unflattenTableNames } from '../../../common/util';
 import { MasterTableName, TableTier } from '../common/api';
 import { ApiService } from '../core/api/api.service';
-import { AuthService } from '../core/auth/auth.service';
+import { SchemaSelectorComponent } from '../core/schema-selector/schema-selector.component';
 
 /**
  * The SidenavComponent handles navigation to all available schemas and tables,
@@ -19,7 +17,7 @@ import { AuthService } from '../core/auth/auth.service';
     templateUrl: 'sidenav.component.html',
     styleUrls: ['sidenav.component.scss']
 })
-export class SidenavComponent implements OnInit, OnDestroy {
+export class SidenavComponent implements AfterViewInit, OnDestroy {
     /**
      * The order in which tiers of tables are shown. Any tables whose tier
      * appears at index `n` will always come before tables whose tier appears at
@@ -62,12 +60,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
 
     public get opened() { return this.matSidenav.opened; }
 
-    /** The only member of this group is a MatSelect for choosing the schema. */
-    public formGroup: FormGroup;
-
-    /** Emits an array of schema names whenever the user logs in. */
-    public schemas$: Observable<string[]>;
-
     /**
      * Emits an array of TableNames grouped by tier whenever the schema selector
      * is changed.
@@ -87,44 +79,25 @@ export class SidenavComponent implements OnInit, OnDestroy {
     }
 
     public get schema(): string | null {
-        return this.formGroup.value.schemaSelect;
+        return this.schemaSelector.schema;
     }
 
     @ViewChild(MatSidenav)
     private matSidenav: MatSidenav;
 
+    @ViewChild(SchemaSelectorComponent)
+    private schemaSelector: SchemaSelectorComponent;
+
     private schemasSub: Subscription | null = null;
 
     public constructor(
-        private auth: AuthService,
-        private api: ApiService,
-        private router: Router
+        private api: ApiService
     ) {}
 
-    public ngOnInit() {
-        this.schemas$ = this.auth.watchAuthState().pipe(
-            switchMap((isLoggedIn) => {
-                return isLoggedIn ? this.api.schemas() : of([]);
-            })
-        );
-
-        // Use a form group and <form> element so we can more easily update and
-        // read the selected schema
-        this.formGroup = new FormGroup({
-            schemaSelect: new FormControl()
-        });
-
-        const selectedSchema$: Observable<string> = this.formGroup.valueChanges.pipe(
-            map((form) => form.schemaSelect),
-            // The schema may be null if there are no schemas available
-            filter((schema) => schema !== null),
-            distinctUntilChanged()
-        );
-
-        this.tables$ = combineLatest(this.auth.watchAuthState(), selectedSchema$).pipe(
-            switchMap(([isLoggedIn, schema]) => {
-                return isLoggedIn ? this.api.tables(schema) : of([]);
-            }),
+    public ngAfterViewInit() {
+        this.tables$ = this.schemaSelector.schemaChange.pipe(
+            switchMap((schema: string | null) =>
+                schema === null ? of([]) : this.api.tables(schema)),
             // Group part tables with their master tables
             map(unflattenTableNames),
             map((names: MasterTableName[]) => {
@@ -144,13 +117,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
                     .value();
             })
         );
-
-        // Update the schema whenever the user logs in/out
-        this.schemasSub = this.schemas$.pipe(
-            map((schemas) => this.defaultSchema(schemas))
-        ).subscribe((defaultSchema) => {
-            this.formGroup.setValue({ schemaSelect: defaultSchema });
-        });
     }
 
     public ngOnDestroy() {
@@ -185,51 +151,6 @@ export class SidenavComponent implements OnInit, OnDestroy {
      */
     public toggle() {
         (this.matSidenav.opened ? this.close : this.open).call(this);
-    }
-
-    /**
-     * Tries to determine the best schema to select by default. If the current
-     * URL indicates a schema, that is selected if available. Otherwise, the
-     * first schema that appears alphabetically is chosen. `information_schema`
-     * will never be chosen unless it's the only schema. Returns null if
-     * there are no schemas provided.
-     * 
-     * @param {string[]} schema A list of all schemas available to the user
-     */
-    public defaultSchema(schemas: string[]): string | null {
-        if (schemas.length === 0)
-            return null;
-        
-        const segments = this.currentPath();
-        if (segments.length > 1 && (segments[0] === 'tables' || segments[0] === 'forms')) {
-            // The URL indicates a selected schema, pick it if the user has
-            // access to it.
-            const loadedSchema = segments[1];
-            if (schemas.includes(loadedSchema)) {
-                return loadedSchema;
-            }
-        }
-
-        const sorted = _.sortBy(schemas);
-
-        // Use the first schema when sorted alphabetically. Prefer not to use
-        // information_schema since most users probably don't care about this
-        const index = sorted[0].toLowerCase() === 'information_schema' && sorted.length > 1 ? 1 : 0;
-        return sorted[index];
-    }
-
-    /**
-     * Visible for testing purposes only.
-     * 
-     * Returns each segment of the current URL's path as an element of an array.
-     * For example, if the path is `/foo/bar/baz`, this method will return
-     * `['foo', 'bar', 'baz']`.
-     */
-    public currentPath(): string[] {
-        const urlTree = this.router.parseUrl(this.router.url);
-        if (!urlTree.root.children.primary)
-            return [];
-        return urlTree.root.children.primary.segments.map((s) => s.path);
     }
 }
 

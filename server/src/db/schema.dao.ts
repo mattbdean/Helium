@@ -437,15 +437,14 @@ export class SchemaDao {
         return resolved;
     }
 
-    public async erd(): Promise<Erd> {
+    public async erd(db: string): Promise<Erd> {
         const tempEdges: ErdEdge[] = [];
 
         const data: SqlRow[] = await this.helper.execute((squel) =>
             squel.select()
                 .fields(['TABLE_SCHEMA', 'TABLE_NAME', 'REFERENCED_TABLE_SCHEMA', 'REFERENCED_TABLE_NAME'])
                 .from('information_schema.KEY_COLUMN_USAGE')
-                .where('TABLE_SCHEMA <> "mysql"')
-                .where('TABLE_SCHEMA <> "sys"')
+                .where('TABLE_SCHEMA = ?', db)
                 .where('TABLE_NAME NOT LIKE "~%"')
         );
 
@@ -494,7 +493,7 @@ export class SchemaDao {
             };
         });
 
-        return { nodes, edges: uniqueEdges };
+        return { nodes, edges: uniqueEdges, schema: db };
     }
 
     /**

@@ -4,7 +4,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import {
     MatButtonModule, MatFormFieldModule,
     MatIconModule,
-    MatNativeDateModule, MatSelectModule,
+    MatNativeDateModule, MatProgressBarModule,
+    MatSelectModule,
     MatSidenavModule,
     MatToolbarModule
 } from '@angular/material';
@@ -38,6 +39,7 @@ import 'normalize.css/normalize.css';
         MatToolbarModule,
         MatSelectModule,
         MatSidenavModule,
+        MatProgressBarModule,
 
         LoginModule,
         TablesModule,

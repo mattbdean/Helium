@@ -12,8 +12,8 @@ export function erdRouter(db: DatabaseHelper, daoFactory: DaoFactory) {
 
     const daoFor = (req: Request): SchemaDao => daoFactory(db, req.header('x-api-key')!!);
 
-    r.get('/', wrap(async (req: Request): Promise<Erd> =>
-            daoFor(req).erd()));
+    r.get('/:schema', wrap(async (req: Request): Promise<Erd> =>
+            daoFor(req).erd(req.params.schema)));
     
     return r;
 }

@@ -1,2 +1,5 @@
-<div #networkContainer class="network-container">
+<mat-progress-bar mode="indeterminate" [style.visibility]="working ? 'visible' : 'hidden'"></mat-progress-bar>
+<div #networkContainer class="network-container" [style.display]="failed ? 'none' : 'block'"></div>
+<div *ngIf="failed" class="failure-message">
+    <p>Couldn't create the ERD. The table doesn't exist, the schema has no tables, or we made a mistake.</p>
 </div>

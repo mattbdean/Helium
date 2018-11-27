@@ -6,7 +6,7 @@ import { NotFoundComponent } from './not-found.component';
 
 const routes: Routes = [
     { path: '', redirectTo: '/tables', pathMatch: 'full' },
-    { path: 'erd', component: ErdComponent },
+    { path: 'erd/:schema', component: ErdComponent },
     { path: '**', component: NotFoundComponent }
 ];
 

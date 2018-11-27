@@ -1,137 +1,162 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { DataSet, Edge, Network, Node, Options } from 'vis';
-import 'vis/dist/vis.css';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { from, NEVER, Observable, of } from 'rxjs';
+import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
+import * as vizmodule from 'viz.js';
+import { environment } from '../../environments/environment';
 import { Erd, ErdNode } from '../common/api';
-import { TableName } from '../common/table-name';
 import { ApiService } from '../core/api/api.service';
+
+// tslint:disable-next-line:variable-name
+const Viz = vizmodule['default'];
 
 @Component({
     selector: 'erd',
     templateUrl: 'erd.component.html',
     styleUrls: ['erd.component.scss']
 })
-export class ErdComponent implements OnInit, AfterViewInit, OnDestroy {
-    public data$: Observable<VisErd>;
+export class ErdComponent implements OnInit, AfterViewInit {
+    /**
+     * True if the ERD is in transit from the server or is being transformed
+     * from a string to an SVG to display.
+     */
+    public working = true;
+
+    /** True if the ERD request returned an error or the ERD was empty. */
+    public failed = false;
+
+    /**
+     * Emits a graph described in graphviz's DOT language created from the
+     * schema in the URL.
+     */
+    private dot$: Observable<string | null>;
+
+    private static workerUrl = environment.baseUrl + 'assets/full.render.js';
+
+    private static readonly FONT_SIZE = 14.0;
+    private static readonly SMALLER_FONT_SIZE = 10.0;
 
     @ViewChild('networkContainer')
-    private networkContainer: ElementRef<any>;
-
-    private network: Network | null = null;
+    private networkContainer: ElementRef;
 
     public constructor(
         private api: ApiService,
-        private router: Router
+        private route: ActivatedRoute
     ) {}
 
     public ngOnInit() {
-        this.data$ = this.api.erd().pipe(
-            map((erd: Erd): VisErd => {
-                const nodes = new DataSet<Node>(erd.nodes.map((n) => this.createNode(n)));
+        this.dot$ = this.route.params.pipe(
+            map((p) => p.schema),
+            tap(() => {
+                // Reset state
+                this.working = true;
+                this.failed = false;
 
-                let lastId = 0;
-                const edges = new DataSet<Edge>(erd.edges.map((e) => {
-                    return {
-                        from: e.from,
-                        to: e.to,
-                        id: lastId++
-                    };
-                }));
+                // View might not have been initialized yet
+                if (this.networkContainer.nativeElement) {
+                    const host = this.networkContainer.nativeElement;
 
-                return {
-                    nodes,
-                    edges
-                };
+                    // Remove all previous graphs
+                    while (host.firstChild)
+                        host.removeChild(host.firstChild);
+                }
+            }),
+            flatMap((schema) => this.api.erd(schema).pipe(
+                // tslint:disable-next-line:no-console
+                catchError((err) => { console.error(err); return NEVER; })
+            )),
+            map((erd: Erd | null): string | null => {
+                if (erd === null || erd.nodes.length === 0)
+                    // No information available, probably tried to view the ERD
+                    // for information_schema or another built-in table
+                    return null;
+                
+                let graph = [
+                    'digraph {',
+                    '  graph [bgcolor=transparent]',
+                    `  node [fontname="Helvetica,Arial,sans-serif",fontsize="${ErdComponent.FONT_SIZE}"]`
+                ].join('\n');
+
+                graph += '\n';
+
+                for (const node of erd.nodes) {
+                    graph += '  ' + this.nodeAsDot(node, erd.schema) + ';\n';
+                }
+
+                for (const edge of erd.edges) {
+                    graph += '  ' + ErdComponent.nodeIdString(edge.from) +
+                        ' -> ' + ErdComponent.nodeIdString(edge.to) + '\n';
+                }
+
+                graph += '}';
+
+                return graph;
+            }),
+            switchMap((graph: string | null) => {
+                if (graph === null) {
+                    this.failed = true;
+                    this.working = false;
+                    return NEVER;
+                }
+
+                return of(graph);
             })
         );
     }
 
     public ngAfterViewInit() {
-        this.data$.subscribe((erd: VisErd) => {
-            const container = this.networkContainer.nativeElement;
-
-            const size = 10;
-            const options: Options = {
-                physics: {
-                    enabled: false
-                },
-                layout: {
-                    hierarchical: {
-                        direction: 'DU',
-                        sortMethod: 'directed',
-                        // Temporary workaround for
-                        // https://github.com/almende/vis/issues/1964
-                        nodeSpacing: 220
-                    }
-                },
-                nodes: {
-                    font: {
-                        multi: 'markdown',
-                        face: 'Roboto'
-                    },
-                    size
-                },
-                groups: {
-                    part: {
-                        shape: 'dot',
-                        color: 'black',
-                        size: size / 2
-                    },
-                    manual: {
-                        color: 'green',
-                        shape: 'square',
-                    },
-                    lookup: {
-                        color: 'gray',
-                        shape: 'star',
-                    },
-                    imported: {
-                        color: 'blue',
-                        shape: 'dot',
-                    },
-                    computed: {
-                        color: 'red',
-                        shape: 'star',
-                    }
-                }
-            };
-
-            this.network = new Network(container, erd, options);
-            this.network.on('doubleClick', (e) => {
-                if (e.nodes.length < 1)
-                    return;
-
-                const id = e.nodes[0];
-                const table: TableName = (erd.nodes.get(id) as any)._table;
-
-                this.router.navigate(['/tables', table.schema, table.name.raw]);
-            });
+        this.dot$.pipe(
+            switchMap((graph: string) => {
+                const viz = new Viz({ workerURL: ErdComponent.workerUrl });
+                return from(viz.renderSVGElement(graph));
+            })
+        ).subscribe((svg: SVGElement) => {
+            const host = this.networkContainer.nativeElement;
+            host.appendChild(svg);
+            this.working = false;
         });
     }
 
-    public ngOnDestroy() {
-        if (this.network)
-            this.network.destroy();
+    private nodeAsDot(node: ErdNode, schema: string) {
+        const tier = node.table.tier;
+        let shape: string | undefined, color: string | undefined;
+
+        const label = schema.toLowerCase() === node.table.schema.toLowerCase() ?
+            '"' + node.table.name.clean + '"' :
+            `<${node.table.name.clean}<br/><font point-size="${ErdComponent.SMALLER_FONT_SIZE}">` +
+            `${node.table.schema}</font>>`;
+
+        if (node.table.isPartTable()) {
+            shape = 'underline';
+        } else if (tier === 'lookup') {
+            color = '#78909C'; // gray
+            shape = 'Mdiamond';
+        } else if (tier === 'manual') {
+            color = '#66BB6A'; // green
+            shape = 'rectangle';
+        } else if (tier === 'imported') {
+            color = '#42A5F5'; // blue
+            shape = 'ellipse';
+        } else if (tier === 'computed') {
+            color = '#ef5350'; // red
+            shape = 'doubleoctagon';
+        }
+
+        const attrs: { [key: string]: string | undefined } = {
+            tooltip: '`' + node.table.schema + '`.`' + node.table.name.raw + '`',
+            shape,
+            color
+        };
+
+        const attrString = Object.keys(attrs)
+            .filter((key) => attrs[key] !== undefined)
+            .map((key) => `${key}="${attrs[key]}"`)
+            .join(' ') + ' label=' + label;
+
+        return `${ErdComponent.nodeIdString(node)} [${attrString}]`;
     }
 
-    private createNode(n: ErdNode): Node {
-        const { table, id } = n;
-
-        return {
-            id,
-            label: `*${table.name.clean}*\n${table.schema}`,
-            widthConstraint: {
-                maximum: 200
-            },
-            group: table.isPartTable() ? 'part' : table.tier,
-            _table: table
-        } as any;
+    private static nodeIdString(id: ErdNode | number) {
+        return typeof id === 'number' ? `node_${id}` : this.nodeIdString(id.id);
     }
-}
-
-interface VisErd {
-    nodes: DataSet<Node>;
-    edges: DataSet<Edge>;
 }

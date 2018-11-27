@@ -1,6 +1,7 @@
 import { TableName } from '../table-name';
 
 export interface Erd {
+    schema: string;
     nodes: ErdNode[];
     edges: ErdEdge[];
 }
