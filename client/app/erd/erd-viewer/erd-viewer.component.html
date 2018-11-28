@@ -6,5 +6,5 @@
 <div class="toolbar">
     <schema-selector #schemaSelector></schema-selector>
     <button class="download-button" mat-icon-button title="Download" [disabled]="!erdShowing" (click)="handleDownloadRequest()"><mat-icon svgIcon="app:download"></mat-icon></button>
-    <button class="help-button" mat-icon-button title="Help">?</button>
+    <button class="help-button" mat-icon-button title="Help" (click)="handleHelpRequest()">?</button>
 </div>

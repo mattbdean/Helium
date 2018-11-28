@@ -59,6 +59,37 @@ export class ErdStyleService {
     }
 
     /**
+     * Any attributes that should be applied to the graph. For example, to make
+     * the entire SVG background blue via DOT, one would use
+     * 
+     * digraph G {
+     *   graph [bgcolor=blue]
+     * }
+     * 
+     * These attributes should be specified where "bgcolor=blue" is.
+     */
+    public globalGraphAttrs(): ErdAttribute[] {
+        return this.quoted({
+            bgcolor: 'transparent',
+        });
+    }
+
+    /**
+     * Any attributes that should be applied to all nodes in the graph. Can be
+     * specified in DOT like this:
+     * 
+     * digraph G {
+     *   node [key1=value1 key2=value2 (...)]
+     * }
+     */
+    public globalNodeAttrs(): ErdAttribute[] {
+        return this.quoted({
+            fontname: 'Helvetica,Arial,sans-serif',
+            fontsize: String(ErdStyleService.FONT_SIZE)
+        });
+    }
+
+    /**
      * Formats the given attributes into an attribute string (`a_list` in the
      * graphviz DOT language spec).
      */

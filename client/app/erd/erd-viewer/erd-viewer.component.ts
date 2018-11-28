@@ -1,16 +1,13 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { MatDialog } from '@angular/material';
 import { ActivatedRoute, Router } from '@angular/router';
-import { from, NEVER, Observable, of } from 'rxjs';
+import { NEVER, Observable, of } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
-import * as vizmodule from 'viz.js';
-import { environment } from '../../../environments/environment';
-import { Erd, ErdNode } from '../../common/api';
+import { Erd } from '../../common/api';
 import { ApiService } from '../../core/api/api.service';
 import { SchemaSelectorComponent } from '../../core/schema-selector/schema-selector.component';
-import { ErdStyleService } from '../erd-style.service';
-
-// tslint:disable-next-line:variable-name
-const Viz = vizmodule['default'];
+import { ErdHelpComponent } from '../erd-help/erd-help.component';
+import { ErdRenderingService } from '../erd-rendering.service';
 
 @Component({
     selector: 'erd-viewer',
@@ -41,8 +38,6 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
     @ViewChild(SchemaSelectorComponent)
     private schemaSelector: SchemaSelectorComponent;
 
-    private static workerUrl = environment.baseUrl + 'assets/full.render.js';
-
     @ViewChild('networkContainer')
     private networkContainer: ElementRef;
 
@@ -50,7 +45,8 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
         private api: ApiService,
         private route: ActivatedRoute,
         private router: Router,
-        private style: ErdStyleService
+        private erd: ErdRenderingService,
+        private dialog: MatDialog
     ) {}
 
     public ngOnInit() {
@@ -80,26 +76,7 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
                     // for information_schema or another built-in table
                     return null;
                 
-                let graph = [
-                    'digraph {',
-                    '  graph [bgcolor=transparent]',
-                    `  node [fontname="Helvetica,Arial,sans-serif",fontsize="${ErdStyleService.FONT_SIZE}"]`
-                ].join('\n');
-
-                graph += '\n';
-
-                for (const node of erd.nodes) {
-                    graph += '  ' + this.nodeAsDot(node, erd.schema) + ';\n';
-                }
-
-                for (const edge of erd.edges) {
-                    graph += '  ' + ErdViewerComponent.nodeIdString(edge.from) +
-                        ' -> ' + ErdViewerComponent.nodeIdString(edge.to) + '\n';
-                }
-
-                graph += '}';
-
-                return graph;
+                return this.erd.toDot(erd);
             }),
             switchMap((graph: string | null) => {
                 if (graph === null) {
@@ -115,10 +92,7 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
 
     public ngAfterViewInit() {
         this.dot$.pipe(
-            switchMap((graph: string) => {
-                const viz = new Viz({ workerURL: ErdViewerComponent.workerUrl });
-                return from(viz.renderSVGElement(graph));
-            })
+            switchMap((graph: string) => this.erd.toSvg(graph))
         ).subscribe((svg: SVGElement) => {
             const host = this.networkContainer.nativeElement;
             host.appendChild(svg);
@@ -156,12 +130,7 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
         document.body.removeChild(link);
     }
 
-    private nodeAsDot(node: ErdNode, schema: string) {
-        const attrs = this.style.nodeAttributes(node, schema);
-        return `${ErdViewerComponent.nodeIdString(node)} [${this.style.asAttributeString(attrs)}]`;
-    }
-
-    private static nodeIdString(id: ErdNode | number) {
-        return typeof id === 'number' ? `node_${id}` : this.nodeIdString(id.id);
+    public handleHelpRequest() {
+        this.dialog.open(ErdHelpComponent);
     }
 }
