@@ -7,6 +7,7 @@ import { environment } from '../../../environments/environment';
 import { Erd, ErdNode } from '../../common/api';
 import { ApiService } from '../../core/api/api.service';
 import { SchemaSelectorComponent } from '../../core/schema-selector/schema-selector.component';
+import { ErdStyleService } from '../erd-style.service';
 
 // tslint:disable-next-line:variable-name
 const Viz = vizmodule['default'];
@@ -42,16 +43,14 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
 
     private static workerUrl = environment.baseUrl + 'assets/full.render.js';
 
-    private static readonly FONT_SIZE = 12.0;
-    private static readonly SMALLER_FONT_SIZE = 10.0;
-
     @ViewChild('networkContainer')
     private networkContainer: ElementRef;
 
     public constructor(
         private api: ApiService,
         private route: ActivatedRoute,
-        private router: Router
+        private router: Router,
+        private style: ErdStyleService
     ) {}
 
     public ngOnInit() {
@@ -84,7 +83,7 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
                 let graph = [
                     'digraph {',
                     '  graph [bgcolor=transparent]',
-                    `  node [fontname="Helvetica,Arial,sans-serif",fontsize="${ErdViewerComponent.FONT_SIZE}"]`
+                    `  node [fontname="Helvetica,Arial,sans-serif",fontsize="${ErdStyleService.FONT_SIZE}"]`
                 ].join('\n');
 
                 graph += '\n';
@@ -158,42 +157,8 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
     }
 
     private nodeAsDot(node: ErdNode, schema: string) {
-        const tier = node.table.tier;
-        let shape: string | undefined, color: string | undefined;
-
-        const label = schema.toLowerCase() === node.table.schema.toLowerCase() ?
-            '"' + node.table.name.clean + '"' :
-            `<${node.table.name.clean}<br/><font point-size="${ErdViewerComponent.SMALLER_FONT_SIZE}">` +
-            `${node.table.schema}</font>>`;
-
-        if (node.table.isPartTable()) {
-            shape = 'underline';
-        } else if (tier === 'lookup') {
-            color = '#78909C'; // gray
-            shape = 'Mdiamond';
-        } else if (tier === 'manual') {
-            color = '#66BB6A'; // green
-            shape = 'rectangle';
-        } else if (tier === 'imported') {
-            color = '#42A5F5'; // blue
-            shape = 'ellipse';
-        } else if (tier === 'computed') {
-            color = '#ef5350'; // red
-            shape = 'doubleoctagon';
-        }
-
-        const attrs: { [key: string]: string | undefined } = {
-            tooltip: '`' + node.table.schema + '`.`' + node.table.name.raw + '`',
-            shape,
-            color
-        };
-
-        const attrString = Object.keys(attrs)
-            .filter((key) => attrs[key] !== undefined)
-            .map((key) => `${key}="${attrs[key]}"`)
-            .join(' ') + ' label=' + label;
-
-        return `${ErdViewerComponent.nodeIdString(node)} [${attrString}]`;
+        const attrs = this.style.nodeAttributes(node, schema);
+        return `${ErdViewerComponent.nodeIdString(node)} [${this.style.asAttributeString(attrs)}]`;
     }
 
     private static nodeIdString(id: ErdNode | number) {

@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { MatButtonModule, MatIconModule, MatProgressBarModule } from '@angular/material';
 import { CoreModule } from '../core/core.module';
 import { ErdRoutingModule } from './erd-routing.module';
+import { ErdStyleService } from './erd-style.service';
 import { ErdViewerComponent } from './erd-viewer/erd-viewer.component';
 
 @NgModule({
@@ -18,7 +19,7 @@ import { ErdViewerComponent } from './erd-viewer/erd-viewer.component';
         ErdViewerComponent
     ],
     providers: [
-
+        ErdStyleService
     ]
 })
 export class ErdModule {}
