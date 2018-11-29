@@ -36,6 +36,7 @@ export class ErdHelpComponent implements OnInit, AfterViewInit {
                 { id: 1, table: new TableName(schema, '#lookup_table') },
                 { id: 2, table: new TableName(schema, '_imported_table') },
                 { id: 3, table: new TableName(schema, '__computed_table') },
+                { id: 4, table: new TableName(schema, 'master__part_table') },
                 { id: 10, table: new TableName(schema, 'table_referencing') },
                 { id: 11, table: new TableName(schema, 'table_being_referenced') },
             ],
