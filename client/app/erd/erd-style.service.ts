@@ -48,11 +48,15 @@ export class ErdStyleService {
             shape = 'doubleoctagon';
         }
 
+        const path = `/tables/${encodeURIComponent(node.table.schema)}/` +
+            encodeURIComponent(node.table.name.raw);
+
         return [
             ...this.quoted({
                 shape,
                 color,
                 tooltip: '`' + node.table.schema + '`.`' + node.table.name.raw + '`',
+                URL: window.location.origin + path
             }),
             { key: 'label', value: label, quoted: false }
         ];
