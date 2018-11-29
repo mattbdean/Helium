@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { ActivatedRoute, Router } from '@angular/router';
+import * as panzoomModule from 'panzoom';
 import { NEVER, Observable, of } from 'rxjs';
 import { catchError, flatMap, map, switchMap, tap } from 'rxjs/operators';
 import { Erd } from '../../common/api';
@@ -8,6 +9,8 @@ import { ApiService } from '../../core/api/api.service';
 import { SchemaSelectorComponent } from '../../core/schema-selector/schema-selector.component';
 import { ErdHelpComponent } from '../erd-help/erd-help.component';
 import { ErdRenderingService } from '../erd-rendering.service';
+
+const panzoom = panzoomModule as any;
 
 @Component({
     selector: 'erd-viewer',
@@ -25,8 +28,8 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
     public failed = false;
 
     public get erdShowing() {
-        if (!this.networkContainer) return false;
-        return !!this.networkContainer.nativeElement.querySelector('svg');
+        if (!this.svgWrapper) return false;
+        return !!this.svgWrapper.nativeElement.querySelector('svg');
     }
 
     /**
@@ -38,8 +41,8 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
     @ViewChild(SchemaSelectorComponent)
     private schemaSelector: SchemaSelectorComponent;
 
-    @ViewChild('networkContainer')
-    private networkContainer: ElementRef;
+    @ViewChild('svgWrapper')
+    private svgWrapper: ElementRef;
 
     public constructor(
         private api: ApiService,
@@ -58,8 +61,8 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
                 this.failed = false;
 
                 // View might not have been initialized yet
-                if (this.networkContainer.nativeElement) {
-                    const host = this.networkContainer.nativeElement;
+                if (this.svgWrapper.nativeElement) {
+                    const host = this.svgWrapper.nativeElement;
 
                     // Remove all previous graphs
                     while (host.firstChild)
@@ -94,8 +97,22 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
         this.dot$.pipe(
             switchMap((graph: string) => this.erd.toSvg(graph))
         ).subscribe((svg: SVGElement) => {
-            const host = this.networkContainer.nativeElement;
+            const host = this.svgWrapper.nativeElement;
+            const parent = host.parentNode;
             host.appendChild(svg);
+
+            // Center relative to the parent
+            const x = parent.clientWidth / 2 - (svg.clientWidth / 2 );
+
+            // Chosen kinda arbitrarily, want to keep top of ERD close to top
+            // of screen
+            const y = 30; 
+            panzoom(host, {
+                // This is that really cool feature where if you're panning and
+                // if your mouse's speed is above 0.0000000001px/s when you let
+                // go it'll nudge the target a little bit in the same direction
+                smoothScroll: false
+            }).moveTo(x, y);
             this.working = false;
         });
 
@@ -112,7 +129,7 @@ export class ErdViewerComponent implements OnInit, AfterViewInit {
 
     public handleDownloadRequest() {
         // Create a data URL out of the SVG
-        const svg = this.networkContainer.nativeElement.querySelector('svg');
+        const svg = this.svgWrapper.nativeElement.querySelector('svg');
         const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
 
