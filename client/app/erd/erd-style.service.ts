@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ErdNode } from '../common/api';
+import { ErdEdge, ErdNode, TableTier } from '../common/api';
 
 /**
  * Handles styling for ERDs. Assumes the network graph is being described in
@@ -25,27 +25,25 @@ export class ErdStyleService {
      */
     public nodeAttributes(node: ErdNode, schema: string): ErdAttribute[] {
         const tier = node.table.tier;
-        let shape: string | undefined, color: string | undefined;
 
         const label = schema.toLowerCase() === node.table.schema.toLowerCase() ?
             '"' + node.table.name.clean + '"' :
             `<${node.table.name.clean}<br/><font point-size="${ErdStyleService.SMALLER_FONT_SIZE}">` +
             `${node.table.schema}</font>>`;
 
+        const colorScheme = this.colorScheme(tier);
+
+        let style: string | undefined,
+            penwidth: string | undefined,
+            borderColor = colorScheme.dark,
+            fillColor: string | undefined = colorScheme.primary;
+
         if (node.table.isPartTable()) {
-            shape = 'underline';
-        } else if (tier === 'lookup') {
-            color = '#78909C'; // gray
-            shape = 'Mdiamond';
-        } else if (tier === 'manual') {
-            color = '#66BB6A'; // green
-            shape = 'rectangle';
-        } else if (tier === 'imported') {
-            color = '#42A5F5'; // blue
-            shape = 'ellipse';
-        } else if (tier === 'computed') {
-            color = '#ef5350'; // red
-            shape = 'doubleoctagon';
+            style = 'dashed';
+            penwidth = '1.0';
+
+            borderColor = fillColor;
+            fillColor = undefined;
         }
 
         const path = `/tables/${encodeURIComponent(node.table.schema)}/` +
@@ -53,13 +51,51 @@ export class ErdStyleService {
 
         return [
             ...this.quoted({
-                shape,
-                color,
+                shape: this.shape(tier),
+                color: borderColor,
                 tooltip: '`' + node.table.schema + '`.`' + node.table.name.raw + '`',
-                URL: window.location.origin + path
+                URL: window.location.origin + path,
+                style,
+                fillcolor: fillColor,
+                penwidth
             }),
             { key: 'label', value: label, quoted: false }
         ];
+    }
+
+    public edgeAttributes(edge: ErdEdge): ErdAttribute[] {
+        return this.quoted({
+            style: edge.type === 'part' ? 'dashed' : undefined
+        });
+    }
+
+    public colorScheme(tier: TableTier): ColorScheme {
+        // https://www.materialui.co/colors
+        // In general, primary == 600, dark == 900, light == 300
+        if (tier === 'manual') {
+            // green
+            return { primary: '#4CAF50', dark: '#1B5E20', light: '#81C784', };
+        } else if (tier === 'imported') {
+            // blue
+            return { primary: '#1E88E5', dark: '#0D47A1', light: '#64B5F6' };
+        } else if (tier === 'computed') {
+            // red
+            return { primary: '#E53935', dark: '#B71C1C', light: '#E57373' };
+        } else if (tier === 'lookup') {
+            // gray
+            return { primary: '#90A4AE', dark: '#263238', light: '#90A4AE' };
+        } else {
+            // white for unknown
+            return { primary: '#FFFFFF', dark: '#FFFFFF', light: '#FFFFFF' };
+        }
+    }
+
+    public shape(tier: TableTier): string {
+        return {
+            imported: 'ellipse',
+            computed: 'doubleoctagon',
+            lookup: 'Mdiamond'
+        }[tier] || 'rectangle';
     }
 
     /**
@@ -89,7 +125,22 @@ export class ErdStyleService {
     public globalNodeAttrs(): ErdAttribute[] {
         return this.quoted({
             fontname: 'Helvetica,Arial,sans-serif',
-            fontsize: String(ErdStyleService.FONT_SIZE)
+            fontsize: String(ErdStyleService.FONT_SIZE),
+            style: 'filled'
+        });
+    }
+
+    /**
+     * Any attributes applied to all edges in the graph. Applied in DOT likes
+     * this:
+     * 
+     * digraph G {
+     *   edge [key1=value1 key2=value2 (...)]
+     * }
+     */
+    public globalEdgeAttrs(): ErdAttribute[] {
+        return this.quoted({
+            arrowhead: 'none'
         });
     }
 
@@ -118,4 +169,10 @@ export interface ErdAttribute {
 
     /** If false, the value should not be surrounded by quotes */
     quoted: boolean;
+}
+
+interface ColorScheme {
+    primary: string;
+    light: string;
+    dark: string;
 }

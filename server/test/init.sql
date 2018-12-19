@@ -24,6 +24,10 @@ CREATE DATABASE helium_sample CHARACTER SET utf8;
 DROP DATABASE IF EXISTS helium_compound_fk_test;
 CREATE DATABASE helium_compound_fk_test CHARACTER SET utf8;
 
+# Testing 1:0..1 relationships in the ERD
+DROP DATABASE IF EXISTS helium_one_to_one_test;
+CREATE DATABASE helium_one_to_one_test CHARACTER SET utf8;
+
 # Select the new database
 USE helium_sample;
 
@@ -253,3 +257,18 @@ INSERT INTO table_b VALUES
   (101, 102, 103),
   (104, 105, 106),
   (107, 108, 109);
+
+USE helium_one_to_one_test;
+
+CREATE TABLE users(
+    id INT NOT NULL AUTO_INCREMENT,
+    user_name VARCHAR(45) NOT NULL,
+    PRIMARY KEY(id)
+);
+
+CREATE TABLE accounts(
+    id INT NOT NULL AUTO_INCREMENT,
+    account_name VARCHAR(45) NOT NULL,
+    PRIMARY KEY(id),
+    FOREIGN KEY(id) REFERENCES users(id)
+);

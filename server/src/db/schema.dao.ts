@@ -5,8 +5,8 @@ import { zipObject } from 'lodash';
 import * as moment from 'moment';
 import { Select } from 'squel';
 import {
-    CompoundConstraint, Constraint, ConstraintType, DefaultValue, Erd, ErdEdge,
-    ErdNode, Filter, RawConstraint, SqlRow, TableDataType, TableHeader, TableMeta
+    CompoundConstraint, Constraint, ConstraintType, DefaultValue, EdgeType, Erd,
+    ErdEdge, ErdNode, Filter, RawConstraint, SqlRow, TableDataType, TableHeader, TableMeta
 } from '../common/api';
 import { TableInsert } from '../common/api/table-insert';
 import {
@@ -472,9 +472,16 @@ export class SchemaDao {
 
             // If there's a referenced table, that means this is a foreign key
             if (row.REFERENCED_TABLE_SCHEMA) {
+                const from = new TableName('', row.TABLE_NAME);
+                const to = new TableName('', row.REFERENCED_TABLE_NAME);
+                let type: EdgeType = 'normal';
+                if (from.isPartTable() && from.name.raw.startsWith(to.name.raw)) {
+                    type = 'part';
+                }
                 tempEdges.push({
                     from: tableId(row.TABLE_SCHEMA, row.TABLE_NAME),
-                    to: tableId(row.REFERENCED_TABLE_SCHEMA, row.REFERENCED_TABLE_NAME)
+                    to: tableId(row.REFERENCED_TABLE_SCHEMA, row.REFERENCED_TABLE_NAME),
+                    type
                 });
 
                 tempNodes.push({ schema: row.REFERENCED_TABLE_SCHEMA, table: row.REFERENCED_TABLE_NAME });

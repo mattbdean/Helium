@@ -14,4 +14,7 @@ export interface ErdNode {
 export interface ErdEdge {
     from: number;
     to: number;
+    type: EdgeType;
 }
+
+export type EdgeType = 'normal' | 'part';

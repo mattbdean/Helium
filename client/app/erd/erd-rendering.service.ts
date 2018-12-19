@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { from, Observable } from 'rxjs';
 import * as vizmodule from 'viz.js';
 import { environment } from '../../environments/environment';
-import { Erd, ErdNode } from '../common/api';
+import { Erd, ErdEdge, ErdNode } from '../common/api';
 import { ErdStyleService } from './erd-style.service';
 
 // tslint:disable-next-line:variable-name
@@ -24,7 +24,8 @@ export class ErdRenderingService {
         let graph = [
             'digraph {',
             `  graph [${this.style.asAttributeString(this.style.globalGraphAttrs())}]`,
-            `  node [${this.style.asAttributeString(this.style.globalNodeAttrs())}]`
+            `  node [${this.style.asAttributeString(this.style.globalNodeAttrs())}]`,
+            `  edge [${this.style.asAttributeString(this.style.globalEdgeAttrs())}]`
         ].join('\n');
 
         graph += '\n';
@@ -34,8 +35,7 @@ export class ErdRenderingService {
         }
 
         for (const edge of erd.edges) {
-            graph += '  ' + ErdRenderingService.nodeIdString(edge.from) +
-                ' -> ' + ErdRenderingService.nodeIdString(edge.to) + '\n';
+            graph += '  ' + this.edgeAsDot(edge) + ';\n';
         }
 
         graph += '}';
@@ -57,6 +57,20 @@ export class ErdRenderingService {
     private nodeAsDot(node: ErdNode, schema: string) {
         const attrs = this.style.nodeAttributes(node, schema);
         return `${ErdRenderingService.nodeIdString(node)} [${this.style.asAttributeString(attrs)}]`;
+    }
+
+    private edgeAsDot(edge: ErdEdge) {
+        // This is backwards, but its how we get dependent tables plotted
+        // below referenced tables
+        let str = ErdRenderingService.nodeIdString(edge.to) +
+            ' -> ' + ErdRenderingService.nodeIdString(edge.from);
+
+        const attrs = this.style.edgeAttributes(edge);
+        if (attrs.length > 0) {
+            str += ' [' + this.style.asAttributeString(attrs) + ']';
+        }
+
+        return str;
     }
 
     private static nodeIdString(id: ErdNode | number) {
