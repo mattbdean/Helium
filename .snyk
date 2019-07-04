@@ -1,5 +1,5 @@
 # Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.10.1
+version: v1.13.5
 # ignores vulnerabilities until expiry date; change duration by modifying expiry date
 ignore:
   'npm:hoek:20180212':
@@ -136,3 +136,24 @@ patch:
   'npm:uglify-js:20151024':
     - '@angular/cli > postcss-url > directory-encoder > handlebars > uglify-js':
         patched: '2017-10-30T16:10:57.510Z'
+  SNYK-JS-LODASH-450202:
+    - lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > @snyk/dep-graph > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > inquirer > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > snyk-config > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > snyk-nuget-plugin > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > snyk-php-plugin > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > @snyk/dep-graph > graphlib > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > snyk-go-plugin > graphlib > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
+    - snyk > snyk-nodejs-lockfile-parser > graphlib > lodash:
+        patched: '2019-07-04T04:30:23.513Z'
