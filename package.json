@@ -50,7 +50,7 @@
     "helmet": "^3.8.1",
     "joi": "^13.0.0",
     "joi-date-extensions": "^1.0.2",
-    "lodash": "^4.17.10",
+    "lodash": "^4.17.19",
     "lru-cache": "^4.1.1",
     "moment": "^2.20.1",
     "morgan": "^1.9.1",
