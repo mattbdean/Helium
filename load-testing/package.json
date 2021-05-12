@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "chart.js": "^2.7.2",
+    "chart.js": "^2.9.4",
     "chartjs-node": "^1.7.1",
     "typescript": "file:../node_modules/typescript"
   },
